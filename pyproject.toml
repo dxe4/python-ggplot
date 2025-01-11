@@ -1,0 +1,21 @@
+[project]
+name = "python-ggplot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "charalmapos papaloizou", email = "harry@e2e4.email" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pycairo>=1.27.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pylint>=3.3.3",
+]
