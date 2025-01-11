@@ -1,13 +1,17 @@
 from math import pi
 import cairo
+from cairo import (
+    Gradient, LinearGradient, ImageSurface, Context, FORMAT_ARGB32,
+    FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
+)
 
 
-def create_gradient(gradient: cairo.Gradient, left: float, bottom: float, height: float, width: float) -> cairo.LinearGradient:
+def create_gradient(gradient: Gradient, left: float, bottom: float, height: float, width: float) -> LinearGradient:
     # middle = bottom + height / 2.0
     # right = left + width
     center = left + width / 2.0
 
-    result = cairo.LinearGradient(center, bottom + height, center, bottom)
+    result = LinearGradient(center, bottom + height, center, bottom)
 
     # step_size = width / len(gradient.colors)
     num_colors = len(gradient.colors)
@@ -25,14 +29,14 @@ class CairoBackend:
         self.created = False
         self.text_extents = None
         # if surface:
-        #     self.ctx = cairo.Context(surface)
+        #     self.ctx = Context(surface)
         #     self.created = True
 
     def with_surface(self, img, cb):
         # todo refacor
         if not self.created:
-            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, img.width, img.height)
-            self.ctx = cairo.Context(surface)
+            surface = ImageSurface(FORMAT_ARGB32, img.width, img.height)
+            self.ctx =Context(surface)
             self.canvas = surface
             self.created = True
         if self.ctx:
@@ -158,11 +162,11 @@ class CairoBackend:
     def get_text_extents(self, text, font):
         width = len(text) * font.size * 2.0
         height = font.size * 2.0
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(width), int(height))
-        context = cairo.Context(surface)
+        surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
+        context = Context(surface)
 
         context.select_font_face(
-            font.family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
+            font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
         )
         context.set_font_size(font.size)
         context.set_source_rgba(
@@ -186,7 +190,7 @@ class CairoBackend:
             if rotate_in_view:
                 self.rotate(context, rotate_in_view[0], rotate_in_view[1])
             context.select_font_face(
-                font.family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
+                font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
             )
             context.set_font_size(font.size)
             context.set_source_rgba(
@@ -287,8 +291,8 @@ class CairoBackend:
                     data[data_idx] = to_draw[to_draw_val]
 
             data2 = self.to_bytes(data)
-            surface = cairo.ImageSurface.create_for_data(
-                data2, cairo.FORMAT_ARGB32, w_img, h_img
+            surface = ImageSurface.create_for_data(
+                data2, FORMAT_ARGB32, w_img, h_img
             )
             surface.mark_dirty()
             context.set_source_surface(surface, left, bottom)
@@ -302,7 +306,7 @@ class CairoBackend:
 
 def init_image(backend, filename, width, height, ftype):
     if ftype == "Png":
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        surface = ImageSurface(FORMAT_ARGB32, width, height)
     else:
         raise ValueError("Only PNG format is supported for now")
 
@@ -313,10 +317,10 @@ def init_image(backend, filename, width, height, ftype):
 
 
 def cairo_test():
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 600, 400)
-    context = cairo.Context(surface)
+    surface = ImageSurface(FORMAT_ARGB32, 600, 400)
+    context = Context(surface)
 
-    context.select_font_face("serif", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    context.select_font_face("serif", FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD)
     context.set_font_size(32.0)
     context.set_source_rgb(0.0, 0.0, 1.0)
     context.move_to(100.0, 300.0)
