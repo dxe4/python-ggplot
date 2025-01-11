@@ -19,5 +19,6 @@ build-backend = "hatchling.build"
 dev = [
     "black>=24.10.0",
     "ipython>=8.31.0",
+    "isort>=5.13.2",
     "pylint>=3.3.3",
 ]

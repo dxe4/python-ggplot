@@ -291,6 +291,7 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "ipython" },
+    { name = "isort" },
     { name = "pylint" },
 ]
 
@@ -301,6 +302,7 @@ requires-dist = [{ name = "pycairo", specifier = ">=1.27.0" }]
 dev = [
     { name = "black", specifier = ">=24.10.0" },
     { name = "ipython", specifier = ">=8.31.0" },
+    { name = "isort", specifier = ">=5.13.2" },
     { name = "pylint", specifier = ">=3.3.3" },
 ]
 
