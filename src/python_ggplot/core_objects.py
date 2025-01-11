@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Callable
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import linspace
 
@@ -20,12 +20,14 @@ class MarkerKind(Enum):
     EMPTY_RHOMBUS = auto()
 
 
+
 class FileTypeKind(Enum):
     SVG = auto()
     PNG = auto()
     PDF = auto()
     VEGA = auto()
     TEX = auto()
+
 
 @dataclass
 class Image:
@@ -42,6 +44,7 @@ class HueConfig:
     chroma: float = 100.0
     luminance: float = 65.0
 
+
 class LineType(Enum):
     NONE_TYPE = auto()
     SOLID = auto()
@@ -51,19 +54,23 @@ class LineType(Enum):
     LONG_DASH = auto()
     TWO_DASH = auto()
 
+
 class ErrorBarKind(Enum):
     LINES = auto()
     LINEST = auto()
+
 
 class TextAlignKind(Enum):
     LEFT = auto()
     CENRTER = auto()
     RIGHT = auto()
 
+
 class CFontSlant(Enum):
     NORMAL = auto()
     ITALIC = auto()
     OBLIQUE = auto()
+
 
 @dataclass
 class Color:
@@ -72,6 +79,7 @@ class Color:
     b: float
     a: float
 
+
 @dataclass
 class ColorHCL:
     h: float
@@ -79,10 +87,15 @@ class ColorHCL:
     l: float
 
     @staticmethod
-    def gg_color_hue(num: int, hue_config: HueConfig) -> List['ColorHCL']:
-        hues = linspace(hue_config.hue_start, hue_config.hue_start + 360.0, num + 1, endpoint=True)
-        colors = [ColorHCL(h=h, c=hue_config.chroma, l=hue_config.luminance) for h in hues]
+    def gg_color_hue(num: int, hue_config: HueConfig) -> List["ColorHCL"]:
+        hues = linspace(
+            hue_config.hue_start, hue_config.hue_start + 360.0, num + 1, endpoint=True
+        )
+        colors = [
+            ColorHCL(h=h, c=hue_config.chroma, l=hue_config.luminance) for h in hues
+        ]
         return colors
+
 
 @dataclass
 class Font:
@@ -98,6 +111,7 @@ class Font:
 class Gradient:
     colors: List[Color]
     rotation: float
+
 
 class AxisKind(Enum):
     X = auto()
@@ -116,15 +130,19 @@ class Style:
     gradient: Optional[Gradient]
     font: Font
 
+
 class CompositeKind(Enum):
     ERROR_BAR = auto()
+
 
 class TickKind(Enum):
     ONE_SIDE = auto()
     BOTH_SIDES = auto()
 
+
 class OptionError(Exception):
     pass
+
 
 def either(a, b):
     if a is not None:
@@ -133,18 +151,18 @@ def either(a, b):
         return b
     raise OptionError("Both options are None.")
 
+
 @dataclass
 class Scale:
     low: float
     high: float
 
 
-
 @dataclass
 class QuantityConversionData:
-    quantity: 'Quantity'
-    length: Optional['Quantity'] = None
-    scale: Optional['Scale'] = None
+    quantity: "Quantity"
+    length: Optional["Quantity"] = None
+    scale: Optional["Scale"] = None
 
     def validate_generic_conversion(self, kind):
         if kind == self.quantity.__class__:
@@ -156,11 +174,16 @@ class QuantityConversionData:
 
     def validate_to_relative_conversion(self):
         # todo refactor
-        if self.quantity.unit.__class__ not  in [Data, Relative]:
+        if self.quantity.unit.__class__ not in [Data, Relative]:
             if self.length and self.quantity.unit in [Point, Centimeter, Inch]:
-                raise GGException("length scale needed to convert quantity to relative value!")
+                raise GGException(
+                    "length scale needed to convert quantity to relative value!"
+                )
         elif isinstance(self.quantity.unit, Data) and self.scale:
-            raise GGException("length scale needed to convert quantity to relative value!")
+            raise GGException(
+                "length scale needed to convert quantity to relative value!"
+            )
+
 
 @dataclass
 class Quantity:
@@ -180,8 +203,7 @@ class Quantity:
 
         return conversaion_table[kind](data)
 
-
-    def to_data(self, scale: 'Scale', length: 'Quantity'):
+    def to_data(self, scale: "Scale", length: "Quantity"):
         data = QuantityConversionData(quantity=self, length=length, scale=scale)
         return self.unit.to_data(self, data)
 
@@ -202,6 +224,7 @@ class Quantity:
         data.validate_to_relative_conversion()
         return self.unit.to_relative(data)
 
+
 @dataclass
 class ViewPort:
     name: str
@@ -211,11 +234,11 @@ class ViewPort:
     y_scale: Scale
     rotate: Optional[float] = None
     scale: Optional[float] = None
-    origin: 'Coord'
+    origin: "Coord"
     width: Quantity
     height: Quantity
-    objects: List['GraphicsObject']
-    children: List['ViewPort']
+    objects: List["GraphicsObject"]
+    children: List["ViewPort"]
     w_view: Quantity
     h_view: Quantity
     w_img: Quantity
@@ -223,12 +246,12 @@ class ViewPort:
 
     def apply_operator(
         self,
-        other: 'Quantity',
-        length: Optional['Quantity'],
+        other: "Quantity",
+        length: Optional["Quantity"],
         scale: Optional[Scale],
         as_coordinate: bool,
-        operator: Callable[[float, float], float]
-    ) -> 'Quantity':
+        operator: Callable[[float, float], float],
+    ) -> "Quantity":
         pass
 
     def point_height_height(self, dimension: Quantity) -> Quantity:
@@ -255,8 +278,10 @@ def default_coord_view_location(view: ViewPort, kind: AxisKind):
     else:
         raise GGException("")
 
+
 class GGException(Exception):
     pass
+
 
 class UnitKind:
 
@@ -275,15 +300,17 @@ class UnitKind:
     def to_points(self, data: QuantityConversionData):
         raise GGException("to points not implement for this type")
 
-    def default_length_and_scale(self, view: ViewPort, kind: 'UnitKind'):
+    def default_length_and_scale(self, view: ViewPort, kind: "UnitKind"):
         length, scale = default_coord_view_location(view, kind)
         return length, scale
 
+
 class Point(UnitKind):
-    
 
     def to_data(self, data: QuantityConversionData):
-        new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(data.length, data.scale).val
+        new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
+            data.length, data.scale
+        ).val
         return Quantity(val=new_val, unit=Data())
 
     def to_centimeter(self, data: QuantityConversionData):
@@ -293,19 +320,25 @@ class Point(UnitKind):
         return Quantity(abs_to_inch(data.quantity.val), unit=Inch())
 
     def to_relative(self, data: QuantityConversionData):
-        return Quantity(val=data.quantity.val / data.length.to_points().val, unit=Relative())
+        return Quantity(
+            val=data.quantity.val / data.length.to_points().val, unit=Relative()
+        )
 
     def to_points(self, data: QuantityConversionData):
         return Quantity(val=data.val, unit=Point())
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         length, _ = super().default_length_and_scale(view, kind)
         return PointCoordType(data=LengthCoord(length=length.to_points()))
 
 
 class Centimeter(UnitKind):
     def to_data(self, data: QuantityConversionData):
-        new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(data.length, data.scale).val
+        new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
+            data.length, data.scale
+        ).val
         return Quantity(val=new_val, unit=Data())
 
     def to_centimeter(self, data: QuantityConversionData):
@@ -323,13 +356,18 @@ class Centimeter(UnitKind):
     def to_points(self, data: QuantityConversionData):
         return Quantity(val=inch_to_abs(cm_to_inch(data.quantity.val)), unit=Point())
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         length, _ = super().default_length_and_scale(view, kind)
         return PointCoordType(data=LengthCoord(length=length.to_centimeter()))
 
+
 class Inch(UnitKind):
     def to_data(self, data: QuantityConversionData):
-        new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(data.length, data.scale).val
+        new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
+            data.length, data.scale
+        ).val
         return Quantity(val=new_val, unit=Data())
 
     def to_centimeter(self, data: QuantityConversionData):
@@ -345,7 +383,9 @@ class Inch(UnitKind):
     def to_points(self, data: QuantityConversionData):
         return Quantity(val=inch_to_abs(data.val), unit=Point())
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         length, _ = super().default_length_and_scale(view, kind)
         return PointCoordType(data=LengthCoord(length=length.to_inch()))
 
@@ -363,8 +403,11 @@ class Relative(UnitKind):
             return Quantity(val=data.val, unit=Point())
         raise GGException("un expected")
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         return RelativeCoordType()
+
 
 class Data(UnitKind):
 
@@ -373,11 +416,15 @@ class Data(UnitKind):
 
     def to_relative(self, data: QuantityConversionData):
         if not data.scale:
-            raise GGException("Need a scale to convert quantity of kind Data to relative")
+            raise GGException(
+                "Need a scale to convert quantity of kind Data to relative"
+            )
         new_val = data.quantity.val / (data.scale.high - data.scale.low)
         return Quantity(val=new_val, unit=Relative())
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         _, scale = super().default_length_and_scale(view, kind)
         data = DataCoord(scale=scale, axis_kind=axis_kind)
         return DataCoordType(data=data)
@@ -385,13 +432,17 @@ class Data(UnitKind):
 
 class StrWidth(UnitKind):
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         raise GGException("not implemented")
 
 
 class StrHeight(UnitKind):
 
-    def create_default_coord_type(self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind) -> CoordType:
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> CoordType:
         raise GGException("not implemented")
 
 
@@ -399,43 +450,53 @@ class StrHeight(UnitKind):
 class LengthCoord:
     length: Optional[Quantity] = None
 
+
 @dataclass
 class DataCoord:
     scale: Scale
     axis_kind: AxisKind
+
 
 @dataclass
 class TextCoord:
     text: str
     font: Font
 
+
 @dataclass
 class CoordType:
     pass
+
 
 @dataclass
 class RelativeCoordType(CoordType):
     pass
 
+
 @dataclass
 class PointCoordType(CoordType):
     data: LengthCoord
+
 
 @dataclass
 class CentimeterCoordType(CoordType):
     data: LengthCoord
 
+
 @dataclass
 class InchCoordType(CoordType):
     data: LengthCoord
+
 
 @dataclass
 class DataCoordType(CoordType):
     data: DataCoord
 
+
 @dataclass
 class StrWidthCoordType(CoordType):
     data: TextCoord
+
 
 @dataclass
 class StrHeightCoordType(CoordType):
