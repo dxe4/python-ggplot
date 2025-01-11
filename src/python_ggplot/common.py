@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 # Constants
 DPI = 72.27
 
@@ -56,5 +57,5 @@ def to_cairo_font_slant(font: str) -> str:
     return mapping.get(font, "Normal")
 
 
-def to_cairo_font_weight(font: str, bold: bool) -> str:
-    return "Bold" if bold else "Normal"
+def to_cairo_font_weight(font: "Font") -> str:
+    return "Bold" if font.bold else "Normal"
