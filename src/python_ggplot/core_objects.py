@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, TypeVar, Generic
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import linspace
 
@@ -117,6 +117,14 @@ class AxisKind(Enum):
     X = auto()
     Y = auto()
 
+T = TypeVar('T', int, float)
+
+
+@dataclass
+class Point(Generic[T]):
+    x: T
+    y: T
+
 
 @dataclass
 class Style:
@@ -168,18 +176,18 @@ class QuantityConversionData:
         if kind == self.quantity.__class__:
             # TODO remove __class__ usage
             return Quantity(val=self.quantity.val, unit=self.quantity.unit)
-        if kind == Data and not self.scale:
+        if kind == DataUnit and not self.scale:
             # TODO remove __class__ usage
             raise GGException("cannot covnert to data without scale")
 
     def validate_to_relative_conversion(self):
         # todo refactor
-        if self.quantity.unit.__class__ not in [Data, Relative]:
-            if self.length and self.quantity.unit in [Point, Centimeter, Inch]:
+        if self.quantity.unit.__class__ not in [DataUnit, RelativeUnit]:
+            if self.length and self.quantity.unit in [PointUnit, CentimeterUnit, InchUnit]:
                 raise GGException(
                     "length scale needed to convert quantity to relative value!"
                 )
-        elif isinstance(self.quantity.unit, Data) and self.scale:
+        elif isinstance(self.quantity.unit, DataUnit) and self.scale:
             raise GGException(
                 "length scale needed to convert quantity to relative value!"
             )
@@ -194,11 +202,11 @@ class Quantity:
         data = QuantityConversionData(quantity=self, length=length, scale=scale)
         data.validate_generic_conversion(kind)
         conversaion_table = {
-            Point: self.to_points,
-            Centimeter: self.to_centimeter,
-            Inch: self.to_inch,
-            Relative: self.to_relative,
-            Data: self.to_data,
+            PointUnit: self.to_points,
+            CentimeterUnit: self.to_centimeter,
+            InchUnit: self.to_inch,
+            RelativeUnit: self.to_relative,
+            DataUnit: self.to_data,
         }
 
         return conversaion_table[kind](data)
@@ -256,7 +264,7 @@ class ViewPort:
 
     def point_height_height(self, dimension: Quantity) -> Quantity:
 
-        if not isinstance(self.w_view.unit, Point):
+        if not isinstance(self.w_view.unit, PointUnit):
             raise ValueError(f"Expected Point, found {self.w_view.unit}")
 
         # Placeholder for relative width computation
@@ -305,56 +313,56 @@ class UnitKind:
         return length, scale
 
 
-class Point(UnitKind):
+class PointUnit(UnitKind):
 
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
         ).val
-        return Quantity(val=new_val, unit=Data())
+        return Quantity(val=new_val, unit=DataUnit())
 
     def to_centimeter(self, data: QuantityConversionData):
-        return Quantity(inch_to_cm(abs_to_inch(data.quantity.val)), unit=Centimeter())
+        return Quantity(inch_to_cm(abs_to_inch(data.quantity.val)), unit=CentimeterUnit())
 
     def to_inch(self, data: QuantityConversionData):
-        return Quantity(abs_to_inch(data.quantity.val), unit=Inch())
+        return Quantity(abs_to_inch(data.quantity.val), unit=InchUnit())
 
     def to_relative(self, data: QuantityConversionData):
         return Quantity(
-            val=data.quantity.val / data.length.to_points().val, unit=Relative()
+            val=data.quantity.val / data.length.to_points().val, unit=RelativeUnit()
         )
 
     def to_points(self, data: QuantityConversionData):
-        return Quantity(val=data.val, unit=Point())
+        return Quantity(val=data.val, unit=PointUnit())
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
+    ) -> 'CoordType':
         length, _ = super().default_length_and_scale(view, kind)
         return PointCoordType(data=LengthCoord(length=length.to_points()))
 
 
-class Centimeter(UnitKind):
+class CentimeterUnit(UnitKind):
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
         ).val
-        return Quantity(val=new_val, unit=Data())
+        return Quantity(val=new_val, unit=DataUnit())
 
     def to_centimeter(self, data: QuantityConversionData):
-        return Quantity(data.quantity.val, unit=Centimeter())
+        return Quantity(data.quantity.val, unit=CentimeterUnit())
 
     def to_inch(self, data: QuantityConversionData):
         # TODO this has to be double checked, the rust code says inch to cm,
         # but logically this sounds like cm to inch
-        return Quantity(inch_to_cm(data.quantity.val), unit=Inch())
+        return Quantity(inch_to_cm(data.quantity.val), unit=InchUnit())
 
     def to_relative(self, data: QuantityConversionData):
         new_val = data.quantity.to_points().val / data.length.to_points().val
-        return Quantity(val=new_val, unit=Relative())
+        return Quantity(val=new_val, unit=RelativeUnit())
 
     def to_points(self, data: QuantityConversionData):
-        return Quantity(val=inch_to_abs(cm_to_inch(data.quantity.val)), unit=Point())
+        return Quantity(val=inch_to_abs(cm_to_inch(data.quantity.val)), unit=PointUnit())
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
@@ -363,25 +371,25 @@ class Centimeter(UnitKind):
         return PointCoordType(data=LengthCoord(length=length.to_centimeter()))
 
 
-class Inch(UnitKind):
+class InchUnit(UnitKind):
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
         ).val
-        return Quantity(val=new_val, unit=Data())
+        return Quantity(val=new_val, unit=DataUnit())
 
     def to_centimeter(self, data: QuantityConversionData):
-        return Quantity(inch_to_cm(data.quantity.val), unit=Centimeter())
+        return Quantity(inch_to_cm(data.quantity.val), unit=CentimeterUnit())
 
     def to_inch(self, data: QuantityConversionData):
-        return Quantity(data.quantity.val, unit=Inch())
+        return Quantity(data.quantity.val, unit=InchUnit())
 
     def to_relative(self, data: QuantityConversionData):
         new_val = data.quantity.to_points().val / data.length.to_points().val
-        return Quantity(val=new_val, unit=Relative())
+        return Quantity(val=new_val, unit=RelativeUnit())
 
     def to_points(self, data: QuantityConversionData):
-        return Quantity(val=inch_to_abs(data.val), unit=Point())
+        return Quantity(val=inch_to_abs(data.val), unit=PointUnit())
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
@@ -390,17 +398,17 @@ class Inch(UnitKind):
         return PointCoordType(data=LengthCoord(length=length.to_inch()))
 
 
-class Relative(UnitKind):
+class RelativeUnit(UnitKind):
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.val
-        return Quantity(val=new_val, unit=Data())
+        return Quantity(val=new_val, unit=DataUnit())
 
     def to_relative(self, data: QuantityConversionData):
-        return Quantity(val=data.quantity.val, unit=Relative())
+        return Quantity(val=data.quantity.val, unit=RelativeUnit())
 
     def to_points(self, data: QuantityConversionData):
         if data.length:
-            return Quantity(val=data.val, unit=Point())
+            return Quantity(val=data.val, unit=PointUnit())
         raise GGException("un expected")
 
     def create_default_coord_type(
@@ -409,10 +417,10 @@ class Relative(UnitKind):
         return RelativeCoordType()
 
 
-class Data(UnitKind):
+class DataUnit(UnitKind):
 
     def to_data(self, data: QuantityConversionData):
-        return Quantity(val=data.quantity.val, unit=Data())
+        return Quantity(val=data.quantity.val, unit=DataUnit())
 
     def to_relative(self, data: QuantityConversionData):
         if not data.scale:
@@ -420,7 +428,7 @@ class Data(UnitKind):
                 "Need a scale to convert quantity of kind Data to relative"
             )
         new_val = data.quantity.val / (data.scale.high - data.scale.low)
-        return Quantity(val=new_val, unit=Relative())
+        return Quantity(val=new_val, unit=RelativeUnit())
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
@@ -430,7 +438,7 @@ class Data(UnitKind):
         return DataCoordType(data=data)
 
 
-class StrWidth(UnitKind):
+class StrWidthUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
@@ -438,7 +446,7 @@ class StrWidth(UnitKind):
         raise GGException("not implemented")
 
 
-class StrHeight(UnitKind):
+class StrHeightUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
@@ -450,11 +458,29 @@ class StrHeight(UnitKind):
 class LengthCoord:
     length: Optional[Quantity] = None
 
+    def to_relative_coord1d(self, pos: float, length: Optional[Quantity], kind: UnitKind) -> 'Coord1D':
+        length = self.length or length
+        if length is None:
+            raise ValueError("A length is required for relative conversion.")
+
+        relative_length = length.to(kind)
+        return Coord1D(pos / relative_length.val, RelativeCoordType())
+
 
 @dataclass
 class DataCoord:
     scale: Scale
     axis_kind: AxisKind
+
+    def to_relative_coord1d(self, pos: float) -> Coord1D:
+        if self.axis_kind == AxisKind.X:
+            pos = (pos - self.scale.low) / (self.scale.high - self.scale.low)
+        elif self.axis_kind == AxisKind.Y:
+            pos = 1.0 - (pos - self.scale.low) / (self.scale.high - self.scale.low)
+        else:
+            raise ValueError("Invalid axis kind")
+
+        return Coord1D(pos=pos, coord_type=RelativeCoordType())
 
 
 @dataclass
@@ -462,45 +488,98 @@ class TextCoord:
     text: str
     font: Font
 
+    def to_relative_coord1d(self, pos: float, coord_type: CoordType, length: Optional[Quantity]) -> Coord1D:
+        # Get text dimensions
+        text_extend = CairoBackend.get_text_extend(self.text, self.font)
+
+        # this has to be str height or str width
+        # todo add validation
+        dimension = coord_type.text_extend_dimension(text_extend)
+
+        if length is None:
+            raise GGException("Conversion from StrWidth to relative requires a length scale!")
+
+        pos = (pos * dimension) / length.to_points(None).val
+        return Coord1D(pos=pos, coord_type=RelativeCoordType())
+
+
+@dataclass
+class CoordTypeConversion:
+    coord1d: Coord1D
+    length: Optional[Quantity] = None
+
 
 @dataclass
 class CoordType:
-    pass
+    is_length_coord = False
+
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        raise GGException("Not implemented")
 
 
 @dataclass
 class RelativeCoordType(CoordType):
-    pass
+    is_length_coord = False
 
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        return Coord1D(pos=data.coord1d.pos, coord_type=RelativeCoordType())
 
 @dataclass
 class PointCoordType(CoordType):
+    is_length_coord = True
     data: LengthCoord
+
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        return self.data.to_relative_coord1d(data.coord1d.pos, data.length, PointUnit)
 
 
 @dataclass
 class CentimeterCoordType(CoordType):
+    is_length_coord = True
     data: LengthCoord
+
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        return self.data.to_relative_coord1d(data.coord1d.pos, data.length, CentimeterUnit)
 
 
 @dataclass
 class InchCoordType(CoordType):
+    is_length_coord = True
     data: LengthCoord
+
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        return self.data.to_relative_coord1d(data.coord1d.pos, data.length, InchUnit)
 
 
 @dataclass
 class DataCoordType(CoordType):
     data: DataCoord
 
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        return self.data.to_relative_coord1d(data.coord1d.pos)
+
+
 
 @dataclass
 class StrWidthCoordType(CoordType):
     data: TextCoord
 
+    def text_extend_dimension(self, text_extend):
+        return text_extend.width()
+
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        return self.data.to_relative_coord1d(data.coord1d.pos, self, data.length)
+
 
 @dataclass
 class StrHeightCoordType(CoordType):
     data: TextCoord
+
+    def text_extend_dimension(self, text_extend):
+        return text_extend.height()
+
+    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
+        raise GGException("Not implemented")
 
 
 @dataclass

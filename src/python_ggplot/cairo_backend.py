@@ -161,10 +161,12 @@ class CairoBackend:
         if rotate_angle:
             self.rotate(context, rotate_angle[0], rotate_angle[1])
 
-    def get_text_extents_from_context(self, context, text):
+    @classmethod
+    def get_text_extends_from_context(cls, context, text):
         return context.text_extents(text)
 
-    def get_text_extents(self, text, font):
+    @classmethod
+    def get_text_extend(cls, text, font):
         width = len(text) * font.size * 2.0
         height = font.size * 2.0
         surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
@@ -173,7 +175,7 @@ class CairoBackend:
         context.select_font_face(font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD)
         context.set_font_size(font.size)
         context.set_source_rgba(font.color.r, font.color.g, font.color.b, font.color.a)
-        result = self.get_text_extents_from_context(context, text)
+        result = cls.get_text_extends_from_context(context, text)
         return result
 
     def draw_text(
@@ -193,7 +195,7 @@ class CairoBackend:
                 font.color.r, font.color.g, font.color.b, font.color.a
             )
             x, y = at
-            extends = self.get_text_extents_from_context(context, text)
+            extends = CairoBackend.get_text_extends_from_context(context, text)
 
             if rotate:
                 self.rotate(context, rotate, at)
