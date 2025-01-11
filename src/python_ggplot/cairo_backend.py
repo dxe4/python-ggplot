@@ -1,12 +1,20 @@
 from math import pi
 import cairo
 from cairo import (
-    Gradient, LinearGradient, ImageSurface, Context, FORMAT_ARGB32,
-    FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
+    Gradient,
+    LinearGradient,
+    ImageSurface,
+    Context,
+    FORMAT_ARGB32,
+    FONT_SLANT_NORMAL,
+    FONT_WEIGHT_BOLD,
 )
 
 
-def create_gradient(gradient: Gradient, left: float, bottom: float, height: float, width: float) -> LinearGradient:
+def create_gradient(
+    gradient: Gradient, left: float, bottom: float, height: float, width: float
+) -> LinearGradient:
+    # todo revisit this later
     # middle = bottom + height / 2.0
     # right = left + width
     center = left + width / 2.0
@@ -36,7 +44,7 @@ class CairoBackend:
         # todo refacor
         if not self.created:
             surface = ImageSurface(FORMAT_ARGB32, img.width, img.height)
-            self.ctx =Context(surface)
+            self.ctx = Context(surface)
             self.canvas = surface
             self.created = True
         if self.ctx:
@@ -56,18 +64,14 @@ class CairoBackend:
         dot_space = line_width * 2.0
         long_dash = line_width * 8.0
 
-        if line_type.name == "DASHED":
-            return [dash, dash_space]
-        elif line_type.name == "DOTTED":
-            return [dot, dot_space]
-        elif line_type.name == "DOT_DASH":
-            return [dot, dot_space, dash, dot_space]
-        elif line_type.name == "LONG_DASH":
-            return [long_dash, dash_space]
-        elif line_type.name == "TWO_DASH":
-            return [dash, dot_space * 2.0, long_dash, dot_space * 2.0]
-        else:
-            return []
+        lookup = {
+            "DASHED": [dash, dash_space],
+            "DOTTED": [dot, dot_space],
+            "DOT_DASH": [dot, dot_space, dash, dot_space],
+            "LONG_DASH": [long_dash, dash_space],
+            "TWO_DASH": [dash, dot_space * 2.0, long_dash, dot_space * 2.0],
+        }
+        return lookup.get(line_type.name, [])
 
     def set_line_style(self, ctx, line_type, line_width):
         if line_type == "None":
@@ -80,6 +84,7 @@ class CairoBackend:
         def callback(context):
             if rotate_angle:
                 self.rotate(context, rotate_angle[0], rotate_angle[1])
+
             context.set_source_rgba(
                 style.color.r,
                 style.color.g,
@@ -165,16 +170,9 @@ class CairoBackend:
         surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
         context = Context(surface)
 
-        context.select_font_face(
-            font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
-        )
+        context.select_font_face(font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD)
         context.set_font_size(font.size)
-        context.set_source_rgba(
-            font.color.r,
-            font.color.g,
-            font.color.b,
-            font.color.a
-        )
+        context.set_source_rgba(font.color.r, font.color.g, font.color.b, font.color.a)
         result = self.get_text_extents_from_context(context, text)
         return result
 
@@ -189,15 +187,10 @@ class CairoBackend:
         def callback(context):
             if rotate_in_view:
                 self.rotate(context, rotate_in_view[0], rotate_in_view[1])
-            context.select_font_face(
-                font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
-            )
+            context.select_font_face(font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD)
             context.set_font_size(font.size)
             context.set_source_rgba(
-                font.color.r,
-                font.color.g,
-                font.color.b,
-                font.color.a
+                font.color.r, font.color.g, font.color.b, font.color.a
             )
             x, y = at
             extends = self.get_text_extents_from_context(context, text)
@@ -240,9 +233,7 @@ class CairoBackend:
             context.stroke_preserve()
 
             if style.gradient:
-                pattern = create_gradient(
-                    style.gradient, left, bottom, height, width
-                )
+                pattern = create_gradient(style.gradient, left, bottom, height, width)
                 context.set_source(pattern)
             else:
                 context.set_source_rgb(
@@ -291,9 +282,7 @@ class CairoBackend:
                     data[data_idx] = to_draw[to_draw_val]
 
             data2 = self.to_bytes(data)
-            surface = ImageSurface.create_for_data(
-                data2, FORMAT_ARGB32, w_img, h_img
-            )
+            surface = ImageSurface.create_for_data(data2, FORMAT_ARGB32, w_img, h_img)
             surface.mark_dirty()
             context.set_source_surface(surface, left, bottom)
             context.paint()
@@ -313,6 +302,7 @@ def init_image(backend, filename, width, height, ftype):
     backend = CairoBackend(surface)
     # todo fix this later
     from python_ggplot.core_objects import Image
+
     return Image(filename, width, height, ftype, backend)
 
 
