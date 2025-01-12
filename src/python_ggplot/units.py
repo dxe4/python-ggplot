@@ -328,6 +328,50 @@ def convert_quantity_data(
     return func_(ToQuantityData)
 
 
+def add_data_quantity(
+    left: Quantity,
+    right: Quantity,
+    length: Optional[Quantity],
+    scale: Optional["Scale"],
+    operator: Callable[[float, float], float],
+) -> Quantity:
+    if scale is None:
+        raise ValueError("Expected scale")
+
+    final_q = Quantity(left.value - scale.low, DataUnit())
+
+    left_convert = ToQuantityData(length=length, scale=scale)
+    right_convert = ToQuantityData(length=length, scale=scale)
+
+    left_relative = convert_quantity_data(RelativeUnit(), final_q, left_convert)
+    right_relative = convert_quantity_data(RelativeUnit(), right, right_convert)
+
+    val = operator(left_relative.value, right_relative.value)
+
+    return Quantity(val, RelativeUnit())
+
+
+def add_length_relative_quantity(
+    length_quantity: Quantity,
+    relative_quantity: Quantity,
+    operator: Callable[[float, float], float],
+) -> Quantity:
+    val = operator(length_quantity.value, relative_quantity.value)
+    return Quantity(val, length_quantity.unit)
+
+
+def add_length_quantities(
+    left: Quantity, right: Quantity, operator: Callable[[float, float], float]
+) -> Quantity:
+
+    left_converted = convert_quantity_data(PointUnit(), left, None)
+    right_converted = convert_quantity_data(PointUnit(), right, None)
+
+    val = operator(left_converted.value, right_converted.value)
+    point = Quantity(val, PointUnit())
+    return convert_quantity_data(left.unit, point, None)
+
+
 def unit_type_from_string(input_str):
     data = {
         "point": PointUnit,
