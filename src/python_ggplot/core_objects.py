@@ -1,6 +1,7 @@
-from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Optional, List, TypeVar, Generic
+from enum import Enum, auto
+from typing import Generic, List, Optional, TypeVar
+
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import linspace
 

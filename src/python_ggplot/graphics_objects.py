@@ -1,17 +1,12 @@
 from dataclasses import dataclass
-from typing import Optional, List, Callable
-from python_ggplot.core_objects import (
-    GGException,
-    CompositeKind,
-    TextAlignKind,
-    Font,
-    AxisKind,
-    TickKind,
-    MarkerKind,
-    Color,
-)
-from python_ggplot.coord import Coord, Coord1D, RelativeCoordType
-from python_ggplot.units import Quantity
+from typing import Callable, List, Optional
+
+from python_ggplot.coord import (Coord, Coord1D, RelativeCoordType,
+                                 quantitiy_to_coord)
+from python_ggplot.core_objects import (AxisKind, Color, CompositeKind, Font,
+                                        GGException, MarkerKind, TextAlignKind,
+                                        TickKind)
+from python_ggplot.units import Quantity, ToQuantityData
 
 
 class GraphObjectKind:
@@ -125,14 +120,12 @@ class ViewPort:
         return self.origin.x.to_relative(None)
 
     def get_width(self):
-        from python_ggplot.units import ToQuantityData  # todo
         return self.height.to_relative(ToQuantityData(length=self.w_img))
 
     def bottom(self):
         return self.origin.y.to_relative(None)
 
     def get_height(self):
-        from python_ggplot.units import ToQuantityData  # todo
         return self.height.to_relative(ToQuantityData(length=self.h_img))
 
     def embed_into_origin_for_length(self, axis_kind: AxisKind):
@@ -198,7 +191,7 @@ def x_axis_y_pos(
     margin = margin if margin is not None else 0.0
 
     if viewport:
-        coord = viewport.height.quantitiy_to_coord()
+        coord = quantitiy_to_coord(viewport.height)
         pos = viewport.height.val + margin if is_secondary else -margin
         coord.pos = pos
         return coord
@@ -216,7 +209,7 @@ def y_axis_x_pos(
     margin = margin if margin is not None else 0.0
 
     if viewport:
-        coord = viewport.width.quantitiy_to_coord()
+        coord = quantitiy_to_coord(viewport.width)
         pos = viewport.width.val + margin if is_secondary else -margin
         coord.pos = pos
         return coord

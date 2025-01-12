@@ -1,18 +1,10 @@
-from enum import Enum, auto
-from typing import Optional, Union, List, OrderedDict, Set, Tuple, Callable
 from dataclasses import dataclass
-from python_ggplot.core_objects import (
-    AxisKind,
-    MarkerKind,
-    Color,
-    LineType,
-    Font,
-    ErrorBarKind,
-    Scale,
-    GGException,
-)
-from python_ggplot.core_objects import Duration
+from enum import Enum, auto
+from typing import Callable, List, Optional, OrderedDict, Set, Tuple, Union
 
+from python_ggplot.core_objects import (AxisKind, Color, Duration,
+                                        ErrorBarKind, Font, GGException,
+                                        LineType, MarkerKind, Scale)
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"

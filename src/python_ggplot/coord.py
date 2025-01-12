@@ -1,21 +1,28 @@
-from copy import deepcopy
-from enum import Enum
-from dataclasses import dataclass
-from typing import Optional, Callable
 import typing as tp
-from typing import List
+from copy import deepcopy
+from dataclasses import dataclass
+from enum import Enum
+from typing import Callable, List, Optional
 
-
-from python_ggplot.core_objects import AxisKind, Scale, GGException, Font
-from python_ggplot.units import (
-    UnitKind,
-    InchUnit,
-    PointUnit,
-    CentimeterUnit,
-    RelativeUnit,
-)
 from python_ggplot.cairo_backend import CairoBackend
-from python_ggplot.common import inch_to_cm, abs_to_inch, inch_to_abs, cm_to_inch
+from python_ggplot.common import abs_to_inch, inch_to_abs, inch_to_cm
+from python_ggplot.core_objects import AxisKind, Font, GGException, Scale
+from python_ggplot.units import (CentimeterUnit, InchUnit, PointUnit,
+                                 RelativeUnit, UnitKind)
+
+
+def quantitiy_to_coord(quantity):
+    conversion_data = {
+        "relative": lambda: RelativeCoordType(quantity.pos),
+        "point": lambda: PointCoordType(quantity.pos, data=LengthCoord(length=deepcopy(quantity))),
+        "inch": lambda: InchCoordType(quantity.pos, data=LengthCoord(length=deepcopy(quantity))),
+        "centimeter": lambda: CentimeterCoordType(
+            quantity.pos, data=LengthCoord(length=deepcopy(quantity))
+        ),
+    }
+    conversion = conversion_data[quantity.unit.str_type]
+    return conversion()
+
 
 
 def unit_to_point(str_type, pos):
@@ -164,6 +171,13 @@ class ToCord:
     str_text: Optional[str] = None
     str_font: Optional[str] = None
 
+def default_coord_view_location(view: 'ViewPort', kind: AxisKind):
+    if kind == AxisKind.X:
+        return view.point_width(), view.x_scale
+    elif kind == AxisKind.Y:
+        return view.point_height(), view.y_scale
+    else:
+        raise GGException("")
 
 @dataclass
 class Coord1D:
@@ -171,6 +185,23 @@ class Coord1D:
     str_type = None
     is_absolute = False
     is_length_coord = False
+
+    def default_length_and_scale(self, view: 'ViewPort', kind: "UnitKind"):
+        length, scale = default_coord_view_location(view, kind)
+        return length, scale
+
+
+    @staticmethod
+    def create_default_coord_type(
+        view: 'ViewPort', at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> "CoordType":
+        raise GGException("not implemented")
+
+    @staticmethod
+    def from_view(
+        view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        raise GGException("Not implemented")
 
     def embed_into(self, axis_kind: AxisKind, into: 'ViewPort'):
         if self.is_length_coord:
@@ -264,13 +295,6 @@ class Coord1D:
 
         raise GGException("shouldnt reach here")
 
-
-    @staticmethod
-    def from_view(
-        unit_kind: "UnitKind", view: "ViewPort", axis_kind: "AxisKind", at: float
-    ) -> "Coord1D":
-        return unit_kind.from_view(view, axis_kind, at)
-
     @staticmethod
     def create(view: "ViewPort", at: float, axis_kind: "AxisKind", kind: "UnitKind"):
         return kind.create_default_coord_type(view, at, axis_kind, kind)
@@ -355,6 +379,12 @@ class RelativeCoordType(Coord1D):
     str_type = "relative"
     is_length_coord = False
 
+    @staticmethod
+    def create_default_coord_type(
+        view: 'ViewPort', at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> 'Coord1D':
+        return RelativeCoordType(pos=at)
+
     def compare_scale_and_kind(self, other):
         return True
 
@@ -410,6 +440,19 @@ class PointCoordType(Coord1D, LengthCoordMixin):
     str_type = "point"
     data: LengthCoord
 
+    @staticmethod
+    def create_default_coord_type(
+        view: 'ViewPort', at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> "CoordType":
+        length, _ = super().default_length_and_scale(view, kind)
+        return PointCoordType(pos=at, data=LengthCoord(length=length.to_points()))
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
+        length: Quantity = view.length_from_axis(axis_kind)
+        length = length.to_points(length)
+        return PointCoordType(pos=at, data=LengthCoord(length=length))
+
     def to_point(self, convert_data: ToCord):
         return self._to_point(self.data)
 
@@ -442,6 +485,20 @@ class CentimeterCoordType(Coord1D, LengthCoordMixin):
     is_length_coord = True
     is_absolute = True
     data: LengthCoord
+
+    def create_default_coord_type(
+        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> 'Coord1D':
+        length, _ = super().default_length_and_scale(view, kind)
+        return CentimeterCoordType(pos=at, data=LengthCoord(length=length.to_centimeter()))
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        length: Quantity = view.length_from_axis(axis_kind)
+        length = length.to_points(length)
+        return CentimeterCoordType(pos=at, data=LengthCoord(length=length))
+
 
     def to_point(self, convert_data: ToCord):
         return self._to_point(convert_data)
@@ -478,6 +535,21 @@ class InchCoordType(Coord1D, LengthCoordMixin):
     is_length_coord = True
     data: LengthCoord
 
+    @staticmethod
+    def create_default_coord_type(
+        view: 'ViewPort', at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> 'Coord1D':
+        length, _ = super().default_length_and_scale(view, kind)
+        return InchCoordType(pos=at, data=LengthCoord(length=length.to_inch()))
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+
+        length: Quantity = view.length_from_axis(axis_kind)
+        length = length.to_points(length)
+        return InchCoordType(pos=at, data=LengthCoord(length=length))
+
     def to_point(self, convert_data: ToCord):
         return self._to_point(convert_data)
 
@@ -510,6 +582,21 @@ class InchCoordType(Coord1D, LengthCoordMixin):
 class DataCoordType(Coord1D):
     str_type = "data"
     data: DataCoord
+
+    @staticmethod
+    def create_default_coord_type(
+        view: 'ViewPort', at: float, axis_kind: AxisKind, kind: UnitKind
+    ) -> 'Coord1D':
+        _, scale = super().default_length_and_scale(view, kind)
+        data = DataCoord(scale=scale, axis_kind=axis_kind)
+        return DataCoordType(pos=at, data=data)
+
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        scale = view.scale_for_axis(axis_kind)
+        return DataCoordType(pos=at, data=DataCoord(scale=scale, axis_kind=axis_kind))
 
     def to(self, to_kind: UnitKind, data: ToCord):
         result = super().to(to_kind, data)
