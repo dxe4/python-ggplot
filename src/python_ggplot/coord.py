@@ -15,6 +15,7 @@ from python_ggplot.units import (
     UnitKind,
     Quantity,
     convert_quantity_data,
+    ToQuantityData
 )
 
 
@@ -150,22 +151,22 @@ def coord_quantity_operator(
 
 def coord_quantity_add(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a + b
-    coord_quantity_operator(coord, quantity, operator)
+    return coord_quantity_operator(coord, quantity, operator)
 
 
 def coord_quantity_sub(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a - b
-    coord_quantity_operator(coord, quantity, operator)
+    return coord_quantity_operator(coord, quantity, operator)
 
 
 def coord_quantity_mul(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a * b
-    coord_quantity_operator(coord, quantity, operator)
+    return coord_quantity_operator(coord, quantity, operator)
 
 
 def coord_quantity_div(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a / b
-    coord_quantity_operator(coord, quantity, operator)
+    return coord_quantity_operator(coord, quantity, operator)
 
 
 @dataclass
@@ -493,9 +494,8 @@ class CentimeterCoordType(Coord1D, LengthCoordMixin):
     is_absolute = True
     data: LengthCoord
 
-    def create_default_coord_type(
-        self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> "Coord1D":
+    @staticmethod
+    def create_default_coord_type(view: 'ViewPort', at: float, axis_kind: AxisKind, kind: UnitKind) -> "Coord1D":
         length, _ = super().default_length_and_scale(view, kind)
         return CentimeterCoordType(
             pos=at, data=LengthCoord(length=length.to_centimeter())
@@ -543,9 +543,7 @@ class InchCoordType(Coord1D, LengthCoordMixin):
     data: LengthCoord
 
     @staticmethod
-    def create_default_coord_type(
-        view: "ViewPort", at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> "Coord1D":
+    def create_default_coord_type(view: "ViewPort", at: float, axis_kind: AxisKind, kind: UnitKind) -> "Coord1D":
         length, _ = super().default_length_and_scale(view, kind)
         return InchCoordType(pos=at, data=LengthCoord(length=length.to_inch()))
 
@@ -559,7 +557,7 @@ class InchCoordType(Coord1D, LengthCoordMixin):
     def to_point(self, convert_data: ToCord):
         return self._to_point(convert_data)
 
-    def to_inch(self):
+    def to_inch(self, convert_data: ToCord):
         return deepcopy(self)
 
     def to_centimeter(self, convert_data: ToCord) -> Coord1D:
