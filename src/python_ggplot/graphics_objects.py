@@ -1,11 +1,17 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from python_ggplot.coord import (Coord, Coord1D, RelativeCoordType,
-                                 quantitiy_to_coord)
-from python_ggplot.core_objects import (AxisKind, Color, CompositeKind, Font,
-                                        GGException, MarkerKind, TextAlignKind,
-                                        TickKind)
+from python_ggplot.coord import Coord, Coord1D, RelativeCoordType, quantitiy_to_coord
+from python_ggplot.core_objects import (
+    AxisKind,
+    Color,
+    CompositeKind,
+    Font,
+    GGException,
+    MarkerKind,
+    TextAlignKind,
+    TickKind,
+)
 from python_ggplot.units import Quantity, ToQuantityData
 
 

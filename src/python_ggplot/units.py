@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from python_ggplot.common import (abs_to_inch, cm_to_inch, inch_to_abs,
-                                  inch_to_cm)
+from python_ggplot.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core_objects import GGException
 
 
@@ -59,7 +58,9 @@ class Quantity:
         return conversaion_table[kind](data)
 
     def to_data(self, quantity_data: ToQuantityData):
-        data = QuantityConversionData(quantity=self, length=quantity_data.length, scale=quantity_data.scale)
+        data = QuantityConversionData(
+            quantity=self, length=quantity_data.length, scale=quantity_data.scale
+        )
         return self.unit.to_data(self, data)
 
     def to_centimeter(self, quantity_data: ToQuantityData):
@@ -75,7 +76,9 @@ class Quantity:
         return self.unit.to_points(data)
 
     def to_relative(self, quantity_data: ToQuantityData):
-        data = QuantityConversionData(quantity=self, length=quantity_data.length, scale=quantity_data.scale)
+        data = QuantityConversionData(
+            quantity=self, length=quantity_data.length, scale=quantity_data.scale
+        )
         data.validate_to_relative_conversion()
         return self.unit.to_relative(data)
 
@@ -92,7 +95,9 @@ class Quantity:
             return Quantity(operator(self.val, other.val), self.unit)
         if self.unit.is_length_unit:
             other_converted = other.to_points(length)
-            result_val = operator(self.to_points(ToQuantityData()).val, other_converted.val)
+            result_val = operator(
+                self.to_points(ToQuantityData()).val, other_converted.val
+            )
             return Quantity(result_val, PointUnit).to(self.unit, length, scale)
         elif isinstance(self.unit, RelativeUnit):
             if isinstance(self.unit, RelativeUnit):
@@ -179,6 +184,7 @@ class UnitKind:
     def to_points(self, data: QuantityConversionData):
         raise GGException("to points not implement for this type")
 
+
 class PointUnit(UnitKind):
     str_type = "point"
     is_length_unit = True
@@ -238,7 +244,6 @@ class CentimeterUnit(UnitKind):
         )
 
 
-
 class InchUnit(UnitKind):
     str_type = "inch"
     is_length_unit = True
@@ -278,6 +283,7 @@ class RelativeUnit(UnitKind):
             return Quantity(val=data.val, unit=PointUnit())
         raise GGException("un expected")
 
+
 class DataUnit(UnitKind):
     str_type = "data"
 
@@ -292,14 +298,18 @@ class DataUnit(UnitKind):
         new_val = data.quantity.val / (data.scale.high - data.scale.low)
         return Quantity(val=new_val, unit=RelativeUnit())
 
+
 class StrWidthUnit(UnitKind):
     str_type = "str_width"
+
 
 class StrHeightUnit(UnitKind):
     str_type = "str_height"
 
 
-def convert_quantity_data(kind: UnitKind, quantity: Quantity, data: ToQuantityData) -> Quantity:
+def convert_quantity_data(
+    kind: UnitKind, quantity: Quantity, data: ToQuantityData
+) -> Quantity:
     if quantity.unit.str_type == kind.str_type:
         return quantity
 
