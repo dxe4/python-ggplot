@@ -1,14 +1,14 @@
-import typing as tp
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, List, Optional
 
+
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import abs_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core_objects import AxisKind, Font, GGException, Scale
 from python_ggplot.units import (CentimeterUnit, InchUnit, PointUnit,
-                                 RelativeUnit, UnitKind)
+                                 RelativeUnit, UnitKind, Quantity, convert_quantity_data)
 
 
 def quantitiy_to_coord(quantity):
@@ -37,11 +37,11 @@ def unit_to_point(str_type, pos):
     return convert()
 
 
-if tp.TYPE_CHECKING:
-    from python_ggplot.units import Quantity
+# if tp.TYPE_CHECKING:
+#     from python_ggplot.units import Quantity
 
 
-def path_coord_quantity(coord: "Coord1D", length: "Quantity"):
+def path_coord_quantity(coord: "Coord1D", length: Quantity):
     if coord.is_length_coord:
         length = coord.coord_type.get_length()
         if length is None:
@@ -81,9 +81,6 @@ def add_two_absolute_coord(
 def add_coord_one_length(
     length_coord: "Coord1D", other_coord: "Coord1D", operator: Operator
 ) -> "Coord1D":
-    # todo fix this
-    from python_ggplot.units import Quantity
-
     scale: Scale = other_coord.get_scale()
     length: Quantity = length_coord.get_length()
 
@@ -129,7 +126,7 @@ def coord_operator(
 
 
 def coord_quantity_operator(
-    coord: "Coord1D", quantity: "Quantity", operator: Operator
+    coord: "Coord1D", quantity: Quantity, operator: Operator
 ) -> "Coord1D":
     if coord.str_type != quantity.str_type:
         raise GGException("Quantity and coord types have to be the same")
@@ -141,22 +138,22 @@ def coord_quantity_operator(
     return res
 
 
-def coord_quantity_add(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+def coord_quantity_add(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a + b
     coord_quantity_operator(coord, quantity, operator)
 
 
-def coord_quantity_sub(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+def coord_quantity_sub(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a - b
     coord_quantity_operator(coord, quantity, operator)
 
 
-def coord_quantity_mul(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+def coord_quantity_mul(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a * b
     coord_quantity_operator(coord, quantity, operator)
 
 
-def coord_quantity_div(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+def coord_quantity_div(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
     operator: Operator = lambda a, b: a / b
     coord_quantity_operator(coord, quantity, operator)
 
@@ -164,8 +161,8 @@ def coord_quantity_div(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
 @dataclass
 class ToCord:
     to_kind: UnitKind = RelativeUnit()
-    length: Optional["Quantity"] = None
-    abs_length: Optional["Quantity"] = None
+    length: Optional[Quantity] = None
+    abs_length: Optional[Quantity] = None
     scale: Optional[Scale] = None
     axis: Optional[AxisKind] = None
     str_text: Optional[str] = None
@@ -242,7 +239,6 @@ class Coord1D:
 
     def to(self, to_kind: UnitKind, data: ToCord):
         # todo refactor function
-        from python_ggplot.units import ToQuantityData  # todo fix
         if self.str_type == to_kind.str_type:
             return deepcopy(self)
 
@@ -327,8 +323,6 @@ class Coord1D:
                 return result
         else:
             # TODO fix this.
-            from python_ggplot.units import Quantity, RelativeUnit
-
             if self.is_length_coord:
                 scale = other.data.scale
                 added = Quantity(self.pos, self.coord_type).add(
@@ -351,7 +345,7 @@ class Coord1D:
 
 @dataclass
 class LengthCoord:
-    length: Optional["Quantity"] = None
+    length: Optional[Quantity] = None
 
 
 @dataclass
@@ -402,7 +396,6 @@ class LengthCoordMixin:
     is_absolute = True
 
     def _to_point(self, data: ToCord):
-        from python_ggplot.units import convert_quantity_data  # todo fix this
         res_length = None
         if data.length:
             res_length = convert_quantity_data(PointUnit, data.length, None)
@@ -410,7 +403,7 @@ class LengthCoordMixin:
         return PointCoordType(pos=pos, data=LengthCoord(length=res_length))
 
     def _to_relative(
-        self, data: LengthCoord, pos: float, length: Optional["Quantity"], kind: UnitKind
+        self, data: LengthCoord, pos: float, length: Optional[Quantity], kind: UnitKind
     ) -> "Coord1D":
         length = data.length or length
         if length is None:
@@ -644,7 +637,7 @@ class TextCoordTypeMixin:
         pos = self.pos * dimension
         return PointCoordType(pos=pos, data=LengthCoord(length=convert_data.length))
 
-    def _to_relative(self, length: Optional["Quantity"]) -> Coord1D:
+    def _to_relative(self, length: Optional[Quantity]) -> Coord1D:
         if length is None:
             raise GGException(
                 "Conversion from StrWidth to relative requires a length scale!"
