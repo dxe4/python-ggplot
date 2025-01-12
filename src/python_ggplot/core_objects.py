@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Optional, List, Callable, TypeVar, Generic
+from typing import Optional, List, TypeVar, Generic
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import linspace
 
@@ -163,50 +163,8 @@ class Scale:
     low: float
     high: float
 
-
-@dataclass
-class ViewPort:
-    name: str
-    parent: str
-    style: Style
-    x_scale: Scale
-    y_scale: Scale
-    rotate: Optional[float] = None
-    scale: Optional[float] = None
-    origin: "Coord"
-    width: "Quantity"
-    height: "Quantity"
-    objects: List["GraphicsObject"]
-    children: List["ViewPort"]
-    w_view: "Quantity"
-    h_view: "Quantity"
-    w_img: "Quantity"
-    h_img: "Quantity"
-
-    def apply_operator(
-        self,
-        other: "Quantity",
-        length: Optional["Quantity"],
-        scale: Optional[Scale],
-        as_coordinate: bool,
-        operator: Callable[[float, float], float],
-    ) -> "Quantity":
-        pass
-
-    def point_height_height(self, dimension: "Quantity") -> "Quantity":
-
-        if not self.w_view.unit.is_point():
-            raise ValueError(f"Expected Point, found {self.w_view.unit}")
-
-        # Placeholder for relative width computation
-        other = self.width.to_relative(dimension)
-        return self.w_view.multiply(other)
-
-    def point_width(self) -> "Quantity":
-        return self.point_height_height(self.w_view)
-
-    def point_height(self) -> "Quantity":
-        return self.point_height_height(self.h_view)
+    def __eq__(self, o):
+        return self.low == o.low and self.high == o.high
 
 
 class GGException(Exception):

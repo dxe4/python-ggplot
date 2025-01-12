@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional
-from python_ggplot.core_objects import GGException, AxisKind, ViewPort
+from typing import Optional, Callable
+from python_ggplot.core_objects import GGException, AxisKind
+from python_ggplot.graphics_objects import ViewPort
 from python_ggplot.coord import (
     PointCoordType,
     LengthCoord,
@@ -57,6 +58,11 @@ class Quantity:
     val: float
     unit: "UnitKind"
 
+    def quantitiy_to_coord(self):
+        if not self.unit.is_length_unit:
+            raise GGException("Not supported")
+        return self.unit.to
+
     def to(self, kind, length=None, scale=None):
         data = QuantityConversionData(quantity=self, length=length, scale=scale)
         data.validate_generic_conversion(kind)
@@ -91,8 +97,86 @@ class Quantity:
         data.validate_to_relative_conversion()
         return self.unit.to_relative(data)
 
+    def apply_operator(
+        self,
+        other: "Quantity",
+        length: Optional["Quantity"],
+        scale: Optional["Scale"],
+        as_coordinate: bool,  # noqa TODO fix
+        operator: Callable[[float, float], float],
+    ) -> "Quantity":
+        # todo refactor
+        if type(self.unit) is type(other.unit):
+            return Quantity(operator(self.val, other.val), self.unit)
+        if self.unit.is_length_unit:
+            other_converted = other.to_points(length)
+            result_val = operator(self.to_points().val, other_converted.val)
+            return Quantity(result_val, PointUnit).to(self.unit, length, scale)
+        elif isinstance(self.unit, RelativeUnit):
+            if isinstance(self.unit, RelativeUnit):
+                raise ValueError("Cannot perform arithmetic on two RELATIVE quantities")
+            other_converted = other.to_points(length)
+            return Quantity(operator(self.val, other_converted.val), self.unit)
+        elif isinstance(self.unit, DataUnit):
+            if not scale:
+                raise GGException("TODO re evaluate nim version of this")
+            if not as_coordinate:
+                raise GGException("TODO re evaluate nim version of this")
+
+            left = self.to_relative(length, scale).val
+            right = other.to_relative(length, scale).val
+            return Quantity(operator(left, right), RelativeUnit)
+        else:
+            raise GGException(f"Unsupported unit arithmetic for {self.unit}")
+
+    def multiply(
+        self,
+        other: "Quantity",
+        length: Optional["Quantity"],
+        scale: Optional["Scale"],
+        as_coordinate: bool = False,
+    ) -> "Quantity":
+        return self.apply_operator(
+            other, length, scale, as_coordinate, lambda a, b: a * b
+        )
+
+    def add(
+        self,
+        other: "Quantity",
+        length: Optional["Quantity"],
+        scale: Optional["Scale"],
+        as_coordinate: bool = False,
+    ) -> "Quantity":
+        return self.apply_operator(
+            other, length, scale, as_coordinate, lambda a, b: a + b
+        )
+
+    def divide(
+        self,
+        other: "Quantity",
+        length: Optional["Quantity"],
+        scale: Optional["Scale"],
+        as_coordinate: bool = False,
+    ) -> "Quantity":
+        return self.apply_operator(
+            other, length, scale, as_coordinate, lambda a, b: a / b
+        )
+
+    def subtract(
+        self,
+        other: "Quantity",
+        length: Optional["Quantity"],
+        scale: Optional["Scale"],
+        as_coordinate: bool = False,
+    ) -> "Quantity":
+        return self.apply_operator(
+            other, length, scale, as_coordinate, lambda a, b: a - b
+        )
+
 
 class UnitKind:
+    is_length_unit = False
+
     def is_point(self):
         # todo temp hack
         return False
@@ -118,8 +202,10 @@ class UnitKind:
 
 
 class PointUnit(UnitKind):
+    is_length_unit = True
+
     def is_point(self):
-        # todo temp hack
+        # todo temp
         return True
 
     def to_data(self, data: QuantityConversionData):
@@ -152,6 +238,8 @@ class PointUnit(UnitKind):
 
 
 class CentimeterUnit(UnitKind):
+    is_length_unit = True
+
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
@@ -183,6 +271,8 @@ class CentimeterUnit(UnitKind):
 
 
 class InchUnit(UnitKind):
+    is_length_unit = True
+
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
