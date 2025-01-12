@@ -119,8 +119,8 @@ class Quantity:
     def multiply(
         self,
         other: "Quantity",
-        length: Optional["Quantity"],
-        scale: Optional["Scale"],
+        length: Optional["Quantity"] = None,
+        scale: Optional["Scale"] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
         return self.apply_operator(
@@ -130,8 +130,8 @@ class Quantity:
     def add(
         self,
         other: "Quantity",
-        length: Optional["Quantity"],
-        scale: Optional["Scale"],
+        length: Optional["Quantity"] = None,
+        scale: Optional["Scale"] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
         return self.apply_operator(
@@ -141,8 +141,8 @@ class Quantity:
     def divide(
         self,
         other: "Quantity",
-        length: Optional["Quantity"],
-        scale: Optional["Scale"],
+        length: Optional["Quantity"] = None,
+        scale: Optional["Scale"] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
         return self.apply_operator(
@@ -152,8 +152,8 @@ class Quantity:
     def subtract(
         self,
         other: "Quantity",
-        length: Optional["Quantity"],
-        scale: Optional["Scale"],
+        length: Optional["Quantity"] = None,
+        scale: Optional["Scale"] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
         return self.apply_operator(

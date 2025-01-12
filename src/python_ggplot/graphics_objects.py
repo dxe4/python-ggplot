@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
+import typing as tp
 
 from python_ggplot.coord import Coord, Coord1D, RelativeCoordType, quantitiy_to_coord
 from python_ggplot.core_objects import (
@@ -11,6 +12,8 @@ from python_ggplot.core_objects import (
     MarkerKind,
     TextAlignKind,
     TickKind,
+    Style,
+    Scale
 )
 from python_ggplot.units import Quantity, ToQuantityData
 
@@ -96,7 +99,7 @@ class CompositeData(GraphObjectKind):
 @dataclass
 class GraphicsObject:
     name: str
-    style: Optional["Style"]
+    style: Optional[Style]
     rotate_in_view: Optional[tuple[float, tuple[float, float]]] = None
     rotate: Optional[float] = None
     children: List["GraphicsObject"]
@@ -107,20 +110,20 @@ class GraphicsObject:
 class ViewPort:
     name: str
     parent: str
-    style: "Style"
-    x_scale: "Scale"
-    y_scale: "Scale"
+    style: Style
+    x_scale: Scale
+    y_scale: Scale
     rotate: Optional[float] = None
     scale: Optional[float] = None
-    origin: "Coord"
-    width: "Quantity"
-    height: "Quantity"
-    objects: List["GraphicsObject"]
+    origin: Coord
+    width: Quantity
+    height: Quantity
+    objects: List[GraphicsObject]
     children: List["ViewPort"]
-    w_view: "Quantity"
-    h_view: "Quantity"
-    w_img: "Quantity"
-    h_img: "Quantity"
+    w_view: Quantity
+    h_view: Quantity
+    w_img: Quantity
+    h_img: Quantity
 
     def left(self):
         return self.origin.x.to_relative(None)
@@ -164,9 +167,9 @@ class ViewPort:
 
     def apply_operator(
         self,
-        other: "Quantity",
-        length: Optional["Quantity"],
-        scale: Optional["Scale"],
+        other: Quantity,
+        length: Optional[Quantity],
+        scale: Optional[Scale],
         as_coordinate: bool,
         operator: Callable[[float, float], float],
     ) -> "Quantity":
@@ -177,7 +180,6 @@ class ViewPort:
         if not self.w_view.unit.is_point():
             raise ValueError(f"Expected Point, found {self.w_view.unit}")
 
-        # Placeholder for relative width computation
         other = self.width.to_relative(dimension)
         return self.w_view.multiply(other)
 
