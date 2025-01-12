@@ -7,8 +7,27 @@ from typing import List
 
 
 from python_ggplot.core_objects import AxisKind, Scale, GGException, Font
-from python_ggplot.units import UnitKind, InchUnit, PointUnit, CentimeterUnit
+from python_ggplot.units import (
+    UnitKind,
+    InchUnit,
+    PointUnit,
+    CentimeterUnit,
+    RelativeUnit,
+)
 from python_ggplot.cairo_backend import CairoBackend
+from python_ggplot.common import inch_to_cm, abs_to_inch, inch_to_abs, cm_to_inch
+
+
+def unit_to_point(str_type, pos):
+    data = {
+        "centimeter": lambda: inch_to_abs(abs_to_inch(pos)),
+        "point": lambda: pos,
+        "inch": lambda: inch_to_abs(pos),
+    }
+    convert = data.get(str_type)
+    if not convert:
+        raise GGException("convert not possible")
+    return convert()
 
 
 if tp.TYPE_CHECKING:
@@ -49,7 +68,7 @@ def add_two_absolute_coord(
     length = left_point.get_length()
     pos = operator(left_point.pos, right_point.pos)
     data = LengthCoord(length=length)
-    return Coord1D(pos=pos, coord_type=PointCoordType(data=data))
+    return PointCoordType(pos=pos, data=data)
 
 
 def add_coord_one_length(
@@ -67,9 +86,11 @@ def add_coord_one_length(
     quantity = left.apply_operator(right, operator, length, scale, True)
 
     if quantity.unit.str_type == "relative":
-        return Coord1D(pos=quantity.val, coord_type=RelativeCoordType())
+        return RelativeCoordType(pos=quantity.val)
     else:
-        return Coord1D(pos=quantity.val, coord_type=deepcopy(length_coord.coord_type))
+        result = deepcopy(length_coord.coord_type)
+        result.pos = quantity.val
+        return result
 
 
 def coord_operator(
@@ -83,7 +104,7 @@ def coord_operator(
         alike = lhs.compatible_kind_and_scale(rhs)
 
     if alike:
-        if lhs.is_absolute() and rhs.is_absolute():
+        if lhs.is_absolute and rhs.is_absolute:
             return add_two_absolute_coord(lhs, rhs, operator)
         else:
             res = lhs
@@ -97,7 +118,7 @@ def coord_operator(
         left = lhs.to_relative(None)
         right = rhs.to_relative(None)
         pos = operator(left.pos, right.pos)
-        return Coord1D(pos=pos, coord_type=RelativeCoordType())
+        return RelativeCoordType(pos=pos)
 
 
 def coord_quantity_operator(
@@ -134,12 +155,104 @@ def coord_quantity_div(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
 
 
 @dataclass
+class ToCord:
+    to_kind: UnitKind = RelativeUnit()
+    length: Optional["Quantity"] = None
+    abs_length: Optional["Quantity"] = None
+    scale: Optional[Scale] = None
+    axis: Optional[AxisKind] = None
+    str_text: Optional[str] = None
+    str_font: Optional[str] = None
+
+
+@dataclass
 class Coord1D:
     pos: float
-    coord_type: "CoordType"
+    str_type = None
+    is_absolute = False
+    is_length_coord = False
 
-    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
-        self.coord_type.update_from_view(view, axis_kind)
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
+        raise GGException("not implemented")
+
+    def from_length(self, length: LengthCoord):
+        raise GGException("This should never be used")
+
+    def get_length(self):
+        # todo fix this, fine for now
+        return None
+
+
+    def to_inch(self, convert_data: ToCord):
+        raise GGException("This should never be sued")
+
+    def to_centimeter(self, convert_data: ToCord):
+        raise GGException("This should never be sued")
+
+    def to_point(self, convert_data: ToCord):
+        raise GGException("This should never be sued")
+
+    def to_relative(self, data: ToCord) -> 'Coord1D':
+        raise GGException("This should never be used")
+
+    def compare_scale_and_kind(self, other):
+        raise GGException("This should never be used")
+
+    def to(self, to_kind: UnitKind, data: ToCord):
+        # todo refactor function
+        from python_ggplot.units import ToQuantityData  # todo fix
+        if self.str_type == to_kind.str_type:
+            return deepcopy(self)
+
+        if self.is_length_coord:
+            conversaion_table = {
+                "centimeter": self.to_centimeter,
+                "point": self.to_point,
+                "inch": self.to_inch,
+            }
+            convert = conversaion_table.get(to_kind.str_type)
+            if not convert:
+                raise GGException("conversion not possible")
+            return convert(data)
+
+        rel = self.to_relative(data)
+        if to_kind.str_type == "relative":
+            return rel
+
+        if to_kind.str_type == "data":
+            if data.axis is None:
+                raise GGException("expected axis")
+            if data.scale is None:
+                raise GGException("expected scale")
+            pos = (data.scale.high - data.scale.low) * rel.pos + data.scale.low
+            return DataCoordType(pos=pos, data=DataCoord(scale=data.scale, axis_kind=data.axis))
+
+        if to_kind.str_type in ("str_width", "str_height"):
+            raise GGException("cannot convert")
+
+        if to_kind.str_type == "point":
+            if data.abs_length is None:
+                raise GGException("expected abs length")
+            length = data.abs_length.to_points(ToQuantityData())
+            pos = rel.pos * length.val
+            return PointUnit(pos=pos, data=LengthCoord(length=length))
+
+        if to_kind.str_type == "centimeter":
+            if data.abs_length is None:
+                raise GGException("expected abs length")
+            length = data.abs_length.to_centimeter(ToQuantityData())
+            pos = rel.pos * length.val
+            return CentimeterCoordType(pos=pos, data=LengthCoord(length=length))
+
+        if to_kind.str_type == "inch":
+            if data.abs_length is None:
+                raise GGException("expected abs length")
+            length = data.abs_length.to_inch(ToQuantityData())
+            pos = rel.pos * length.val
+            return InchCoordType(pos=pos, data=LengthCoord(length=length))
+
+        raise GGException("shouldnt reach here")
+
 
     @staticmethod
     def from_view(
@@ -149,45 +262,29 @@ class Coord1D:
 
     @staticmethod
     def create(view: "ViewPort", at: float, axis_kind: "AxisKind", kind: "UnitKind"):
-        coord_type = kind.create_default_coord_type(view, at, axis_kind, kind)
-        return Coord1D(pos=at, coord_type=coord_type)
+        return kind.create_default_coord_type(view, at, axis_kind, kind)
 
-    def to_relative(self, length: Optional["Quantity"]) -> Coord1D:
-        return self.coord_type.to_relative(CoordTypeConversion(self, length=length))
-
-    def to_points(
-        self,
-        length: Optional["Quantity"] = None,
-        backend: Optional["CairoBackend"] = None,
-    ) -> Coord1D:
-        return self.coord_type.to_points(length=length, backend=backend)
-
-    def equal_kind_and_scale(self, other: Coord1D):
-        if type(self.coord_type) is not type(other.coord_type):
+    def equal_kind_and_scale(self, other: 'Coord1D'):
+        if self.str_type != other.str_type:
             return False
 
-        return self.coord_type.compare_scale_and_kind(other)
-
-    def is_absolute(self) -> bool:
-        return self.coord_type.is_absolute
+        return self.compare_scale_and_kind(other)
 
     def compatible_kind_and_scale(self, other: "Coord1D"):
-        if self.is_absolute() and other.is_absolute():
+        if self.is_absolute and other.is_absolute:
             return True
-        elif self.coord_type != other.coord_type:
+        elif self.str_type != other.str_type:
             return False
         else:
             return self.equal_kind_and_scale(other)
 
     def __add__(self, other: "Coord1D") -> "Coord1D":
         if self.compatible_kind_and_scale(other):
-            if self.is_absolute() and other.is_absolute():
-                left = self.to_points()
+            if self.is_absolute and other.is_absolute:
+                left = self.to_point(ToCord())
                 right = other.to_points()
                 length_coord = left.data or LengthCoord(length=None)
-                return Coord1D(
-                    pos=left.pos + right.pos, coord_type=PointCoordType(length_coord)
-                )
+                return PointCoordType(pos=left.pos + right.pos, data=length_coord)
             else:
                 # TODO unit test this
                 result = deepcopy(self)
@@ -197,8 +294,8 @@ class Coord1D:
             # TODO fix this.
             from python_ggplot.units import Quantity, RelativeUnit
 
-            if self.coord_type.is_length_coord:
-                scale = other.coord_type.data.scale
+            if self.is_length_coord:
+                scale = other.data.scale
                 added = Quantity(self.pos, self.coord_type).add(
                     Quantity(other.pos, other.coord_type),
                     length=self.coord_type.get_length(),
@@ -208,66 +305,22 @@ class Coord1D:
 
                 # todo fix this
                 if isinstance(added, RelativeUnit):
-                    return Coord1D(pos=added.val, coord_type=RelativeCoordType())
+                    return RelativeCoordType(pos=added.val)
                 else:
                     result = deepcopy(added)
                     result.pos = added.val
                     return result
             else:
-                return Coord1D(
-                    pos=left.to_relative().pos + other.to_relative().pos,
-                    coord_type=RelativeCoordType(),
-                )
-
-
-@dataclass
-class CoordTypeConversion:
-    coord1d: Coord1D
-    length: Optional["Quantity"] = None
-    backend: Optional["CairoBackend"] = None
-
-
-@dataclass
-class CoordType:
-    str_type = None
-    is_absolute = False
-    is_length_coord = False
-
-    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
-        raise GGException("not implemented")
-
-    def from_length(self, length: LengthCoord):
-        # todo improve
-        raise GGException("This should never be used")
-
-    def get_length(self):
-        # todo fix this, fine for now
-        return None
-
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        raise GGException("This should never be used")
-
-    def compare_scale_and_kind(self, other):
-        raise GGException("This should never be used")
+                return RelativeCoordType(pos=left.to_relative().pos + other.to_relative().pos)
 
 
 @dataclass
 class LengthCoord:
     length: Optional["Quantity"] = None
 
-    def to_relative_coord1d(
-        self, pos: float, length: Optional["Quantity"], kind: UnitKind
-    ) -> "Coord1D":
-        length = self.length or length
-        if length is None:
-            raise ValueError("A length is required for relative conversion.")
-
-        relative_length = length.to(kind)
-        return Coord1D(pos / relative_length.val, RelativeCoordType())
-
 
 @dataclass
-class DataCoord(CoordType):
+class DataCoord():
     str_type = "data"
     is_absolute = False
     scale: Scale
@@ -276,101 +329,131 @@ class DataCoord(CoordType):
     def compare_scale_and_kind(self, other):
         return self.scale == other.scale and self.axis_kind == other.axis_kind
 
-    def to_relative_coord1d(self, pos: float) -> Coord1D:
-        if self.axis_kind == AxisKind.X:
-            pos = (pos - self.scale.low) / (self.scale.high - self.scale.low)
-        elif self.axis_kind == AxisKind.Y:
-            pos = 1.0 - (pos - self.scale.low) / (self.scale.high - self.scale.low)
-        else:
-            raise ValueError("Invalid axis kind")
-
-        return Coord1D(pos=pos, coord_type=RelativeCoordType())
-
-
 @dataclass
-class TextCoord(CoordType):
-    str_type = "text"
+class TextCoordData:
     is_absolute = False
     text: str
     font: Font
 
-    def to_relative_coord1d(
-        self, pos: float, coord_type: CoordType, length: Optional["Quantity"]
-    ) -> Coord1D:
-        # Get text dimensions
-        text_extend = CairoBackend.get_text_extend(self.text, self.font)
-
-        # this has to be str height or str width
-        # todo add validation
-        dimension = coord_type.text_extend_dimension(text_extend)
-
-        if length is None:
-            raise GGException(
-                "Conversion from StrWidth to relative requires a length scale!"
-            )
-
-        pos = (pos * dimension) / length.to_points(None).val
-        return Coord1D(pos=pos, coord_type=RelativeCoordType())
+    def get_text_extend(self):
+        return CairoBackend.get_text_extend(self.text, self.font)
 
 
 @dataclass
-class RelativeCoordType(CoordType):
+class RelativeCoordType(Coord1D):
     str_type = "relative"
     is_length_coord = False
 
     def compare_scale_and_kind(self, other):
         return True
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        return Coord1D(pos=data.coord1d.pos, coord_type=RelativeCoordType())
+    def to_relative(self, data: ToCord) -> Coord1D:
+        return RelativeCoordType(pos=data.coord1d.pos)
+
+    def to_point(self, data: ToCord) -> Coord1D:
+        if not data.length:
+            raise GGException("expected length for conversion")
+        return PointCoordType(pos=self.pos + data.length.val, data=LengthCoord(length=data.length))
+
+
+class LengthCoordMixin:
+    is_length_coord = True
+    is_absolute = True
+
+    def _to_point(self, data: ToCord):
+        from python_ggplot.units import convert_quantity_data  # todo fix this
+        res_length = None
+        if data.length:
+            res_length = convert_quantity_data(PointUnit, data.length, None)
+        pos = unit_to_point(self.str_type, self.pos)
+        return PointCoordType(pos=pos, data=LengthCoord(length=res_length))
+
+    def _to_relative(
+        self, data: LengthCoord, pos: float, length: Optional["Quantity"], kind: UnitKind
+    ) -> "Coord1D":
+        length = data.length or length
+        if length is None:
+            raise ValueError("A length is required for relative conversion.")
+
+        relative_length = length.to(kind)
+        return RelativeCoordType(pos / relative_length.val)
+
+
+    def _to_centimeter(self) -> Coord1D:
+        # point_pos = coord1d.to_points().pos
+        pos = inch_to_cm(abs_to_inch(self.pos))
+        length = self.data.length.to_centimeter()
+        # todo make helper func
+        return CentimeterCoordType(pos=pos, data=LengthCoord(length=length))
+
+    def _to_inch(self) -> Coord1D:
+        # point_pos = coord1d.to_points().pos
+        pos = abs_to_inch(self.pos)
+        length = self.data.length.to_inch()
+        # todo make helper func
+        return InchCoordType(pos=pos, data=LengthCoord(length=length))
 
 
 @dataclass
-class PointCoordType(CoordType):
+class PointCoordType(Coord1D, LengthCoordMixin):
     str_type = "point"
-    is_length_coord = True
-    is_absolute = True
     data: LengthCoord
 
-    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+    def to_point(self, convert_data: ToCord):
+        return self._to_point(self.data)
+
+    def to_inch(self, convert_data: ToCord):
+        return self._to_inch()
+
+    def to_centimeter(self, convert_data: ToCord) -> Coord1D:
+        return self._to_centimeter()
+
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
     def from_length(self, length: LengthCoord):
-        # todo improve
-        return PointCoordType(data=length)
+        return PointCoordType(pos=self.pos, data=length)
 
     def get_length(self):
         # todo fix this, fine for now
         return self.data.length
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        return self.data.to_relative_coord1d(data.coord1d.pos, data.length, PointUnit)
+    def to_relative(self, data: ToCord) -> Coord1D:
+        return self._to_relative(self.data, data.coord1d.pos, data.length, PointUnit)
 
     def compare_scale_and_kind(self, other):
         return self.data.length == other.data.length
 
 
 @dataclass
-class CentimeterCoordType(CoordType):
+class CentimeterCoordType(Coord1D, LengthCoordMixin):
     str_type = "centimeter"
     is_length_coord = True
     is_absolute = True
     data: LengthCoord
 
-    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+    def to_point(self, convert_data: ToCord):
+        return self._to_point(convert_data)
+
+    def to_centimeter(self, convert_data: ToCord) -> Coord1D:
+        return deepcopy(self)
+
+    def to_inch(self, convert_data: ToCord):
+        return self._to_inch()
+
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
     def from_length(self, length: LengthCoord):
-        # todo improve
-        return PointCoordType(data=length)
+        return PointCoordType(pos=self.pos, data=length)
 
     def get_length(self):
         # todo fix this, fine for now
         return self.data.length
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        return self.data.to_relative_coord1d(
-            data.coord1d.pos, data.length, CentimeterUnit
+    def to_relative(self, data: ToCord) -> Coord1D:
+        return self._to_relative(
+            self.data, data.coord1d.pos, data.length, CentimeterUnit
         )
 
     def compare(self, other):
@@ -378,67 +461,151 @@ class CentimeterCoordType(CoordType):
 
 
 @dataclass
-class InchCoordType(CoordType):
+class InchCoordType(Coord1D, LengthCoordMixin):
     str_type = "inch"
     is_absolute = True
     is_length_coord = True
     data: LengthCoord
 
-    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+    def to_point(self, convert_data: ToCord):
+        return self._to_point(convert_data)
+
+    def to_inch(self):
+        return deepcopy(self)
+
+    def to_centimeter(self, convert_data: ToCord) -> Coord1D:
+        return self._to_centimeter()
+
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
     def from_length(self, length: LengthCoord):
-        # todo improve
-        return PointCoordType(data=length)
+        return PointCoordType(pos=self.pos, data=length)
 
     def get_length(self):
         # todo fix this, fine for now
         return self.data.length
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        return self.data.to_relative_coord1d(data.coord1d.pos, data.length, InchUnit)
+    def to_relative(self, data: ToCord) -> Coord1D:
+        return self._to_relative(
+            self.data, data.coord1d.pos, data.length, InchUnit
+        )
 
     def compare(self, other):
         return self.data.length == other.data.length
 
 
 @dataclass
-class DataCoordType(CoordType):
+class DataCoordType(Coord1D):
     str_type = "data"
     data: DataCoord
 
-    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+    def to(self, to_kind: UnitKind, data: ToCord):
+        result = super().to(to_kind, data)
+        if result:
+            return result
+
+        conversaion_table = {
+            "point": self.to_point,
+        }
+        convert = conversaion_table.get(to_kind.str_type)
+        if not convert:
+            raise GGException("conversion not possible")
+        return convert(data)
+
+    def to_point(self, convert_data: ToCord):
+        return self.to_relative(convert_data).to_point(convert_data.length)
+
+    def _to_relative_x(self):
+        return (self.pos - self.data.scale.low) / (self.data.scale.high - self.data.scale.low)
+
+    def _to_relative_y(self):
+        return 1.0 - (self.pos - self.data.scale.low) / (self.data.scale.high - self.data.scale.low)
+
+    def _to_relative_data(self):
+        if self.data.axis_kind == AxisKind.X:
+            return self._to_relative_x()
+        if self.data.axis_kind == AxisKind.Y:
+            return self._to_relative_y()
+        raise GGException()
+
+    def to_relative(self, convert_data: ToCord):
+        return RelativeCoordType(pos=self._to_relative_data())
+
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         scale = view.scale_for_axis(axis_kind)
         self.data.scale = scale
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        return self.data.to_relative_coord1d(data.coord1d.pos)
+class TextCoordTypeMixin:
+
+    def to_point(self, convert_data: ToCord):
+        if not convert_data.length:
+            raise GGException("length must be provided")
+
+        dimension = self.point_dimension()
+        pos = self.pos * dimension
+        return PointCoordType(pos=pos, data=LengthCoord(length=convert_data.length))
+
+    def _to_relative(self, length: Optional["Quantity"]) -> Coord1D:
+        if length is None:
+            raise GGException(
+                "Conversion from StrWidth to relative requires a length scale!"
+            )
+
+        text_extend = CairoBackend.get_text_extend(self.text, self.font)
+        # this has to be str height or str width
+        # todo add validation
+        dimension = self.text_extend_dimension(text_extend)
+        pos = (self.pos * dimension) / length.to_points(None).val
+        return RelativeCoordType(pos=pos)
 
 
 @dataclass
-class StrWidthCoordType(CoordType):
+class StrWidthCoordType(Coord1D, TextCoordTypeMixin):
     str_type = "str_width"
     is_absolute = True
-    data: TextCoord
+    data: TextCoordData
+
+    def point_dimension(self):
+        text_extend = self.data.get_text_extend()
+        return text_extend.x_bearing() + text_extend.x_advance()
+
+    def relative_dimension(self):
+        text_extend = self.data.get_text_extend()
+        return text_extend.width()
 
     def text_extend_dimension(self, text_extend):
         return text_extend.width()
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        return self.data.to_relative_coord1d(data.coord1d.pos, self, data.length)
+    def to_relative(self, data: ToCord) -> Coord1D:
+        return self._to_relative(data.length)
+
+    def to_point(self, data: ToCord) -> Coord1D:
+        return self._to_relative(data.length)
 
 
 @dataclass
-class StrHeightCoordType(CoordType):
+class StrHeightCoordType(Coord1D, TextCoordTypeMixin):
     str_type = "str_height"
     is_absolute = True
-    data: TextCoord
+    data: TextCoordData
+
+    def relative_dimension(self):
+        text_extend = self.data.get_text_extend()
+        return text_extend.height()
+
+    def point_dimension(self):
+        text_extend = self.data.get_text_extend()
+        return text_extend.y_bearing() + text_extend.y_advance()
+
+    def to_point(self, data: ToCord) -> Coord1D:
+        return self._to_relative(data.length)
 
     def text_extend_dimension(self, text_extend):
         return text_extend.height()
 
-    def to_relative(self, data: CoordTypeConversion) -> Coord1D:
-        raise GGException("Not implemented")
+    def to_relative(self, data: ToCord) -> Coord1D:
+        return self._to_relative(data.length)
 
 
 @dataclass

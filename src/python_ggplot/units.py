@@ -1,11 +1,13 @@
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional, Callable
 from python_ggplot.core_objects import GGException, AxisKind
 from python_ggplot.graphics_objects import ViewPort
 from python_ggplot.coord import (
+    InchCoordType,
+    CentimeterCoordType,
     PointCoordType,
     LengthCoord,
-    CoordType,
     DataCoord,
     DataCoordType,
     RelativeCoordType,
@@ -65,9 +67,17 @@ class Quantity:
     unit: "UnitKind"
 
     def quantitiy_to_coord(self):
-        if not self.unit.is_length_unit:
-            raise GGException("Not supported")
-        return self.unit.to
+        conversion_data = {
+            "relative": lambda: RelativeCoordType(self.pos),
+            "point": lambda: PointCoordType(self.pos, data=LengthCoord(length=deepcopy(self))),
+            "inch": lambda: InchCoordType(self.pos, data=LengthCoord(length=deepcopy(self))),
+            "centimeter": lambda: CentimeterCoordType(
+                self.pos, data=LengthCoord(length=deepcopy(self))
+            ),
+        }
+        conversion = conversion_data[self.unit.str_type]
+        return conversion()
+
 
     def to(self, kind, length=None, scale=None):
         data = QuantityConversionData(quantity=self, length=length, scale=scale)
@@ -82,24 +92,24 @@ class Quantity:
 
         return conversaion_table[kind](data)
 
-    def to_data(self, scale: "Scale", length: "Quantity"):
-        data = QuantityConversionData(quantity=self, length=length, scale=scale)
+    def to_data(self, quantity_data: ToQuantityData):
+        data = QuantityConversionData(quantity=self, length=quantity_data.length, scale=quantity_data.scale)
         return self.unit.to_data(self, data)
 
-    def to_centimeter(self):
+    def to_centimeter(self, quantity_data: ToQuantityData):
         data = QuantityConversionData(quantity=self)
         return self.unit.to_centimeter(data)
 
-    def to_inch(self):
+    def to_inch(self, quantity_data: ToQuantityData):
         data = QuantityConversionData(quantity=self)
         return self.unit.to_inch(data)
 
-    def to_points(self, length=None):
-        data = QuantityConversionData(quantity=self, length=length)
+    def to_points(self, quantity_data: ToQuantityData):
+        data = QuantityConversionData(quantity=self, length=quantity_data.length)
         return self.unit.to_points(data)
 
-    def to_relative(self, length=None, scale=None):
-        data = QuantityConversionData(quantity=self, length=length, scale=scale)
+    def to_relative(self, quantity_data: ToQuantityData):
+        data = QuantityConversionData(quantity=self, length=quantity_data.length, scale=quantity_data.scale)
         data.validate_to_relative_conversion()
         return self.unit.to_relative(data)
 
@@ -116,7 +126,7 @@ class Quantity:
             return Quantity(operator(self.val, other.val), self.unit)
         if self.unit.is_length_unit:
             other_converted = other.to_points(length)
-            result_val = operator(self.to_points().val, other_converted.val)
+            result_val = operator(self.to_points(ToQuantityData()).val, other_converted.val)
             return Quantity(result_val, PointUnit).to(self.unit, length, scale)
         elif isinstance(self.unit, RelativeUnit):
             if isinstance(self.unit, RelativeUnit):
@@ -129,7 +139,7 @@ class Quantity:
             if not as_coordinate:
                 raise GGException("TODO re evaluate nim version of this")
 
-            left = self.to_relative(length, scale).val
+            left = self.to_relative(ToQuantityData(length=length, scale=scale)).val
             right = other.to_relative(length, scale).val
             return Quantity(operator(left, right), RelativeUnit)
         else:
@@ -230,9 +240,7 @@ class PointUnit(UnitKind):
         # todo sanity check this with nim version, looks weird
         length = length.to_points(length)
         # todo create helper functions
-        return Coord1D(
-            pos=at, coord_type=PointCoordType(data=LengthCoord(length=length))
-        )
+        return PointCoordType(pos=at, data=LengthCoord(length=length))
 
     def is_point(self):
         # todo temp
@@ -264,7 +272,7 @@ class PointUnit(UnitKind):
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
     ) -> "CoordType":
         length, _ = super().default_length_and_scale(view, kind)
-        return PointCoordType(data=LengthCoord(length=length.to_points()))
+        return PointCoordType(pos=at, data=LengthCoord(length=length.to_points()))
 
 
 class CentimeterUnit(UnitKind):
@@ -284,9 +292,7 @@ class CentimeterUnit(UnitKind):
         # todo sanity check this with nim version, looks weird
         length = length.to_points(length)
         # todo create helper functions
-        return Coord1D(
-            pos=at, coord_type=CentimeterCoordType(data=LengthCoord(length=length))
-        )
+        return CentimeterCoordType(pos=at, data=LengthCoord(length=length))
 
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
@@ -313,9 +319,9 @@ class CentimeterUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
+    ) -> 'Coord1D':
         length, _ = super().default_length_and_scale(view, kind)
-        return PointCoordType(data=LengthCoord(length=length.to_centimeter()))
+        return PointCoordType(pos=at, data=LengthCoord(length=length.to_centimeter()))
 
 
 class InchUnit(UnitKind):
@@ -335,9 +341,7 @@ class InchUnit(UnitKind):
         # todo sanity check this with nim version, looks weird
         length = length.to_points(length)
         # todo create helper functions
-        return Coord1D(
-            pos=at, coord_type=InchCoordType(data=LengthCoord(length=length))
-        )
+        return InchCoordType(pos=at, data=LengthCoord(length=length))
 
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
@@ -360,9 +364,9 @@ class InchUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
+    ) -> 'Coord1D':
         length, _ = super().default_length_and_scale(view, kind)
-        return PointCoordType(data=LengthCoord(length=length.to_inch()))
+        return PointCoordType(pos=at, data=LengthCoord(length=length.to_inch()))
 
 
 class RelativeUnit(UnitKind):
@@ -382,8 +386,8 @@ class RelativeUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
-        return RelativeCoordType()
+    ) -> 'Coord1D':
+        return RelativeCoordType(pos=at)
 
 
 class DataUnit(UnitKind):
@@ -392,10 +396,8 @@ class DataUnit(UnitKind):
     def from_view(
         self, view: "ViewPort", axis_kind: "AxisKind", at: float
     ) -> "Coord1D":
-        from python_ggplot.coord import Coord1D  # todo fix this
-
         scale = view.scale_for_axis(axis_kind)
-        return Coord1D(pos=at, coord_type=DataCoord(scale=scale, axis_kind=axis_kind))
+        return DataCoordType(pos=at, data=DataCoord(scale=scale, axis_kind=axis_kind))
 
     def to_data(self, data: QuantityConversionData):
         return Quantity(val=data.quantity.val, unit=DataUnit())
@@ -410,10 +412,10 @@ class DataUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
+    ) -> 'Coord1D':
         _, scale = super().default_length_and_scale(view, kind)
         data = DataCoord(scale=scale, axis_kind=axis_kind)
-        return DataCoordType(data=data)
+        return DataCoordType(pos=at, data=data)
 
 
 class StrWidthUnit(UnitKind):
@@ -421,7 +423,7 @@ class StrWidthUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
+    ) -> 'Coord1D':
         raise GGException("not implemented")
 
 
@@ -430,5 +432,37 @@ class StrHeightUnit(UnitKind):
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
-    ) -> CoordType:
+    ) -> 'Coord1D':
         raise GGException("not implemented")
+
+
+def convert_quantity_data(kind: UnitKind, quantity: Quantity, data: ToQuantityData) -> Quantity:
+    if quantity.unit.str_type == kind.str_type:
+        return quantity
+
+    conversion_map = {
+        "centimeter": lambda: quantity.to_centimeters(data),
+        "point": lambda: quantity.to_points(data),
+        "inch": lambda: quantity.to_inches(data),
+        "data": lambda: quantity.to_data(data),
+        "relative": lambda: quantity.to_relative(data),
+    }
+
+    func_ = conversion_map.get(kind.str_type)
+    if not func_:
+        raise GGException("conversion not implemented")
+
+    return func_(ToQuantityData)
+
+
+def unit_type_from_string(input_str):
+    data = {
+        "point": PointUnit,
+        "centimeter": CentimeterUnit,
+        "inch": InchUnit,
+        "relative": RelativeUnit,
+        "data": DataUnit,
+        "str_widht": StrWidthUnit,
+        "str_height": StrHeightUnit,
+    }
+    return data[input_str]
