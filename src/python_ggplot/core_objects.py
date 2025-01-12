@@ -5,6 +5,55 @@ from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import linspace
 
 
+class Duration:
+    """
+    Port from nim lang
+    see here https://github.com/nim-lang/Nim/blob/version-2-2/lib/pure/times.nim#L662
+    """
+
+    def __init__(self, seconds: int, nanoseconds: int = 0):
+        extra_seconds, normalized_nanoseconds = divmod(nanoseconds, 1_000_000_000)
+        self.total_seconds = seconds + extra_seconds
+        self.nanoseconds = normalized_nanoseconds
+
+    def in_seconds(self) -> int:
+        return self.total_seconds
+
+    def in_milliseconds(self) -> int:
+        return (self.total_seconds * 1_000) + (self.nanoseconds // 1_000_000)
+
+
+def init_duration(
+    nanoseconds: int = 0,
+    microseconds: int = 0,
+    milliseconds: int = 0,
+    seconds: int = 0,
+    minutes: int = 0,
+    hours: int = 0,
+    days: int = 0,
+    weeks: int = 0,
+) -> Duration:
+    # TODO this needs many unit tests
+    total_seconds = (
+        weeks * 7 * 24 * 60 * 60
+        + days * 24 * 60 * 60
+        + hours * 60 * 60
+        + minutes * 60
+        + seconds
+        + milliseconds // 1_000
+        + microseconds // 1_000_000
+        + nanoseconds // 1_000_000_000
+    )
+
+    total_nanoseconds = (
+        (milliseconds % 1_000) * 1_000_000
+        + (microseconds % 1_000_000) * 1_000
+        + (nanoseconds % 1_000_000_000)
+    )
+
+    return Duration(total_seconds, total_nanoseconds)
+
+
 class MarkerKind(Enum):
     CIRCLE = auto()
     CROSS = auto()
