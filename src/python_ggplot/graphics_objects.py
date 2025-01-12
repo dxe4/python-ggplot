@@ -121,6 +121,34 @@ class ViewPort:
     w_img: "Quantity"
     h_img: "Quantity"
 
+    def left(self):
+        return self.origin.x.to_relative(None)
+
+    def get_width(self):
+        from python_ggplot.units import ToQuantityData  # todo
+        return self.height.to_relative(ToQuantityData(length=self.w_img))
+
+    def bottom(self):
+        return self.origin.y.to_relative(None)
+
+    def get_height(self):
+        from python_ggplot.units import ToQuantityData  # todo
+        return self.height.to_relative(ToQuantityData(length=self.h_img))
+
+    def embed_into_origin_for_length(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.origin.x, self.w_img
+        if axis_kind == AxisKind.Y:
+            return self.origin.y, self.h_img
+        raise GGException("unexpected")
+
+    def embed_into_origin(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.left(), self.get_width()
+        if axis_kind == AxisKind.Y:
+            return self.bottom(), self.get_height()
+        raise GGException("unexpected")
+
     def length_from_axis(self, axis_kind: AxisKind):
         if axis_kind == AxisKind.X:
             return self.point_width()

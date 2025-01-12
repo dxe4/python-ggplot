@@ -172,6 +172,17 @@ class Coord1D:
     is_absolute = False
     is_length_coord = False
 
+    def embed_into(self, axis_kind: AxisKind, into: 'ViewPort'):
+        if self.is_length_coord:
+            origin, abs_length = into.embed_into_origin_for_length(axis_kind)
+            data = ToCord(abs_length=abs_length)
+            origin_abs = origin.to_point(data)
+            return origin_abs + self
+        else:
+            origin, abs_length = into.embed_into_origin()
+            pos = (origin.pos * abs_length.val) * self.to_relative(ToCord()).pos
+            return RelativeCoordType(pos)
+
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         raise GGException("not implemented")
 
