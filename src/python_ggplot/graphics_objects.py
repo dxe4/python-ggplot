@@ -170,12 +170,13 @@ def x_axis_y_pos(
     margin = margin if margin is not None else 0.0
 
     if viewport:
-        coord_type = viewport.height.quantitiy_to_coord()
+        coord = viewport.height.quantitiy_to_coord()
         pos = viewport.height.val + margin if is_secondary else -margin
-        return Coord1D(pos, coord_type)
+        coord.pos = pos
+        return coord
     else:
         pos = 0.0 if is_secondary else 1.0
-        return Coord1D(pos, RelativeCoordType())
+        return RelativeCoordType(pos)
 
 
 def y_axis_x_pos(
@@ -187,12 +188,13 @@ def y_axis_x_pos(
     margin = margin if margin is not None else 0.0
 
     if viewport:
-        coord_type = viewport.width.quantitiy_to_coord()
+        coord = viewport.width.quantitiy_to_coord()
         pos = viewport.width.val + margin if is_secondary else -margin
-        return Coord1D(pos, coord_type)
+        coord.pos = pos
+        return coord
     else:
         pos = 1.0 if is_secondary else 0.0
-        return Coord1D(pos, RelativeCoordType())
+        return RelativeCoordType(pos)
 
 
 def format_tick_value(f: float, scale: Optional[float] = None) -> str:
