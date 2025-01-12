@@ -138,6 +138,9 @@ class Coord1D:
     pos: float
     coord_type: "CoordType"
 
+    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+        self.coord_type.update_from_view(view, axis_kind)
+
     @staticmethod
     def from_view(
         unit_kind: "UnitKind", view: "ViewPort", axis_kind: "AxisKind", at: float
@@ -229,6 +232,9 @@ class CoordType:
     str_type = None
     is_absolute = False
     is_length_coord = False
+
+    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+        raise GGException("not implemented")
 
     def from_length(self, length: LengthCoord):
         # todo improve
@@ -326,6 +332,9 @@ class PointCoordType(CoordType):
     is_absolute = True
     data: LengthCoord
 
+    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+        self.data.length = view.length_from_axis(axis_kind)
+
     def from_length(self, length: LengthCoord):
         # todo improve
         return PointCoordType(data=length)
@@ -347,6 +356,9 @@ class CentimeterCoordType(CoordType):
     is_length_coord = True
     is_absolute = True
     data: LengthCoord
+
+    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+        self.data.length = view.length_from_axis(axis_kind)
 
     def from_length(self, length: LengthCoord):
         # todo improve
@@ -372,6 +384,9 @@ class InchCoordType(CoordType):
     is_length_coord = True
     data: LengthCoord
 
+    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+        self.data.length = view.length_from_axis(axis_kind)
+
     def from_length(self, length: LengthCoord):
         # todo improve
         return PointCoordType(data=length)
@@ -391,6 +406,10 @@ class InchCoordType(CoordType):
 class DataCoordType(CoordType):
     str_type = "data"
     data: DataCoord
+
+    def update_from_view(self, view: 'ViewPort', axis_kind: AxisKind):
+        scale = view.scale_for_axis(axis_kind)
+        self.data.scale = scale
 
     def to_relative(self, data: CoordTypeConversion) -> Coord1D:
         return self.data.to_relative_coord1d(data.coord1d.pos)
