@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List, Callable
 from python_ggplot.core_objects import (
+    GGException,
     CompositeKind,
     TextAlignKind,
     Font,
@@ -119,6 +120,20 @@ class ViewPort:
     h_view: "Quantity"
     w_img: "Quantity"
     h_img: "Quantity"
+
+    def length_from_axis(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.point_width()
+        if axis_kind == AxisKind.Y:
+            return self.point_height()
+        raise GGException("unexpected")
+
+    def scale_for_axis(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.x_scale
+        if axis_kind == AxisKind.Y:
+            return self.y_scale
+        raise GGException("unexpected")
 
     def apply_operator(
         self,

@@ -42,7 +42,7 @@ class OperatorType(Enum):
 
 def add_two_absolute_coord(
     left: "Coord1D", right: "Coord1D", operator: Operator
-) -> 'Coord1D':
+) -> "Coord1D":
     left_point = left.to_point()
     right_point = right.to_point()
 
@@ -137,6 +137,12 @@ def coord_quantity_div(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
 class Coord1D:
     pos: float
     coord_type: "CoordType"
+
+    @staticmethod
+    def from_view(
+        unit_kind: "UnitKind", view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        return unit_kind.from_view(view, axis_kind, at)
 
     @staticmethod
     def create(view: "ViewPort", at: float, axis_kind: "AxisKind", kind: "UnitKind"):

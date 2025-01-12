@@ -23,6 +23,12 @@ def default_coord_view_location(view: ViewPort, kind: AxisKind):
 
 
 @dataclass
+class ToQuantityData:
+    scale: Optional["Scale"] = None
+    length: Optional["Quantity"] = None
+
+
+@dataclass
 class QuantityConversionData:
     quantity: "Quantity"
     length: Optional["Quantity"] = None
@@ -178,6 +184,11 @@ class UnitKind:
     str_type = None
     is_length_unit = False
 
+    def from_view(
+        self, view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        raise GGException("Not implemented")
+
     def is_point(self):
         # todo temp hack
         return False
@@ -205,6 +216,23 @@ class UnitKind:
 class PointUnit(UnitKind):
     str_type = "point"
     is_length_unit = True
+
+    def from_view(
+        self, view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        from python_ggplot.coord import (
+            Coord1D,
+            LengthCoord,
+            PointCoordType,
+        )  # todo fix this
+
+        length: Quantity = view.length_from_axis(axis_kind)
+        # todo sanity check this with nim version, looks weird
+        length = length.to_points(length)
+        # todo create helper functions
+        return Coord1D(
+            pos=at, coord_type=PointCoordType(data=LengthCoord(length=length))
+        )
 
     def is_point(self):
         # todo temp
@@ -243,6 +271,23 @@ class CentimeterUnit(UnitKind):
     str_type = "centimeter"
     is_length_unit = True
 
+    def from_view(
+        self, view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        from python_ggplot.coord import (
+            Coord1D,
+            LengthCoord,
+            CentimeterCoordType,
+        )  # todo fix this
+
+        length: Quantity = view.length_from_axis(axis_kind)
+        # todo sanity check this with nim version, looks weird
+        length = length.to_points(length)
+        # todo create helper functions
+        return Coord1D(
+            pos=at, coord_type=CentimeterCoordType(data=LengthCoord(length=length))
+        )
+
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
@@ -277,6 +322,23 @@ class InchUnit(UnitKind):
     str_type = "inch"
     is_length_unit = True
 
+    def from_view(
+        self, view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        from python_ggplot.coord import (
+            Coord1D,
+            LengthCoord,
+            InchCoordType,
+        )  # todo fix this
+
+        length: Quantity = view.length_from_axis(axis_kind)
+        # todo sanity check this with nim version, looks weird
+        length = length.to_points(length)
+        # todo create helper functions
+        return Coord1D(
+            pos=at, coord_type=InchCoordType(data=LengthCoord(length=length))
+        )
+
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
             data.length, data.scale
@@ -305,6 +367,7 @@ class InchUnit(UnitKind):
 
 class RelativeUnit(UnitKind):
     str_type = "relative"
+
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.val
         return Quantity(val=new_val, unit=DataUnit())
@@ -325,6 +388,14 @@ class RelativeUnit(UnitKind):
 
 class DataUnit(UnitKind):
     str_type = "data"
+
+    def from_view(
+        self, view: "ViewPort", axis_kind: "AxisKind", at: float
+    ) -> "Coord1D":
+        from python_ggplot.coord import Coord1D  # todo fix this
+
+        scale = view.scale_for_axis(axis_kind)
+        return Coord1D(pos=at, coord_type=DataCoord(scale=scale, axis_kind=axis_kind))
 
     def to_data(self, data: QuantityConversionData):
         return Quantity(val=data.quantity.val, unit=DataUnit())

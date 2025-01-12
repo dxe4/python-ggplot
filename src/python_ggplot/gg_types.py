@@ -2,8 +2,14 @@ from enum import Enum, auto
 from typing import Optional, Union, List, OrderedDict, Set, Tuple, Callable
 from dataclasses import dataclass
 from python_ggplot.core_objects import (
-    AxisKind, MarkerKind, Color, LineType, Font, ErrorBarKind, Scale,
-    GGException
+    AxisKind,
+    MarkerKind,
+    Color,
+    LineType,
+    Font,
+    ErrorBarKind,
+    Scale,
+    GGException,
 )
 from python_ggplot.core_objects import Duration
 
@@ -36,6 +42,7 @@ class VBool(Value):
 class VObject(Value):
     fields: OrderedDict[str, Value]
 
+
 class VNull(Value):
     pass
 
@@ -55,7 +62,7 @@ class AestheticError(Exception):
 
 @dataclass
 class ColorScaleData:
-    color_scale: 'ColorScale'
+    color_scale: "ColorScale"
 
 
 @dataclass
@@ -64,7 +71,7 @@ class LinearAndTransformScaleData:
     reversed: bool
     transform: ScaleTransform
     secondary_axis: Optional["SecondaryAxis"]
-    date_scale: Optional['DateScale']
+    date_scale: Optional["DateScale"]
 
 
 class ScaleKind:
@@ -183,6 +190,7 @@ class ScaleValue:
     def create_from_kind(kind: ScaleKind, **kwargs) -> ScaleValue:
         return kind.create_scale_value(**kwargs)
 
+
 # todo refactor
 DiscreteFormat = Callable[["Value"], str]
 ContinuousFormat = Callable[[float], str]
@@ -267,8 +275,10 @@ class DateScale:
         # todo this should return datetime
         pass
 
+
 class Missing:
     pass
+
 
 # Define the types
 PossibleColor = Union[Missing, Color, int, str, Optional[Color]]
