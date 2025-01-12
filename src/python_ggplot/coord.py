@@ -1,8 +1,10 @@
 from copy import deepcopy
+from enum import Enum
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Callable
 import typing as tp
 from typing import List
+
 
 from python_ggplot.core_objects import AxisKind, Scale, GGException, Font
 from python_ggplot.units import UnitKind, InchUnit, PointUnit, CentimeterUnit
@@ -11,6 +13,124 @@ from python_ggplot.cairo_backend import CairoBackend
 
 if tp.TYPE_CHECKING:
     from python_ggplot.units import Quantity
+
+
+def path_coord_quantity(coord: "Coord1D", length: "Quantity"):
+    if coord.is_length_coord:
+        length = coord.coord_type.get_length()
+        if length is None:
+            coord.coord_type.length = length
+    return coord
+
+
+def path_coord_view_port(coord: "Coord", view: "ViewPort") -> "Coord":
+    return Coord(
+        x=path_coord_quantity(coord.x, view.w_img),
+        y=path_coord_quantity(coord.y, view.h_img),
+    )
+
+
+Operator = Callable[[float, float], float]
+
+
+class OperatorType(Enum):
+    DIV = "DIV"
+    ADD = "ADD"
+    SUB = "SUB"
+    MUL = "MUL"
+
+
+def add_two_absolute_coord(
+    left: "Coord1D", right: "Coord1D", operator: Operator
+) -> 'Coord1D':
+    left_point = left.to_point()
+    right_point = right.to_point()
+
+    length = left_point.get_length()
+    pos = operator(left_point.pos, right_point.pos)
+    data = LengthCoord(length=length)
+    return Coord1D(pos=pos, coord_type=PointCoordType(data=data))
+
+
+def add_coord_one_length(
+    length_coord: "Coord1D", other_coord: "Coord1D", operator: Operator
+) -> "Coord1D":
+    # todo fix this
+    from python_ggplot.units import Quantity
+
+    scale: Scale = other_coord.get_scale()
+    length: Quantity = length_coord.get_length()
+
+    left = Quantity(val=length_coord.pos, unit=length_coord.kind)
+    right = Quantity(val=other_coord.pos, unit=other_coord.kind)
+
+    quantity = left.apply_operator(right, operator, length, scale, True)
+
+    if quantity.unit.str_type == "relative":
+        return Coord1D(pos=quantity.val, coord_type=RelativeCoordType())
+    else:
+        return Coord1D(pos=quantity.val, coord_type=deepcopy(length_coord.coord_type))
+
+
+def coord_operator(
+    lhs: "Coord1D", rhs: "Coord1D", operator: Operator, operator_type: OperatorType
+) -> "Coord1D":
+    # todo unit tests
+    alike = False
+    if operator_type == OperatorType.DIV:
+        alike = lhs.equal_kind_and_scale(rhs)
+    else:
+        alike = lhs.compatible_kind_and_scale(rhs)
+
+    if alike:
+        if lhs.is_absolute() and rhs.is_absolute():
+            return add_two_absolute_coord(lhs, rhs, operator)
+        else:
+            res = lhs
+            res.pos = operator(lhs.pos, lhs.pos)  # Modify `pos` using the operator
+            return res
+    elif lhs.is_length_type():
+        return add_coord_one_length(lhs, rhs, operator)
+    elif rhs.is_length_type():
+        return add_coord_one_length(rhs, lhs, operator)
+    else:
+        left = lhs.to_relative(None)
+        right = rhs.to_relative(None)
+        pos = operator(left.pos, right.pos)
+        return Coord1D(pos=pos, coord_type=RelativeCoordType())
+
+
+def coord_quantity_operator(
+    coord: "Coord1D", quantity: "Quantity", operator: Operator
+) -> "Coord1D":
+    if coord.str_type != quantity.str_type:
+        raise GGException("Quantity and coord types have to be the same")
+
+    pos = operator(coord.pos, quantity.val)
+
+    res = deepcopy(coord)
+    res.pos = pos
+    return res
+
+
+def coord_quantity_add(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+    operator: Operator = lambda a, b: a + b
+    coord_quantity_operator(coord, quantity, operator)
+
+
+def coord_quantity_sub(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+    operator: Operator = lambda a, b: a - b
+    coord_quantity_operator(coord, quantity, operator)
+
+
+def coord_quantity_mul(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+    operator: Operator = lambda a, b: a * b
+    coord_quantity_operator(coord, quantity, operator)
+
+
+def coord_quantity_div(coord: "Coord1D", quantity: "Quantity") -> "Coord1D":
+    operator: Operator = lambda a, b: a / b
+    coord_quantity_operator(coord, quantity, operator)
 
 
 @dataclass
@@ -100,6 +220,7 @@ class CoordTypeConversion:
 
 @dataclass
 class CoordType:
+    str_type = None
     is_absolute = False
     is_length_coord = False
 
@@ -135,6 +256,7 @@ class LengthCoord:
 
 @dataclass
 class DataCoord(CoordType):
+    str_type = "data"
     is_absolute = False
     scale: Scale
     axis_kind: AxisKind
@@ -155,6 +277,7 @@ class DataCoord(CoordType):
 
 @dataclass
 class TextCoord(CoordType):
+    str_type = "text"
     is_absolute = False
     text: str
     font: Font
@@ -180,6 +303,7 @@ class TextCoord(CoordType):
 
 @dataclass
 class RelativeCoordType(CoordType):
+    str_type = "relative"
     is_length_coord = False
 
     def compare_scale_and_kind(self, other):
@@ -191,6 +315,7 @@ class RelativeCoordType(CoordType):
 
 @dataclass
 class PointCoordType(CoordType):
+    str_type = "point"
     is_length_coord = True
     is_absolute = True
     data: LengthCoord
@@ -212,6 +337,7 @@ class PointCoordType(CoordType):
 
 @dataclass
 class CentimeterCoordType(CoordType):
+    str_type = "centimeter"
     is_length_coord = True
     is_absolute = True
     data: LengthCoord
@@ -235,6 +361,7 @@ class CentimeterCoordType(CoordType):
 
 @dataclass
 class InchCoordType(CoordType):
+    str_type = "inch"
     is_absolute = True
     is_length_coord = True
     data: LengthCoord
@@ -256,6 +383,7 @@ class InchCoordType(CoordType):
 
 @dataclass
 class DataCoordType(CoordType):
+    str_type = "data"
     data: DataCoord
 
     def to_relative(self, data: CoordTypeConversion) -> Coord1D:
@@ -264,6 +392,7 @@ class DataCoordType(CoordType):
 
 @dataclass
 class StrWidthCoordType(CoordType):
+    str_type = "str_width"
     is_absolute = True
     data: TextCoord
 
@@ -276,6 +405,7 @@ class StrWidthCoordType(CoordType):
 
 @dataclass
 class StrHeightCoordType(CoordType):
+    str_type = "str_height"
     is_absolute = True
     data: TextCoord
 

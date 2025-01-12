@@ -175,6 +175,7 @@ class Quantity:
 
 
 class UnitKind:
+    str_type = None
     is_length_unit = False
 
     def is_point(self):
@@ -202,6 +203,7 @@ class UnitKind:
 
 
 class PointUnit(UnitKind):
+    str_type = "point"
     is_length_unit = True
 
     def is_point(self):
@@ -238,6 +240,7 @@ class PointUnit(UnitKind):
 
 
 class CentimeterUnit(UnitKind):
+    str_type = "centimeter"
     is_length_unit = True
 
     def to_data(self, data: QuantityConversionData):
@@ -271,6 +274,7 @@ class CentimeterUnit(UnitKind):
 
 
 class InchUnit(UnitKind):
+    str_type = "inch"
     is_length_unit = True
 
     def to_data(self, data: QuantityConversionData):
@@ -300,6 +304,7 @@ class InchUnit(UnitKind):
 
 
 class RelativeUnit(UnitKind):
+    str_type = "relative"
     def to_data(self, data: QuantityConversionData):
         new_val = (data.scale.high - data.scale.low) * data.quantity.val
         return Quantity(val=new_val, unit=DataUnit())
@@ -319,6 +324,7 @@ class RelativeUnit(UnitKind):
 
 
 class DataUnit(UnitKind):
+    str_type = "data"
 
     def to_data(self, data: QuantityConversionData):
         return Quantity(val=data.quantity.val, unit=DataUnit())
@@ -340,6 +346,7 @@ class DataUnit(UnitKind):
 
 
 class StrWidthUnit(UnitKind):
+    str_type = "str_width"
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
@@ -348,6 +355,7 @@ class StrWidthUnit(UnitKind):
 
 
 class StrHeightUnit(UnitKind):
+    str_type = "str_height"
 
     def create_default_coord_type(
         self, view: ViewPort, at: float, axis_kind: AxisKind, kind: UnitKind
