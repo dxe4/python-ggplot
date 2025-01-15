@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Callable, List, Optional
 
-from python_ggplot.coord import (Coord, Coord1D, RelativeCoordType,
-                                 quantitiy_to_coord)
+from python_ggplot.coord import (Coord, Coord1D, RelativeCoordType)
 from python_ggplot.core_objects import (AxisKind, Color, CompositeKind, Font,
                                         GGException, MarkerKind, Scale, Style,
                                         TextAlignKind, TickKind, UnitType)
 from python_ggplot.units import Quantity
+from python_ggplot.quantity_convert import quantitiy_to_coord
 
 
 @dataclass

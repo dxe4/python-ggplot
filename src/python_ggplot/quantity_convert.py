@@ -7,6 +7,7 @@ from python_ggplot.common import (abs_to_inch, cm_to_inch, inch_to_abs,
 from python_ggplot.core_objects import GGException, Scale, UnitType
 from python_ggplot.units import (CentimeterUnit, DataUnit, InchUnit, PointUnit,
                                  RelativeUnit)
+from python_ggplot.coord import RelativeCoordType, PointCoordType, LengthCoord, InchCoordType, CentimeterCoordType
 
 if TYPE_CHECKING:
     from python_ggplot.units import Quantity
@@ -212,3 +213,20 @@ def convert_quantity_data(data: QuantityConversionData, to_type: UnitType):
 def convert_quantity(quantity, to_type: UnitType, length=None, scale=None):
     data = QuantityConversionData(quantity=quantity, length=length, scale=scale)
     return convert_quantity_data(data, to_type)
+
+
+def quantitiy_to_coord(quantity):
+    conversion_data = {
+        UnitType.RELATIVE: lambda: RelativeCoordType(quantity.pos),
+        UnitType.POINT: lambda: PointCoordType(
+            quantity.pos, LengthCoord(length=deepcopy(quantity))
+        ),
+        UnitType.INCH: lambda: InchCoordType(
+            quantity.pos, LengthCoord(length=deepcopy(quantity))
+        ),
+        UnitType.CENTIMETER: lambda: CentimeterCoordType(
+            quantity.pos, LengthCoord(length=deepcopy(quantity))
+        ),
+    }
+    conversion = conversion_data[quantity.unit_type]
+    return conversion

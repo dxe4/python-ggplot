@@ -13,23 +13,6 @@ if TYPE_CHECKING:
     from python_ggplot.graphics_objects import ViewPort
 
 
-def quantitiy_to_coord(quantity):
-    conversion_data = {
-        UnitType.RELATIVE: lambda: RelativeCoordType(quantity.pos),
-        UnitType.POINT: lambda: PointCoordType(
-            quantity.pos, LengthCoord(length=deepcopy(quantity))
-        ),
-        UnitType.INCH: lambda: InchCoordType(
-            quantity.pos, LengthCoord(length=deepcopy(quantity))
-        ),
-        UnitType.CENTIMETER: lambda: CentimeterCoordType(
-            quantity.pos, LengthCoord(length=deepcopy(quantity))
-        ),
-    }
-    conversion = conversion_data[quantity.unit_type]
-    return conversion
-
-
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
     if coord.unit_type.is_length():
         length = coord.get_length()
