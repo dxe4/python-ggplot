@@ -4,12 +4,19 @@ from typing import Optional, Union, cast
 
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import DPI, abs_to_inch, inch_to_abs, inch_to_cm
-from python_ggplot.coord import (CentimeterCoordType, Coord1D, DataCoord,
-                                 DataCoordType, InchCoordType, LengthCoord,
-                                 PointCoordType, RelativeCoordType,
-                                 StrHeightCoordType, StrWidthCoordType)
-from python_ggplot.core_objects import (AxisKind, Font, GGException, Scale,
-                                        UnitType)
+from python_ggplot.coord import (
+    CentimeterCoordType,
+    Coord1D,
+    DataCoord,
+    DataCoordType,
+    InchCoordType,
+    LengthCoord,
+    PointCoordType,
+    RelativeCoordType,
+    StrHeightCoordType,
+    StrWidthCoordType,
+)
+from python_ggplot.core_objects import AxisKind, Font, GGException, Scale, UnitType
 from python_ggplot.units import Quantity
 
 

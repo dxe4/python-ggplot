@@ -2,12 +2,22 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Callable, List, Optional
 
-from python_ggplot.coord import (Coord, Coord1D, RelativeCoordType)
-from python_ggplot.core_objects import (AxisKind, Color, CompositeKind, Font,
-                                        GGException, MarkerKind, Scale, Style,
-                                        TextAlignKind, TickKind, UnitType)
-from python_ggplot.units import Quantity
+from python_ggplot.coord import Coord, Coord1D, RelativeCoordType
+from python_ggplot.core_objects import (
+    AxisKind,
+    Color,
+    CompositeKind,
+    Font,
+    GGException,
+    MarkerKind,
+    Scale,
+    Style,
+    TextAlignKind,
+    TickKind,
+    UnitType,
+)
 from python_ggplot.quantity_convert import quantitiy_to_coord
+from python_ggplot.units import Quantity
 
 
 @dataclass
@@ -162,27 +172,6 @@ class ViewPort:
 
     def get_height(self):
         return self.height.to_relative(length=self.h_img)
-
-    def quantity_embed_into_origin(self, axis_kind: AxisKind):
-        if axis_kind == AxisKind.X:
-            return self.x_scale, self.point_width(), self.x_scale
-        if axis_kind == AxisKind.Y:
-            return self.y_scale, self.point_height(), self.y_scale
-        raise GGException("unexpected")
-
-    def coord_embed_into_origin_for_length(self, axis_kind: AxisKind):
-        if axis_kind == AxisKind.X:
-            return self.origin.x, self.w_img
-        if axis_kind == AxisKind.Y:
-            return self.origin.y, self.h_img
-        raise GGException("unexpected")
-
-    def coord_embed_into_origin(self, axis_kind: AxisKind):
-        if axis_kind == AxisKind.X:
-            return self.left(), self.get_width()
-        if axis_kind == AxisKind.Y:
-            return self.bottom(), self.get_height()
-        raise GGException("unexpected")
 
     def length_from_axis(self, axis_kind: AxisKind):
         if axis_kind == AxisKind.X:

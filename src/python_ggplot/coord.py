@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type
 
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import abs_to_inch, inch_to_abs, inch_to_cm
-from python_ggplot.core_objects import (AxisKind, Font, GGException, Scale,
-                                        UnitType)
+from python_ggplot.core_objects import AxisKind, Font, GGException, Scale, UnitType
 from python_ggplot.units import Quantity, unit_type_from_type
 
 if TYPE_CHECKING:
@@ -173,15 +172,10 @@ class Coord1D:
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
         raise GGException("Not implemented")
 
-    def embed_into(self, axis_kind: AxisKind, into: "ViewPort"):
-        if self.unit_type.is_length():
-            origin, abs_length = into.coord_embed_into_origin_for_length(axis_kind)
-            origin_abs = origin.to_via_points(abs_length=abs_length)
-            return origin_abs + self
-        else:
-            origin, abs_length = into.coord_embed_into_origin(axis_kind)
-            pos = (origin.pos * abs_length.val) * self.to_relative().pos
-            return RelativeCoordType(pos)
+    def embed_into(self, axis_kind: AxisKind, into: "ViewPort") -> "Coord1D":
+        from python_ggplot.embed import coord_embed_into
+
+        return coord_embed_into(self, axis_kind, into)
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         raise GGException("not implemented")

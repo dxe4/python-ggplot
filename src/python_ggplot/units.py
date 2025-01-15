@@ -2,8 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Optional
 
-from python_ggplot.common import (abs_to_inch, cm_to_inch, inch_to_abs,
-                                  inch_to_cm)
+from python_ggplot.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core_objects import AxisKind, GGException, Scale, UnitType
 
 if TYPE_CHECKING:
@@ -41,8 +40,9 @@ class Quantity:
         return self.to_relative(length=length, scale=deepcopy(view.x_scale))
 
     def to(self, kind: UnitType, length=None, scale=None):
-        from python_ggplot.quantity_convert import \
-            convert_quantity  # pylint: disable=all
+        from python_ggplot.quantity_convert import (
+            convert_quantity,
+        )  # pylint: disable=all
 
         return convert_quantity(self, kind, length=length, scale=scale)
 
@@ -165,10 +165,6 @@ class RelativeUnit(Quantity):
     def __init__(self, *args, **kwargs):
         kwargs["unit_type"] = UnitType.RELATIVE
         super().__init__(*args, **kwargs)
-
-    def quantity_embed_into(self, axis: AxisKind, view: "ViewPort") -> "Quantity":
-        quantity, length, scale = view.quantity_embed_into_origin(axis)
-        return self.multiply(quantity, length=length, scale=scale, as_coordinate=False)
 
 
 class DataUnit(Quantity):
