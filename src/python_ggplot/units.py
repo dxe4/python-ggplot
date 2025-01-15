@@ -6,7 +6,7 @@ from python_ggplot.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_c
 from python_ggplot.core_objects import AxisKind, GGException, Scale, UnitType
 
 if TYPE_CHECKING:
-    from python_ggplot.graphics_objects import ViewPort
+    from python_ggplot.views import ViewPort
 
 
 def unity_type_to_quantity_cls(kind: UnitType):

@@ -6,7 +6,7 @@ from python_ggplot.core_objects import AxisKind, GGException, UnitType
 from python_ggplot.units import Quantity
 
 if TYPE_CHECKING:
-    from python_ggplot.graphics_objects import ViewPort
+    from python_ggplot.views import ViewPort
 
 
 def quantity_embed_into_origin(view: "ViewPort", axis_kind: AxisKind):

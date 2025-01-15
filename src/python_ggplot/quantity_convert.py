@@ -20,8 +20,8 @@ from python_ggplot.units import (
 )
 
 if TYPE_CHECKING:
-    from python_ggplot.graphics_objects import ViewPort
     from python_ggplot.units import Quantity
+    from python_ggplot.views import ViewPort
 
 
 @dataclass

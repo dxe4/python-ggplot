@@ -9,7 +9,7 @@ from python_ggplot.core_objects import AxisKind, Font, GGException, Scale, UnitT
 from python_ggplot.units import Quantity, unit_type_from_type
 
 if TYPE_CHECKING:
-    from python_ggplot.graphics_objects import ViewPort
+    from python_ggplot.views import ViewPort
 
 
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
