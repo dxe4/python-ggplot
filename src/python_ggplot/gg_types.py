@@ -2,17 +2,9 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Callable, List, Optional, OrderedDict, Set, Tuple, Union
 
-from python_ggplot.core_objects import (
-    AxisKind,
-    Color,
-    Duration,
-    ErrorBarKind,
-    Font,
-    GGException,
-    LineType,
-    MarkerKind,
-    Scale,
-)
+from python_ggplot.core_objects import (AxisKind, Color, Duration,
+                                        ErrorBarKind, Font, GGException,
+                                        LineType, MarkerKind, Scale)
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
@@ -217,6 +209,10 @@ class Continuous(DiscreteKind):
 
 @dataclass
 class Aesthetics:
+    scale_kind: ScaleKind
+    position_kind: PositionKind
+    stat_kind: StatKind
+    discrete_kind: DiscreteKind
     x: Optional["ScaleValue"] = None
     x_min: Optional["ScaleValue"] = None
     x_max: Optional["ScaleValue"] = None
@@ -233,10 +229,6 @@ class Aesthetics:
     text: Optional["ScaleValue"] = None
     y_ridges: Optional["ScaleValue"] = None
     weight: Optional["ScaleValue"] = None
-    scale_kind: ScaleKind
-    position_kind: PositionKind
-    stat_kind: StatKind
-    discrete_kind: DiscreteKind
 
 
 @dataclass

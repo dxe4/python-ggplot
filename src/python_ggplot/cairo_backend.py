@@ -1,15 +1,8 @@
 from math import pi
 
 import cairo
-from cairo import (
-    FONT_SLANT_NORMAL,
-    FONT_WEIGHT_BOLD,
-    FORMAT_ARGB32,
-    Context,
-    Gradient,
-    ImageSurface,
-    LinearGradient,
-)
+from cairo import (FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD, FORMAT_ARGB32, Context,
+                   Gradient, ImageSurface, LinearGradient)
 
 
 def create_gradient(

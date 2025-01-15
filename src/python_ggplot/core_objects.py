@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, List, Literal, Optional, TypeVar, Union
 
 from python_ggplot.cairo_backend import CairoBackend
 from python_ggplot.common import linspace
@@ -219,3 +219,38 @@ class Scale:
 
 class GGException(Exception):
     pass
+
+
+class UnitType(Enum):
+    POINT = auto()
+    CENTIMETER = auto()
+    INCH = auto()
+    RELATIVE = auto()
+    DATA = auto()
+    STR_WIDTH = auto()
+    STR_HEIGHT = auto()
+    ABSTRACT = auto()
+
+    def is_length(self):
+        return self.value in (
+            UnitType.POINT.value,
+            UnitType.CENTIMETER.value,
+            UnitType.INCH.value,
+        )
+
+    def is_absolute(self):
+        return self.value in (
+            UnitType.POINT.value,
+            UnitType.CENTIMETER.value,
+            UnitType.INCH.value,
+            UnitType.STR_HEIGHT.value,
+            UnitType.STR_WIDTH.value,
+        )
+
+
+TextType = Union[Literal[UnitType.STR_HEIGHT], Literal[UnitType.STR_WIDTH]]
+LengthType = Union[
+    Literal[UnitType.POINT],
+    Literal[UnitType.CENTIMETER],
+    Literal[UnitType.INCH],
+]

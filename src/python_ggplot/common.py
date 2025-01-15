@@ -1,4 +1,8 @@
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
+
+if TYPE_CHECKING:
+    from python_ggplot.core_objects import Font
+
 
 # Constants
 DPI = 72.27
@@ -30,7 +34,7 @@ def linspace(
     start: float, stop: float, num: int, endpoint: Optional[bool] = True
 ) -> List[float]:
     endpoint = endpoint if endpoint is not None else True
-    result = []
+    result: List[float] = []
     step = start
     fnum = float(num)
 

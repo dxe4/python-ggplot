@@ -1,43 +1,73 @@
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Callable, List, Optional
-import typing as tp
 
-from python_ggplot.coord import Coord, Coord1D, RelativeCoordType, quantitiy_to_coord
-from python_ggplot.core_objects import (
-    AxisKind,
-    Color,
-    CompositeKind,
-    Font,
-    GGException,
-    MarkerKind,
-    TextAlignKind,
-    TickKind,
-    Style,
-    Scale
-)
-from python_ggplot.units import Quantity, ToQuantityData
-
-
-class GraphObjectKind:
-    pass
+from python_ggplot.coord import (Coord, Coord1D, RelativeCoordType,
+                                 quantitiy_to_coord)
+from python_ggplot.core_objects import (AxisKind, Color, CompositeKind, Font,
+                                        GGException, MarkerKind, Scale, Style,
+                                        TextAlignKind, TickKind, UnitType)
+from python_ggplot.units import Quantity
 
 
 @dataclass
-class StartStopData(GraphObjectKind):
+class GraphicsObjectConfig:
+    style: Optional[Style]
+    rotate_in_view: Optional[tuple[float, tuple[float, float]]] = None
+    rotate: Optional[float] = None
+    children: Optional[List["GraphicsObject"]] = None
+
+
+@dataclass
+class GraphicsObject:
+    name: str
+    config: GraphicsObjectConfig
+
+
+class GOType(Enum):
+    START_STOP = auto()
+    TEXT = auto()
+    GRID_DATA = auto()
+    TICK_DATA = auto()
+    POINT_DATA = auto()
+    MANY_POINTS_DATA = auto()
+    POLYLINE_DATA = auto()
+    REC_DATA = auto()
+    RASTER_DATA = auto()
+    COMPOSITE_DATA = auto()
+
+
+@dataclass
+class StartStopData(GraphicsObject):
+    go_type = GOType.START_STOP
     start: Coord
     stop: Coord
 
+    def to_relative(self):
+        self.start = self.start.to_relative()
+        self.stop = self.stop.to_relative()
+
 
 @dataclass
-class TextData(GraphObjectKind):
+class TextData(GraphicsObject):
+    go_type = GOType.TEXT
     text: str
     font: Font
     pos: Coord
     align: TextAlignKind
 
+    # def to_relative(self):
+    #     self.pos = self.pos.to_relative()
+
+    # def to_relative_with_view(self, view: "ViewPort"):
+    #     self.origin = self.origin.to_relative()
+    #     self.width = self.width.to_relative_with_view(view, AxisKind.X)
+    #     self.height = self.height.to_relative_with_view(view, AxisKind.Y)
+
 
 @dataclass
-class GridData(GraphObjectKind):
+class GridData(GraphicsObject):
+    go_type = GOType.GRID_DATA
     origin: Coord
     origin_diagonal: Coord
     x_post: List[Coord1D]
@@ -45,7 +75,8 @@ class GridData(GraphObjectKind):
 
 
 @dataclass
-class TickData(GraphObjectKind):
+class TickData(GraphicsObject):
+    go_type = GOType.TICK_DATA
     major: bool
     pos: Coord
     axis: AxisKind
@@ -54,7 +85,8 @@ class TickData(GraphObjectKind):
 
 
 @dataclass
-class PointData(GraphObjectKind):
+class PointData(GraphicsObject):
+    go_type = GOType.POINT_DATA
     marker: MarkerKind
     pos: Coord
     size: float
@@ -62,7 +94,8 @@ class PointData(GraphObjectKind):
 
 
 @dataclass
-class ManyPointsData(GraphObjectKind):
+class ManyPointsData(GraphicsObject):
+    go_type = GOType.MANY_POINTS_DATA
     marker: MarkerKind
     pos: List[Coord]
     size: float
@@ -70,19 +103,14 @@ class ManyPointsData(GraphObjectKind):
 
 
 @dataclass
-class PolyLineData(GraphObjectKind):
+class PolyLineData(GraphicsObject):
+    go_type = GOType.POLYLINE_DATA
     pos: List[Coord]
 
 
 @dataclass
-class RectData(GraphObjectKind):
-    origin: Coord
-    width: Quantity
-    height: Quantity
-
-
-@dataclass
-class RasterData(GraphObjectKind):
+class RasterData(GraphicsObject):
+    go_type = GOType.RASTER_DATA
     origin: Coord
     pixel_width: Quantity
     pixel_height: Quantity
@@ -92,18 +120,9 @@ class RasterData(GraphObjectKind):
 
 
 @dataclass
-class CompositeData(GraphObjectKind):
-    kind: CompositeKind
-
-
-@dataclass
-class GraphicsObject:
-    name: str
-    style: Optional[Style]
-    rotate_in_view: Optional[tuple[float, tuple[float, float]]] = None
-    rotate: Optional[float] = None
-    children: List["GraphicsObject"]
-    graphics_kind: Optional[GraphObjectKind] = None
+class CompositeData(GraphicsObject):
+    go_type = GOType.COMPOSITE_DATA
+    kind: CompositeKindToQuantityData
 
 
 @dataclass
@@ -113,8 +132,6 @@ class ViewPort:
     style: Style
     x_scale: Scale
     y_scale: Scale
-    rotate: Optional[float] = None
-    scale: Optional[float] = None
     origin: Coord
     width: Quantity
     height: Quantity
@@ -124,27 +141,43 @@ class ViewPort:
     h_view: Quantity
     w_img: Quantity
     h_img: Quantity
+    rotate: Optional[float] = None
+    scale: Optional[float] = None
+
+    def to_relative_dimension(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.get_width()
+        if axis_kind == AxisKind.Y:
+            return self.get_height()
+        raise GGException("unexpected")
 
     def left(self):
         return self.origin.x.to_relative(None)
 
     def get_width(self):
-        return self.height.to_relative(ToQuantityData(length=self.w_img))
+        return self.height.to_relative(length=self.w_img)
 
     def bottom(self):
         return self.origin.y.to_relative(None)
 
     def get_height(self):
-        return self.height.to_relative(ToQuantityData(length=self.h_img))
+        return self.height.to_relative(length=self.h_img)
 
-    def embed_into_origin_for_length(self, axis_kind: AxisKind):
+    def quantity_embed_into_origin(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.x_scale, self.point_width(), self.x_scale
+        if axis_kind == AxisKind.Y:
+            return self.y_scale, self.point_height(), self.y_scale
+        raise GGException("unexpected")
+
+    def coord_embed_into_origin_for_length(self, axis_kind: AxisKind):
         if axis_kind == AxisKind.X:
             return self.origin.x, self.w_img
         if axis_kind == AxisKind.Y:
             return self.origin.y, self.h_img
         raise GGException("unexpected")
 
-    def embed_into_origin(self, axis_kind: AxisKind):
+    def coord_embed_into_origin(self, axis_kind: AxisKind):
         if axis_kind == AxisKind.X:
             return self.left(), self.get_width()
         if axis_kind == AxisKind.Y:
@@ -177,8 +210,8 @@ class ViewPort:
 
     def point_height_height(self, dimension: "Quantity") -> "Quantity":
 
-        if not self.w_view.unit.is_point():
-            raise ValueError(f"Expected Point, found {self.w_view.unit}")
+        if self.w_view.unit_type != UnitType.POINT:
+            raise ValueError(f"Expected Point, found {self.w_view.unit_type}")
 
         other = self.width.to_relative(dimension)
         return self.w_view.multiply(other)
