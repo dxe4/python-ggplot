@@ -162,6 +162,12 @@ class Coord1D:
     pos: float
     unit_type: UnitType
 
+    def __eq__(self, other) -> bool:
+        if self.unit_type.is_length() and other.unit_type.is_length():
+            return self.to_point().pos == other.to_point().pos
+        else:
+            return self.to_relative().pos == other.to_relative().pos
+
     @staticmethod
     def create_default_coord_type(
         view: "ViewPort", at: float, axis_kind: AxisKind, kind: UnitType
