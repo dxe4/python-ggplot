@@ -1,12 +1,60 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from python_ggplot.coord import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core_objects import AxisKind, GGException, Scale, Style, UnitType
 from python_ggplot.graphics_objects import GraphicsObject
 from python_ggplot.quantity_convert import quantitiy_to_coord
-from python_ggplot.units import Quantity
+from python_ggplot.units import Quantity, PointUnit
+
+
+@dataclass
+class ViewPortInput:
+    name: str = ""
+    parent: str = ""
+    w_img: Optional["Quantity"] = field(default_factory=lambda: Quantity(640.0))
+    h_img: Optional["Quantity"] = field(default_factory=lambda: Quantity(480.0))
+    style: Optional["Style"] = None
+    x_scale: Optional["Scale"] = None
+    y_scale: Optional["Scale"] = None
+    rotate: Optional[float] = None
+    scale: Optional[float] = None
+    objects: List["GraphicsObject"] = field(default_factory=list)
+    children: List["ViewPort"] = field(default_factory=list)
+    w_view: Optional["Quantity"] = None
+    h_view: Optional["Quantity"] = None
+
+    def update_from_viewport(self, view: "ViewPort"):
+        self.h_img = view.h_img.to_points()
+        self.w_img = view.h_img.to_points()
+
+        self.h_view = view.point_height()
+        self.w_view = view.point_width()
+
+    @staticmethod
+    def get_views(
+        w_view_quantity: Optional[Quantity] = None,
+        h_view_quantity: Optional[Quantity] = None,
+    ) -> Tuple["Quantity", "Quantity"]:
+        if w_view_quantity is not None and h_view_quantity is not None:
+            if {w_view_quantity.unit_type, h_view_quantity} != {UnitType.POINT}:
+                raise GGException("parent view must have a point unit")
+            return (deepcopy(w_view_quantity), deepcopy(h_view_quantity))
+        return (PointUnit(640.0), PointUnit(480.0))
+
+    @staticmethod
+    def new(
+        w_view_quantity: Optional[Quantity] = None,
+        h_view_quantity: Optional[Quantity] = None,
+    ) -> "ViewPortInput":
+        w_view, h_view = ViewPortInput.get_views(w_view_quantity, h_view_quantity)
+        return ViewPortInput(
+            w_view=w_view,
+            h_view=h_view,
+            h_img=PointUnit(h_view.val),
+            w_img=PointUnit(w_view.val),
+        )
 
 
 @dataclass
