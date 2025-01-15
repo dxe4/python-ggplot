@@ -174,7 +174,6 @@ class Coord1D:
 
     def embed_into(self, axis_kind: AxisKind, into: "ViewPort") -> "Coord1D":
         from python_ggplot.embed import coord_embed_into
-
         return coord_embed_into(self, axis_kind, into)
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
@@ -209,15 +208,13 @@ class Coord1D:
     def to_via_points(
         self, to_kind: UnitType, length=None, abs_length=None, scale=None, axis=None
     ):
-        from python_ggplot.coord_convert import convert_via_point
-
+        from python_ggplot.coord_convert import convert_via_point  # pylint: disable=all
         return convert_via_point(
-            self, to_kind, length=None, abs_length=None, scale=None, axis=None
+            self, to_kind, length=length, abs_length=abs_length, scale=scale, axis=axis
         )
 
     def to(self, to_kind: UnitType, length=None) -> "Coord1D":
-        from python_ggplot.coord_convert import convert_coord
-
+        from python_ggplot.coord_convert import convert_coord  # pylint: disable=all
         return convert_coord(coord=self, to_type=to_kind, length=length)
 
     @staticmethod
