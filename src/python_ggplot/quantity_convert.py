@@ -10,7 +10,7 @@ from python_ggplot.coord import (
     PointCoordType,
     RelativeCoordType,
 )
-from python_ggplot.core_objects import GGException, Scale, UnitType
+from python_ggplot.core_objects import AxisKind, GGException, Scale, UnitType
 from python_ggplot.units import (
     CentimeterUnit,
     DataUnit,
@@ -20,6 +20,7 @@ from python_ggplot.units import (
 )
 
 if TYPE_CHECKING:
+    from python_ggplot.graphics_objects import ViewPort
     from python_ggplot.units import Quantity
 
 
@@ -240,3 +241,21 @@ def quantitiy_to_coord(quantity):
     }
     conversion = conversion_data[quantity.unit_type]
     return conversion
+
+
+def to_relative_from_view(
+    quantity: "Quantity", view: "ViewPort", axis: AxisKind
+) -> "Quantity":
+    if AxisKind.X == axis:
+        length = view.point_width()
+        scale = view.x_scale
+        return convert_quantity(
+            quantity, to_type=UnitType.RELATIVE, length=length, scale=scale
+        )
+    elif AxisKind.Y == axis:
+        length = view.point_height()
+        scale = view.y_scale
+        return convert_quantity(
+            quantity, to_type=UnitType.RELATIVE, length=length, scale=scale
+        )
+    raise GGException("unexpected")

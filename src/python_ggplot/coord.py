@@ -162,6 +162,10 @@ class Coord1D:
     pos: float
     unit_type: UnitType
 
+    def update_scale(self, view: "ViewPort"):
+        # only applicable to DataCoord
+        pass
+
     def __eq__(self, other) -> bool:
         if self.unit_type.is_length() and other.unit_type.is_length():
             return self.to_point().pos == other.to_point().pos
@@ -430,6 +434,12 @@ class InchCoordType(Coord1D):
 @dataclass
 class DataCoordType(Coord1D):
     data: DataCoord
+
+    def update_scale(self, view: "ViewPort"):
+        if self.data.axis_kind == AxisKind.X:
+            self.scale = view.x_scale
+        if self.data.axis_kind == AxisKind.Y:
+            self.scale = view.y_scale
 
     def get_scale(self):
         # todo fix this, fine for now

@@ -41,6 +41,15 @@ class Quantity:
         length = view.to_relative_dimension(axis)
         return self.to_relative(length=length, scale=deepcopy(view.x_scale))
 
+    def to_relative_from_view(
+        self, view: "ViewPort", axis_kind: AxisKind
+    ) -> "Quantity":
+        from python_ggplot.quantity_convert import (
+            to_relative_from_view,
+        )  # pylint: disable=all
+
+        return to_relative_from_view(self, view, axis_kind)
+
     def to(self, kind: UnitType, length=None, scale=None):
         from python_ggplot.quantity_convert import (
             convert_quantity,

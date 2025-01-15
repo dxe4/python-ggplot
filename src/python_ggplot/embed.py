@@ -84,3 +84,27 @@ def quantity_embed_into(
         raise GGException("cannot embed quantity")
 
     return func(quantity, axis, view)
+
+
+def view_embed_into(current_view: "ViewPort", into: "ViewPort") -> "ViewPort":
+    current_view.origin = current_view.origin.embed_into(into)
+    current_view.height = current_view.height.embed_into(AxisKind.Y, into)
+    current_view.width = current_view.width.embed_into(AxisKind.X, into)
+    return current_view
+
+
+def view_embed_at(current_view: "ViewPort", idx: int, view: "ViewPort") -> "ViewPort":
+    child = current_view.children[idx]
+    view_embed_into(current_view, child)
+    current_view.update_item_at(idx, view)
+    current_view.update_size_new_root()
+    return current_view
+
+
+def view_embed_as_relative(
+    current_view: "ViewPort", idx: int, into: "ViewPort"
+) -> "ViewPort":
+    into.relative_to(current_view)
+    current_view[idx] = view_embed_into(into, current_view[idx])
+    current_view.update_size_new_root()
+    return current_view
