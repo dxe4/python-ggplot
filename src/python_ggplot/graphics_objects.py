@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Callable, List, Optional, TypeVar
+from typing import Callable, List, Optional, TypeVar, TYPE_CHECKING
 
 from python_ggplot.coord import Coord, Coord1D
 from python_ggplot.core_objects import (
@@ -14,7 +14,10 @@ from python_ggplot.core_objects import (
     TextAlignKind,
     TickKind,
 )
-from python_ggplot.units import  Quantity
+from python_ggplot.units import Quantity
+
+if TYPE_CHECKING:
+    from python_ggplot.views import ViewPort
 
 
 @dataclass
@@ -25,16 +28,6 @@ class GraphicsObjectConfig:
     children: Optional[List["GraphicsObject"]] = None
 
 
-@dataclass
-class GraphicsObject:
-    name: str
-    config: GraphicsObjectConfig
-
-    def to_relative(self, other):
-        # todo implemeent
-        raise GGException("TODO impl")
-
-
 class GOType(Enum):
     START_STOP = auto()
     TEXT = auto()
@@ -43,85 +36,122 @@ class GOType(Enum):
     POINT_DATA = auto()
     MANY_POINTS_DATA = auto()
     POLYLINE_DATA = auto()
-    REC_DATA = auto()
+    RECT_DATA = auto()
     RASTER_DATA = auto()
     COMPOSITE_DATA = auto()
 
 
 @dataclass
+class GraphicsObject:
+    name: str
+    config: GraphicsObjectConfig
+    go_type: GOType
+
+    def to_relative(
+        self, view: Optional["ViewPort"] = None, axis: Optional[AxisKind] = None
+    ) -> "GraphicsObject":
+        from python_ggplot.graphics_object_convert import (
+            graphics_object_to_relative,
+        )  # pylint: disable=all
+
+        return graphics_object_to_relative(self, view=view, axis=axis)
+
+
+@dataclass
 class StartStopData(GraphicsObject):
-    go_type = GOType.START_STOP
     start: Coord
     stop: Coord
 
-    def to_relative(self):
-        self.start = self.start.to_relative()
-        self.stop = self.stop.to_relative()
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.START_STOP
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
 class TextData(GraphicsObject):
-    go_type = GOType.TEXT
     text: str
     font: Font
     pos: Coord
     align: TextAlignKind
 
-    # def to_relative(self):
-    #     self.pos = self.pos.to_relative()
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.TEXT
+        super().__init__(*args, **kwargs)
 
-    # def to_relative_with_view(self, view: "ViewPort"):
-    #     self.origin = self.origin.to_relative()
-    #     self.width = self.width.to_relative_with_view(view, AxisKind.X)
-    #     self.height = self.height.to_relative_with_view(view, AxisKind.Y)
+
+@dataclass
+class RectData(GraphicsObject):
+    origin: Coord
+    width: Quantity
+    height: Quantity
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.RECT_DATA
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
 class GridData(GraphicsObject):
-    go_type = GOType.GRID_DATA
-    origin: Coord
+    origin: Coord  # todo is this optinal? check later
     origin_diagonal: Coord
-    x_post: List[Coord1D]
-    y_post: List[Coord1D]
+    x_pos: List[Coord1D]
+    y_pos: List[Coord1D]
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.GRID_DATA
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
 class TickData(GraphicsObject):
-    go_type = GOType.TICK_DATA
+
     major: bool
     pos: Coord
     axis: AxisKind
     kind: TickKind
     secondary: bool
 
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.TICK_DATA
+        super().__init__(*args, **kwargs)
+
 
 @dataclass
 class PointData(GraphicsObject):
-    go_type = GOType.POINT_DATA
     marker: MarkerKind
     pos: Coord
     size: float
     color: Color
 
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.POINT_DATA
+        super().__init__(*args, **kwargs)
+
 
 @dataclass
 class ManyPointsData(GraphicsObject):
-    go_type = GOType.MANY_POINTS_DATA
+
     marker: MarkerKind
     pos: List[Coord]
     size: float
     color: Color
 
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.MANY_POINTS_DATA
+        super().__init__(*args, **kwargs)
+
 
 @dataclass
 class PolyLineData(GraphicsObject):
-    go_type = GOType.POLYLINE_DATA
     pos: List[Coord]
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.POLYLINE_DATA
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
 class RasterData(GraphicsObject):
-    go_type = GOType.RASTER_DATA
     origin: Coord
     pixel_width: Quantity
     pixel_height: Quantity
@@ -129,11 +159,18 @@ class RasterData(GraphicsObject):
     block_y: int
     draw_cb: Callable[[], List[int]]
 
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.RASTER_DATA
+        super().__init__(*args, **kwargs)
+
 
 @dataclass
 class CompositeData(GraphicsObject):
-    go_type = GOType.COMPOSITE_DATA
     kind: CompositeKind
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.COMPOSITE_DATA
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
