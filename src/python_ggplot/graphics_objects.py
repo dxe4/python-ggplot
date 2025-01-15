@@ -29,8 +29,14 @@ class GraphicsObjectConfig:
 
 
 class GOType(Enum):
-    START_STOP = auto()
+    # start/stop data
+    LINE = auto()
+    AXIS = auto()
+    # text
     TEXT = auto()
+    TICK_LABEL = auto()
+    LABEL = auto()
+    # others
     GRID_DATA = auto()
     TICK_DATA = auto()
     POINT_DATA = auto()
@@ -58,29 +64,62 @@ class GraphicsObject:
 
 
 @dataclass
-class StartStopData(GraphicsObject):
+class StartStopData:
     start: Coord
     stop: Coord
-
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.START_STOP
-        super().__init__(*args, **kwargs)
-
+        
 
 @dataclass
-class TextData(GraphicsObject):
+class GOAxis(GraphicsObject):
+    data: StartStopData
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.AXIS
+        super().__init__(*args, **kwargs)
+
+@dataclass
+class GOLine(GraphicsObject):
+    data: StartStopData
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.LINE
+        super().__init__(*args, **kwargs)
+
+@dataclass
+class TextData:
     text: str
     font: Font
     pos: Coord
     align: TextAlignKind
 
+
+@dataclass
+class GOText(GraphicsObject):
+    data: TextData
+
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.TEXT
         super().__init__(*args, **kwargs)
 
+@dataclass
+class GOLabel(GraphicsObject):
+    data: TextData
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.LABEL
+        super().__init__(*args, **kwargs)
 
 @dataclass
-class RectData(GraphicsObject):
+class GOTickLabel(GraphicsObject):
+    data: TextData
+
+    def __init__(self, *args, **kwargs):
+        kwargs["go_type"] = GOType.TICK_LABEL
+        super().__init__(*args, **kwargs)
+
+
+@dataclass
+class GOREct(GraphicsObject):
     origin: Coord
     width: Quantity
     height: Quantity
@@ -91,7 +130,7 @@ class RectData(GraphicsObject):
 
 
 @dataclass
-class GridData(GraphicsObject):
+class GOGrid(GraphicsObject):
     origin: Coord  # todo is this optinal? check later
     origin_diagonal: Coord
     x_pos: List[Coord1D]
@@ -103,7 +142,7 @@ class GridData(GraphicsObject):
 
 
 @dataclass
-class TickData(GraphicsObject):
+class GOTick(GraphicsObject):
 
     major: bool
     pos: Coord
@@ -117,7 +156,7 @@ class TickData(GraphicsObject):
 
 
 @dataclass
-class PointData(GraphicsObject):
+class GOPoint(GraphicsObject):
     marker: MarkerKind
     pos: Coord
     size: float
@@ -129,7 +168,7 @@ class PointData(GraphicsObject):
 
 
 @dataclass
-class ManyPointsData(GraphicsObject):
+class GOManyPoints(GraphicsObject):
 
     marker: MarkerKind
     pos: List[Coord]
@@ -142,7 +181,7 @@ class ManyPointsData(GraphicsObject):
 
 
 @dataclass
-class PolyLineData(GraphicsObject):
+class GOPolyLine(GraphicsObject):
     pos: List[Coord]
 
     def __init__(self, *args, **kwargs):
@@ -151,7 +190,7 @@ class PolyLineData(GraphicsObject):
 
 
 @dataclass
-class RasterData(GraphicsObject):
+class GORaster(GraphicsObject):
     origin: Coord
     pixel_width: Quantity
     pixel_height: Quantity
@@ -165,7 +204,7 @@ class RasterData(GraphicsObject):
 
 
 @dataclass
-class CompositeData(GraphicsObject):
+class GOComposite(GraphicsObject):
     kind: CompositeKind
 
     def __init__(self, *args, **kwargs):
