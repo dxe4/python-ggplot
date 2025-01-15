@@ -32,8 +32,10 @@ class Quantity:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def quantity_embed_into(self, axis: AxisKind, view: "ViewPort") -> "Quantity":
-        raise GGException("Not implemeneted")
+    def embed_into(self, axis: AxisKind, view: "ViewPort") -> "Quantity":
+        from python_ggplot.embed import quantity_embed_into  # pylint: disable=all
+
+        return quantity_embed_into(self, axis, view)
 
     def to_relative_with_view(self, view: "ViewPort", axis: AxisKind):
         length = view.to_relative_dimension(axis)
