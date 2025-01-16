@@ -2,19 +2,19 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from python_ggplot.coord import Coord, Coord1D, RelativeCoordType
+from python_ggplot.coord import Coord, Coord1D, RelativeCoordType, path_coord_view_port
 from python_ggplot.core_objects import AxisKind, GGException, Scale, Style, UnitType
 from python_ggplot.graphics_objects import GraphicsObject
 from python_ggplot.quantity_convert import quantitiy_to_coord
-from python_ggplot.units import PointUnit, Quantity
+from python_ggplot.units import PointUnit, Quantity, RelativeUnit
 
 
 @dataclass
 class ViewPortInput:
     name: str = ""
     parent: str = ""
-    w_img: Optional["Quantity"] = field(default_factory=lambda: Quantity(640.0))
-    h_img: Optional["Quantity"] = field(default_factory=lambda: Quantity(480.0))
+    w_img: "Quantity" = field(default_factory=lambda: Quantity(640.0))
+    h_img: "Quantity" = field(default_factory=lambda: Quantity(480.0))
     style: Optional["Style"] = None
     x_scale: Optional["Scale"] = None
     y_scale: Optional["Scale"] = None
@@ -58,6 +58,14 @@ class ViewPortInput:
 
 
 @dataclass
+class CoordsInput:
+    left: float = 0.0
+    bottom: float = 0.0
+    width: float = 1.0
+    height: float = 1.0
+
+
+@dataclass
 class ViewPort:
     origin: Coord
     width: Quantity
@@ -81,6 +89,65 @@ class ViewPort:
 
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
+
+    def add_obj(self, obj: GraphicsObject):
+        self.objects.append(obj)
+
+    @staticmethod
+    def from_input(origin: Coord, width: Quantity, height: Quantity, input_data: ViewPortInput) -> 'ViewPort':
+        w_view, h_view = ViewPortInput.get_views(input_data.w_view, input_data.h_view)
+        return ViewPort(
+            origin=origin,
+            width=width,
+            height=height,
+            name=input_data.name,
+            parent=input_data.parent,
+            style=input_data.style,
+            x_scale=input_data.x_scale,
+            y_scale=input_data.y_scale,
+            rotate=input_data.rotate,
+            scale=input_data.scale,
+            w_view=w_view,
+            h_view=h_view,
+            w_img=input_data.w_img,
+            h_img=input_data.h_img,
+        )
+
+    def add_viewport(
+        self,
+            origin: Coord,
+            width: Quantity,
+            height: Quantity,
+        input_data: ViewPortInput,
+    ) -> "ViewPort":
+        origin = path_coord_view_port(origin, self)
+
+        input_data.update_from_viewport(self)
+
+        return ViewPort.from_input(origin, width, height, input_data)
+
+    @staticmethod
+    def from_coords(coords_input: CoordsInput, view_input: ViewPortInput) -> 'ViewPort':
+        origin = Coord(
+            x=RelativeCoordType(coords_input.left),
+            y=RelativeCoordType(coords_input.bottom)
+        )
+        width = RelativeUnit(coords_input.width)
+        height = RelativeUnit(coords_input.height)
+        return ViewPort.from_input(origin, width, height, view_input)
+
+    def add_viewport_from_coords(self, coords_input: CoordsInput, input_data: ViewPortInput):
+        origin = Coord(
+            x=RelativeCoordType(coords_input.width),
+            y=RelativeCoordType(coords_input.height),
+        )
+        width = RelativeUnit(coords_input.width)
+        height = RelativeUnit(coords_input.height)
+
+        input_data.x_scale = self.x_scale or input_data.x_scale
+        input_data.y_scale = self.y_scale or input_data.y_scale
+
+        return ViewPort.from_input(origin, width, height, input_data)
 
     def update_data_scale(self):
         self.update_data_scale_for_objects(self.objects)
@@ -123,6 +190,14 @@ class ViewPort:
         if axis_kind == AxisKind.Y:
             return self.get_height()
         raise GGException("unexpected")
+
+    def embed_as_relative(self: "ViewPort", idx: int, into: "ViewPort") -> 'ViewPort':
+        from python_ggplot.embed import view_embed_as_relative  # pylint: disable=import-outside-toplevel
+        return view_embed_as_relative(self, idx, into)
+
+    def embed_into(self: "ViewPort",  into: "ViewPort") -> 'ViewPort':
+        from python_ggplot.embed import view_embed_into  # pylint: disable=import-outside-toplevel
+        return view_embed_into(self, into)
 
     def relative_to(self, other: "ViewPort"):
         origin = self.origin.to_relative()

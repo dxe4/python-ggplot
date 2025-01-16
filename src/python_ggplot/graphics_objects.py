@@ -271,14 +271,6 @@ class GOComposite(GraphicsObject):
         super().__init__(*args, **kwargs)
 
 
-@dataclass
-class CoordsInput:
-    left: float = 0.0
-    bottom: float = 0.0
-    width: float = 1.0
-    height: float = 1.0
-
-
 T = TypeVar("T")
 
 
