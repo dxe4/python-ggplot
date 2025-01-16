@@ -29,6 +29,18 @@ class Quantity:
     str_type = None
     is_length_unit: bool = False
 
+    @staticmethod
+    def centimeters(val: float) -> "Quantity":
+        return CentimeterUnit(val)
+
+    @staticmethod
+    def points(val: float) -> "Quantity":
+        return PointUnit(val)
+
+    @staticmethod
+    def relative(val: float) -> "Quantity":
+        return RelativeUnit(val)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

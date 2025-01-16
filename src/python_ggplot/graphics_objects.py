@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar
 
 from python_ggplot.coord import Coord, Coord1D
 from python_ggplot.core_objects import (
+    BLACK,
     AxisKind,
     Color,
     CompositeKind,
@@ -13,6 +14,7 @@ from python_ggplot.core_objects import (
     Style,
     TextAlignKind,
     TickKind,
+    UnitType,
 )
 from python_ggplot.units import Quantity
 
@@ -22,10 +24,10 @@ if TYPE_CHECKING:
 
 @dataclass
 class GraphicsObjectConfig:
-    style: Optional[Style]
+    style: Optional[Style] = None
     rotate_in_view: Optional[tuple[float, tuple[float, float]]] = None
     rotate: Optional[float] = None
-    children: Optional[List["GraphicsObject"]] = None
+    children: Optional[List["GraphicsObject"]] = field(default_factory=list)
 
 
 class GOType(Enum):

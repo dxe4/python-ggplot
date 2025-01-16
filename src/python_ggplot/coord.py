@@ -12,6 +12,14 @@ if TYPE_CHECKING:
     from python_ggplot.views import ViewPort
 
 
+@dataclass
+class CoordsInput:
+    left: float = 0.0
+    bottom: float = 0.0
+    width: float = 1.0
+    height: float = 1.0
+
+
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
     if coord.unit_type.is_length():
         length = coord.get_length()
@@ -73,6 +81,10 @@ def add_coord_one_length(
 def coord_operator(
     lhs: "Coord1D", rhs: "Coord1D", operator: Operator, operator_type: OperatorType
 ) -> "Coord1D":
+    """
+    # TODO this allows you to pass operator=lambda x,y: x-y and OperatorType.DIV
+    needs refactoring to become prone to errors
+    """
     # todo unit tests
     alike = False
     if operator_type == OperatorType.DIV:
@@ -162,13 +174,29 @@ class Coord1D:
     pos: float
     unit_type: UnitType
 
+    @staticmethod
+    def str_height(pos: float, font: Font) -> "StrHeightCoordType":
+        return StrHeightCoordType(pos, data=TextCoordData(text="W", font=font))
+
+    @staticmethod
+    def str_width(pos: float, font: Font) -> "StrWidthCoordType":
+        return StrWidthCoordType(pos, data=TextCoordData(text="W", font=font))
+
+    @staticmethod
+    def relative(pos: float) -> "Coord1D":
+        return RelativeCoordType(pos)
+
+    @staticmethod
+    def data(pos: float, scale: Scale, axis_kind: AxisKind) -> "Coord1D":
+        return DataCoordType(pos, data=DataCoord(scale=scale, axis_kind=axis_kind))
+
     def update_scale(self, view: "ViewPort"):
         # only applicable to DataCoord
         pass
 
     def __eq__(self, other) -> bool:
         if self.unit_type.is_length() and other.unit_type.is_length():
-            return self.to_point().pos == other.to_point().pos
+            return self.to_points().pos == other.to_point().pos
         else:
             return self.to_relative().pos == other.to_relative().pos
 
@@ -201,13 +229,13 @@ class Coord1D:
         # todo fix this, fine for now
         return None
 
-    def to_inch(self, length=None):
+    def to_inches(self, length=None):
         return self.to(UnitType.INCH, length=length)
 
-    def to_centimeter(self, length=None):
+    def to_centimeters(self, length=None):
         return self.to(UnitType.CENTIMETER, length=length)
 
-    def to_point(self, length=None):
+    def to_points(self, length=None):
         return self.to(UnitType.POINT, length=length)
 
     def to_relative(self, length=None) -> "Coord1D":
@@ -249,40 +277,16 @@ class Coord1D:
             return self.equal_kind_and_scale(other)
 
     def __add__(self, other: "Coord1D") -> "Coord1D":
-        if self.compatible_kind_and_scale(other):
-            if self.unit_type.is_absolute() and other.unit_type.is_absolute():
-                left = self.to(UnitType.POINT)
-                right = other.to(UnitType.POINT)
-                length_coord = LengthCoord(length=left.get_length())
-                return PointCoordType(left.pos + right.pos, length_coord)
-            else:
-                # TODO unit test this
-                result = deepcopy(self)
-                result.pos = self.pos + other.pos
-                return result
-        else:
-            if self.unit_type.is_length():
-                scale = other.get_scale()
-                left_cls = unit_type_from_type(self.unit_type)
-                right_cls = unit_type_from_type(other.unit_type)
+        return coord_operator(self, other, lambda x, y: x + y, OperatorType.ADD)
 
-                added = left_cls(self.pos).add(
-                    right_cls(other.pos),
-                    length=self.get_length(),
-                    scale=scale,
-                    as_coordinate=True,
-                )
+    def __mul__(self, other: "Coord1D") -> "Coord1D":
+        return coord_operator(self, other, lambda x, y: x * y, OperatorType.MUL)
 
-                if added.unit_type == UnitType.RELATIVE:
-                    return RelativeCoordType(pos=added.val)
-                else:
-                    result = deepcopy(added)
-                    result.pos = added.val
-                    return result
-            else:
-                return RelativeCoordType(
-                    pos=left.to(UnitType.RELATIVE).pos + other.to(UnitType.RELATIVE).pos
-                )
+    def __truediv__(self, other: "Coord1D") -> "Coord1D":
+        return coord_operator(self, other, lambda x, y: x / y, OperatorType.DIV)
+
+    def __sub__(self, other: "Coord1D") -> "Coord1D":
+        return coord_operator(self, other, lambda x, y: x - y, OperatorType.SUB)
 
 
 @dataclass
@@ -511,6 +515,13 @@ class StrHeightCoordType(Coord1D):
 class Coord:
     x: Coord1D
     y: Coord1D
+
+    @staticmethod
+    def relative(x: float, y: float) -> "Coord":
+        return Coord(
+            x=RelativeCoordType(x),
+            y=RelativeCoordType(y),
+        )
 
     def to_relative(self) -> "Coord":
         x = self.x.to(UnitType.RELATIVE)

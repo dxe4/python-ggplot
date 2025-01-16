@@ -163,17 +163,17 @@ def coord_to_self_via_point(data: CoordViaPointData):
 
 
 def length_to_point_via_point(data: CoordViaPointData) -> Coord1D:
-    return data.coord.to_point()
+    return data.coord.to_points()
 
 
 def length_to_centimeter_via_point(data: CoordViaPointData):
-    new_pos = inch_to_cm(abs_to_inch(data.coord.to_point().pos))
+    new_pos = inch_to_cm(abs_to_inch(data.coord.to_points().pos))
     length = data.coord.get_length().to_centimeter()
     return PointCoordType(new_pos, data=LengthCoord(length=length))
 
 
 def length_to_inch_via_point(data: CoordViaPointData):
-    new_pos = abs_to_inch(data.coord.to_point().pos)
+    new_pos = abs_to_inch(data.coord.to_points().pos)
     length = data.coord.get_length().to_inch()
     return PointCoordType(new_pos, data=LengthCoord(length=length))
 

@@ -2,7 +2,13 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from python_ggplot.coord import Coord, Coord1D, RelativeCoordType, path_coord_view_port
+from python_ggplot.coord import (
+    Coord,
+    Coord1D,
+    CoordsInput,
+    RelativeCoordType,
+    path_coord_view_port,
+)
 from python_ggplot.core_objects import AxisKind, GGException, Scale, Style, UnitType
 from python_ggplot.graphics_objects import GraphicsObject
 from python_ggplot.quantity_convert import quantitiy_to_coord
@@ -58,14 +64,6 @@ class ViewPortInput:
 
 
 @dataclass
-class CoordsInput:
-    left: float = 0.0
-    bottom: float = 0.0
-    width: float = 1.0
-    height: float = 1.0
-
-
-@dataclass
 class ViewPort:
     origin: Coord
     width: Quantity
@@ -94,7 +92,9 @@ class ViewPort:
         self.objects.append(obj)
 
     @staticmethod
-    def from_input(origin: Coord, width: Quantity, height: Quantity, input_data: ViewPortInput) -> 'ViewPort':
+    def from_input(
+        origin: Coord, width: Quantity, height: Quantity, input_data: ViewPortInput
+    ) -> "ViewPort":
         w_view, h_view = ViewPortInput.get_views(input_data.w_view, input_data.h_view)
         return ViewPort(
             origin=origin,
@@ -115,9 +115,9 @@ class ViewPort:
 
     def add_viewport(
         self,
-            origin: Coord,
-            width: Quantity,
-            height: Quantity,
+        origin: Coord,
+        width: Quantity,
+        height: Quantity,
         input_data: ViewPortInput,
     ) -> "ViewPort":
         origin = path_coord_view_port(origin, self)
@@ -127,16 +127,18 @@ class ViewPort:
         return ViewPort.from_input(origin, width, height, input_data)
 
     @staticmethod
-    def from_coords(coords_input: CoordsInput, view_input: ViewPortInput) -> 'ViewPort':
+    def from_coords(coords_input: CoordsInput, view_input: ViewPortInput) -> "ViewPort":
         origin = Coord(
             x=RelativeCoordType(coords_input.left),
-            y=RelativeCoordType(coords_input.bottom)
+            y=RelativeCoordType(coords_input.bottom),
         )
         width = RelativeUnit(coords_input.width)
         height = RelativeUnit(coords_input.height)
         return ViewPort.from_input(origin, width, height, view_input)
 
-    def add_viewport_from_coords(self, coords_input: CoordsInput, input_data: ViewPortInput):
+    def add_viewport_from_coords(
+        self, coords_input: CoordsInput, input_data: ViewPortInput
+    ):
         origin = Coord(
             x=RelativeCoordType(coords_input.width),
             y=RelativeCoordType(coords_input.height),
@@ -191,12 +193,18 @@ class ViewPort:
             return self.get_height()
         raise GGException("unexpected")
 
-    def embed_as_relative(self: "ViewPort", idx: int, into: "ViewPort") -> 'ViewPort':
-        from python_ggplot.embed import view_embed_as_relative  # pylint: disable=import-outside-toplevel
+    def embed_as_relative(self: "ViewPort", idx: int, into: "ViewPort") -> "ViewPort":
+        from python_ggplot.embed import (
+            view_embed_as_relative,
+        )  # pylint: disable=import-outside-toplevel
+
         return view_embed_as_relative(self, idx, into)
 
-    def embed_into(self: "ViewPort",  into: "ViewPort") -> 'ViewPort':
-        from python_ggplot.embed import view_embed_into  # pylint: disable=import-outside-toplevel
+    def embed_into(self: "ViewPort", into: "ViewPort") -> "ViewPort":
+        from python_ggplot.embed import (
+            view_embed_into,
+        )  # pylint: disable=import-outside-toplevel
+
         return view_embed_into(self, into)
 
     def relative_to(self, other: "ViewPort"):
@@ -279,16 +287,16 @@ class ViewPort:
 
 
 def x_axis_y_pos(
-    viewport: Optional[ViewPort] = None,
+    view: Optional[ViewPort] = None,
     margin: Optional[float] = 0.0,
     is_secondary: Optional[bool] = False,
 ) -> Coord1D:
     is_secondary = is_secondary if is_secondary is not None else False
     margin = margin if margin is not None else 0.0
 
-    if viewport:
-        coord = quantitiy_to_coord(viewport.height)
-        pos = viewport.height.val + margin if is_secondary else -margin
+    if view:
+        coord = quantitiy_to_coord(view.height)
+        pos = view.height.val + margin if is_secondary else -margin
         coord.pos = pos
         return coord
     else:

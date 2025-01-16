@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Generic, List, Literal, Optional, TypeVar, Union
 
@@ -109,7 +109,7 @@ class ErrorBarKind(Enum):
 
 class TextAlignKind(Enum):
     LEFT = auto()
-    CENRTER = auto()
+    CENTER = auto()
     RIGHT = auto()
 
 
@@ -151,7 +151,7 @@ class Font:
     bold: bool = False
     slant: CFontSlant = CFontSlant.NORMAL
     color: Color = Color(r=0.0, g=0.0, b=0.0, a=1.0)
-    align_kind: TextAlignKind = TextAlignKind.CENRTER
+    align_kind: TextAlignKind = TextAlignKind.CENTER
 
 
 @dataclass
@@ -176,15 +176,19 @@ class Point(Generic[T]):
 
 @dataclass
 class Style:
-    color: Color
-    size: float
-    line_type: LineType
-    line_width: float
-    fill_color: Color
-    marker: MarkerKind
-    error_bar_kind: ErrorBarKind
-    gradient: Optional[Gradient]
-    font: Font
+    line_width: Optional[float] = 0.0
+    color: Optional[Color] = field(
+        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0)
+    )
+    size: Optional[float] = 0.0
+    line_type: Optional[LineType] = LineType.SOLID
+    fill_color: Optional[Color] = field(
+        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0)
+    )
+    marker: Optional[MarkerKind] = None
+    error_bar_kind: Optional[ErrorBarKind] = None
+    gradient: Optional[Gradient] = None
+    font: Optional[Font] = None
 
 
 class CompositeKind(Enum):
@@ -254,3 +258,9 @@ LengthType = Union[
     Literal[UnitType.CENTIMETER],
     Literal[UnitType.INCH],
 ]
+
+GREY92 = Color(r=0.92, g=0.92, b=0.92, a=1.0)
+GREY20 = Color(r=0.20, g=0.20, b=0.20, a=1.0)
+BLACK = Color(r=0.0, g=0.0, b=0.0, a=1.0)
+WHITE = Color(r=1.0, g=1.0, b=1.0, a=1.0)
+TRANSPARENT = Color(r=0.0, g=0.0, b=0.0, a=0.0)
