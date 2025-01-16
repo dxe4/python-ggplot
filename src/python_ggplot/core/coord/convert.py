@@ -2,7 +2,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional, cast
 
-from python_ggplot.graphics.cairo_backend import CairoBackend
 from python_ggplot.core.common import DPI, abs_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
@@ -17,6 +16,7 @@ from python_ggplot.core.coord.objects import (
 )
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, UnitType
 from python_ggplot.core.units.objects import Quantity
+from python_ggplot.graphics.cairo_backend import CairoBackend
 
 
 def unit_to_point(kind: UnitType, pos):

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional, cast
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core.objects import AxisKind, GGException, UnitType
+from python_ggplot.core.units.objects import Quantity
 from python_ggplot.graphics.objects import (
     GOAxis,
     GOGrid,
@@ -20,7 +21,6 @@ from python_ggplot.graphics.objects import (
     GOType,
     GraphicsObject,
 )
-from python_ggplot.core.units.objects import Quantity
 
 if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, cast
 
 from python_ggplot.core.objects import GGException
+from python_ggplot.core.units.objects import AxisKind, UnitType
 from python_ggplot.graphics.objects import (
     GOAxis,
     GOGrid,
@@ -18,7 +19,6 @@ from python_ggplot.graphics.objects import (
     GOType,
     GraphicsObject,
 )
-from python_ggplot.core.units.objects import AxisKind, UnitType
 
 if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort

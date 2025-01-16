@@ -3,11 +3,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type
 
-from python_ggplot.graphics.cairo_backend import CairoBackend
 from python_ggplot.core.common import abs_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, UnitType
 from python_ggplot.core.units.objects import Quantity, unit_type_from_type
-
+from python_ggplot.graphics.cairo_backend import CairoBackend
 
 if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort
@@ -248,14 +247,18 @@ class Coord1D:
     def to_via_points(
         self, to_kind: UnitType, length=None, abs_length=None, scale=None, axis=None
     ):
-        from python_ggplot.core.coord.convert import convert_via_point  # pylint: disable=all
+        from python_ggplot.core.coord.convert import (
+            convert_via_point,
+        )  # pylint: disable=all
 
         return convert_via_point(
             self, to_kind, length=length, abs_length=abs_length, scale=scale, axis=axis
         )
 
     def to(self, to_kind: UnitType, length=None) -> "Coord1D":
-        from python_ggplot.core.coord.convert import convert_coord  # pylint: disable=all
+        from python_ggplot.core.coord.convert import (
+            convert_coord,
+        )  # pylint: disable=all
 
         return convert_coord(coord=self, to_type=to_kind, length=length)
 

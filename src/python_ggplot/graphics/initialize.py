@@ -13,11 +13,8 @@ from python_ggplot.core.coord.objects import (
     path_coord_view_port,
 )
 from python_ggplot.core.objects import (
-    BLACK,
-    # GREY20,
-    # GREY92,
+    BLACK,  # GREY20,; GREY92,; WHITE,
     TRANSPARENT,
-    # WHITE,
     AxisKind,
     Color,
     CompositeKind,
@@ -32,6 +29,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     UnitType,
 )
+from python_ggplot.core.units.objects import CentimeterUnit, Quantity
 from python_ggplot.graphics.objects import (
     GOAxis,
     GOComposite,
@@ -50,7 +48,6 @@ from python_ggplot.graphics.objects import (
     StartStopData,
     TextData,
 )
-from python_ggplot.core.units.objects import CentimeterUnit, Quantity
 from python_ggplot.graphics.views import ViewPort, x_axis_y_pos
 
 
@@ -221,7 +218,7 @@ def init_rect_from_coord(
 ) -> GraphicsObject:
     origin = Coord(
         x=Coord1D.create_relative(coords_input.left),
-        y=Coord1D.create_relative(coords_input.bottom)
+        y=Coord1D.create_relative(coords_input.bottom),
     )
     width = Quantity.relative(coords_input.width)
     height = Quantity.relative(coords_input.height)
