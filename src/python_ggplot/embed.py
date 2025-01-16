@@ -153,10 +153,13 @@ def go_embed_start_stop(data: GOEmbedData) -> GraphicsObject:
 
 
 def go_embed_rect(data: GOEmbedData) -> GraphicsObject:
+    if not data.axis:
+        raise GGException("expected axis to be provided")
+
     obj = cast(GORect, data.graphics_obj)
     obj.origin = obj.origin.embed_into(data.view)
-    obj.width = obj.width.embed_into(data.view)
-    obj.height = obj.height.embed_into(data.view)
+    obj.width = obj.width.embed_into(data.axis, data.view)
+    obj.height = obj.height.embed_into(data.axis, data.view)
     return obj
 
 
