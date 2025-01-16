@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Callable, List, Optional, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar
 
 from python_ggplot.coord import Coord, Coord1D
 from python_ggplot.core_objects import (
@@ -53,6 +53,15 @@ class GraphicsObject:
     config: GraphicsObjectConfig
     go_type: GOType
 
+    def embed_into(
+        self, view: "ViewPort", axis: Optional[AxisKind] = None
+    ) -> "GraphicsObject":
+        from python_ggplot.embed import (
+            graphics_object_to_relative,
+        )  # pylint: disable=all
+
+        return graphics_object_to_relative(self, view, axis)
+
     def to_relative(
         self, view: Optional["ViewPort"] = None, axis: Optional[AxisKind] = None
     ) -> "GraphicsObject":
@@ -67,7 +76,7 @@ class GraphicsObject:
 class StartStopData:
     start: Coord
     stop: Coord
-        
+
 
 @dataclass
 class GOAxis(GraphicsObject):
@@ -77,6 +86,7 @@ class GOAxis(GraphicsObject):
         kwargs["go_type"] = GOType.AXIS
         super().__init__(*args, **kwargs)
 
+
 @dataclass
 class GOLine(GraphicsObject):
     data: StartStopData
@@ -84,6 +94,7 @@ class GOLine(GraphicsObject):
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.LINE
         super().__init__(*args, **kwargs)
+
 
 @dataclass
 class TextData:
@@ -101,6 +112,7 @@ class GOText(GraphicsObject):
         kwargs["go_type"] = GOType.TEXT
         super().__init__(*args, **kwargs)
 
+
 @dataclass
 class GOLabel(GraphicsObject):
     data: TextData
@@ -108,6 +120,7 @@ class GOLabel(GraphicsObject):
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.LABEL
         super().__init__(*args, **kwargs)
+
 
 @dataclass
 class GOTickLabel(GraphicsObject):

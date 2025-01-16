@@ -1,22 +1,34 @@
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, cast
 
 from python_ggplot.coord import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core_objects import AxisKind, GGException, UnitType
+from python_ggplot.graphics_objects import (
+    GOAxis,
+    GOGrid,
+    GOLabel,
+    GOLine,
+    GOManyPoints,
+    GOPoint,
+    GOPolyLine,
+    GORaster,
+    GOREct,
+    GOText,
+    GOTick,
+    GOTickLabel,
+    GOType,
+    GraphicsObject,
+)
 from python_ggplot.units import Quantity
 
 if TYPE_CHECKING:
     from python_ggplot.views import ViewPort
 
-
-def quantity_embed_into_origin(view: "ViewPort", axis_kind: AxisKind):
-    if axis_kind == AxisKind.X:
-        return view.x_scale, view.point_width(), view.x_scale
-    if axis_kind == AxisKind.Y:
-        return view.y_scale, view.point_height(), view.y_scale
-    raise GGException("unexpected")
+# todo maybe split in few files
 
 
+# coord
 def _coord_embed_into_origin_for_length(view: "ViewPort", axis_kind: AxisKind):
     if axis_kind == AxisKind.X:
         return view.origin.x, view.w_img
@@ -53,6 +65,15 @@ def coord_embed_into(coord: Coord, into: "ViewPort") -> Coord:
     )
 
 
+# Quantity
+def quantity_embed_into_origin(view: "ViewPort", axis_kind: AxisKind):
+    if axis_kind == AxisKind.X:
+        return view.x_scale, view.point_width(), view.x_scale
+    if axis_kind == AxisKind.Y:
+        return view.y_scale, view.point_height(), view.y_scale
+    raise GGException("unexpected")
+
+
 def relative_quantity_embed_into(
     quantity: Quantity, axis: AxisKind, view: "ViewPort"
 ) -> "Quantity":
@@ -86,6 +107,7 @@ def quantity_embed_into(
     return func(quantity, axis, view)
 
 
+# view
 def view_embed_into(current_view: "ViewPort", into: "ViewPort") -> "ViewPort":
     current_view.origin = current_view.origin.embed_into(into)
     current_view.height = current_view.height.embed_into(AxisKind.Y, into)
@@ -108,3 +130,129 @@ def view_embed_as_relative(
     current_view[idx] = view_embed_into(into, current_view[idx])
     current_view.update_size_new_root()
     return current_view
+
+
+# graphics objects
+
+
+@dataclass
+class GOEmbedData:
+    graphics_obj: GraphicsObject
+    view: "ViewPort"
+    axis: Optional[AxisKind]
+
+
+def go_embed_start_stop(data: GOEmbedData) -> GraphicsObject:
+    if not isinstance(data.graphics_obj, (GOLine, GOAxis)):
+        raise GGException("unexpecteda type")
+
+    obj = data.graphics_obj
+    obj.data.start = obj.data.start.embed_into(data.view)
+    obj.data.stop = obj.data.stop.embed_into(data.view)
+    return obj
+
+
+def go_embed_rect(data: GOEmbedData) -> GraphicsObject:
+    obj = cast(GOREct, data.graphics_obj)
+    obj.origin = obj.origin.embed_into(data.view)
+    obj.width = obj.width.embed_into(data.view)
+    obj.height = obj.height.embed_into(data.view)
+    return obj
+
+
+def go_embed_raster(data: GOEmbedData) -> GraphicsObject:
+    if data.axis is None or data.view is None:
+        raise GGException("expected view and axis")
+
+    obj = cast(GORaster, data.graphics_obj)
+    obj.origin = obj.origin.to_relative()
+    obj.pixel_width = obj.pixel_width.to_relative_from_view(data.view, data.axis)
+    obj.pixel_height = obj.pixel_height.to_relative_from_view(data.view, data.axis)
+    return obj
+
+
+def go_embed_point(data: GOEmbedData) -> GraphicsObject:
+    obj = cast(GOPoint, data.graphics_obj)
+    obj.pos = obj.pos.embed_into(data.view)
+    return obj
+
+
+def go_embed_many_points(data: GOEmbedData) -> GraphicsObject:
+    obj = cast(GOManyPoints, data.graphics_obj)
+    obj.pos = [i.embed_into(data.view) for i in obj.pos]
+    return obj
+
+
+def go_embed_poly_line(data: GOEmbedData) -> GraphicsObject:
+    obj = cast(GOPolyLine, data.graphics_obj)
+    obj.pos = [i.embed_into(data.view) for i in obj.pos]
+    return obj
+
+
+def go_embed_text(data: GOEmbedData) -> GraphicsObject:
+    if not isinstance(data.graphics_obj, (GOText, GOLabel, GOTickLabel)):
+        raise GGException("unexpected")
+
+    obj = data.graphics_obj
+    obj.data.pos = obj.data.pos.embed_into(data.view)
+    return obj
+
+
+def go_embed_tick(data: GOEmbedData) -> GraphicsObject:
+    obj = cast(GOTick, data.graphics_obj)
+    obj.pos = obj.pos.embed_into(data.view)
+    return obj
+
+
+def go_embed_grid(data: GOEmbedData) -> GraphicsObject:
+    obj = cast(GOGrid, data.graphics_obj)
+    obj.origin = deepcopy(data.view.origin)
+    obj.origin_diagonal = Coord(
+        x=data.view.origin.x + RelativeCoordType(data.view.get_width().val),
+        y=data.view.origin.y + RelativeCoordType(data.view.get_height().val),
+    )
+
+    obj.x_pos = [
+        data.view.origin.x + i + RelativeCoordType(data.view.get_width().val)
+        for i in obj.x_pos
+    ]
+    obj.y_pos = [
+        data.view.origin.y + i + RelativeCoordType(data.view.get_height().val)
+        for i in obj.y_pos
+    ]
+
+    return obj
+
+
+go_embed_lookup = {
+    # start/stop
+    GOType.AXIS: go_embed_start_stop,
+    GOType.LINE: go_embed_start_stop,
+    # text
+    GOType.TEXT: go_embed_text,
+    GOType.LABEL: go_embed_text,
+    GOType.TICK_LABEL: go_embed_text,
+    # others
+    GOType.GRID_DATA: go_embed_grid,
+    GOType.TICK_DATA: go_embed_tick,
+    GOType.POINT_DATA: go_embed_point,
+    GOType.MANY_POINTS_DATA: go_embed_many_points,
+    GOType.POLYLINE_DATA: go_embed_poly_line,
+    GOType.RECT_DATA: go_embed_rect,
+    GOType.RASTER_DATA: go_embed_raster,
+    # (GOType.COMPOSITE_DATA, UnitType.RELATIVE): None,
+}
+
+
+def graphics_object_to_relative(
+    graphics_obj: GraphicsObject,
+    view: "ViewPort",
+    axis: Optional[AxisKind] = None,
+) -> GraphicsObject:
+    # TODO lot of this logic can be re used with go convert
+    func = go_embed_lookup.get(graphics_obj.go_type)
+    if not func:
+        raise GGException("Conversion not possible")
+
+    data = GOEmbedData(graphics_obj=graphics_obj, view=view, axis=axis)
+    return func(data)

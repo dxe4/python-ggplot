@@ -82,6 +82,12 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
+    def get_width(self) -> Quantity:
+        return self.width.to_relative(length=self.w_img)
+
+    def get_height(self):
+        return self.height.to_relative(length=self.h_img)
+
     def __getitem__(self, k):
         return self.children[k]
 
