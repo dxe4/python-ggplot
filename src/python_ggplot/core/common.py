@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
-    from python_ggplot.core_objects import Font
+    from python_ggplot.core.objects import Font
 
 
 # Constants

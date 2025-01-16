@@ -2,16 +2,16 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from python_ggplot.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
-from python_ggplot.coord import (
+from python_ggplot.core.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
+from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
     InchCoordType,
     LengthCoord,
     PointCoordType,
     RelativeCoordType,
 )
-from python_ggplot.core_objects import AxisKind, GGException, Scale, UnitType
-from python_ggplot.units import (
+from python_ggplot.core.objects import AxisKind, GGException, Scale, UnitType
+from python_ggplot.core.units.objects import (
     CentimeterUnit,
     DataUnit,
     InchUnit,
@@ -20,8 +20,8 @@ from python_ggplot.units import (
 )
 
 if TYPE_CHECKING:
-    from python_ggplot.units import Quantity
-    from python_ggplot.views import ViewPort
+    from python_ggplot.core.units.objects import Quantity
+    from python_ggplot.graphics.views import ViewPort
 
 
 @dataclass

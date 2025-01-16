@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, List, Optional, Union
 
-from python_ggplot.coord import (
+from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
     CoordsInput,
@@ -12,12 +12,12 @@ from python_ggplot.coord import (
     coord_quantity_sub,
     path_coord_view_port,
 )
-from python_ggplot.core_objects import (
+from python_ggplot.core.objects import (
     BLACK,
-    GREY20,
-    GREY92,
+    # GREY20,
+    # GREY92,
     TRANSPARENT,
-    WHITE,
+    # WHITE,
     AxisKind,
     Color,
     CompositeKind,
@@ -50,8 +50,8 @@ from python_ggplot.graphics.objects import (
     StartStopData,
     TextData,
 )
-from python_ggplot.units import CentimeterUnit, Quantity
-from python_ggplot.views import ViewPort, x_axis_y_pos
+from python_ggplot.core.units.objects import CentimeterUnit, Quantity
+from python_ggplot.graphics.views import ViewPort, x_axis_y_pos
 
 
 @dataclass
@@ -220,7 +220,8 @@ def init_rect_from_coord(
     view: ViewPort, init_rect_input: InitRectInput, coords_input: CoordsInput
 ) -> GraphicsObject:
     origin = Coord(
-        x=Coord1D.relative(coords_input.left), y=Coord1D.relative(coords_input.bottom)
+        x=Coord1D.create_relative(coords_input.left),
+        y=Coord1D.create_relative(coords_input.bottom)
     )
     width = Quantity.relative(coords_input.width)
     height = Quantity.relative(coords_input.height)
@@ -350,7 +351,7 @@ def init_multi_line_text(
 
     for idx, line in enumerate(lines):
         pos = lines_len - idx - 0.5
-        new_y = origin.y - Coord1D.str_height(pos, font).to_relative(
+        new_y = origin.y - Coord1D.create_str_height(pos, font).to_relative(
             view.point_height()
         )
         new_origin = Coord(x=origin.x, y=new_y)
@@ -418,8 +419,8 @@ def init_point_from_point(
     )
 
     pos = Coord(
-        x=Coord1D.data(pos.x, view.x_scale, AxisKind.X),
-        y=Coord1D.data(pos.y, view.y_scale, AxisKind.Y),
+        x=Coord1D.create_data(pos.x, view.x_scale, AxisKind.X),
+        y=Coord1D.create_data(pos.y, view.y_scale, AxisKind.Y),
     )
 
     return init_point(pos, style, name)
@@ -546,8 +547,8 @@ def init_error_bar_for_point(data: InitErrorBarData) -> GraphicsObject:
 
     coord_data = deepcopy(data)
     coord_data.point = Coord(
-        x=Coord1D.data(data.point.x, data.view.x_scale, AxisKind.X),
-        y=Coord1D.data(data.point.y, data.view.y_scale, AxisKind.X),
+        x=Coord1D.create_data(data.point.x, data.view.x_scale, AxisKind.X),
+        y=Coord1D.create_data(data.point.y, data.view.y_scale, AxisKind.X),
     )
     return init_error_bar(coord_data)
 
@@ -582,8 +583,8 @@ def init_poly_line_from_points(
 
     positions = [
         Coord(
-            x=Coord1D.data(p.x, view.x_scale, AxisKind.X),
-            y=Coord1D.data(p.y, view.y_scale, AxisKind.Y),
+            x=Coord1D.create_data(p.x, view.x_scale, AxisKind.X),
+            y=Coord1D.create_data(p.y, view.y_scale, AxisKind.Y),
         )
         for p in pos
     ]
@@ -594,13 +595,13 @@ def init_poly_line_from_points(
 def _init_axis_label_data(axis_kind, view, margin_val, is_secondary, name):
     if axis_kind == AxisKind.X:
         y_pos = x_axis_y_pos(view=view, margin=margin_val, is_secondary=is_secondary)
-        pos = Coord(x=Coord1D.relative(0.5), y=y_pos)
+        pos = Coord(x=Coord1D.create_relative(0.5), y=y_pos)
         name = f"y{name}"
         rotate_val = 0.0
         return pos, name, rotate_val
     else:  # AxisKind.Y
         x_pos = x_axis_y_pos(view=view, margin=margin_val, is_secondary=is_secondary)
-        pos = Coord(x=x_pos, y=Coord1D.relative(0.5))
+        pos = Coord(x=x_pos, y=Coord1D.create_relative(0.5))
         name = f"y{name}"
         rotate_val = -90.0
         return pos, name, rotate_val

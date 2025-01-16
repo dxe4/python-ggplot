@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from python_ggplot.coord import Coord
-from python_ggplot.core_objects import (
+from python_ggplot.core.coord.objects import Coord
+from python_ggplot.core.objects import (
     BLACK,
     TRANSPARENT,
     Color,
@@ -17,7 +17,7 @@ from python_ggplot.graphics.initialize import (
     init_rect_from_coord,
     init_text,
 )
-from python_ggplot.views import ViewPort
+from python_ggplot.graphics.views import ViewPort
 
 
 @dataclass

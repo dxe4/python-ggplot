@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar
 
-from python_ggplot.coord import Coord, Coord1D
-from python_ggplot.core_objects import (
+from python_ggplot.core.coord.objects import Coord, Coord1D
+from python_ggplot.core.objects import (
     BLACK,
     AxisKind,
     Color,
@@ -16,10 +16,10 @@ from python_ggplot.core_objects import (
     TickKind,
     UnitType,
 )
-from python_ggplot.units import Quantity
+from python_ggplot.core.units.objects import Quantity
 
 if TYPE_CHECKING:
-    from python_ggplot.views import ViewPort
+    from python_ggplot.graphics.views import ViewPort
 
 
 @dataclass

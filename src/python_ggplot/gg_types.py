@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Callable, List, Optional, OrderedDict, Set, Tuple, Union
 
-from python_ggplot.core_objects import (
+from python_ggplot.core.objects import (
     AxisKind,
     Color,
     Duration,

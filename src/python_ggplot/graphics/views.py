@@ -2,17 +2,17 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from python_ggplot.coord import (
+from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
     CoordsInput,
     RelativeCoordType,
     path_coord_view_port,
 )
-from python_ggplot.core_objects import AxisKind, GGException, Scale, Style, UnitType
+from python_ggplot.core.objects import AxisKind, GGException, Scale, Style, UnitType
 from python_ggplot.graphics.objects import GraphicsObject
-from python_ggplot.quantity_convert import quantitiy_to_coord
-from python_ggplot.units import PointUnit, Quantity, RelativeUnit
+from python_ggplot.core.units.convert import quantitiy_to_coord
+from python_ggplot.core.units.objects import PointUnit, Quantity, RelativeUnit
 
 
 @dataclass

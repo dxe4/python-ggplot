@@ -2,11 +2,11 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Optional
 
-from python_ggplot.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
-from python_ggplot.core_objects import AxisKind, GGException, Scale, UnitType
+from python_ggplot.core.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
+from python_ggplot.core.objects import AxisKind, GGException, Scale, UnitType
 
 if TYPE_CHECKING:
-    from python_ggplot.views import ViewPort
+    from python_ggplot.graphics.views import ViewPort
 
 
 def unity_type_to_quantity_cls(kind: UnitType):
@@ -56,14 +56,14 @@ class Quantity:
     def to_relative_from_view(
         self, view: "ViewPort", axis_kind: AxisKind
     ) -> "Quantity":
-        from python_ggplot.quantity_convert import (
+        from python_ggplot.core.units.convert import (
             to_relative_from_view,
         )  # pylint: disable=all
 
         return to_relative_from_view(self, view, axis_kind)
 
     def to(self, kind: UnitType, length=None, scale=None):
-        from python_ggplot.quantity_convert import (
+        from python_ggplot.core.units.convert import (
             convert_quantity,
         )  # pylint: disable=all
 

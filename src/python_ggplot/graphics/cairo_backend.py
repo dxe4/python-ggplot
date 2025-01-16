@@ -304,7 +304,7 @@ def init_image(backend, filename, width, height, ftype):
 
     backend = CairoBackend(surface)
     # todo fix this later
-    from python_ggplot.core_objects import Image
+    from python_ggplot.core.objects import Image
 
     return Image(filename, width, height, ftype, backend)
 
