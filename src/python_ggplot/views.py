@@ -82,6 +82,20 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
+    def update_data_scale(self):
+        self.update_data_scale_for_objects(self.objects)
+        for child in self.children:
+            child.x_scale = self.x_scale
+            child.y_scale = self.y_scale
+            child.update_data_scale()
+
+    def update_data_scale_for_objects(self, objects: List[GraphicsObject]):
+        for obj in objects:
+            self.update_data_scale_for_object(obj)
+
+    def update_data_scale_for_object(self, obj: GraphicsObject):
+        obj.update_view_scale(self)
+
     def get_width(self) -> Quantity:
         return self.width.to_relative(length=self.w_img)
 
@@ -131,12 +145,6 @@ class ViewPort:
 
     def bottom(self):
         return self.origin.y.to_relative(None)
-
-    def get_width(self):
-        return self.height.to_relative(length=self.w_img)
-
-    def get_height(self):
-        return self.height.to_relative(length=self.h_img)
 
     def length_from_axis(self, axis_kind: AxisKind):
         if axis_kind == AxisKind.X:

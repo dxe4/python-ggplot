@@ -53,6 +53,9 @@ class GraphicsObject:
     config: GraphicsObjectConfig
     go_type: GOType
 
+    def update_view_scale(self, view: "ViewPort"):
+        raise GGException("this should never reach")
+
     def embed_into(
         self, view: "ViewPort", axis: Optional[AxisKind] = None
     ) -> "GraphicsObject":
@@ -82,6 +85,10 @@ class StartStopData:
 class GOAxis(GraphicsObject):
     data: StartStopData
 
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.data.start)
+        view.update_scale(self.data.stop)
+
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.AXIS
         super().__init__(*args, **kwargs)
@@ -90,6 +97,10 @@ class GOAxis(GraphicsObject):
 @dataclass
 class GOLine(GraphicsObject):
     data: StartStopData
+
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.data.start)
+        view.update_scale(self.data.stop)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.LINE
@@ -108,6 +119,9 @@ class TextData:
 class GOText(GraphicsObject):
     data: TextData
 
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.data.pos)
+
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.TEXT
         super().__init__(*args, **kwargs)
@@ -116,6 +130,9 @@ class GOText(GraphicsObject):
 @dataclass
 class GOLabel(GraphicsObject):
     data: TextData
+
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.data.pos)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.LABEL
@@ -126,16 +143,22 @@ class GOLabel(GraphicsObject):
 class GOTickLabel(GraphicsObject):
     data: TextData
 
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.data.pos)
+
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.TICK_LABEL
         super().__init__(*args, **kwargs)
 
 
 @dataclass
-class GOREct(GraphicsObject):
+class GORect(GraphicsObject):
     origin: Coord
     width: Quantity
     height: Quantity
+
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.origin)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.RECT_DATA
@@ -148,6 +171,12 @@ class GOGrid(GraphicsObject):
     origin_diagonal: Coord
     x_pos: List[Coord1D]
     y_pos: List[Coord1D]
+
+    def update_view_scale(self, view: "ViewPort"):
+        for x_pos in self.x_pos:
+            view.update_scale_1d(x_pos)
+        for y_pos in self.y_pos:
+            view.update_scale_1d(y_pos)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.GRID_DATA
@@ -182,11 +211,14 @@ class GOPoint(GraphicsObject):
 
 @dataclass
 class GOManyPoints(GraphicsObject):
-
     marker: MarkerKind
     pos: List[Coord]
     size: float
     color: Color
+
+    def update_view_scale(self, view: "ViewPort"):
+        for pos in self.pos:
+            view.update_scale(pos)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.MANY_POINTS_DATA
@@ -196,6 +228,10 @@ class GOManyPoints(GraphicsObject):
 @dataclass
 class GOPolyLine(GraphicsObject):
     pos: List[Coord]
+
+    def update_view_scale(self, view: "ViewPort"):
+        for pos in self.pos:
+            view.update_scale(pos)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.POLYLINE_DATA
@@ -211,6 +247,9 @@ class GORaster(GraphicsObject):
     block_y: int
     draw_cb: Callable[[], List[int]]
 
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.origin)
+
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.RASTER_DATA
         super().__init__(*args, **kwargs)
@@ -219,6 +258,13 @@ class GORaster(GraphicsObject):
 @dataclass
 class GOComposite(GraphicsObject):
     kind: CompositeKind
+
+    def update_view_scale(self, view: "ViewPort"):
+        if self.config.children is None:
+            return
+
+        for go in self.config.children:
+            go.update_view_scale(view)
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.COMPOSITE_DATA
@@ -256,3 +302,7 @@ def format_tick_value(f: float, scale: Optional[float] = None) -> str:
         return f"{f:5.3e}".rstrip("0")
     else:
         return f"{f:.5f}".rstrip("0")
+
+
+def go_update_data_scale(go: GraphicsObject, view: "ViewPort"):
+    go.update_view_scale(view)

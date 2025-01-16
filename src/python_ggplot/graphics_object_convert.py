@@ -11,7 +11,7 @@ from python_ggplot.graphics_objects import (
     GOPoint,
     GOPolyLine,
     GORaster,
-    GOREct,
+    GORect,
     GOText,
     GOTick,
     GOTickLabel,
@@ -51,7 +51,7 @@ def text_to_relative(data: GOConvertData) -> GraphicsObject:
 
 
 def rect_to_relative(data: GOConvertData) -> GraphicsObject:
-    obj = cast(GOREct, data.graphics_obj)
+    obj = cast(GORect, data.graphics_obj)
     obj.origin = obj.origin.to_relative()
     obj.width = obj.width.to_relative()
     obj.height = obj.height.to_relative()

@@ -13,7 +13,7 @@ from python_ggplot.graphics_objects import (
     GOPoint,
     GOPolyLine,
     GORaster,
-    GOREct,
+    GORect,
     GOText,
     GOTick,
     GOTickLabel,
@@ -153,7 +153,7 @@ def go_embed_start_stop(data: GOEmbedData) -> GraphicsObject:
 
 
 def go_embed_rect(data: GOEmbedData) -> GraphicsObject:
-    obj = cast(GOREct, data.graphics_obj)
+    obj = cast(GORect, data.graphics_obj)
     obj.origin = obj.origin.embed_into(data.view)
     obj.width = obj.width.embed_into(data.view)
     obj.height = obj.height.embed_into(data.view)
