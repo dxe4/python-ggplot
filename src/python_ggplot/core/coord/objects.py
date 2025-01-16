@@ -190,6 +190,10 @@ class Coord1D:
     def create_data(pos: float, scale: Scale, axis_kind: AxisKind) -> "Coord1D":
         return DataCoordType(pos, data=DataCoord(scale=scale, axis_kind=axis_kind))
 
+    @staticmethod
+    def create_point(pos: float, length: Optional[Quantity] = None) -> "Coord1D":
+        return PointCoordType(pos, data=LengthCoord(length=length))
+
     def update_scale(self, view: "ViewPort"):
         # only applicable to DataCoord
         pass
@@ -519,6 +523,12 @@ class StrHeightCoordType(Coord1D):
 class Coord:
     x: Coord1D
     y: Coord1D
+
+    def dimension_for_axis(self, axis: AxisKind) -> Coord1D:
+        if axis == AxisKind.X:
+            return self.x
+        else:
+            return self.y
 
     @staticmethod
     def relative(x: float, y: float) -> "Coord":

@@ -1,3 +1,4 @@
+import math
 from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
@@ -63,3 +64,25 @@ def to_cairo_font_slant(font: str) -> str:
 
 def to_cairo_font_weight(font: "Font") -> str:
     return "Bold" if font.bold else "Normal"
+
+
+def nice_number(val: float, round_: bool) -> float:
+    exponent = math.floor(math.log10(val))
+    frac = val / math.pow(10.0, exponent)
+
+    if round_:
+        if frac < 1.5:
+            nice_frac = 1.0
+        elif frac < 3.0:
+            nice_frac = 2.0
+        elif frac < 7.0:
+            nice_frac = 5.0
+        else:
+            nice_frac = 10.0
+    else:
+        if frac > 5.0:
+            nice_frac = 10.0
+        else:
+            nice_frac = frac
+
+    return nice_frac * math.pow(10.0, exponent)

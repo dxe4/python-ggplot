@@ -1,9 +1,11 @@
 # todo this has to be split up into multiple files
+import math
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Tuple, Union
 
+from python_ggplot.core.common import linspace, nice_number
 from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
@@ -12,21 +14,25 @@ from python_ggplot.core.coord.objects import (
     coord_quantity_sub,
     path_coord_view_port,
 )
+from python_ggplot.core.objects import BLACK  # GREY20,; GREY92,;
 from python_ggplot.core.objects import (
-    BLACK,  # GREY20,; GREY92,; WHITE,
     TRANSPARENT,
+    WHITE,
     AxisKind,
     Color,
     CompositeKind,
     ErrorBarKind,
     Font,
     GGException,
+    GOGrid,
     Gradient,
     LineType,
     MarkerKind,
     Point,
+    Scale,
     Style,
     TextAlignKind,
+    TickKind,
     UnitType,
 )
 from python_ggplot.core.units.objects import CentimeterUnit, Quantity
@@ -41,14 +47,16 @@ from python_ggplot.graphics.objects import (
     GORaster,
     GORect,
     GOText,
+    GOTick,
     GOTickLabel,
     GOType,
     GraphicsObject,
     GraphicsObjectConfig,
     StartStopData,
     TextData,
+    format_tick_value,
 )
-from python_ggplot.graphics.views import ViewPort, x_axis_y_pos
+from python_ggplot.graphics.views import ViewPort, x_axis_y_pos, y_axis_x_pos
 
 
 @dataclass
@@ -77,31 +85,6 @@ class InitTextInput:
     @classmethod
     def new(cls, text: str, align_kind: TextAlignKind) -> "InitTextInput":
         return cls(text=text, align_kind=align_kind)
-
-
-@dataclass
-class DrawBoundaryInput:
-    color: Optional["Color"] = None
-    write_name: Optional[bool] = False
-    write_number: Optional[int] = None
-    style: Optional[Style] = None
-
-    def get_style(self) -> Style:
-        if self.style is not None:
-            return self.style
-
-        color = self.color or BLACK
-        return Style(
-            color=color,
-            line_width=1.0,
-            size=None,
-            line_type=LineType.SOLID,
-            fill_color=TRANSPARENT,
-            marker=None,
-            error_bar_kind=None,
-            gradient=None,
-            font=None,
-        )
 
 
 @dataclass
@@ -284,44 +267,6 @@ def init_tick_label(
         config=GraphicsObjectConfig(rotate=init_text_data.rotate),
         data=data,
     )
-
-
-def draw_boundary(view: "ViewPort", draw_boundary_input: DrawBoundaryInput) -> None:
-    style = draw_boundary_input.get_style()
-
-    rect = init_rect_from_coord(
-        view,
-        InitRectInput(style=style),
-        CoordsInput(
-            left=0.0,
-            bottom=0.0,
-            width=1.0,
-            height=1.0,
-        ),
-    )
-    view.add_obj(rect)
-
-    if draw_boundary_input.write_name:
-        origin = Coord.relative(0.5, 0.5)
-
-        data = InitTextInput(view.name, TextAlignKind.CENTER)
-        text = init_text(view, origin, data)
-        if text.config.style is None:
-            text.config.style = view.style
-
-        view.objects.append(text)
-
-    if draw_boundary_input.write_number is not None:
-        origin = Coord.relative(0.5, 0.5)
-
-        data = InitTextInput(
-            str(draw_boundary_input.write_number), TextAlignKind.CENTER
-        )
-        text = init_text(view, origin, data)
-        if text.config.style is None:
-            text.config.style = view.style
-
-        view.objects.append(text)
 
 
 init_text_lookup = {
@@ -739,4 +684,468 @@ def ylabel_from_float(
         is_custom_margin=False,
         is_secondary=is_secondary,
         rotate=rotate,
+    )
+
+
+# TODO start - this should move out
+def x_label_origin_offset(
+    view: ViewPort, font: Font, is_secondary: Optional[bool] = False
+) -> Coord1D:
+    pos = -1.15 if not is_secondary else 1.15
+    return Coord1D.create_str_width(pos, font).to_relative(view.point_width())
+
+
+def y_label_origin_offset(
+    view: ViewPort, font: Font, is_secondary: Optional[bool] = False
+) -> Coord1D:
+    pos = 1.75 if not is_secondary else -1.75
+    return Coord1D.create_str_height(pos, font).to_relative(view.point_height())
+
+
+def set_text_align_kind(
+    axis_kind: AxisKind,
+    is_secondary: Optional[bool] = False,
+    align_override: Optional[TextAlignKind] = None,
+) -> TextAlignKind:
+    if align_override is not None:
+        return align_override
+
+    if axis_kind == AxisKind.X:
+        return TextAlignKind.CENTER
+    else:  # axis_kind == AxisKind.Y
+        return TextAlignKind.RIGHT if is_secondary else TextAlignKind.LEFT
+
+
+# TODO end
+
+
+def init_tick_label_with_override(
+    view: ViewPort,
+    tick: GOTick,
+    label_text: str,
+    axis_kind: AxisKind,
+    data: InitTextInput,
+    align_override: Optional[TextAlignKind] = None,
+    is_secondary: Optional[bool] = None,
+    margin: Optional[Coord1D] = None,
+) -> GOText:
+
+    font_ = data.font or Font(size=1.0)
+    loc = tick.pos
+    align_to = set_text_align_kind(axis_kind, is_secondary, align_override)
+
+    data = InitTextInput(
+        text=label_text,
+        align_kind=align_to,
+        font=font_,
+        rotate=data.rotate,
+        name=data.name,
+    )
+
+    if tick.axis == AxisKind.X:
+        y_offset = margin or y_label_origin_offset(view, font_, is_secondary)
+        origin = Coord(x=loc.x, y=(loc.y + y_offset).to_relative(None))
+        return init_text(view, origin, data)
+
+    elif tick.axis == AxisKind.Y:
+        x_offset = margin or y_label_origin_offset(view, font_, is_secondary)
+        origin = Coord(x=(loc.x + x_offset).to_relative(None), y=loc.y)
+        return init_text(view, origin, data)
+    else:
+        raise GGException("unexpected axis")
+
+
+def axis_coord(
+    coord: Coord1D, axis_kind: AxisKind, is_secondary: Optional[bool] = None
+) -> Coord:
+    if axis_kind == AxisKind.X:
+        return Coord(x=coord, y=x_axis_y_pos(None, None, is_secondary))
+    else:  # AxisKind.Y
+        return Coord(x=y_axis_x_pos(None, None, is_secondary), y=coord)
+
+
+TickFormat = Callable[[float], str]
+
+
+@dataclass
+class TickLabelsInput:
+    font: Optional["Font"] = None
+    is_secondary: Optional[bool] = None
+    margin: Optional[Coord1D] = None
+    format_fn: Optional[TickFormat] = None
+    rotate: Optional[float] = None
+    align_to_override: Optional["TextAlignKind"] = None
+
+
+def tick_labels(
+    view: ViewPort, ticks: List[GOTick], tick_labels_input: TickLabelsInput
+) -> List[GraphicsObject]:
+    # todo move to view ?
+    if not ticks:
+        raise GGException("empty ticks vector")
+
+    axis_kind = ticks[0].axis
+    tick_labels_input.font = tick_labels_input.font or Font(size=12.0)
+
+    positions = [x.pos.x.pos if axis_kind == AxisKind.X else x.pos.y.pos for x in ticks]
+
+    max_pos = max(positions)
+    min_pos = min(positions)
+
+    tick_scale = (max_pos - min_pos) / (len(positions) - 1)
+
+    def default_format(f: float) -> str:
+        return format_tick_value(f, tick_scale)
+
+    format_fn = tick_labels_input.format_fn or default_format
+
+    strs = [format_fn(p) for p in positions]
+    strs_len = len(strs)
+    strs_unique = list(dict.fromkeys(strs))  # Unique while preserving order
+    strs_unique_len = len(strs_unique)
+
+    rotate = tick_labels_input.rotate
+    new_positions = []
+    result: List[GraphicsObject] = []
+
+    if strs_unique_len < strs_len:
+        new_positions = [x - min_pos for x in positions]
+        max_tick = ticks[-1]
+
+        if axis_kind == AxisKind.X:
+            coord = axis_coord(
+                max_tick.pos.x, AxisKind.X, tick_labels_input.is_secondary
+            )
+            pos = (
+                coord.y.to_points(view.h_img).pos
+                - Quantity.centimeters(1.5).to_points().val
+            )
+            coord.y = Coord1D.create_point(pos)
+        else:  # AxisKind.Y
+            coord = axis_coord(
+                max_tick.pos.y, AxisKind.Y, tick_labels_input.is_secondary
+            )
+            pos = (
+                coord.x.to_points(view.w_img).pos
+                - Quantity.centimeters(2.0).to_points().val
+            )
+            rotate = rotate or -90.0
+            coord.y = Coord1D.create_point(pos, None)
+
+        text = f"+{format_fn(min_pos)}"
+        data = InitTextInput(
+            text=text,
+            align_kind=TextAlignKind.RIGHT,
+            font=tick_labels_input.font,
+            rotate=rotate,
+            name="axis_substraction",
+        )
+        new_text = init_text(view, coord, data)
+        result.append(new_text)
+
+    for idx, obj in enumerate(ticks):
+        label_text = format_fn(new_positions[idx]) if new_positions else strs[idx]
+
+        data = InitTextInput(
+            align_kind=TextAlignKind.RIGHT,
+            font=tick_labels_input.font,
+            rotate=rotate,
+            name="tickLabel",
+        )
+        new_tick_label = init_tick_label_with_override(
+            view=view,
+            tick=obj,
+            label_text=label_text,
+            axis_kind=axis_kind,
+            data=data,
+        )
+        result.append(new_tick_label)
+
+    return result
+
+
+def init_tick(
+    view: ViewPort,
+    axis_kind: AxisKind,
+    major: bool,
+    at: Coord,
+    tick_kind: Optional[TickKind] = None,
+    style: Optional[Style] = None,
+    name: Optional[str] = None,
+    is_secondary: Optional[bool] = False,
+) -> GOTick:
+    name = name or "tick"
+    tick_kind = tick_kind or TickKind.ONE_SIDE
+
+    default_style = Style(
+        line_width=1.0, color=BLACK, size=5.0, line_type=LineType.SOLID
+    )
+    style = style or default_style
+
+    return GOTick(
+        name=name,
+        config=GraphicsObjectConfig(style=style),
+        major=major,
+        pos=path_coord_view_port(at, view),
+        axis=axis_kind,
+        kind=tick_kind,
+        secondary=is_secondary,
+    )
+
+
+def tick_labels_from_coord(
+    view: "ViewPort",
+    tick_pos: list["Coord1D"],
+    tick_labels_list: list[str],
+    axis_kind: AxisKind,
+    font: Optional[Font] = None,
+    is_secondary: Optional[bool] = False,
+    rotate: Optional[float] = None,
+    margin: Optional[Coord1D] = None,
+    align_override: Optional[TextAlignKind] = None,
+) -> list[tuple[GOTick, GOText]]:
+
+    if len(tick_pos) != len(tick_labels_list):
+        raise GGException("Must have as many tick positions as labels")
+
+    font = font or Font(size=8.0)
+
+    result = []
+    for idx, pos in enumerate(tick_pos):
+        at = axis_coord(pos, axis_kind, is_secondary)
+        tick = init_tick(
+            view=view,
+            axis_kind=axis_kind,
+            major=True,
+            at=at,
+            tick_kind=None,
+            style=None,
+            name=None,
+            is_secondary=is_secondary,
+        )
+
+        data = InitTextInput(font=font, rotate=rotate)
+
+        result.append(
+            (
+                tick,
+                init_tick_label_with_override(
+                    view=view,
+                    tick=tick,
+                    label_text=tick_labels_list[idx],
+                    axis_kind=axis_kind,
+                    data=data,
+                    align_override=align_override,
+                    is_secondary=is_secondary,
+                    margin=margin,
+                ),
+            )
+        )
+
+    return result
+
+
+def calc_tick_locations(scale: Scale, num_ticks: int) -> Tuple[Scale, float, int]:
+    if scale.low == scale.high:
+        raise GGException("a data scale is required to calculate tick positions")
+
+    axis_end = scale.high
+    axis_start = scale.low
+    # axis_width = axis_end - axis_start
+
+    nice_range = nice_number(axis_end, False)
+    nice_tick = nice_number(nice_range / (num_ticks - 1), True)
+
+    new_axis_start = math.floor(axis_start / nice_tick) * nice_tick
+    new_axis_end = math.ceil(axis_end / nice_tick) * nice_tick
+
+    new_scale = Scale(low=new_axis_start, high=new_axis_end)
+    num_ticks_actual = round((new_axis_end - new_axis_start) / nice_tick)
+
+    return new_scale, nice_tick, num_ticks_actual
+
+
+def filter_by_bound_scale(
+    tick_pos: List[Coord], axis_kind: AxisKind, bound_scale: Optional[Scale] = None
+) -> List[Coord]:
+    if bound_scale is not None:
+        result = [
+            coord
+            for coord in tick_pos
+            if bound_scale.low
+            <= coord.dimension_for_axis(axis_kind).pos
+            <= bound_scale.high
+        ]
+        return result
+    else:
+        return tick_pos
+
+
+def init_ticks(
+    view: ViewPort,
+    axis_kind: AxisKind,
+    tick_locs: List[Coord],
+    num_ticks: Optional[int] = None,
+    tick_kind: Optional[TickKind] = None,
+    major: bool = True,
+    style: Optional[Style] = None,
+    update_scale: bool = True,
+    is_secondary: Optional[bool] = None,
+    bound_scale: Optional[Scale] = None,
+) -> List[GraphicsObject]:
+    result: List[GraphicsObject] = []
+    num_ticks = num_ticks or 0
+    tick_kind = tick_kind or TickKind.ONE_SIDE
+
+    if num_ticks == 0 and not tick_locs:
+        raise GGException("need to provide num_ticks or tick_locks")
+
+    if num_ticks == 0 and tick_locs:
+        for location in tick_locs:
+            new_obj = init_tick(
+                view,
+                axis_kind,
+                major,
+                location,
+                tick_kind=tick_kind,
+                style=style,
+                is_secondary=is_secondary,
+            )
+            result.append(new_obj)
+    elif num_ticks > 0:
+        scale = view.scale_for_axis(axis_kind)
+        if scale is None:
+            raise GGException("expected scales on view")
+
+        new_scale, _, new_num_ticks = calc_tick_locations(scale, num_ticks)
+        tick_scale = bound_scale or new_scale
+
+        temp = linspace(new_scale.low, new_scale.high, new_num_ticks + 1)
+        auto_tick_locations = [
+            axis_coord(
+                Coord1D.create_data(pos, tick_scale, axis_kind),
+                axis_kind,
+                is_secondary,
+            )
+            for pos in temp
+        ]
+
+        auto_tick_locations = filter_by_bound_scale(
+            auto_tick_locations, axis_kind, bound_scale
+        )
+        result = init_ticks(
+            view,
+            axis_kind,
+            num_ticks=None,
+            tick_locs=auto_tick_locations,
+            tick_kind=tick_kind,
+            major=major,
+            style=style,
+            update_scale=update_scale,
+            is_secondary=is_secondary,
+            bound_scale=bound_scale,
+        )
+
+        if axis_kind == AxisKind.X:
+            view.x_scale = tick_scale
+        else:
+            view.y_scale = tick_scale
+
+    if update_scale:
+        view.update_data_scale()
+
+    return result
+
+
+def xticks(
+    view: ViewPort,
+    tick_locs: List[Coord],
+    num_ticks: Optional[int] = None,
+    tick_kind: Optional[TickKind] = None,
+    style: Optional[Style] = None,
+    update_scale: bool = True,
+    is_secondary: bool = False,
+    bound_scale: Optional[Scale] = None,
+) -> List[GraphicsObject]:
+    return init_ticks(
+        view,
+        AxisKind.X,
+        tick_locs,
+        num_ticks=num_ticks or 10,
+        tick_kind=tick_kind,
+        major=True,
+        style=style,
+        update_scale=update_scale,
+        is_secondary=is_secondary,
+        bound_scale=bound_scale,
+    )
+
+
+def yticks(
+    view: ViewPort,
+    tick_locs: List[Coord],
+    num_ticks: Optional[int] = None,
+    tick_kind: Optional[TickKind] = None,
+    style: Optional[Style] = None,
+    update_scale: bool = True,
+    is_secondary: bool = False,
+    bound_scale: Optional[Scale] = None,
+) -> List[GraphicsObject]:
+    return init_ticks(
+        view,
+        AxisKind.Y,
+        tick_locs,
+        num_ticks=num_ticks or 10,
+        tick_kind=tick_kind,
+        major=True,
+        style=style,
+        update_scale=update_scale,
+        is_secondary=is_secondary,
+        bound_scale=bound_scale,
+    )
+
+
+def calc_minor_ticks(ticks: List[GOTick], axis_kind: AxisKind) -> List[Coord1D]:
+    result = []
+    first = ticks[0]
+
+    scale = first.scale_for_axis(axis_kind)
+
+    if scale is None:
+        raise GGException("scale not found")
+
+    cdiv2 = Coord1D.create_data(2.0, scale=scale, axis_kind=axis_kind)
+
+    for i, tick in enumerate(ticks):
+        if axis_kind == AxisKind.X:
+            result.append((tick.pos.x + ticks[i + 1].pos.x) / cdiv2)
+        else:  # AxisKind.Y
+            result.append((tick.pos.y + ticks[i + 1].pos.y) / cdiv2)
+
+    return result
+
+
+def init_grid_lines(
+    x_ticks=None, y_ticks=None, major: bool = True, style=None, name="grid_lines"
+) -> GOGrid:
+    default_style = Style(
+        size=1.0 if major else 0.3, color=WHITE, line_type=LineType.SOLID
+    )
+
+    style = style or default_style
+    x_ticks = x_ticks or []
+    y_ticks = y_ticks or []
+
+    if major:
+        x_ticks = [obj.get_pos().x for obj in x_ticks]
+        y_ticks = [obj.get_pos().y for obj in y_ticks]
+    else:
+        x_ticks = calc_minor_ticks(x_ticks, AxisKind.X)
+        y_ticks = calc_minor_ticks(y_ticks, AxisKind.Y)
+
+    return GOGrid(
+        name=name,
+        config=GraphicsObjectConfig(style=style),
+        x_pos=x_ticks,
+        y_pos=y_ticks,
     )

@@ -88,6 +88,13 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
+    def scale_for_axis(self, axis: AxisKind) -> Optional[Scale]:
+        if axis == AxisKind.X:
+            return self.x_scale
+        if axis == AxisKind.Y:
+            return self.y_scale
+        raise GGException("unexpected")
+
     def add_obj(self, obj: GraphicsObject):
         self.objects.append(obj)
 

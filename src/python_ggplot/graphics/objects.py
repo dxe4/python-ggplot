@@ -11,6 +11,7 @@ from python_ggplot.core.objects import (
     Font,
     GGException,
     MarkerKind,
+    Scale,
     Style,
     TextAlignKind,
     TickKind,
@@ -54,6 +55,9 @@ class GraphicsObject:
     name: str
     config: GraphicsObjectConfig
     go_type: GOType
+
+    def get_pos(self):
+        raise GGException("graphics object has no position")
 
     def update_view_scale(self, view: "ViewPort"):
         raise GGException("this should never reach")
@@ -121,6 +125,9 @@ class TextData:
 class GOText(GraphicsObject):
     data: TextData
 
+    def get_pos(self):
+        return self.data.pos
+
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.pos)
 
@@ -133,6 +140,9 @@ class GOText(GraphicsObject):
 class GOLabel(GraphicsObject):
     data: TextData
 
+    def get_pos(self):
+        return self.data.pos
+
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.pos)
 
@@ -144,6 +154,9 @@ class GOLabel(GraphicsObject):
 @dataclass
 class GOTickLabel(GraphicsObject):
     data: TextData
+
+    def get_pos(self):
+        return self.data.pos
 
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.pos)
@@ -169,10 +182,10 @@ class GORect(GraphicsObject):
 
 @dataclass
 class GOGrid(GraphicsObject):
-    origin: Coord  # todo is this optinal? check later
-    origin_diagonal: Coord
     x_pos: List[Coord1D]
     y_pos: List[Coord1D]
+    origin: Optional[Coord]
+    origin_diagonal: Optional[Coord]
 
     def update_view_scale(self, view: "ViewPort"):
         for x_pos in self.x_pos:
@@ -187,12 +200,21 @@ class GOGrid(GraphicsObject):
 
 @dataclass
 class GOTick(GraphicsObject):
-
     major: bool
     pos: Coord
     axis: AxisKind
     kind: TickKind
     secondary: bool
+
+    def get_pos(self):
+        return self.pos
+
+    def scale_for_axis(self, axis: AxisKind) -> Scale:
+        if axis == AxisKind.X:
+            return self.pos.x.get_scale()
+        if axis == AxisKind.Y:
+            return self.pos.y.get_scale()
+        raise GGException("unexpected")
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.TICK_DATA
@@ -205,6 +227,9 @@ class GOPoint(GraphicsObject):
     pos: Coord
     size: float
     color: Color
+
+    def get_pos(self):
+        return self.pos
 
     def __init__(self, *args, **kwargs):
         kwargs["go_type"] = GOType.POINT_DATA
