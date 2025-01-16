@@ -70,7 +70,7 @@ class GraphicsObject:
     def to_relative(
         self, view: Optional["ViewPort"] = None, axis: Optional[AxisKind] = None
     ) -> "GraphicsObject":
-        from python_ggplot.graphics_object_convert import (
+        from python_ggplot.graphics.convert import (
             graphics_object_to_relative,
         )  # pylint: disable=all
 

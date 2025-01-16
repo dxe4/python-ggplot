@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, cast
 
 from python_ggplot.core_objects import GGException
-from python_ggplot.graphics_objects import (
+from python_ggplot.graphics.objects import (
     GOAxis,
     GOGrid,
     GOLabel,

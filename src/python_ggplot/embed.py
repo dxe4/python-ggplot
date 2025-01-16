@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, cast
 
 from python_ggplot.coord import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core_objects import AxisKind, GGException, UnitType
-from python_ggplot.graphics_objects import (
+from python_ggplot.graphics.objects import (
     GOAxis,
     GOGrid,
     GOLabel,

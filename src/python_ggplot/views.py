@@ -10,7 +10,7 @@ from python_ggplot.coord import (
     path_coord_view_port,
 )
 from python_ggplot.core_objects import AxisKind, GGException, Scale, Style, UnitType
-from python_ggplot.graphics_objects import GraphicsObject
+from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.quantity_convert import quantitiy_to_coord
 from python_ggplot.units import PointUnit, Quantity, RelativeUnit
 
