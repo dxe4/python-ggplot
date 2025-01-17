@@ -10,6 +10,7 @@ from python_ggplot.core.objects import (
     CompositeKind,
     Font,
     GGException,
+    Image,
     MarkerKind,
     Point,
     Scale,
@@ -17,7 +18,6 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     TickKind,
     UnitType,
-    Image,
 )
 from python_ggplot.core.units.objects import Quantity
 
@@ -33,10 +33,10 @@ def mut_coord_to_abs_image(coord, img):
 
 @dataclass
 class GraphicsObjectConfig:
+    children: List["GraphicsObject"] = field(default_factory=list)
     style: Optional[Style] = None
     rotate_in_view: Optional[tuple[float, Point]] = None
     rotate: Optional[float] = None
-    children: Optional[List["GraphicsObject"]] = field(default_factory=list)
 
 
 class GOType(Enum):

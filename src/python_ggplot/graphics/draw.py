@@ -9,6 +9,7 @@ from python_ggplot.core.objects import (
     TRANSPARENT,
     AxisKind,
     Color,
+    FileTypeKind,
     GGException,
     Image,
     LineType,
@@ -21,6 +22,7 @@ from python_ggplot.core.objects import (
     UnitType,
 )
 from python_ggplot.core.units.objects import Quantity
+from python_ggplot.graphics.cairo_backend import init_image
 from python_ggplot.graphics.initialize import (
     CoordsInput,
     InitRectInput,
@@ -41,8 +43,9 @@ from python_ggplot.graphics.objects import (
     GOText,
     GOTick,
     GOTickLabel,
+    GOType,
+    GraphicsObject,
     GraphicsObjectConfig,
-    GraphicsObject
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 
@@ -561,3 +564,78 @@ def coord1d_to_abs_image(coord, img, axis_kind):
 
 def to_global_coords(gobj: GraphicsObject, img: Image):
     gobj.to_global_coords(img)
+
+
+draw_lookup = {
+    # start/stop data
+    GOType.LINE: draw_line,
+    GOType.AXIS: draw_line,
+    # text
+    GOType.TEXT: draw_text,
+    GOType.TICK_LABEL: draw_text,
+    GOType.LABEL: draw_text,
+    # others
+    GOType.GRID_DATA: draw_grid,
+    GOType.TICK_DATA: draw_tick,
+    GOType.POINT_DATA: draw_point,
+    GOType.MANY_POINTS_DATA: draw_many_points,
+    GOType.POLYLINE_DATA: draw_polyline,
+    GOType.RECT_DATA: draw_rect,
+    GOType.RASTER_DATA: draw_raster,
+}
+
+
+def draw_graphics_object(img: Image, gobj: GraphicsObject):
+    """
+    TODO fix the type ignore
+    we can do gobj.draw()
+    but for now we prefer backwards compat
+    """
+    to_global_coords(gobj, img)
+    if not gobj.go_type == GOType.COMPOSITE_DATA:
+        draw_lookup[gobj.go_type](img, gobj)  # type: ignore
+
+
+def transform_and_draw(
+    img: Image, gobj: GraphicsObject, view: ViewPort, center_x: float, center_y: float
+):
+    if view.rotate:
+        point = Point(x=center_x, y=center_y)
+        scaled_point = scale_point(point, img.width, img.height)
+        gobj.config.rotate_in_view = (view.rotate, scaled_point)
+
+    gobj.embed_into(view)
+    draw_graphics_object(img, gobj)
+
+
+def draw_viewport(img: Image, view: ViewPort):
+    center_x, center_y = view.get_center()
+
+    for gobj in view.objects:
+
+        transform_and_draw(img, gobj, view, center_x, center_y)
+        for go_child in gobj.config.children:
+            transform_and_draw(img, go_child, view, center_x, center_y)
+
+    for view_child in view.children:
+        embeded_view = view_child.embed_into(view)
+        # todo implement quantity comparison, low priority
+        if (view_child.h_img.val != view.h_img.val) or (
+            view_child.w_img.val != view.w_img.val
+        ):
+            raise GGException("expected h_img and w_img to match")
+
+        if view.rotate and embeded_view.rotate is None:
+            embeded_view.rotate = view.rotate
+
+        draw_viewport(img, embeded_view)
+
+
+def draw_to_file(view: "ViewPort", filename: str):
+    # TODO PNG is hardcoded which is fine for now
+    width = round(view.w_img.val)
+    height = round(view.h_img.val)
+    img = init_image(filename, width, height, FileTypeKind.PNG)
+    draw_viewport(img, view)
+    # Save the surface to a PNG file
+    img.backend.canvas.write_to_png(filename)

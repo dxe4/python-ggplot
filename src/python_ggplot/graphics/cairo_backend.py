@@ -296,7 +296,7 @@ class CairoBackend:
         return bytearray(input_data)
 
 
-def init_image(backend, filename, width, height, ftype):
+def init_image(filename, width, height, ftype):
     if ftype == "Png":
         surface = ImageSurface(FORMAT_ARGB32, width, height)
     else:
