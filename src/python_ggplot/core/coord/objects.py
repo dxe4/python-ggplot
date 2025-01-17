@@ -4,7 +4,14 @@ from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type
 
 from python_ggplot.core.common import abs_to_inch, inch_to_abs, inch_to_cm
-from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, UnitType
+from python_ggplot.core.objects import (
+    AxisKind,
+    Font,
+    GGException,
+    Scale,
+    UnitType,
+    Point,
+)
 from python_ggplot.core.units.objects import Quantity, unit_type_from_type
 from python_ggplot.graphics.cairo_backend import CairoBackend
 
@@ -527,6 +534,12 @@ class StrHeightCoordType(Coord1D):
 class Coord:
     x: Coord1D
     y: Coord1D
+
+    def point(self) -> Point[float]:
+        return Point[float](
+            x=self.x.pos,
+            y=self.y.pos,
+        )
 
     def dimension_for_axis(self, axis: AxisKind) -> Coord1D:
         if axis == AxisKind.X:

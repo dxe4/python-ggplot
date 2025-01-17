@@ -16,6 +16,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     TickKind,
     UnitType,
+    Point,
 )
 from python_ggplot.core.units.objects import Quantity
 
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 @dataclass
 class GraphicsObjectConfig:
     style: Optional[Style] = None
-    rotate_in_view: Optional[tuple[float, tuple[float, float]]] = None
+    rotate_in_view: Optional[tuple[float, Point]] = None
     rotate: Optional[float] = None
     children: Optional[List["GraphicsObject"]] = field(default_factory=list)
 

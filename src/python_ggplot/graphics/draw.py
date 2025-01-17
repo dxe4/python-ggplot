@@ -1,9 +1,11 @@
+import math
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Union, Set, Tuple
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, coord_type_from_type
 from python_ggplot.core.objects import (
     BLACK,
+    GREY92,
     TRANSPARENT,
     AxisKind,
     Color,
@@ -12,8 +14,20 @@ from python_ggplot.core.objects import (
     Scale,
     Style,
     TextAlignKind,
+    MarkerKind,
+    Point,
+    Image,
+    LineType,
 )
 from python_ggplot.core.units.objects import Quantity
+from python_ggplot.graphics.objects import (
+    GORect,
+    GORect,
+    GOAxis,
+    GOLine,
+    GORaster,
+    GraphicsObjectConfig,
+)
 from python_ggplot.graphics.initialize import (
     CoordsInput,
     InitRectInput,
@@ -223,3 +237,186 @@ def layout(
 
         coord_cls = coord_type_from_type(widths[j].unit_type)
         current_row = coord_cls.from_view(view, AxisKind.Y, heights[i].val)
+
+
+def background(view: ViewPort, style: Optional[Style] = None):
+    default_style = Style(color=BLACK, fill_color=GREY92)
+
+    style = style or default_style
+
+    new_obj = GORect(
+        name="",
+        config=GraphicsObjectConfig(style=style),
+        origin=Coord.relative(0.0, 0.0),
+        width=Quantity.relative(1.0),
+        height=Quantity.relative(1.0),
+    )
+    view.objects.append(new_obj)
+
+
+def draw_line(img, gobj: Union[GOAxis, GOLine]):
+    start = gobj.data.start.point()
+    stop = gobj.data.stop.point()
+    if gobj.config.style is None:
+        raise GGException("expected style")
+
+    rotate_in_view = None
+    if gobj.config.rotate_in_view:
+        rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
+
+    img.backend.draw_line(img, start, stop, gobj.config.style, rotate_in_view)
+
+
+def draw_rect(img, gobj: GORect):
+    left = gobj.origin.point().x
+    bottom = gobj.origin.point().y
+
+    if gobj.config.style is None:
+        raise GGException("expected style")
+
+    rotate = gobj.config.rotate
+    rotate_in_view = None
+    if gobj.config.rotate_in_view:
+        rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
+
+    img.backend.draw_rectangle(
+        img,
+        left,
+        bottom,
+        gobj.width.val,
+        gobj.height.val,
+        gobj.config.style,
+        rotate,
+        rotate_in_view,
+    )
+
+
+def draw_raster(img, gobj: GORaster):
+    left = gobj.origin.point().x
+    bottom = gobj.origin.point().y
+
+    if gobj.config.style is None:
+        raise GGException("expected style")
+
+    rotate = gobj.config.rotate
+    rotate_in_view = None
+    if gobj.config.rotate_in_view:
+        rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
+
+    img.backend.draw_raster(
+        img,
+        left,
+        bottom,
+        gobj.pixel_width.val,
+        gobj.pixel_height.val,
+        gobj.block_x,
+        gobj.block_y,
+        gobj.draw_cb,
+        rotate,
+        rotate_in_view,
+    )
+
+
+def rotate_obj(
+    rotate_in_view: Optional[tuple[float, Point]],
+    marker: MarkerKind,
+    angle: float,
+    pos: Point,
+    kind: Set[MarkerKind],
+) -> Optional[Tuple[float, Point]]:
+    if marker not in kind:
+        return None
+
+    if rotate_in_view:
+        return (rotate_in_view[0] + angle, rotate_in_view[1])
+
+    return (angle, pos)
+
+
+def draw_point_impl(
+    img: Image,
+    pos: Point[float],
+    marker: MarkerKind,
+    size: float,
+    color: Color,
+    rotate_in_view: Optional[Tuple[float, Point]] = None,
+    style: Optional[Style] = None,
+):
+    if marker in (MarkerKind.CIRCLE, MarkerKind.EMPTY_CIRCLE):
+        fill_color = color if marker == MarkerKind.CIRCLE else TRANSPARENT
+        stroke_color = TRANSPARENT if marker == MarkerKind.CIRCLE else color
+
+        img.backend.draw_circle(
+            img,
+            pos,
+            size,
+            1.0,
+            stroke_color if stroke_color else None,
+            fill_color if fill_color else None,
+            rotate_in_view,
+        )
+
+    if style is None:
+        raise GGException("Expected a style")
+
+    style.color = color
+    style.line_width = size / 2.0
+    style.line_type = LineType.SOLID
+    style.fill_color = color
+
+    if marker in (MarkerKind.CROSS, MarkerKind.ROTCROSS):
+        rotate = rotate_obj(rotate_in_view, marker, 45.0, pos, {MarkerKind.ROTCROSS})
+        rotate = (rotate[0], rotate[1]) if rotate else None
+
+        # Draw horizontal line
+        start = Point(x=pos.x - size, y=pos.y)
+        stop = Point(x=pos.x + size, y=pos.y)
+        img.backend.draw_line(img, start, stop, style, rotate)
+
+        # Draw vertical line
+        start = Point(x=pos.x, y=pos.y - size)
+        stop = Point(x=pos.x, y=pos.y + size)
+        img.backend.draw_line(img, start, stop, style, rotate)
+
+    elif marker in (MarkerKind.TRIANGLE, MarkerKind.EMPTY_RECTANGLE):
+        # TODO sanity check this
+        step = math.sin(math.radians(60)) * size
+        rotate = rotate_obj(
+            rotate_in_view, marker, 180.0, pos, {MarkerKind.UPSIDEDOWN_TRIANGLE}
+        )
+        rotate = (rotate[0], rotate[1]) if rotate else None
+
+        points = [
+            Point(x=pos.x - step, y=pos.y + step),  # bottom left
+            Point(x=pos.x, y=pos.y - step),  # top middle
+            Point(x=pos.x + step, y=pos.y + step),  # bottom right
+        ]
+
+        img.backend.draw_polyline(img, points, style, rotate)
+
+    elif marker in (
+        MarkerKind.RHOMBUS,
+        MarkerKind.RECTANGLE,
+        MarkerKind.UPSIDEDOWN_TRIANGLE,
+        MarkerKind.EMPTY_RHOMBUS,
+    ):
+        fill_color = (
+            color
+            if marker in (MarkerKind.RECTANGLE, MarkerKind.RHOMBUS)
+            else TRANSPARENT
+        )
+
+        rotate = rotate_obj(
+            rotate_in_view,
+            marker,
+            45.0,
+            pos,
+            {MarkerKind.RHOMBUS, MarkerKind.EMPTY_RHOMBUS},
+        )
+        rotate = (rotate[0], rotate[1]) if rotate else None
+
+        size = size * 1.5
+        left = pos.x - (size / 2.0)
+        bottom = pos.y - (size / 2.0)
+
+        img.backend.draw_rectangle(img, left, bottom, size, size, style, None, rotate)
