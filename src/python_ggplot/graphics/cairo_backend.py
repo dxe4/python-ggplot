@@ -2,6 +2,8 @@ from math import pi
 
 import cairo
 from cairo import (
+    FONT_SLANT_ITALIC,
+    FONT_SLANT_OBLIQUE,
     FONT_SLANT_NORMAL,
     FONT_WEIGHT_BOLD,
     FORMAT_ARGB32,
@@ -10,7 +12,24 @@ from cairo import (
     ImageSurface,
     LinearGradient,
     TextExtents,
+    FontWeight,
 )
+
+
+def to_cairo_font_slaint(c_font_slant):
+    from python_ggplot.core.objects import CFontSlant
+
+    data = {
+        CFontSlant.NORMAL: FONT_SLANT_NORMAL,
+        CFontSlant.ITALIC: FONT_SLANT_ITALIC,
+        CFontSlant.OBLIQUE: FONT_SLANT_OBLIQUE,
+    }
+    return data[c_font_slant]
+
+
+def to_cairo_font_weight(font):
+    data = {True: FontWeight.NORMAL, False: FontWeight.BOLD}
+    return data[font.bold]
 
 
 def create_gradient(
@@ -42,17 +61,18 @@ class CairoBackend:
         #     self.ctx = Context(surface)
         #     self.created = True
 
-    def with_surface(self, img, cb):
+    @staticmethod
+    def with_surface(img, cb):
         # todo refacor
-        if not self.created:
-            surface = ImageSurface(FORMAT_ARGB32, img.width, img.height)
-            self.ctx = Context(surface)
-            self.canvas = surface
-            self.created = True
-        if self.ctx:
-            self.ctx.save()
-            cb(self.ctx)
-            self.ctx.restore()
+        if not img.backend.created:
+            # surface = ImageSurface(FORMAT_ARGB32, img.width, img.height)
+            img.backend.ctx = Context(img.backend.canvas)
+            # self.canvas = surface
+            img.backend.created = True
+        if img.backend.ctx:
+            img.backend.ctx.save()
+            cb(img.backend.ctx)
+            img.backend.ctx.restore()
 
     def rotate(self, ctx, angle, around):
         ctx.translate(around.x, around.y)
@@ -60,6 +80,8 @@ class CairoBackend:
         ctx.translate(-around.x, -around.y)
 
     def get_line_style(self, line_type, line_width):
+        from python_ggplot.core.objects import LineType
+
         dash = line_width * 4.0
         dash_space = line_width * 5.0
         dot = line_width / 2.0
@@ -67,16 +89,18 @@ class CairoBackend:
         long_dash = line_width * 8.0
 
         lookup = {
-            "DASHED": [dash, dash_space],
-            "DOTTED": [dot, dot_space],
-            "DOT_DASH": [dot, dot_space, dash, dot_space],
-            "LONG_DASH": [long_dash, dash_space],
-            "TWO_DASH": [dash, dot_space * 2.0, long_dash, dot_space * 2.0],
+            LineType.DASHED: [dash, dash_space],
+            LineType.DOTTED: [dot, dot_space],
+            LineType.DOT_DASH: [dot, dot_space, dash, dot_space],
+            LineType.LONG_DASH: [long_dash, dash_space],
+            LineType.TWO_DASH: [dash, dot_space * 2.0, long_dash, dot_space * 2.0],
         }
-        return lookup.get(line_type.name, [])
+        return lookup.get(line_type, [])
 
     def set_line_style(self, ctx, line_type, line_width):
-        if line_type == "None":
+        from python_ggplot.core.objects import LineType
+
+        if line_type == LineType.NONE_TYPE:
             ctx.set_line_width(0.0)
         else:
             style = self.get_line_style(line_type, line_width)
@@ -99,7 +123,7 @@ class CairoBackend:
             context.line_to(stop.x, stop.y)
             context.stroke()
 
-        self.with_surface(img, callback)
+        CairoBackend.with_surface(img, callback)
 
     def draw_polyline(self, img, points, style, rotate_angle=None):
         def callback(context):
@@ -126,7 +150,7 @@ class CairoBackend:
             )
             context.fill()
 
-        self.with_surface(img, callback)
+        CairoBackend.with_surface(img, callback)
 
     def draw_circle(
         self,
@@ -139,13 +163,15 @@ class CairoBackend:
         rotate_angle=None,
     ):
         if not fill_color:
-            fill_color = [0.0, 0.0, 0.0, 0.0]
+            fill_color = Color(r=0.0, g=0.0, b=0.0, a=0.0)
+
         if not stroke_color:
-            stroke_color = [0.0, 0.0, 0.0, 0.0]
+            stroke_color = Color(r=0.0, g=0.0, b=0.0, a=0.0)
 
         def callback(context):
             if rotate_angle:
                 self.rotate(context, rotate_angle[0], rotate_angle[1])
+
             context.set_line_width(line_width)
             context.set_source_rgba(
                 stroke_color.r, stroke_color.g, stroke_color.b, stroke_color.a
@@ -157,7 +183,7 @@ class CairoBackend:
             )
             context.fill()
 
-        self.with_surface(img, callback)
+        CairoBackend.with_surface(img, callback)
 
     def rotate_if_needed(self, context, rotate_angle):
         if rotate_angle:
@@ -174,7 +200,9 @@ class CairoBackend:
         surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
         context = Context(surface)
 
-        context.select_font_face(font.family, FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD)
+        context.select_font_face(
+            font.family, to_cairo_font_slaint(font.slant), to_cairo_font_weight(font)
+        )
         context.set_font_size(font.size)
         context.set_source_rgba(font.color.r, font.color.g, font.color.b, font.color.a)
         result = cls.get_text_extends_from_context(context, text)
@@ -217,7 +245,7 @@ class CairoBackend:
             context.move_to(move_to_x, move_to_y)
             context.show_text(text)
 
-        self.with_surface(img, callback)
+        CairoBackend.with_surface(img, callback)
 
     def draw_rectangle(
         self, img, left, bottom, width, height, style, rotate=None, rotate_in_view=None
@@ -244,12 +272,12 @@ class CairoBackend:
             else:
                 context.set_source_rgb(
                     style.fill_color.r,
-                    style.fill_color.r,
-                    style.fill_color.r,
+                    style.fill_color.g,
+                    style.fill_color.b,
                 )
             context.fill()
 
-        self.with_surface(img, callback)
+        CairoBackend.with_surface(img, callback)
 
     def draw_raster(
         self,
@@ -288,12 +316,16 @@ class CairoBackend:
                     data[data_idx] = to_draw[to_draw_val]
 
             data2 = self.to_bytes(data)
-            surface = ImageSurface.create_for_data(data2, FORMAT_ARGB32, w_img, h_img)
+            stride = w_img * 4
+            surface = ImageSurface.create_for_data(
+                data2, FORMAT_ARGB32, w_img, h_img, stride
+            )
             surface.mark_dirty()
             context.set_source_surface(surface, left, bottom)
             context.paint()
+            del surface
 
-        self.with_surface(img, callback)
+        CairoBackend.with_surface(img, callback)
 
     def to_bytes(self, input_data):
         return bytearray(input_data)
@@ -305,12 +337,10 @@ def init_image(filename, width, height, ftype):
 
     if ftype == FileTypeKind.PNG:
         surface = ImageSurface(FORMAT_ARGB32, width, height)
+        backend = CairoBackend(surface)
+        return Image(filename, width, height, ftype, backend)
     else:
         raise GGException("Only PNG format is supported for now")
-
-    backend = CairoBackend(surface)
-
-    return Image(filename, width, height, ftype, backend)
 
 
 def cairo_test():
