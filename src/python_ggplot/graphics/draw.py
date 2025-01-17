@@ -26,6 +26,12 @@ from python_ggplot.graphics.objects import (
     GOAxis,
     GOLine,
     GORaster,
+    GOPoint,
+    GOManyPoints,
+    GOPolyLine,
+    GOText,
+    GOLabel,
+    GOTickLabel,
     GraphicsObjectConfig,
 )
 from python_ggplot.graphics.initialize import (
@@ -420,3 +426,58 @@ def draw_point_impl(
         bottom = pos.y - (size / 2.0)
 
         img.backend.draw_rectangle(img, left, bottom, size, size, style, None, rotate)
+
+
+def draw_point(img: Image, gobj: GOPoint):
+    pos = gobj.pos.point()
+    style = gobj.config.style
+    marker = gobj.marker
+    size = gobj.size
+    color = gobj.color
+
+    rotate_in_view = None
+    if gobj.config.rotate_in_view:
+        rotate_in_view = gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1]
+
+    draw_point_impl(img, pos, marker, size, color, rotate_in_view, style)
+
+
+def draw_many_points(img: Image, gobj: GOManyPoints):
+    style = gobj.config.style
+    marker = gobj.marker
+    size = gobj.size
+    color = gobj.color
+
+    rotate_in_view = None
+    if gobj.config.rotate_in_view:
+        rotate_in_view = gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1]
+
+    for pos in gobj.pos:
+        draw_point_impl(img, pos.point(), marker, size, color, rotate_in_view, style)
+
+
+def draw_polyline(img: Image, gobj: GOPolyLine):
+    if gobj.config.style is None:
+        raise GGException("expected a style")
+
+    points = [Point(x=coord.x.pos, y=coord.y.pos) for coord in gobj.pos]
+
+    rotate_in_view = None
+    if gobj.config.rotate_in_view:
+        rotate_in_view = gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1]
+
+    img_copy = img
+    img_copy.backend.draw_polyline(img, points, gobj.config.style, rotate_in_view)
+
+
+def draw_text(img: Image, gobj: Union[GOText, GOLabel, GOTickLabel]):
+    data = gobj.data
+    text = data.text
+    font = data.font
+    at = data.pos.point()
+    align_kind = data.align
+
+    img_copy = img
+    img_copy.backend.draw_text(
+        img, text, font, at, align_kind, gobj.config.rotate, None
+    )
