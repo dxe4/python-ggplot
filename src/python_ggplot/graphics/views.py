@@ -243,13 +243,6 @@ class ViewPort:
             return self.point_height()
         raise GGException("unexpected")
 
-    def scale_for_axis(self, axis_kind: AxisKind):
-        if axis_kind == AxisKind.X:
-            return self.x_scale
-        if axis_kind == AxisKind.Y:
-            return self.y_scale
-        raise GGException("unexpected")
-
     def update_scale_1d(self, coord: Coord1D):
         coord.update_scale(self)
 

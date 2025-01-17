@@ -472,10 +472,14 @@ class DataCoordType(Coord1D):
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
         scale = view.scale_for_axis(axis_kind)
+        if scale is None:
+            raise GGException("expected scale")
         return DataCoordType(at, DataCoord(scale=scale, axis_kind=axis_kind))
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         scale = view.scale_for_axis(axis_kind)
+        if scale is None:
+            raise GGException("expected scale")
         self.data.scale = scale
 
 
@@ -557,3 +561,16 @@ class GridCoord:
     origin_diagonal: Coord
     x: List[Coord]
     y: List[Coord]
+
+
+def coord_type_from_type(kind: UnitType):
+    data = {
+        UnitType.POINT: PointCoordType,
+        UnitType.CENTIMETER: CentimeterCoordType,
+        UnitType.INCH: InchCoordType,
+        UnitType.RELATIVE: RelativeCoordType,
+        UnitType.DATA: DataCoordType,
+        UnitType.STR_WIDTH: StrWidthCoordType,
+        UnitType.STR_HEIGHT: StrWidthCoordType,
+    }
+    return data[kind]
