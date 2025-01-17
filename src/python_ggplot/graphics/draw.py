@@ -42,6 +42,7 @@ from python_ggplot.graphics.objects import (
     GOTick,
     GOTickLabel,
     GraphicsObjectConfig,
+    GraphicsObject
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 
@@ -558,5 +559,5 @@ def coord1d_to_abs_image(coord, img, axis_kind):
     return coord.to(UnitType.POINT, abs_length=abs_length)
 
 
-def to_global_coords(gobj: GraphicsObject, img: Image) -> GraphicsObject:
+def to_global_coords(gobj: GraphicsObject, img: Image):
     gobj.to_global_coords(img)
