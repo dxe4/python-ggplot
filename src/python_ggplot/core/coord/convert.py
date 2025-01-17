@@ -276,10 +276,10 @@ via_point_lookup = {
 }
 relative_via_point_lookup = {
     UnitType.RELATIVE: coord_to_self_via_point,
-    UnitType.INCH: None,
-    UnitType.POINT: None,
-    UnitType.CENTIMETER: None,
-    UnitType.DATA: None,
+    UnitType.INCH: to_inch_relative_via_point,
+    UnitType.POINT: to_point_relative_via_point,
+    UnitType.CENTIMETER: to_centimeter_relative_via_point,
+    UnitType.DATA: to_data_relative_via_point,
     UnitType.STR_HEIGHT: None,
     UnitType.STR_WIDTH: None,
 }

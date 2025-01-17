@@ -17,11 +17,18 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     TickKind,
     UnitType,
+    Image,
 )
 from python_ggplot.core.units.objects import Quantity
 
 if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort
+
+
+def mut_coord_to_abs_image(coord, img):
+    coord.x = coord1d_to_abs_image(coord.x, img, AxisKind.X)
+    coord.y = coord1d_to_abs_image(coord.y, img, AxisKind.Y)
+    return coord
 
 
 @dataclass
@@ -57,6 +64,9 @@ class GraphicsObject:
     config: GraphicsObjectConfig
     go_type: GOType
 
+    def to_global_coords(self, img: Image):
+        raise GGException("Not implented")
+
     def get_pos(self):
         raise GGException("graphics object has no position")
 
@@ -87,10 +97,17 @@ class StartStopData:
     start: Coord
     stop: Coord
 
+    def to_global_coords(self, img: Image):
+        self.start = mut_coord_to_abs_image(self.start, img)
+        self.stop = mut_coord_to_abs_image(self.stop, img)
+
 
 @dataclass
 class GOAxis(GraphicsObject):
     data: StartStopData
+
+    def to_global_coords(self, img: Image):
+        self.data.to_global_coords(img)
 
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.start)
@@ -104,6 +121,9 @@ class GOAxis(GraphicsObject):
 @dataclass
 class GOLine(GraphicsObject):
     data: StartStopData
+
+    def to_global_coords(self, img: Image):
+        self.data.to_global_coords(img)
 
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.start)
@@ -121,10 +141,16 @@ class TextData:
     pos: Coord
     align: TextAlignKind
 
+    def to_global_coords(self, img: Image):
+        self.pos = mut_coord_to_abs_image(self.pos, img)
+
 
 @dataclass
 class GOText(GraphicsObject):
     data: TextData
+
+    def to_global_coords(self, img: Image):
+        self.data.to_global_coords(img)
 
     def get_pos(self):
         return self.data.pos
@@ -141,6 +167,9 @@ class GOText(GraphicsObject):
 class GOLabel(GraphicsObject):
     data: TextData
 
+    def to_global_coords(self, img: Image):
+        self.data.to_global_coords(img)
+
     def get_pos(self):
         return self.data.pos
 
@@ -155,6 +184,9 @@ class GOLabel(GraphicsObject):
 @dataclass
 class GOTickLabel(GraphicsObject):
     data: TextData
+
+    def to_global_coords(self, img: Image):
+        self.data.to_global_coords(img)
 
     def get_pos(self):
         return self.data.pos
@@ -173,6 +205,15 @@ class GORect(GraphicsObject):
     width: Quantity
     height: Quantity
 
+    def to_global_coords(self, img: Image):
+        self.origin = mut_coord_to_abs_image(self.origin, img)
+        self.width = self.width.to_points(
+            scale=None, length=Quantity.points(float(img.width))
+        )
+        self.height = self.height.to_points(
+            scale=None, length=Quantity.points(float(img.height))
+        )
+
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
 
@@ -187,6 +228,28 @@ class GOGrid(GraphicsObject):
     y_pos: List[Coord1D]
     origin: Optional[Coord]
     origin_diagonal: Optional[Coord]
+
+    def to_global_coords(self, img: Image):
+        if self.origin is None:
+            raise GGException("expected origin")
+
+        if self.origin_diagonal:
+            raise GGException("expected origin_diagonal")
+
+        self.origin = mut_coord_to_abs_image(self.origin, img)
+        self.origin_diagonal = mut_coord_to_abs_image(self.origin_diagonal, img)
+
+        img_width = Quantity.points(float(img.width))
+        img_height = Quantity.points(float(img.height))
+
+        self.y_pos = [
+            item.to_via_points(UnitType.POINT, abs_length=img_height)
+            for item in self.y_pos
+        ]
+        self.x_pos = [
+            item.to_via_points(UnitType.POINT, abs_length=img_width)
+            for item in self.x_pos
+        ]
 
     def update_view_scale(self, view: "ViewPort"):
         for x_pos in self.x_pos:
@@ -206,6 +269,9 @@ class GOTick(GraphicsObject):
     axis: AxisKind
     kind: TickKind
     secondary: bool
+
+    def to_global_coords(self, img: Image):
+        self.pos = mut_coord_to_abs_image(self.pos, img)
 
     def _x_axis_start_stop(self, length: float) -> Tuple[Point, Point]:
         x = self.pos.point().x
@@ -270,6 +336,9 @@ class GOPoint(GraphicsObject):
     size: float
     color: Color
 
+    def to_global_coords(self, img: Image):
+        self.pos = mut_coord_to_abs_image(self.pos, img)
+
     def get_pos(self):
         return self.pos
 
@@ -285,6 +354,9 @@ class GOManyPoints(GraphicsObject):
     size: float
     color: Color
 
+    def to_global_coords(self, img: Image):
+        self.pos = [mut_coord_to_abs_image(pos, img) for pos in self.pos]
+
     def update_view_scale(self, view: "ViewPort"):
         for pos in self.pos:
             view.update_scale(pos)
@@ -297,6 +369,9 @@ class GOManyPoints(GraphicsObject):
 @dataclass
 class GOPolyLine(GraphicsObject):
     pos: List[Coord]
+
+    def to_global_coords(self, img: Image):
+        self.pos = [mut_coord_to_abs_image(pos, img) for pos in self.pos]
 
     def update_view_scale(self, view: "ViewPort"):
         for pos in self.pos:
@@ -316,6 +391,15 @@ class GORaster(GraphicsObject):
     block_y: int
     draw_cb: Callable[[], List[int]]
 
+    def to_global_coords(self, img: Image):
+        self.origin = mut_coord_to_abs_image(self.origin, img)
+        self.pixel_width = self.pixel_width.to_points(
+            scale=None, length=Quantity.points(float(img.width))
+        )
+        self.pixel_height = self.pixel_height.to_points(
+            scale=None, length=Quantity.points(float(img.height))
+        )
+
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
 
@@ -327,6 +411,10 @@ class GORaster(GraphicsObject):
 @dataclass
 class GOComposite(GraphicsObject):
     kind: CompositeKind
+
+    def to_global_coords(self, img: Image):
+        # nothing to do in this case
+        pass
 
     def update_view_scale(self, view: "ViewPort"):
         if self.config.children is None:

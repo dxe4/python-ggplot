@@ -88,6 +88,19 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
+    def get_center(self) -> Tuple[float, float]:
+        center_x = self.left().pos + (
+            self.get_width().to_relative(scale=None, length=self.point_width()).val
+            / 2.0
+        )
+
+        center_y = self.bottom().pos + (
+            self.get_height().to_relative(scale=None, length=self.point_height()).val
+            / 2.0
+        )
+
+        return center_x, center_y
+
     def scale_for_axis(self, axis: AxisKind) -> Optional[Scale]:
         if axis == AxisKind.X:
             return self.x_scale
@@ -258,16 +271,6 @@ class ViewPort:
 
     def update_item_at(self, idx, view: "ViewPort"):
         self.children[idx] = deepcopy(view)
-
-    # def apply_operator(
-    #     self,
-    #     other: Quantity,
-    #     length: Optional[Quantity],
-    #     scale: Optional[Scale],
-    #     as_coordinate: bool,
-    #     operator: Callable[[float, float], float],
-    # ) -> "Quantity":
-    #     pass
 
     def point_width_height(self, dimension: Optional["Quantity"]) -> "Quantity":
         if not self.w_view:

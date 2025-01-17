@@ -18,6 +18,7 @@ from python_ggplot.core.objects import (
     Style,
     TextAlignKind,
     TickKind,
+    UnitType,
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.graphics.initialize import (
@@ -60,7 +61,7 @@ class DrawBoundaryInput:
         return Style(
             color=color,
             line_width=1.0,
-            size=None,
+            size=0.0,
             line_type=LineType.SOLID,
             fill_color=TRANSPARENT,
             marker=None,
@@ -544,3 +545,18 @@ def draw_grid(img: Image, gobj: GOGrid):
             style,
             rotate_angle=gobj.config.rotate_in_view,
         )
+
+
+def scale_point(point: Point, width: float, height: float):
+    return Point(x=point.x * width, y=point.y * height)
+
+
+def coord1d_to_abs_image(coord, img, axis_kind):
+    length_val = img.height if axis_kind == AxisKind.X else img.width
+    abs_length = Quantity.points(float(length_val))
+
+    return coord.to(UnitType.POINT, abs_length=abs_length)
+
+
+def to_global_coords(gobj: GraphicsObject, img: Image) -> GraphicsObject:
+    gobj.to_global_coords(img)
