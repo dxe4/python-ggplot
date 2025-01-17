@@ -8,9 +8,9 @@ from python_ggplot.core.objects import (
     AxisKind,
     Font,
     GGException,
+    Point,
     Scale,
     UnitType,
-    Point,
 )
 from python_ggplot.core.units.objects import Quantity, unit_type_from_type
 from python_ggplot.graphics.cairo_backend import CairoBackend

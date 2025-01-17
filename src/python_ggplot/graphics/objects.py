@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
 
 from python_ggplot.core.coord.objects import Coord, Coord1D
 from python_ggplot.core.objects import (
@@ -11,12 +11,12 @@ from python_ggplot.core.objects import (
     Font,
     GGException,
     MarkerKind,
+    Point,
     Scale,
     Style,
     TextAlignKind,
     TickKind,
     UnitType,
-    Point,
 )
 from python_ggplot.core.units.objects import Quantity
 
@@ -206,6 +206,47 @@ class GOTick(GraphicsObject):
     axis: AxisKind
     kind: TickKind
     secondary: bool
+
+    def _x_axis_start_stop(self, length: float) -> Tuple[Point, Point]:
+        x = self.pos.point().x
+        if self.kind == TickKind.ONE_SIDE:
+            start = Point(x=x, y=self.pos.point().y + length)
+            end = Point(x=x, y=self.pos.point().y)
+            return start, end
+
+        elif self.kind == TickKind.BOTH_SIDES:
+            start_ = self.pos.point().y + length
+            end_ = self.pos.point().y - length
+            start = Point(x=x, y=self.pos.point().y + length)
+            end = Point(x=x, y=self.pos.point().y - length)
+            return start, end
+        else:
+            raise GGException("unexpected type")
+
+    def _y_axis_start_stop(self, length: float) -> Tuple[Point, Point]:
+        y = self.pos.point().y
+        if self.kind == TickKind.ONE_SIDE:
+            start = Point(x=self.pos.point().x, y=y)
+            end = Point(x=self.pos.point().x - length, y=y)
+            return start, end
+
+        elif self.kind == TickKind.BOTH_SIDES:
+            start_ = self.pos.point().y + length
+            end_ = self.pos.point().y - length
+            start = Point(x=self.pos.point().x + length, y=y)
+            end = Point(x=self.pos.point().x - length, y=y)
+            return start, end
+        else:
+            raise GGException("unexpected type")
+
+    def get_start_stop_point(self, length: float) -> Tuple[Point, Point]:
+        if self.axis == AxisKind.X:
+            return self._x_axis_start_stop(length)
+
+        elif self.axis == AxisKind.X:
+            return self._y_axis_start_stop(length)
+        else:
+            raise GGException("unexpected")
 
     def get_pos(self):
         return self.pos

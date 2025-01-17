@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Union, Set, Tuple
+from typing import List, Optional, Set, Tuple, Union
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, coord_type_from_type
 from python_ggplot.core.objects import (
@@ -10,36 +10,37 @@ from python_ggplot.core.objects import (
     AxisKind,
     Color,
     GGException,
+    Image,
     LineType,
+    MarkerKind,
+    Point,
     Scale,
     Style,
     TextAlignKind,
-    MarkerKind,
-    Point,
-    Image,
-    LineType,
+    TickKind,
 )
 from python_ggplot.core.units.objects import Quantity
-from python_ggplot.graphics.objects import (
-    GORect,
-    GORect,
-    GOAxis,
-    GOLine,
-    GORaster,
-    GOPoint,
-    GOManyPoints,
-    GOPolyLine,
-    GOText,
-    GOLabel,
-    GOTickLabel,
-    GraphicsObjectConfig,
-)
 from python_ggplot.graphics.initialize import (
     CoordsInput,
     InitRectInput,
     InitTextInput,
     init_rect_from_coord,
     init_text,
+)
+from python_ggplot.graphics.objects import (
+    GOAxis,
+    GOGrid,
+    GOLabel,
+    GOLine,
+    GOManyPoints,
+    GOPoint,
+    GOPolyLine,
+    GORaster,
+    GORect,
+    GOText,
+    GOTick,
+    GOTickLabel,
+    GraphicsObjectConfig,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 
@@ -480,4 +481,26 @@ def draw_text(img: Image, gobj: Union[GOText, GOLabel, GOTickLabel]):
     img_copy = img
     img_copy.backend.draw_text(
         img, text, font, at, align_kind, gobj.config.rotate, None
+    )
+
+
+def draw_tick(img: Image, gobj: GOTick):
+    style = gobj.config.style
+    if style is None:
+        raise GGException("expected style")
+
+    length = style.size
+    if length is None:
+        raise GGException("expected size on style")
+
+    if not gobj.major:
+        length = length / 2.0
+        style.line_width = style.line_width / 2.0
+
+    if gobj.secondary:
+        length = -length
+
+    start, stop = gobj.get_start_stop_point(length)
+    img.backend.draw_line(
+        img, start, stop, style, rotate_angle=gobj.config.rotate_in_view
     )

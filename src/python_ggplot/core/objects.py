@@ -176,15 +176,11 @@ class Point(Generic[T]):
 
 @dataclass
 class Style:
-    line_width: Optional[float] = 0.0
-    color: Optional[Color] = field(
-        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0)
-    )
-    size: Optional[float] = 0.0
-    line_type: Optional[LineType] = LineType.SOLID
-    fill_color: Optional[Color] = field(
-        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0)
-    )
+    line_width: float = 0.0
+    color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0))
+    size: float = 0.0
+    line_type: LineType = LineType.SOLID
+    fill_color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0))
     marker: Optional[MarkerKind] = None
     error_bar_kind: Optional[ErrorBarKind] = None
     gradient: Optional[Gradient] = None
