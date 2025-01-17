@@ -504,3 +504,43 @@ def draw_tick(img: Image, gobj: GOTick):
     img.backend.draw_line(
         img, start, stop, style, rotate_angle=gobj.config.rotate_in_view
     )
+
+
+def draw_grid(img: Image, gobj: GOGrid):
+    style = gobj.config.style
+    if style is None:
+        raise ValueError("expected style")
+
+    for x in gobj.x_pos:
+        origin = gobj.origin
+        origin_diag = gobj.origin_diagonal
+        if origin is None or origin_diag is None:
+            raise ValueError("expected origin")
+
+        start = Point(x=x.pos, y=origin.y.pos)
+        stop = Point(x=x.pos, y=origin_diag.y.pos)
+
+        img.backend.draw_line(
+            img,
+            start,
+            stop,
+            style,
+            rotate_angle=gobj.config.rotate_in_view,
+        )
+
+    for y in gobj.y_pos:
+        origin = gobj.origin
+        origin_diag = gobj.origin_diagonal
+        if origin is None or origin_diag is None:
+            raise GGException("expected origin")
+
+        start = Point(x=origin.x.pos, y=y.pos)
+        stop = Point(x=origin_diag.x.pos, y=y.pos)
+
+        img.backend.draw_line(
+            img,
+            start,
+            stop,
+            style,
+            rotate_angle=gobj.config.rotate_in_view,
+        )
