@@ -74,6 +74,10 @@ def grid_to_relative(data: GOConvertData) -> GraphicsObject:
         raise GGException("expected view")
 
     obj = cast(GOGrid, data.graphics_obj)
+
+    if not obj.origin or not obj.origin_diagonal:
+        raise GGException("expected origin and origin diagonal")
+
     obj.origin = obj.origin.to_relative()
     obj.origin_diagonal = obj.origin_diagonal.to_relative()
 

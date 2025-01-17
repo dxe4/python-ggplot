@@ -19,8 +19,8 @@ from python_ggplot.graphics.objects import GraphicsObject
 class ViewPortInput:
     name: str = ""
     parent: str = ""
-    w_img: "Quantity" = field(default_factory=lambda: Quantity(640.0))
-    h_img: "Quantity" = field(default_factory=lambda: Quantity(480.0))
+    w_img: "Quantity" = field(default_factory=lambda: Quantity.points(40.0))
+    h_img: "Quantity" = field(default_factory=lambda: Quantity.points(480.0))
     style: Optional["Style"] = None
     x_scale: Optional["Scale"] = None
     y_scale: Optional["Scale"] = None
@@ -272,20 +272,26 @@ class ViewPort:
     def update_item_at(self, idx, view: "ViewPort"):
         self.children[idx] = deepcopy(view)
 
-    def point_width_height(self, dimension: Optional["Quantity"]) -> "Quantity":
+    def point_width_height(self, dimension: "Quantity") -> "Quantity":
         if not self.w_view:
             raise GGException("expected w view")
 
         if self.w_view.unit_type != UnitType.POINT:
             raise ValueError(f"Expected Point, found {self.w_view.unit_type}")
 
-        other = self.width.to_relative(dimension)
-        return self.w_view.multiply(other)
+        other = self.width.to_relative(length=dimension)
+        return self.w_view.multiply(other, length=dimension)
 
     def point_width(self) -> "Quantity":
+        if not self.w_view:
+            raise GGException("expected w_view")
+
         return self.point_width_height(self.w_view)
 
     def point_height(self) -> "Quantity":
+        if not self.h_view:
+            raise GGException("expected w_view")
+
         return self.point_width_height(self.h_view)
 
 
@@ -298,8 +304,8 @@ def x_axis_y_pos(
     margin = margin if margin is not None else 0.0
 
     if view:
-        coord = quantitiy_to_coord(view.height)
         pos = view.height.val + margin if is_secondary else -margin
+        coord = quantitiy_to_coord(view.height, pos)
         coord.pos = pos
         return coord
     else:
@@ -316,8 +322,8 @@ def y_axis_x_pos(
     margin = margin if margin is not None else 0.0
 
     if viewport:
-        coord = quantitiy_to_coord(viewport.width)
         pos = viewport.width.val + margin if is_secondary else -margin
+        coord = quantitiy_to_coord(viewport.width, pos)
         coord.pos = pos
         return coord
     else:

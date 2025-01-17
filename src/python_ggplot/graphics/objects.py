@@ -25,6 +25,13 @@ if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort
 
 
+def coord1d_to_abs_image(coord, img, axis_kind):
+    length_val = img.height if axis_kind == AxisKind.X else img.width
+    abs_length = Quantity.points(float(length_val))
+
+    return coord.to_via_points(UnitType.POINT, abs_length=abs_length)
+
+
 def mut_coord_to_abs_image(coord, img):
     coord.x = coord1d_to_abs_image(coord.x, img, AxisKind.X)
     coord.y = coord1d_to_abs_image(coord.y, img, AxisKind.Y)
@@ -62,7 +69,10 @@ class GOType(Enum):
 class GraphicsObject:
     name: str
     config: GraphicsObjectConfig
-    go_type: GOType
+
+    @property
+    def go_type(self) -> GOType:
+        raise GGException("not implemented")
 
     def to_global_coords(self, img: Image):
         raise GGException("Not implented")
@@ -73,14 +83,12 @@ class GraphicsObject:
     def update_view_scale(self, view: "ViewPort"):
         raise GGException("this should never reach")
 
-    def embed_into(
-        self, view: "ViewPort", axis: Optional[AxisKind] = None
-    ) -> "GraphicsObject":
+    def embed_into(self, view: "ViewPort") -> "GraphicsObject":
         from python_ggplot.embed import (
             graphics_object_to_relative,
         )  # pylint: disable=all
 
-        return graphics_object_to_relative(self, view, axis)
+        return graphics_object_to_relative(self, view)
 
     def to_relative(
         self, view: Optional["ViewPort"] = None, axis: Optional[AxisKind] = None
@@ -113,9 +121,9 @@ class GOAxis(GraphicsObject):
         view.update_scale(self.data.start)
         view.update_scale(self.data.stop)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.AXIS
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.AXIS
 
 
 @dataclass
@@ -129,9 +137,9 @@ class GOLine(GraphicsObject):
         view.update_scale(self.data.start)
         view.update_scale(self.data.stop)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.LINE
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.LINE
 
 
 @dataclass
@@ -158,9 +166,9 @@ class GOText(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.pos)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.TEXT
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.TEXT
 
 
 @dataclass
@@ -176,9 +184,9 @@ class GOLabel(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.pos)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.LABEL
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.LABEL
 
 
 @dataclass
@@ -194,9 +202,9 @@ class GOTickLabel(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.data.pos)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.TICK_LABEL
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.TICK_LABEL
 
 
 @dataclass
@@ -217,23 +225,23 @@ class GORect(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.RECT_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.RECT_DATA
 
 
 @dataclass
 class GOGrid(GraphicsObject):
     x_pos: List[Coord1D]
     y_pos: List[Coord1D]
-    origin: Optional[Coord]
-    origin_diagonal: Optional[Coord]
+    origin: Optional[Coord] = None
+    origin_diagonal: Optional[Coord] = None
 
     def to_global_coords(self, img: Image):
         if self.origin is None:
             raise GGException("expected origin")
 
-        if self.origin_diagonal:
+        if self.origin_diagonal is None:
             raise GGException("expected origin_diagonal")
 
         self.origin = mut_coord_to_abs_image(self.origin, img)
@@ -257,9 +265,9 @@ class GOGrid(GraphicsObject):
         for y_pos in self.y_pos:
             view.update_scale_1d(y_pos)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.GRID_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.GRID_DATA
 
 
 @dataclass
@@ -309,7 +317,7 @@ class GOTick(GraphicsObject):
         if self.axis == AxisKind.X:
             return self._x_axis_start_stop(length)
 
-        elif self.axis == AxisKind.X:
+        elif self.axis == AxisKind.Y:
             return self._y_axis_start_stop(length)
         else:
             raise GGException("unexpected")
@@ -324,9 +332,9 @@ class GOTick(GraphicsObject):
             return self.pos.y.get_scale()
         raise GGException("unexpected")
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.TICK_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.TICK_DATA
 
 
 @dataclass
@@ -342,9 +350,9 @@ class GOPoint(GraphicsObject):
     def get_pos(self):
         return self.pos
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.POINT_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.POINT_DATA
 
 
 @dataclass
@@ -361,9 +369,9 @@ class GOManyPoints(GraphicsObject):
         for pos in self.pos:
             view.update_scale(pos)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.MANY_POINTS_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.MANY_POINTS_DATA
 
 
 @dataclass
@@ -377,9 +385,9 @@ class GOPolyLine(GraphicsObject):
         for pos in self.pos:
             view.update_scale(pos)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.POLYLINE_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.POLYLINE_DATA
 
 
 @dataclass
@@ -403,9 +411,9 @@ class GORaster(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.RASTER_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.RASTER_DATA
 
 
 @dataclass
@@ -423,9 +431,9 @@ class GOComposite(GraphicsObject):
         for go in self.config.children:
             go.update_view_scale(view)
 
-    def __init__(self, *args, **kwargs):
-        kwargs["go_type"] = GOType.COMPOSITE_DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def go_type(self) -> GOType:
+        return GOType.COMPOSITE_DATA
 
 
 T = TypeVar("T")

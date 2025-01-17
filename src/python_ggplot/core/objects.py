@@ -150,7 +150,7 @@ class Font:
     size: float = 12.0
     bold: bool = False
     slant: CFontSlant = CFontSlant.NORMAL
-    color: Color = Color(r=0.0, g=0.0, b=0.0, a=1.0)
+    color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0))
     align_kind: TextAlignKind = TextAlignKind.CENTER
 
 
@@ -180,7 +180,9 @@ class Style:
     color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0))
     size: float = 0.0
     line_type: LineType = LineType.SOLID
-    fill_color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0))
+    fill_color: Optional[Color] = field(
+        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0)
+    )
     marker: Optional[MarkerKind] = None
     error_bar_kind: Optional[ErrorBarKind] = None
     gradient: Optional[Gradient] = None

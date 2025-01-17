@@ -280,11 +280,11 @@ def draw_line(img, gobj: Union[GOAxis, GOLine]):
 
 
 def draw_rect(img, gobj: GORect):
-    left = gobj.origin.point().x
-    bottom = gobj.origin.point().y
-
     if gobj.config.style is None:
         raise GGException("expected style")
+
+    left = gobj.origin.point().x
+    bottom = gobj.origin.point().y
 
     rotate = gobj.config.rotate
     rotate_in_view = None
@@ -514,13 +514,13 @@ def draw_tick(img: Image, gobj: GOTick):
 def draw_grid(img: Image, gobj: GOGrid):
     style = gobj.config.style
     if style is None:
-        raise ValueError("expected style")
+        raise GGException("expected style")
 
     for x in gobj.x_pos:
         origin = gobj.origin
         origin_diag = gobj.origin_diagonal
         if origin is None or origin_diag is None:
-            raise ValueError("expected origin")
+            raise GGException("expected origin")
 
         start = Point(x=x.pos, y=origin.y.pos)
         stop = Point(x=x.pos, y=origin_diag.y.pos)
@@ -553,13 +553,6 @@ def draw_grid(img: Image, gobj: GOGrid):
 
 def scale_point(point: Point, width: float, height: float):
     return Point(x=point.x * width, y=point.y * height)
-
-
-def coord1d_to_abs_image(coord, img, axis_kind):
-    length_val = img.height if axis_kind == AxisKind.X else img.width
-    abs_length = Quantity.points(float(length_val))
-
-    return coord.to(UnitType.POINT, abs_length=abs_length)
 
 
 def to_global_coords(gobj: GraphicsObject, img: Image):
@@ -612,7 +605,6 @@ def draw_viewport(img: Image, view: ViewPort):
     center_x, center_y = view.get_center()
 
     for gobj in view.objects:
-
         transform_and_draw(img, gobj, view, center_x, center_y)
         for go_child in gobj.config.children:
             transform_and_draw(img, go_child, view, center_x, center_y)

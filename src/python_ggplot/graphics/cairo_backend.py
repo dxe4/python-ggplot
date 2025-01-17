@@ -9,6 +9,7 @@ from cairo import (
     Gradient,
     ImageSurface,
     LinearGradient,
+    TextExtents,
 )
 
 
@@ -54,9 +55,9 @@ class CairoBackend:
             self.ctx.restore()
 
     def rotate(self, ctx, angle, around):
-        ctx.translate(around[0], around[1])
+        ctx.translate(around.x, around.y)
         ctx.rotate(angle * pi / 180.0)
-        ctx.translate(-around[0], -around[1])
+        ctx.translate(-around.x, -around.y)
 
     def get_line_style(self, line_type, line_width):
         dash = line_width * 4.0
@@ -92,10 +93,10 @@ class CairoBackend:
                 style.color.b,
                 style.color.a,
             )
-            self.set_line_style(context, style["line_type"], style["line_width"])
-            context.set_line_width(style["line_width"])
-            context.move_to(start[0], start[1])
-            context.line_to(stop[0], stop[1])
+            self.set_line_style(context, style.line_type, style.line_width)
+            context.set_line_width(style.line_width)
+            context.move_to(start.x, start.y)
+            context.line_to(stop.x, stop.y)
             context.stroke()
 
         self.with_surface(img, callback)
@@ -110,12 +111,12 @@ class CairoBackend:
                 style.color.b,
                 style.color.a,
             )
-            self.set_line_style(context, style["line_type"], style["line_width"])
-            context.set_line_width(style["line_width"])
+            self.set_line_style(context, style.line_type, style.line_width)
+            context.set_line_width(style.line_width)
 
-            context.move_to(points[0][0], points[0][1])
+            context.move_to(points[0].x, points[0].y)
             for point in points[1:]:
-                context.line_to(point[0], point[1])
+                context.line_to(point.x, point.y)
             context.stroke_preserve()
             context.set_source_rgba(
                 style.fill_color.r,
@@ -163,11 +164,11 @@ class CairoBackend:
             self.rotate(context, rotate_angle[0], rotate_angle[1])
 
     @classmethod
-    def get_text_extends_from_context(cls, context, text):
+    def get_text_extends_from_context(cls, context, text) -> TextExtents:
         return context.text_extents(text)
 
     @classmethod
-    def get_text_extend(cls, text, font):
+    def get_text_extend(cls, text, font) -> TextExtents:
         width = len(text) * font.size * 2.0
         height = font.size * 2.0
         surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
@@ -182,10 +183,10 @@ class CairoBackend:
     def draw_text(
         self, img, text, font, at, align_kind=None, rotate=None, rotate_in_view=None
     ):
+        from python_ggplot.core.objects import GGException, TextAlignKind
+
         if align_kind is None:
-            align_kind = "LEFT"
-        else:
-            align_kind = align_kind.name
+            align_kind = TextAlignKind.LEFT
 
         def callback(context):
             if rotate_in_view:
@@ -195,21 +196,23 @@ class CairoBackend:
             context.set_source_rgba(
                 font.color.r, font.color.g, font.color.b, font.color.a
             )
-            x, y = at
+            x, y = at.x, at.y
             extends = CairoBackend.get_text_extends_from_context(context, text)
 
             if rotate:
                 self.rotate(context, rotate, at)
 
-            if align_kind == "LEFT":
+            if align_kind == TextAlignKind.LEFT:
                 move_to_x = x
                 move_to_y = y - extends.height / 2.0 + extends.y_bearing
-            elif align_kind == "RIGHT":
+            elif align_kind == TextAlignKind.RIGHT:
                 move_to_x = x - (extends.width + extends.x_bearing)
                 move_to_y = y - (extends.height / 2.0 + extends.y_bearing)
-            else:  # Center
+            elif align_kind == TextAlignKind.CENTER:  # Center
                 move_to_x = x - (extends.width / 2.0 + extends.y_bearing)
                 move_to_y = y - (extends.height / 2.0 + extends.y_bearing)
+            else:
+                raise GGException("unexpected")
 
             context.move_to(move_to_x, move_to_y)
             context.show_text(text)
@@ -297,14 +300,15 @@ class CairoBackend:
 
 
 def init_image(filename, width, height, ftype):
-    if ftype == "Png":
+    # todo fix this later
+    from python_ggplot.core.objects import FileTypeKind, GGException, Image
+
+    if ftype == FileTypeKind.PNG:
         surface = ImageSurface(FORMAT_ARGB32, width, height)
     else:
-        raise ValueError("Only PNG format is supported for now")
+        raise GGException("Only PNG format is supported for now")
 
     backend = CairoBackend(surface)
-    # todo fix this later
-    from python_ggplot.core.objects import Image
 
     return Image(filename, width, height, ftype, backend)
 
@@ -319,5 +323,5 @@ def cairo_test():
     context.move_to(100.0, 300.0)
     context.show_text("Hello from Python!")
 
-    with open("foo.png", "wb") as buffer:
+    with open("cairo_test.png", "wb") as buffer:
         surface.write_to_png(buffer)

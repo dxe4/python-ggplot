@@ -1,7 +1,7 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type
+from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type, cast
 
 from python_ggplot.core.common import abs_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core.objects import (
@@ -103,8 +103,8 @@ def coord_operator(
         if lhs.unit_type.is_absolute() and rhs.unit_type.is_absolute():
             return add_two_absolute_coord(lhs, rhs, operator)
         else:
-            res = lhs
-            res.pos = operator(lhs.pos, lhs.pos)  # Modify `pos` using the operator
+            res = deepcopy(lhs)
+            res.pos = operator(lhs.pos, rhs.pos)
             return res
     elif lhs.unit_type.is_length():
         return add_coord_one_length(lhs, rhs, operator)
@@ -179,7 +179,10 @@ def default_length_and_scale(view: "ViewPort", kind: AxisKind):
 @dataclass
 class Coord1D:
     pos: float
-    unit_type: UnitType
+
+    @property
+    def unit_type(self) -> UnitType:
+        raise GGException("not implemented")
 
     @staticmethod
     def create_str_height(pos: float, font: Font) -> "StrHeightCoordType":
@@ -207,7 +210,7 @@ class Coord1D:
 
     def __eq__(self, other) -> bool:
         if self.unit_type.is_length() and other.unit_type.is_length():
-            return self.to_points().pos == other.to_point().pos
+            return self.to_points().pos == other.to_points().pos
         else:
             return self.to_relative().pos == other.to_relative().pos
 
@@ -229,7 +232,7 @@ class Coord1D:
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         raise GGException("not implemented")
 
-    def from_length(self, length: LengthCoord):
+    def from_length(self, length: "LengthCoord"):
         raise GGException("This should never be used")
 
     def get_length(self):
@@ -251,9 +254,6 @@ class Coord1D:
 
     def to_relative(self, length=None) -> "Coord1D":
         return self.to(UnitType.RELATIVE, length=length)
-
-    def compare_scale_and_kind(self, other):
-        raise GGException("This should never be used")
 
     def to_via_points(
         self, to_kind: UnitType, length=None, abs_length=None, scale=None, axis=None
@@ -281,7 +281,21 @@ class Coord1D:
         if self.unit_type != other.unit_type:
             return False
 
-        return self.compare_scale_and_kind(other)
+        if self.unit_type.is_length():
+            return self == other
+
+        if self.unit_type == UnitType.DATA and other.unit_type == UnitType.DATA:
+            self_ = cast(DataCoordType, self)
+            other_ = cast(DataCoordType, other)
+            return (
+                self_.data.scale == other_.data.scale
+                and self_.data.axis_kind == other_.data.axis_kind
+            )
+
+        if self.unit_type == UnitType.RELATIVE:
+            return True
+
+        raise GGException("This should never be reached")
 
     def compatible_kind_and_scale(self, other: "Coord1D"):
         if self.unit_type.is_absolute() and other.unit_type.is_absolute():
@@ -314,9 +328,6 @@ class DataCoord:
     scale: Scale
     axis_kind: AxisKind
 
-    def compare_scale_and_kind(self, other):
-        return self.scale == other.scale and self.axis_kind == other.axis_kind
-
 
 @dataclass
 class TextCoordData:
@@ -330,9 +341,9 @@ class TextCoordData:
 @dataclass
 class RelativeCoordType(Coord1D):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.RELATIVE
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.RELATIVE
 
     @staticmethod
     def create_default_coord_type(
@@ -340,17 +351,14 @@ class RelativeCoordType(Coord1D):
     ) -> "Coord1D":
         return RelativeCoordType(pos=at)
 
-    def compare_scale_and_kind(self, other):
-        return True
-
 
 @dataclass
 class PointCoordType(Coord1D):
     data: LengthCoord
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.POINT
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.POINT
 
     @staticmethod
     def create_default_coord_type(
@@ -375,17 +383,14 @@ class PointCoordType(Coord1D):
         # todo fix this, fine for now
         return self.data.length
 
-    def compare_scale_and_kind(self, other):
-        return self.data.length == other.data.length
-
 
 @dataclass
 class CentimeterCoordType(Coord1D):
     data: LengthCoord
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.CENTIMETER
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.CENTIMETER
 
     @staticmethod
     def create_default_coord_type(
@@ -397,7 +402,7 @@ class CentimeterCoordType(Coord1D):
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
         length: Quantity = view.length_from_axis(axis_kind)
-        length = length.to_points(length)
+        length = length.to_points(length=length)
         return CentimeterCoordType(at, LengthCoord(length=length))
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
@@ -418,9 +423,9 @@ class CentimeterCoordType(Coord1D):
 class InchCoordType(Coord1D):
     data: LengthCoord
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.INCH
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.INCH
 
     @staticmethod
     def create_default_coord_type(
@@ -454,6 +459,10 @@ class InchCoordType(Coord1D):
 class DataCoordType(Coord1D):
     data: DataCoord
 
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.DATA
+
     def update_scale(self, view: "ViewPort"):
         if self.data.axis_kind == AxisKind.X:
             self.scale = view.x_scale
@@ -463,10 +472,6 @@ class DataCoordType(Coord1D):
     def get_scale(self):
         # todo fix this, fine for now
         return self.data.scale
-
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.DATA
-        super().__init__(*args, **kwargs)
 
     @staticmethod
     def create_default_coord_type(
@@ -494,9 +499,9 @@ class DataCoordType(Coord1D):
 class StrWidthCoordType(Coord1D):
     data: TextCoordData
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.STR_WIDTH
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.STR_WIDTH
 
     def point_dimension(self):
         text_extend = self.data.get_text_extend()
@@ -514,20 +519,20 @@ class StrWidthCoordType(Coord1D):
 class StrHeightCoordType(Coord1D):
     data: TextCoordData
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.STR_HEIGHT
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.STR_HEIGHT
 
     def relative_dimension(self):
         text_extend = self.data.get_text_extend()
-        return text_extend.height()
+        return text_extend.height
 
     def point_dimension(self):
         text_extend = self.data.get_text_extend()
         return text_extend.y_bearing() + text_extend.y_advance()
 
     def text_extend_dimension(self, text_extend):
-        return text_extend.height()
+        return text_extend.height
 
 
 @dataclass
@@ -536,7 +541,7 @@ class Coord:
     y: Coord1D
 
     def point(self) -> Point[float]:
-        return Point[float](
+        return Point(
             x=self.x.pos,
             y=self.y.pos,
         )
@@ -562,10 +567,10 @@ class Coord:
     def __eq__(self, other) -> bool:
         return self.x == other.x and self.y == other.y
 
-    def embed_into(self, into: "ViewPort"):
+    def embed_into(self, into: "ViewPort") -> "Coord":
         from python_ggplot.embed import coord_embed_into
 
-        coord_embed_into(self, into)
+        return coord_embed_into(self, into)
 
 
 @dataclass

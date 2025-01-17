@@ -1,5 +1,5 @@
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable, Optional
 
 from python_ggplot.core.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
@@ -25,24 +25,24 @@ def unity_type_to_quantity_cls(kind: UnitType):
 @dataclass
 class Quantity:
     val: float
-    unit_type: UnitType
     str_type = None
     is_length_unit: bool = False
 
+    @property
+    def unit_type(self) -> UnitType:
+        raise GGException("should never reach")
+
     @staticmethod
     def centimeters(val: float) -> "Quantity":
-        return CentimeterUnit(val)
+        return CentimeterUnit(val=val)
 
     @staticmethod
     def points(val: float) -> "Quantity":
-        return PointUnit(val)
+        return PointUnit(val=val)
 
     @staticmethod
     def relative(val: float) -> "Quantity":
-        return RelativeUnit(val)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        return RelativeUnit(val=val)
 
     def embed_into(self, axis: AxisKind, view: "ViewPort") -> "Quantity":
         from python_ggplot.embed import quantity_embed_into  # pylint: disable=all
@@ -164,51 +164,51 @@ class Quantity:
 
 class PointUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.POINT
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.POINT
 
 
 class CentimeterUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.CENTIMETER
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.CENTIMETER
 
 
 class InchUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.INCH
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.INCH
 
 
 class RelativeUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.RELATIVE
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.RELATIVE
 
 
 class DataUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.DATA
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.DATA
 
 
 class StrWidthUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.STR_WIDTH
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.STR_WIDTH
 
 
 class StrHeightUnit(Quantity):
 
-    def __init__(self, *args, **kwargs):
-        kwargs["unit_type"] = UnitType.STR_HEIGHT
-        super().__init__(*args, **kwargs)
+    @property
+    def unit_type(self) -> UnitType:
+        return UnitType.STR_HEIGHT
 
 
 def add_data_quantity(

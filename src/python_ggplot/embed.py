@@ -50,7 +50,7 @@ def coord1d_embed_into(
 ) -> Coord1D:
     if coord.unit_type.is_length():
         origin, abs_length = _coord_embed_into_origin_for_length(into, axis_kind)
-        origin_abs = origin.to_via_points(abs_length=abs_length)
+        origin_abs = origin.to_via_points(UnitType.POINT, abs_length=abs_length)
         return origin_abs + coord
     else:
         origin, abs_length = _coord_embed_into_origin(into, axis_kind)
@@ -61,31 +61,35 @@ def coord1d_embed_into(
 def coord_embed_into(coord: Coord, into: "ViewPort") -> Coord:
     return Coord(
         x=coord.x.embed_into(AxisKind.X, into),
-        y=coord.x.embed_into(AxisKind.Y, into),
+        y=coord.y.embed_into(AxisKind.Y, into),
     )
 
 
 # Quantity
 def quantity_embed_into_origin(view: "ViewPort", axis_kind: AxisKind):
     if axis_kind == AxisKind.X:
-        return view.x_scale, view.point_width(), view.x_scale
+        return view.width, view.point_width(), view.x_scale
     if axis_kind == AxisKind.Y:
-        return view.y_scale, view.point_height(), view.y_scale
+        return view.height, view.point_height(), view.y_scale
     raise GGException("unexpected")
 
 
 def relative_quantity_embed_into(
     quantity: Quantity, axis: AxisKind, view: "ViewPort"
 ) -> "Quantity":
-    quantity, length, scale = quantity_embed_into_origin(view, axis)
-    return quantity.multiply(quantity, length=length, scale=scale, as_coordinate=False)
+    new_quantity, length, scale = quantity_embed_into_origin(view, axis)
+    return quantity.multiply(
+        new_quantity, length=length, scale=scale, as_coordinate=False
+    )
 
 
 def data_quantity_embed_into(
     quantity: Quantity, axis: AxisKind, view: "ViewPort"
 ) -> "Quantity":
-    quantity, length, scale = quantity_embed_into_origin(view, axis)
-    return quantity.multiply(quantity, length=length, scale=scale, as_coordinate=False)
+    new_quantity, length, scale = quantity_embed_into_origin(view, axis)
+    return quantity.multiply(
+        new_quantity, length=length, scale=scale, as_coordinate=False
+    )
 
 
 quantity_embed_into_lookup = {
@@ -139,7 +143,6 @@ def view_embed_as_relative(
 class GOEmbedData:
     graphics_obj: GraphicsObject
     view: "ViewPort"
-    axis: Optional[AxisKind]
 
 
 def go_embed_start_stop(data: GOEmbedData) -> GraphicsObject:
@@ -153,24 +156,18 @@ def go_embed_start_stop(data: GOEmbedData) -> GraphicsObject:
 
 
 def go_embed_rect(data: GOEmbedData) -> GraphicsObject:
-    if not data.axis:
-        raise GGException("expected axis to be provided")
-
     obj = cast(GORect, data.graphics_obj)
     obj.origin = obj.origin.embed_into(data.view)
-    obj.width = obj.width.embed_into(data.axis, data.view)
-    obj.height = obj.height.embed_into(data.axis, data.view)
+    obj.width = obj.width.embed_into(AxisKind.X, data.view)
+    obj.height = obj.height.embed_into(AxisKind.Y, data.view)
     return obj
 
 
 def go_embed_raster(data: GOEmbedData) -> GraphicsObject:
-    if data.axis is None or data.view is None:
-        raise GGException("expected view and axis")
-
     obj = cast(GORaster, data.graphics_obj)
     obj.origin = obj.origin.to_relative()
-    obj.pixel_width = obj.pixel_width.to_relative_from_view(data.view, data.axis)
-    obj.pixel_height = obj.pixel_height.to_relative_from_view(data.view, data.axis)
+    obj.pixel_width = obj.pixel_width.to_relative_from_view(data.view, AxisKind.X)
+    obj.pixel_height = obj.pixel_height.to_relative_from_view(data.view, AxisKind.Y)
     return obj
 
 
@@ -227,6 +224,10 @@ def go_embed_grid(data: GOEmbedData) -> GraphicsObject:
     return obj
 
 
+def go_embed_composite(data: GOEmbedData) -> GraphicsObject:
+    return data.graphics_obj
+
+
 go_embed_lookup = {
     # start/stop
     GOType.AXIS: go_embed_start_stop,
@@ -243,19 +244,19 @@ go_embed_lookup = {
     GOType.POLYLINE_DATA: go_embed_poly_line,
     GOType.RECT_DATA: go_embed_rect,
     GOType.RASTER_DATA: go_embed_raster,
-    # (GOType.COMPOSITE_DATA, UnitType.RELATIVE): None,
+    GOType.COMPOSITE_DATA: go_embed_composite,
 }
 
 
 def graphics_object_to_relative(
     graphics_obj: GraphicsObject,
     view: "ViewPort",
-    axis: Optional[AxisKind] = None,
 ) -> GraphicsObject:
     # TODO lot of this logic can be re used with go convert
     func = go_embed_lookup.get(graphics_obj.go_type)
+
     if not func:
         raise GGException("Conversion not possible")
 
-    data = GOEmbedData(graphics_obj=graphics_obj, view=view, axis=axis)
+    data = GOEmbedData(graphics_obj=graphics_obj, view=view)
     return func(data)

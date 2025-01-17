@@ -226,20 +226,20 @@ def convert_quantity(quantity, to_type: UnitType, length=None, scale=None):
     return convert_quantity_data(data, to_type)
 
 
-def quantitiy_to_coord(quantity):
+def quantitiy_to_coord(quantity: "Quantity", pos: float):
     conversion_data = {
-        UnitType.RELATIVE: lambda: RelativeCoordType(quantity.pos),
+        UnitType.RELATIVE: lambda: RelativeCoordType(pos),
         UnitType.POINT: lambda: PointCoordType(
-            quantity.pos, LengthCoord(length=deepcopy(quantity))
+            pos, LengthCoord(length=deepcopy(quantity))
         ),
         UnitType.INCH: lambda: InchCoordType(
-            quantity.pos, LengthCoord(length=deepcopy(quantity))
+            pos, LengthCoord(length=deepcopy(quantity))
         ),
         UnitType.CENTIMETER: lambda: CentimeterCoordType(
-            quantity.pos, LengthCoord(length=deepcopy(quantity))
+            pos, LengthCoord(length=deepcopy(quantity))
         ),
     }
-    conversion = conversion_data[quantity.unit_type]
+    conversion = conversion_data[quantity.unit_type]()
     return conversion
 
 

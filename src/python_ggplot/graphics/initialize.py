@@ -24,7 +24,6 @@ from python_ggplot.core.objects import (
     ErrorBarKind,
     Font,
     GGException,
-    GOGrid,
     Gradient,
     LineType,
     MarkerKind,
@@ -39,6 +38,7 @@ from python_ggplot.core.units.objects import CentimeterUnit, Quantity
 from python_ggplot.graphics.objects import (
     GOAxis,
     GOComposite,
+    GOGrid,
     GOLabel,
     GOLine,
     GOManyPoints,
@@ -95,7 +95,7 @@ class InitRectInput:
     gradient: Optional[Gradient] = None
     style: Optional[Style] = None
     rotate: Optional[float] = None
-    name: str = "rect"
+    name: Optional[str] = "rect"
 
 
 @dataclass
@@ -188,7 +188,7 @@ def init_rect(
     )
 
     return GORect(
-        name=init_rect_input.name,
+        name=init_rect_input.name or "",
         config=GraphicsObjectConfig(style=style),
         origin=path_coord_view_port(origin, view),
         width=width,
@@ -212,14 +212,13 @@ def init_rect_from_coord(
 def init_raster(view, origin, width, height, init_raster_data: InitRasterData):
     return GORaster(
         name=init_raster_data.name or "raster",
-        config=GraphicsObjectConfig(),
+        config=GraphicsObjectConfig(rotate=init_raster_data.rotate),
         origin=origin.path_coord_view_port(view),
         pixel_width=width,
         pixel_height=height,
         block_x=init_raster_data.num_x,
         block_y=init_raster_data.num_y,
         draw_cb=init_raster_data.callback,
-        rotate=init_raster_data.rotate,
     )
 
 
@@ -314,7 +313,7 @@ def init_multi_line_text(
 def init_line(
     start: Coord, stop: Coord, init_line_input: InitLineInput
 ) -> GraphicsObject:
-    start_stop_data = {"start": start, "stop": stop}
+    start_stop_data = StartStopData(start=start, stop=stop)
 
     default_style = Style(
         color=BLACK,
@@ -368,7 +367,10 @@ def init_point_from_point(
     return init_point(pos, style, name)
 
 
-def init_many_points(pos: List[float], style: Style, name: Optional[str] = None):
+def init_many_points(pos: List[Coord], style: Style, name: Optional[str] = None):
+    if style.marker is None:
+        raise GGException("expected marker")
+
     return GOManyPoints(
         name=name or "many_points",
         config=GraphicsObjectConfig(style=style),
@@ -480,7 +482,7 @@ def init_error_bar(data: InitErrorBarData) -> GraphicsObject:
     return ob
 
 
-def init_error_bar_for_point(data: InitErrorBarData) -> GraphicsObject:
+def init_error_bar_from_point(data: InitErrorBarData) -> GraphicsObject:
     if not isinstance(data.point, Point):
         raise GGException("this function is called on multiple points")
 
@@ -589,7 +591,7 @@ def init_axis_label(
     )
 
     return GOText(
-        name=name,
+        name=name or "",
         config=GraphicsObjectConfig(rotate=rotate_val),
         data=data,
     )
@@ -644,7 +646,7 @@ def ylabel(
 def xlabel_from_float(
     view: ViewPort,
     label: str,
-    margin: float,
+    margin: float = 1.0,
     font: Optional[Font] = None,
     name: Optional[str] = None,
     is_secondary: Optional[bool] = None,
@@ -667,7 +669,7 @@ def xlabel_from_float(
 def ylabel_from_float(
     view: ViewPort,
     label: str,
-    margin: float,
+    margin: float = 1.0,
     font: Optional[Font] = None,
     name: Optional[str] = None,
     is_secondary: Optional[bool] = None,
@@ -872,7 +874,7 @@ def init_tick(
     tick_kind: Optional[TickKind] = None,
     style: Optional[Style] = None,
     name: Optional[str] = None,
-    is_secondary: Optional[bool] = False,
+    is_secondary: bool = False,
 ) -> GOTick:
     name = name or "tick"
     tick_kind = tick_kind or TickKind.ONE_SIDE
@@ -899,7 +901,7 @@ def tick_labels_from_coord(
     tick_labels_list: list[str],
     axis_kind: AxisKind,
     font: Optional[Font] = None,
-    is_secondary: Optional[bool] = False,
+    is_secondary: bool = False,
     rotate: Optional[float] = None,
     margin: Optional[Coord1D] = None,
     align_override: Optional[TextAlignKind] = None,
@@ -990,7 +992,7 @@ def init_ticks(
     major: bool = True,
     style: Optional[Style] = None,
     update_scale: bool = True,
-    is_secondary: Optional[bool] = None,
+    is_secondary: bool = False,
     bound_scale: Optional[Scale] = None,
 ) -> List[GraphicsObject]:
     result: List[GraphicsObject] = []
@@ -1116,7 +1118,7 @@ def calc_minor_ticks(ticks: List[GOTick], axis_kind: AxisKind) -> List[Coord1D]:
 
     cdiv2 = Coord1D.create_data(2.0, scale=scale, axis_kind=axis_kind)
 
-    for i, tick in enumerate(ticks):
+    for i, tick in enumerate(ticks[:-1]):
         if axis_kind == AxisKind.X:
             result.append((tick.pos.x + ticks[i + 1].pos.x) / cdiv2)
         else:  # AxisKind.Y
