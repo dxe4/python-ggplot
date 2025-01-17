@@ -19,7 +19,7 @@ from python_ggplot.graphics.objects import GraphicsObject
 class ViewPortInput:
     name: str = ""
     parent: str = ""
-    w_img: "Quantity" = field(default_factory=lambda: Quantity.points(40.0))
+    w_img: "Quantity" = field(default_factory=lambda: Quantity.points(640.0))
     h_img: "Quantity" = field(default_factory=lambda: Quantity.points(480.0))
     style: Optional["Style"] = None
     x_scale: Optional["Scale"] = None
