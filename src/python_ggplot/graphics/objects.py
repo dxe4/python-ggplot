@@ -445,8 +445,7 @@ def first_option(left: Optional[T], right: Optional[T]) -> Optional[T]:
     return right
 
 
-def format_tick_value(f: float, scale: Optional[float] = None) -> str:
-    scale = scale if scale is not None else 0.0
+def format_tick_value(f: float, scale: float = 0.0) -> str:
     tick_precision_cutoff = 6.0
     # tick_precision = 5.0
 

@@ -51,18 +51,12 @@ class QuantityConversionData:
             )
 
 
-@dataclass
-class ToQuantityData:
-    scale: Optional[Scale] = None
-    length: Optional["Quantity"] = None
-
-
 def point_to_data(data: QuantityConversionData):
     if data.scale is None:
         raise GGException("need to provide scale")
 
     new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
-        ToQuantityData(length=data.length, scale=data.scale)
+        length=data.length, scale=data.scale
     ).val
     return DataUnit(val=new_val)
 
@@ -79,7 +73,7 @@ def point_to_relative(data: QuantityConversionData):
     if data.length is None:
         raise GGException("need to provide length")
     return RelativeUnit(
-        val=data.quantity.val / data.length.to_points(ToQuantityData()).val
+        val=data.quantity.val / data.length.to_points().val
     )
 
 
@@ -91,7 +85,7 @@ def centimeter_to_data(data: QuantityConversionData):
     if data.scale is None:
         raise GGException("need to provide scale")
     new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
-        ToQuantityData(length=data.length, scale=data.scale)
+        length=data.length, scale=data.scale
     ).val
     return DataUnit(val=new_val)
 
@@ -110,8 +104,8 @@ def centimeter_to_relative(data: QuantityConversionData):
     if data.length is None:
         raise GGException("need to provide length")
     new_val = (
-        data.quantity.to_points(ToQuantityData()).val
-        / data.length.to_points(ToQuantityData()).val
+        data.quantity.to_points().val
+        / data.length.to_points().val
     )
     return RelativeUnit(val=new_val)
 
@@ -125,7 +119,7 @@ def inch_to_data(data: QuantityConversionData):
         raise GGException("need to provide length")
 
     new_val = (data.scale.high - data.scale.low) * data.quantity.to_relative(
-        ToQuantityData(length=data.length, scale=data.scale)
+        length=data.length, scale=data.scale
     ).val
     return DataUnit(val=new_val)
 
@@ -142,8 +136,8 @@ def inch_to_relative(data: QuantityConversionData):
     if data.length is None:
         raise GGException("need to provide length")
     new_val = (
-        data.quantity.to_points(ToQuantityData()).val
-        / data.length.to_points(ToQuantityData()).val
+        data.quantity.to_points().val
+        / data.length.to_points().val
     )
     return RelativeUnit(val=new_val)
 

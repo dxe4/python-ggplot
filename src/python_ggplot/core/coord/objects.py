@@ -28,10 +28,10 @@ class CoordsInput:
 
 
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
-    if coord.unit_type.is_length():
+    if isinstance(coord, (CentimeterCoordType, InchCoordType, PointCoordType)):
         length = coord.get_length()
-        if length is None:
-            coord.coord_type.length = length
+        if length is not None:
+            coord.data.length = length
     return coord
 
 
@@ -123,10 +123,8 @@ def coord_quantity_operator(
     if coord.unit_type != quantity.unit_type:
         raise GGException("Quantity and coord types have to be the same")
 
-    pos = operator(coord.pos, quantity.val)
-
     res = deepcopy(coord)
-    res.pos = pos
+    res.pos = operator(coord.pos, quantity.val)
     return res
 
 
@@ -375,7 +373,7 @@ class PointCoordType(Coord1D):
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
         length: Quantity = view.length_from_axis(axis_kind)
-        length = length.to_points(length=length)
+        length = length.to_points()
         return PointCoordType(at, LengthCoord(length=length))
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
@@ -406,8 +404,9 @@ class CentimeterCoordType(Coord1D):
 
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
+        # nom source -> template c1*
         length: Quantity = view.length_from_axis(axis_kind)
-        length = length.to_points(length=length)
+        length = length.to_centimeter()
         return CentimeterCoordType(at, LengthCoord(length=length))
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
@@ -441,9 +440,9 @@ class InchCoordType(Coord1D):
 
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
-
+        # nom source -> template c1*
         length: Quantity = view.length_from_axis(axis_kind)
-        length = length.to_points(length)
+        length = length.to_inch()
         return InchCoordType(at, LengthCoord(length=length))
 
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
@@ -488,6 +487,7 @@ class DataCoordType(Coord1D):
 
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
+        # template c1*
         scale = view.scale_for_axis(axis_kind)
         if scale is None:
             raise GGException("expected scale")

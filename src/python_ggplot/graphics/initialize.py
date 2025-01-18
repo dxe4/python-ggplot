@@ -350,7 +350,7 @@ def init_point_without_style(
 
 def init_point_from_point(
     view: ViewPort,
-    pos: Coord,
+    pos: Point,
     size=3.0,
     marker=MarkerKind.CIRCLE,
     color=BLACK,
@@ -362,8 +362,8 @@ def init_point_from_point(
 
     style = Style(marker=marker, size=size, color=color)
     coord_pos = Coord(
-        x=Coord1D.create_data(pos.x.pos, view.x_scale, AxisKind.X),
-        y=Coord1D.create_data(pos.y.pos, view.y_scale, AxisKind.Y),
+        x=Coord1D.create_data(pos.x, view.x_scale, AxisKind.X),
+        y=Coord1D.create_data(pos.y, view.y_scale, AxisKind.Y),
     )
 
     return init_point(coord_pos, style, name)
@@ -400,102 +400,99 @@ def create_lines(
     return init_line(start, stop, data)
 
 
-def init_error_bar(data: InitErrorBarData) -> GraphicsObject:
+def init_error_bar(data: InitErrorBarData) -> GOComposite:
     # TODO this code can improve
     if not isinstance(data.point, Coord):
-        raise GGException("this function is called on single point")
+        raise GGException("data.point has to be of type coord, if its point use init_error_bar_from_point")
 
     style = data.style or Style(
         line_width=1.0,
         color=BLACK,
         size=10.0,
     )
-    ob = GOComposite(
-        name=data.name if data.name else "error_bar",
+    result = GOComposite(
+        name=data.name or "error_bar",
         config=GraphicsObjectConfig(style=style),
         kind=CompositeKind.ERROR_BAR,
     )
-    if ob.config.children is None:
+    if result.config.children is None:
         raise GGException("unexpected")
 
-    if data.error_bar_kind == ErrorBarKind.LINES:
-        create_lines_data = data.create_lines_input()
-        res = create_lines(**create_lines_data)
-        ob.config.children.append(res)
+    create_lines_data = data.create_lines_input()
+    new_line: GraphicsObject = create_lines(**create_lines_data)
+    result.config.children = [new_line]
 
+    if data.error_bar_kind == ErrorBarKind.LINES:
+        # this only needs initialising the children array
+        pass
     elif data.error_bar_kind == ErrorBarKind.LINEST:
         if not style.size:
             raise GGException("expected style size")
 
-        create_lines_data = data.create_lines_input()
-        res = create_lines(**create_lines_data)
-        ob.config.children.append(res)
-
         if data.axis_kind == AxisKind.X:
-            scale2 = data.point.y.get_scale()
-            q_ = Quantity.points(style.size)
+            scale2: Scale = data.point.y.get_scale()
 
-            local_abs = q_.to_data(scale=scale2, length=data.view.point_height())
-
-            low = coord_quantity_sub(data.point.y, local_abs)
-            high = coord_quantity_add(data.point.y, local_abs)
-
-            start = Coord(x=data.error_up, y=low)
-            stop = Coord(x=data.error_up, y=high)
-
-            right = init_line(
-                start=start, stop=stop, init_line_input=InitLineInput(style=style)
+            local_abs: Quantity = Quantity.points(style.size).to_data(
+                scale=scale2, length=data.view.point_height()
             )
 
-            start = Coord(x=data.error_down, y=low)
-            stop = Coord(x=data.error_down, y=high)
+            low: Coord1D = coord_quantity_sub(data.point.y, local_abs)
+            high: Coord1D = coord_quantity_add(data.point.y, local_abs)
 
+            right: GraphicsObject = init_line(
+                start=Coord(x=data.error_up, y=low),
+                stop=Coord(x=data.error_up, y=high),
+                init_line_input=InitLineInput(style=style)
+            )
             left = init_line(
-                start=start, stop=stop, init_line_input=InitLineInput(style=style)
+                start=Coord(x=data.error_down, y=low),
+                stop=Coord(x=data.error_down, y=high),
+                init_line_input=InitLineInput(style=style)
             )
 
-            ob.config.children.extend([right, left])
+            result.config.children.extend([right, left])
 
         else:  # AxisKind.Y
             scale2 = data.point.x.get_scale()
-            q_ = Quantity.points(style.size)
+            local_abs2: Quantity = Quantity.points(style.size).to_data(
+                scale=scale2, length=data.view.point_width()
+            )
 
-            local_abs = q_.to_data(scale=scale2, length=data.view.point_width())
-
-            left_point = coord_quantity_sub(data.point.x, local_abs)
-            right_point = coord_quantity_add(data.point.x, local_abs)
-
-            start = Coord(x=left_point, y=data.error_up)
-            stop = Coord(x=right_point, y=data.error_up)
+            left_point = coord_quantity_sub(data.point.x, local_abs2)
+            right_point = coord_quantity_add(data.point.x, local_abs2)
 
             up = init_line(
-                start=start, stop=stop, init_line_input=InitLineInput(style=style)
+                start=Coord(x=left_point, y=data.error_up),
+                stop=Coord(x=right_point, y=data.error_up),
+                init_line_input=InitLineInput(style=style)
             )
-
-            start = Coord(x=left_point, y=data.error_down)
-            stop = Coord(x=right_point, y=data.error_down)
 
             down = init_line(
-                start=start, stop=stop, init_line_input=InitLineInput(style=style)
+                start= Coord(x=left_point, y=data.error_down),
+                stop=Coord(x=right_point, y=data.error_down),
+                init_line_input=InitLineInput(style=style)
             )
 
-            ob.config.children.extend([up, down])
+            result.config.children.extend([up, down])
 
-    return ob
+    return result
 
 
 def init_error_bar_from_point(data: InitErrorBarData) -> GraphicsObject:
     if not isinstance(data.point, Point):
-        raise GGException("this function is called on multiple points")
+        raise GGException("data.point has to be of type point, if its coord use init_error_bar")
 
     if data.view.x_scale is None or data.view.y_scale is None:
         raise GGException("view needs to have x and y scale")
 
     coord_data = deepcopy(data)
+    # todo sanity check this, original package does an if on axis kind
+    # but the body of the if has exactly the same code
     coord_data.point = Coord(
         x=Coord1D.create_data(data.point.x, data.view.x_scale, AxisKind.X),
-        y=Coord1D.create_data(data.point.y, data.view.y_scale, AxisKind.X),
+        y=Coord1D.create_data(data.point.y, data.view.y_scale, AxisKind.Y),
     )
+
     return init_error_bar(coord_data)
 
 
@@ -527,7 +524,7 @@ def init_poly_line_from_points(
     if view.x_scale is None or view.y_scale is None:
         raise GGException("expected x and y scale")
 
-    positions = [
+    positions: List[Coord] = [
         Coord(
             x=Coord1D.create_data(p.x, view.x_scale, AxisKind.X),
             y=Coord1D.create_data(p.y, view.y_scale, AxisKind.Y),
@@ -773,7 +770,7 @@ TickFormat = Callable[[float], str]
 
 @dataclass
 class TickLabelsInput:
-    font: Optional["Font"] = None
+    font: Optional[Font] = None
     is_secondary: Optional[bool] = None
     margin: Optional[Coord1D] = None
     format_fn: Optional[TickFormat] = None
@@ -789,9 +786,9 @@ def tick_labels(
         raise GGException("empty ticks vector")
 
     axis_kind = ticks[0].axis
-    tick_labels_input.font = tick_labels_input.font or Font(size=12.0)
+    tick_labels_input.font = tick_labels_input.font or Font(size=8.0)
 
-    positions = [x.pos.x.pos if axis_kind == AxisKind.X else x.pos.y.pos for x in ticks]
+    positions = [i.pos.x.pos if axis_kind == AxisKind.X else i.pos.y.pos for i in ticks]
 
     max_pos = max(positions)
     min_pos = min(positions)
@@ -812,40 +809,41 @@ def tick_labels(
     new_positions = []
     result: List[GraphicsObject] = []
 
-    if strs_unique_len < strs_len:
-        new_positions = [x - min_pos for x in positions]
-        max_tick = ticks[-1]
+    if tick_labels_input.format_fn is None:
+        if strs_unique_len < strs_len:
+            new_positions = [x - min_pos for x in positions]
+            max_tick = ticks[-1]
 
-        if axis_kind == AxisKind.X:
-            coord = axis_coord(
-                max_tick.pos.x, AxisKind.X, tick_labels_input.is_secondary
-            )
-            pos = (
-                coord.y.to_points(view.h_img).pos
-                - Quantity.centimeters(1.5).to_points().val
-            )
-            coord.y = Coord1D.create_point(pos)
-        else:  # AxisKind.Y
-            coord = axis_coord(
-                max_tick.pos.y, AxisKind.Y, tick_labels_input.is_secondary
-            )
-            pos = (
-                coord.x.to_points(view.w_img).pos
-                - Quantity.centimeters(2.0).to_points().val
-            )
-            rotate = rotate or -90.0
-            coord.y = Coord1D.create_point(pos, None)
+            if axis_kind == AxisKind.X:
+                coord = axis_coord(
+                    max_tick.pos.x, AxisKind.X, tick_labels_input.is_secondary
+                )
+                pos = (
+                    coord.y.to_points(view.h_img).pos
+                    - Quantity.centimeters(1.5).to_points().val
+                )
+                coord.y = Coord1D.create_point(pos)
+            else:  # AxisKind.Y
+                coord = axis_coord(
+                    max_tick.pos.y, AxisKind.Y, tick_labels_input.is_secondary
+                )
+                pos = (
+                    coord.x.to_points(view.w_img).pos
+                    - Quantity.centimeters(2.0).to_points().val
+                )
+                rotate = rotate or -90.0
+                coord.y = Coord1D.create_point(pos, None)
 
-        text = f"+{format_fn(min_pos)}"
-        data = InitTextInput(
-            text=text,
-            align_kind=TextAlignKind.RIGHT,
-            font=tick_labels_input.font,
-            rotate=rotate,
-            name="axis_substraction",
-        )
-        new_text = init_text(view, coord, data)
-        result.append(new_text)
+            text = f"+{format_fn(min_pos)}"
+            data = InitTextInput(
+                text=text,
+                align_kind=TextAlignKind.RIGHT,
+                font=tick_labels_input.font,
+                rotate=rotate,
+                name="axis_substraction",
+            )
+            new_text = init_text(view, coord, data)
+            result.append(new_text)
 
     for idx, obj in enumerate(ticks):
         label_text = format_fn(new_positions[idx]) if new_positions else strs[idx]
@@ -880,11 +878,12 @@ def init_tick(
 ) -> GOTick:
     name = name or "tick"
     tick_kind = tick_kind or TickKind.ONE_SIDE
-
-    default_style = Style(
-        line_width=1.0, color=BLACK, size=5.0, line_type=LineType.SOLID
+    style = style or Style(
+        line_width=1.0,
+        color=BLACK,
+        size=5.0,
+        line_type=LineType.SOLID
     )
-    style = style or default_style
 
     return GOTick(
         name=name,
@@ -955,9 +954,9 @@ def calc_tick_locations(scale: Scale, num_ticks: int) -> Tuple[Scale, float, int
 
     axis_end = scale.high
     axis_start = scale.low
-    # axis_width = axis_end - axis_start
+    axis_width = axis_end - axis_start
 
-    nice_range = nice_number(axis_end, False)
+    nice_range = nice_number(axis_width, False)
     nice_tick = nice_number(nice_range / (num_ticks - 1), True)
 
     new_axis_start = math.floor(axis_start / nice_tick) * nice_tick
@@ -1007,10 +1006,10 @@ def init_ticks(
     if num_ticks == 0 and tick_locs:
         for location in tick_locs:
             new_obj = init_tick(
-                view,
-                axis_kind,
-                major,
-                location,
+                view=view,
+                axis_kind=axis_kind,
+                major=major,
+                at=location,
                 tick_kind=tick_kind,
                 style=style,
                 is_secondary=is_secondary,
@@ -1024,8 +1023,8 @@ def init_ticks(
         new_scale, _, new_num_ticks = calc_tick_locations(scale, num_ticks)
         tick_scale = bound_scale or new_scale
 
-        temp = linspace(new_scale.low, new_scale.high, new_num_ticks + 1)
-        auto_tick_locations = [
+        temp: List[float] = linspace(new_scale.low, new_scale.high, new_num_ticks + 1)
+        auto_tick_locations: List[Coord] = [
             axis_coord(
                 Coord1D.create_data(pos, tick_scale, axis_kind),
                 axis_kind,
@@ -1064,7 +1063,7 @@ def init_ticks(
 def xticks(
     view: ViewPort,
     tick_locs: List[Coord],
-    num_ticks: Optional[int] = None,
+    num_ticks: Optional[int] = 10,
     tick_kind: Optional[TickKind] = None,
     style: Optional[Style] = None,
     update_scale: bool = True,
@@ -1075,7 +1074,7 @@ def xticks(
         view,
         AxisKind.X,
         tick_locs,
-        num_ticks=num_ticks or 10,
+        num_ticks=num_ticks,
         tick_kind=tick_kind,
         major=True,
         style=style,

@@ -252,7 +252,7 @@ def layout(
 
 
 def background(view: ViewPort, style: Optional[Style] = None):
-    default_style = Style(color=BLACK, fill_color=GREY92)
+    default_style = Style(color=TRANSPARENT, fill_color=GREY92)
 
     style = style or default_style
 

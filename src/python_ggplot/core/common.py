@@ -108,9 +108,13 @@ def nice_number(val: float, round_: bool) -> float:
         else:
             nice_frac = 10.0
     else:
-        if frac > 5.0:
-            nice_frac = 10.0
+        if frac <= 1.0:
+            nice_frac = 1.0
+        elif frac <= 2.0:
+            nice_frac = 2.0
+        elif frac <= 5.0:
+            nice_frac = 5.0
         else:
-            nice_frac = frac
+            nice_frac = 10.0
 
     return nice_frac * math.pow(10.0, exponent)
