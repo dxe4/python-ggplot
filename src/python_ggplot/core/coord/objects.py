@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type, cast
 
-from python_ggplot.core.common import abs_to_inch, inch_to_abs, inch_to_cm
+from python_ggplot.core.common import LOG_LEVEL, abs_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core.objects import (
     AxisKind,
     Font,
@@ -256,8 +256,13 @@ class Coord1D:
         return self.to(UnitType.RELATIVE, length=length)
 
     def to_via_points(
-        self, to_kind: UnitType, length=None, abs_length=None, scale=None, axis=None
-    ):
+        self,
+        to_kind: UnitType,
+        length: Optional[Quantity] = None,
+        abs_length: Optional[Quantity] = None,
+        scale: Optional[Scale] = None,
+        axis: Optional[AxisKind] = None,
+    ) -> "Coord1D":
         from python_ggplot.core.coord.convert import (
             convert_via_point,
         )  # pylint: disable=all
@@ -266,7 +271,7 @@ class Coord1D:
             self, to_kind, length=length, abs_length=abs_length, scale=scale, axis=axis
         )
 
-    def to(self, to_kind: UnitType, length=None) -> "Coord1D":
+    def to(self, to_kind: UnitType, length: Optional[Quantity] = None) -> "Coord1D":
         from python_ggplot.core.coord.convert import (
             convert_coord,
         )  # pylint: disable=all
@@ -546,7 +551,7 @@ class Coord:
             y=self.y.pos,
         )
 
-    def dimension_for_axis(self, axis: AxisKind) -> Coord1D:
+    def dimension_for_axis(self, axis: AxisKind) -> "Coord1D":
         if axis == AxisKind.X:
             return self.x
         else:

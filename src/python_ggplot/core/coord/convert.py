@@ -50,7 +50,7 @@ class CoordViaPointData:
     font: Optional[Font] = None
 
 
-def length_to_point(data: CoordConversionData):
+def length_to_point(data: CoordConversionData) -> Coord1D:
     res_length = None
     if data.length:
         # todo sanity check right length is used
@@ -80,25 +80,25 @@ def length_to_inch(data: CoordConversionData) -> Coord1D:
     return InchCoordType(pos, LengthCoord(length=length))
 
 
-def coord_to_self(data: CoordConversionData):
+def coord_to_self(data: CoordConversionData) -> Coord1D:
     return deepcopy(data.coord)
 
 
-def _to_relative_calculation(coord: DataCoordType):
+def _to_relative_calculation(coord: DataCoordType) -> float:
     return (coord.pos - coord.data.scale.low) / (
         coord.data.scale.high - coord.data.scale.low
     )
 
 
-def _to_relative_x(coord: DataCoordType):
+def _to_relative_x(coord: DataCoordType) -> float:
     return _to_relative_calculation(coord)
 
 
-def _to_relative_y(coord: DataCoordType):
+def _to_relative_y(coord: DataCoordType) -> float:
     return 1.0 - _to_relative_calculation(coord)
 
 
-def _to_relative_data(coord: DataCoordType):
+def _to_relative_data(coord: DataCoordType) -> float:
     if coord.data.axis_kind == AxisKind.X:
         return _to_relative_x(coord)
     if coord.data.axis_kind == AxisKind.Y:
@@ -106,18 +106,18 @@ def _to_relative_data(coord: DataCoordType):
     raise GGException()
 
 
-def data_to_point(data: CoordConversionData):
+def data_to_point(data: CoordConversionData) -> Coord1D:
     return data.coord.to(UnitType.RELATIVE).to(UnitType.POINT, length=data.length)
 
 
-def data_to_relative(data: CoordConversionData):
+def data_to_relative(data: CoordConversionData) -> Coord1D:
     data_coord = cast(DataCoordType, data.coord)
     return RelativeCoordType(pos=_to_relative_data(data_coord))
 
 
-def text_to_point(data: CoordConversionData):
+def text_to_point(data: CoordConversionData) -> Coord1D:
     if data.length is None:
-        return GGException("length must be provided")
+        raise GGException("length must be provided")
 
     if not isinstance(data.coord, (StrHeightCoordType, StrHeightCoordType)):
         raise GGException("unexpected")
@@ -127,7 +127,7 @@ def text_to_point(data: CoordConversionData):
     return PointCoordType(pos, LengthCoord(length=data.length))
 
 
-def text_to_relative(data: CoordConversionData):
+def text_to_relative(data: CoordConversionData) -> Coord1D:
     if data.length is None:
         raise GGException(
             "Conversion from StrWidth to relative requires a length scale!"
@@ -145,7 +145,7 @@ def text_to_relative(data: CoordConversionData):
     return RelativeCoordType(pos=pos)
 
 
-def relative_to_point(data: CoordConversionData):
+def relative_to_point(data: CoordConversionData) -> Coord1D:
     if not data.length:
         raise GGException("expected length for conversion")
 
@@ -157,7 +157,7 @@ def relative_to_point(data: CoordConversionData):
 # via point conversion
 
 
-def coord_to_self_via_point(data: CoordViaPointData):
+def coord_to_self_via_point(data: CoordViaPointData) -> Coord1D:
     return deepcopy(data.coord)
 
 
@@ -165,13 +165,13 @@ def length_to_point_via_point(data: CoordViaPointData) -> Coord1D:
     return data.coord.to_points()
 
 
-def length_to_centimeter_via_point(data: CoordViaPointData):
+def length_to_centimeter_via_point(data: CoordViaPointData) -> Coord1D:
     new_pos = inch_to_cm(abs_to_inch(data.coord.to_points().pos))
     length = data.coord.get_length().to_centimeter()
     return PointCoordType(new_pos, data=LengthCoord(length=length))
 
 
-def length_to_inch_via_point(data: CoordViaPointData):
+def length_to_inch_via_point(data: CoordViaPointData) -> Coord1D:
     new_pos = abs_to_inch(data.coord.to_points().pos)
     length = data.coord.get_length().to_inch()
     return PointCoordType(new_pos, data=LengthCoord(length=length))
@@ -180,7 +180,7 @@ def length_to_inch_via_point(data: CoordViaPointData):
 # via point relative conversion
 
 
-def to_point_relative_via_point(data: CoordViaPointData):
+def to_point_relative_via_point(data: CoordViaPointData) -> Coord1D:
     if data.abs_length is None:
         raise GGException("expected abs_length")
 
@@ -190,7 +190,7 @@ def to_point_relative_via_point(data: CoordViaPointData):
     )
 
 
-def to_inch_relative_via_point(data: CoordViaPointData):
+def to_inch_relative_via_point(data: CoordViaPointData) -> Coord1D:
     if data.abs_length is None:
         raise GGException("expected abs_length")
 
@@ -200,7 +200,7 @@ def to_inch_relative_via_point(data: CoordViaPointData):
     )
 
 
-def to_centimeter_relative_via_point(data: CoordViaPointData):
+def to_centimeter_relative_via_point(data: CoordViaPointData) -> Coord1D:
     if data.abs_length is None:
         raise GGException("expected abs_length")
 
@@ -210,14 +210,14 @@ def to_centimeter_relative_via_point(data: CoordViaPointData):
     )
 
 
-def to_data_relative_via_point(data: CoordViaPointData):
+def to_data_relative_via_point(data: CoordViaPointData) -> Coord1D:
     if data.scale is None or data.axis is None:
         raise GGException("need to provide scale and axis")
 
-    new_post = (data.scale.high - data.scale.low) * data.coord.pos + data.scale.low
-    return DataCoordType(
-        new_post, data=DataCoord(scale=data.scale, axis_kind=data.axis)
-    )
+    new_pos: float = (
+        data.scale.high - data.scale.low
+    ) * data.coord.pos + data.scale.low
+    return DataCoordType(new_pos, data=DataCoord(scale=data.scale, axis_kind=data.axis))
 
 
 lookup_table = {
@@ -285,7 +285,7 @@ relative_via_point_lookup = {
 }
 
 
-def coord_convert_data(data: CoordConversionData, to_type: UnitType):
+def coord_convert_data(data: CoordConversionData, to_type: UnitType) -> Coord1D:
     if to_type == data.coord.unit_type:
         return deepcopy(data.coord)
 
@@ -296,7 +296,7 @@ def coord_convert_data(data: CoordConversionData, to_type: UnitType):
     return conversion_func(data)
 
 
-def convert_coord(coord: Coord1D, to_type: UnitType, length=None):
+def convert_coord(coord: Coord1D, to_type: UnitType, length=None) -> Coord1D:
     data = CoordConversionData(coord, length=length)
     return coord_convert_data(data, to_type)
 
@@ -310,7 +310,7 @@ def convert_via_point(
     axis=None,
     text=None,
     font=None,
-):
+) -> Coord1D:
     if coord.unit_type == to_kind:
         return deepcopy(coord)
 

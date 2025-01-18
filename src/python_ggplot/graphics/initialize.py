@@ -341,30 +341,32 @@ def init_point(pos: Coord, style: Style, name: Optional[str]) -> GraphicsObject:
     )
 
 
-def init_point_without_style(pos, size=None, marker=None, color=None, name=None):
-    style = Style(
-        marker=marker or MarkerKind.CIRCLE, size=size or 3.0, color=color or BLACK
-    )
+def init_point_without_style(
+    pos: Coord, size=3.0, marker=MarkerKind.CIRCLE, color=BLACK, name=None
+):
+    style = Style(marker=marker, size=size, color=color)
     return init_point(pos, style, name)
 
 
 def init_point_from_point(
-    view: ViewPort, pos, size=None, marker=None, color=None, name=None
+    view: ViewPort,
+    pos: Coord,
+    size=3.0,
+    marker=MarkerKind.CIRCLE,
+    color=BLACK,
+    name=None,
 ):
 
     if view.x_scale is None or view.y_scale is None:
         raise GGException("x and y scale need to be setup")
 
-    style = Style(
-        marker=marker or MarkerKind.CIRCLE, size=size or 3.0, color=color or BLACK
+    style = Style(marker=marker, size=size, color=color)
+    coord_pos = Coord(
+        x=Coord1D.create_data(pos.x.pos, view.x_scale, AxisKind.X),
+        y=Coord1D.create_data(pos.y.pos, view.y_scale, AxisKind.Y),
     )
 
-    pos = Coord(
-        x=Coord1D.create_data(pos.x, view.x_scale, AxisKind.X),
-        y=Coord1D.create_data(pos.y, view.y_scale, AxisKind.Y),
-    )
-
-    return init_point(pos, style, name)
+    return init_point(coord_pos, style, name)
 
 
 def init_many_points(pos: List[Coord], style: Style, name: Optional[str] = None):

@@ -1,12 +1,40 @@
+import logging
 import math
 from typing import TYPE_CHECKING, List, Optional
+
+from rich.console import Console
+from rich.traceback import install
 
 if TYPE_CHECKING:
     from python_ggplot.core.objects import Font
 
 
+LOG_LEVEL = logging.DEBUG
+VERBOSE_OBJECT_REPR = False
 # Constants
 DPI = 72.27
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler(),
+    ],
+)
+
+
+def get_logger(name):
+    logger = logging.getLogger(name)
+    logger.setLevel(LOG_LEVEL)
+    return logger
+
+
+if LOG_LEVEL == logging.DEBUG:
+    install(show_locals=True)
+else:
+    install(show_locals=False)
+
 
 GREY92 = {"r": 0.92, "g": 0.92, "b": 0.92, "a": 1.0}
 GREY20 = {"r": 0.20, "g": 0.20, "b": 0.20, "a": 1.0}

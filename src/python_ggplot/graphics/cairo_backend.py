@@ -3,16 +3,16 @@ from math import pi
 import cairo
 from cairo import (
     FONT_SLANT_ITALIC,
-    FONT_SLANT_OBLIQUE,
     FONT_SLANT_NORMAL,
+    FONT_SLANT_OBLIQUE,
     FONT_WEIGHT_BOLD,
     FORMAT_ARGB32,
     Context,
+    FontWeight,
     Gradient,
     ImageSurface,
     LinearGradient,
     TextExtents,
-    FontWeight,
 )
 
 

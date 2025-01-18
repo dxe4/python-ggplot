@@ -214,16 +214,12 @@ class ViewPort:
         raise GGException("unexpected")
 
     def embed_as_relative(self: "ViewPort", idx: int, into: "ViewPort") -> "ViewPort":
-        from python_ggplot.embed import (
-            view_embed_as_relative,
-        )  # pylint: disable=import-outside-toplevel
+        from python_ggplot.embed import view_embed_as_relative  # pylint: disable=all
 
         return view_embed_as_relative(self, idx, into)
 
     def embed_into(self: "ViewPort", into: "ViewPort") -> "ViewPort":
-        from python_ggplot.embed import (
-            view_embed_into,
-        )  # pylint: disable=import-outside-toplevel
+        from python_ggplot.embed import view_embed_into  # pylint: disable=all
 
         return view_embed_into(self, into)
 
@@ -293,6 +289,16 @@ class ViewPort:
             raise GGException("expected w_view")
 
         return self.point_width_height(self.h_view)
+
+    def __rich_repr__(self):
+        yield "width", self.width
+        yield "height", self.height
+        yield "x", self.x
+        yield "y", self.y
+        yield "w_img", self.w_img
+        yield "h_img", self.h_img
+        yield "w_view", self.w_view
+        yield "h_view", self.h_view
 
 
 def x_axis_y_pos(

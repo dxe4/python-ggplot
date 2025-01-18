@@ -85,10 +85,10 @@ class GraphicsObject:
 
     def embed_into(self, view: "ViewPort") -> "GraphicsObject":
         from python_ggplot.embed import (
-            graphics_object_to_relative,
+            graphics_object_embed_into,
         )  # pylint: disable=all
 
-        return graphics_object_to_relative(self, view)
+        return graphics_object_embed_into(self, view)
 
     def to_relative(
         self, view: Optional["ViewPort"] = None, axis: Optional[AxisKind] = None

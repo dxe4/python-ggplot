@@ -248,7 +248,7 @@ go_embed_lookup = {
 }
 
 
-def graphics_object_to_relative(
+def graphics_object_embed_into(
     graphics_obj: GraphicsObject,
     view: "ViewPort",
 ) -> GraphicsObject:

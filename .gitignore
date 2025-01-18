@@ -11,3 +11,5 @@ wheels/
 
 temp.py
 .vscode/
+*.png
+*.log
