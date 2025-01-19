@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "pandas>=2.2.3",
     "pycairo>=1.27.0",
     "rich>=13.9.4",
 ]

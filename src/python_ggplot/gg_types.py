@@ -1,6 +1,19 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Callable, List, Optional, OrderedDict, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    OrderedDict,
+    Set,
+    Tuple,
+    Union,
+)
+
+import pandas as pd
 
 from python_ggplot.core.objects import (
     AxisKind,
@@ -17,6 +30,9 @@ from python_ggplot.core.objects import (
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
+
+if TYPE_CHECKING:
+    from python_ggplot.gg_scales import ScaleFreeKind, ScaleKind, ScaleValue
 
 
 class Value:
@@ -47,11 +63,6 @@ class VNull(Value):
     pass
 
 
-class ScaleTransform:
-    # TODO impl
-    pass
-
-
 class FormulaNode:
     pass
 
@@ -60,135 +71,57 @@ class AestheticError(Exception):
     pass
 
 
-@dataclass
-class ColorScaleData:
-    color_scale: "ColorScale"
-
-
-@dataclass
-class LinearAndTransformScaleData:
-    axis_kind: AxisKind
-    reversed: bool
-    transform: ScaleTransform
-    secondary_axis: Optional["SecondaryAxis"]
-    date_scale: Optional["DateScale"]
-
-
-class ScaleKind:
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        pass
-
-
-@dataclass
-class LinearDataScale(ScaleKind):
-    transform: Optional[FormulaNode] = None
-    data: Optional[LinearAndTransformScaleData] = None
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(kind=cls(), val=kwargs.get("val"))
-
-
-@dataclass
-class TransformedDataScale(ScaleKind):
-    data: Optional[LinearAndTransformScaleData] = None
-
-    def transform(self):
-        pass
-
-    def inverse_transform(self):
-        pass
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(kind=cls(), val=kwargs.get("val"))
-
-
-class ColorScaleKind(ScaleKind):
-    data: Optional[ColorScaleData] = None
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(kind=cls(), color=kwargs.get("color"))
-
-
-class FillColorScale(ScaleKind):
-    data: Optional[ColorScaleData] = None
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(kind=cls(), color=kwargs.get("color"))
-
-
-class AlphaScale(ScaleKind):
-    size_range = Tuple[float, float]
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(kind=cls(), alpha=kwargs.get("alpha"))
-
-
-class ShapeScale(ScaleKind):
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(
-            kind=cls(),
-            marker=kwargs.get("marker"),
-            line_type=kwargs.get("line_type"),
-        )
-
-
-class SizeScale(ScaleKind):
-    # low and high
-    size_range = Tuple[float, float]
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(
-            kind=cls(),
-            size=kwargs.get("size"),
-        )
-
-
-class TextScale(ScaleKind):
-
-    @classmethod
-    def create_scale_value(cls, **kwargs) -> "ScaleValue":
-        return ScaleValue(
-            kind=cls(),
-        )
-
-
 class PositionKind(Enum):
-    PK_IDENTITY = auto()
-    PK_STACK = auto()
-    PK_DODGE = auto()
-    PK_FILL = auto()
+    IDENTITY = auto()
+    STACK = auto()
+    DODGE = auto()
+    FILL = auto()
 
 
-class StatKind(Enum):
-    ST_IDENTITY = auto()
-    ST_COUNT = auto()
-    ST_BIN = auto()
-    ST_SMOOTH = auto()
+class StatType(Enum):
+    IDENTITY = auto()
+    COUNT = auto()
+    BIN = auto()
+    SMOOTH = auto()
 
 
 @dataclass
-class ScaleValue:
-    kind: ScaleKind
-    color: Optional[Color] = None
-    alpha: Optional[float] = None
-    size: Optional[float] = None
-    marker: Optional[MarkerKind] = None
-    line_type: Optional[LineType] = None
-    val: Optional[Value] = None
+class StatKind:
+    pass
 
-    @staticmethod
-    def create_from_kind(kind: ScaleKind, **kwargs) -> ScaleValue:
-        return kind.create_scale_value(**kwargs)
+
+class StatIdentity(StatKind):
+    @property
+    def stat_type(self) -> StatType:
+        return StatType.IDENTITY
+
+
+class StatCount(StatKind):
+    @property
+    def stat_type(self) -> StatType:
+        return StatType.COUNT
+
+
+class StatBin(StatKind):
+    num_bins: int
+    bin_width: Optional[float] = None
+    bin_edges: Optional[List[float]] = None
+    bin_by: "BinByKind"
+    density: bool
+
+    @property
+    def stat_type(self) -> StatType:
+        return StatType.BIN
+
+
+class StatSmooth(StatKind):
+    span: float
+    poly_oder: int
+    method_kind: "SmoothMethodKind"
+
+    @property
+    def stat_type(self) -> StatType:
+        return StatType.SMOOTH
 
 
 # todo refactor
@@ -201,53 +134,55 @@ class DiscreteKind:
 
 
 class Discrete(DiscreteKind):
-    value_map: OrderedDict[Value, ScaleValue]
+    # used in gg scale
+    value_map: OrderedDict[Value, "ScaleValue"]
     label_seq: List[Value]
     format_discrete_label: DiscreteFormat
 
 
 class Continuous(DiscreteKind):
+    # used in gg scale
     data_scale: Scale
     format_continuous_label: ContinuousFormat
 
-    def map_data(self, df) -> List[ScaleValue]:
-        # TODO
+    def map_data(self, df) -> List["ScaleValue"]:
+        # TODO does this need to be a param or static func is fune?
         raise GGException("todo")
 
 
 @dataclass
 class Aesthetics:
-    scale_kind: ScaleKind
+    scale_kind: "ScaleKind"
     position_kind: PositionKind
     stat_kind: StatKind
     discrete_kind: DiscreteKind
-    x: Optional["ScaleValue"] = None
-    x_min: Optional["ScaleValue"] = None
-    x_max: Optional["ScaleValue"] = None
-    y: Optional["ScaleValue"] = None
-    y_min: Optional["ScaleValue"] = None
-    y_max: Optional["ScaleValue"] = None
-    fill: Optional["ScaleValue"] = None
-    color: Optional["ScaleValue"] = None
-    alpha: Optional["ScaleValue"] = None
-    size: Optional["ScaleValue"] = None
-    shape: Optional["ScaleValue"] = None
-    width: Optional["ScaleValue"] = None
-    height: Optional["ScaleValue"] = None
-    text: Optional["ScaleValue"] = None
-    y_ridges: Optional["ScaleValue"] = None
-    weight: Optional["ScaleValue"] = None
+    x: Optional["ScaleKind"] = None
+    x_min: Optional["ScaleKind"] = None
+    x_max: Optional["ScaleKind"] = None
+    y: Optional["ScaleKind"] = None
+    y_min: Optional["ScaleKind"] = None
+    y_max: Optional["ScaleKind"] = None
+    fill: Optional["ScaleKind"] = None
+    color: Optional["ScaleKind"] = None
+    alpha: Optional["ScaleKind"] = None
+    size: Optional["ScaleKind"] = None
+    shape: Optional["ScaleKind"] = None
+    width: Optional["ScaleKind"] = None
+    height: Optional["ScaleKind"] = None
+    text: Optional["ScaleKind"] = None
+    y_ridges: Optional["ScaleKind"] = None
+    weight: Optional["ScaleKind"] = None
 
 
 @dataclass
 class SecondaryAxis:
     name: str
-    ax_kind: AxisKind
-    sc_kind: ScaleKind
+    axis_kind: AxisKind
+    scale_kind: "ScaleKind"
 
 
-discrete_format: lambda x: str
-continious_format: lambda x: str
+discrete_format = Callable[[Union[int, str]], str]
+continuous_format = Callable[[float], str]
 
 
 class DateTickAlgorithmKind(Enum):
@@ -257,23 +192,6 @@ class DateTickAlgorithmKind(Enum):
         auto()
     )  # Compute date ticks by adding given duration to start time
     DTA_CUSTOM_BREAKS = auto()  # Use user-given custom breaks (as UNIX timestamps)
-
-
-@dataclass
-class DateScale:
-    """Represents a date scale with various options for formatting and computation."""
-
-    name: str
-    ax_kind: AxisKind
-    is_timestamp: bool
-    breaks: List[float]
-    format_string: str = None
-    date_spacing: Duration = None
-    date_algo: DateTickAlgorithmKind = DateTickAlgorithmKind.DTA_FILTER
-
-    def parse_date(self, date: str):
-        # todo this should return datetime
-        pass
 
 
 class Missing:
@@ -292,26 +210,286 @@ PossibleSecondaryAxis = Union[Missing, SecondaryAxis]
 
 
 @dataclass
-class ColorScale:
-    name: str
-    colors: List[int]
-
-
-@dataclass
 class DataKind:
     mapping: str = "mapping"
     setting: str = "setting"
 
 
+class BinPositionKind(str, Enum):
+    NONE = auto()
+    CENTER = auto()
+    LEFT = auto()
+    RIGHT = auto()
+
+
+class GeoType:
+    GEOM_POINT = auto()
+    GEOM_BAR = auto()
+    GEOM_HISTOGRAM = auto()
+    GEOM_FREQ_POLY = auto()
+    GEOM_TILE = auto()
+    GEOM_LINE = auto()
+    GEOM_ERROR_BAR = auto()
+    GEOM_TEXT = auto()
+    GEOM_RASTER = auto()
+
+
 @dataclass
-class GGScale:
-    col: FormulaNode  # The column which this scale corresponds to
-    name: str  # Name of the scale
-    ids: Set[int]  # Set of ids (uint16 in original, mapped to int in Python)
-    value_kind: Value  # Value kind of the data of `col`
-    has_discreteness: bool  # Whether discreteness is present
-    num_ticks: Optional[int]  # Optional: Desired number of ticks for this scale
-    breaks: Optional[List[float]]  # Optional: Position for all ticks in data units
-    data_kind: DataKind  # Data kind (type of data used in this scale)
-    scale_kind: ScaleKind
-    discrete_kind: DiscreteKind
+class GeomKind:
+    pass
+
+
+class GeomPoint(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_POINT
+
+
+class GeomBar(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_BAR
+
+
+class GeomHistogram(GeomKind):
+    histogram_drawing_style: "HistogramDrawingStyle"
+
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_HISTOGRAM
+
+
+class GeomFreqPoly(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_FREQ_POLY
+
+
+class GeomTile(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_TILE
+
+
+class GeomLine(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_LINE
+
+
+class GeomErrorBar(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_ERROR_BAR
+
+
+class GeomText(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_TEXT
+
+
+class GeomRaster(GeomKind):
+    @property
+    def geo_type(self):
+        return GeoType.GEOM_RASTER
+
+
+class HistogramDrawingStyle(str, Enum):
+    BARS = auto()
+    OUTLINE = auto()
+
+
+class SmoothMethodKind(str, Enum):
+    SVG = auto()
+    LM = auto()
+    POLY = auto()
+
+
+class BinByKind(str, Enum):
+    FULL = auto()
+    SUBSET = auto()
+
+
+class OutsideRangeKind(str, Enum):
+    NONE = auto()
+    DROP = auto()
+    CLIP = auto()
+
+
+class VegaBackend(str, Enum):
+    WEBVIEW = auto()
+    BROWSER = auto()
+
+
+@dataclass
+class Ridges:
+    col: FormulaNode
+    overlap: float
+    show_ticks: bool
+    label_order: Dict[Value, int]
+
+
+@dataclass
+class Draw:
+    fname: str
+    width: Optional[float] = None
+    height: Optional[float] = None
+    tex_options: Optional["TeXOptions"] = None
+    backend: Optional[str] = None
+
+
+@dataclass
+class VegaDraw:
+    fname: str
+    width: Optional[float] = None
+    height: Optional[float] = None
+    as_pretty_json: Optional[bool] = None
+    show: bool = True
+    backend: VegaBackend = VegaBackend.WEBVIEW
+    remove_file: bool = False
+    div_name: str = "vega-div"
+    vega_libs_path: str = "https://cdn.jsdelivr.net/npm/"
+    vega_version: str = "5"
+    vega_lite_version: str = "4"
+    vega_embed_version: str = "6"
+
+
+@dataclass
+class GGStyle:
+    color: Optional[str] = None
+    size: Optional[float] = None
+    line_type: Optional[str] = None
+    line_width: Optional[float] = None
+    fill_color: Optional[str] = None
+    marker: Optional[str] = None
+    error_bar_kind: Optional[str] = None
+    alpha: Optional[float] = None
+    font: Optional[dict] = None
+
+
+@dataclass
+class Theme:
+    base_font_size: Optional[float] = None
+    font_size_scale: Optional[float] = None
+    label_font: Optional[dict] = None
+    title_font: Optional[dict] = None
+    sub_title_font: Optional[dict] = None
+    tick_label_font: Optional[dict] = None
+    hide_ticks: Optional[bool] = None
+    hide_tick_labels: Optional[bool] = None
+    hide_labels: Optional[bool] = None
+    title: Optional[str] = None
+    sub_title: Optional[str] = None
+    x_label: Optional[str] = None
+    x_label_margin: Optional[float] = None
+    x_label_secondary: Optional[str] = None
+    y_label: Optional[str] = None
+    y_label_margin: Optional[float] = None
+    y_label_secondary: Optional[str] = None
+    x_ticks_rotate: Optional[float] = None
+    x_ticks_text_align: Optional[str] = None
+    x_tick_label_margin: Optional[float] = None
+    y_ticks_rotate: Optional[float] = None
+    y_ticks_text_align: Optional[str] = None
+    y_tick_label_margin: Optional[float] = None
+    legend_position: Optional[tuple] = None
+    legend_order: Optional[List[int]] = None
+    hide_legend: Optional[bool] = None
+    canvas_color: Optional[str] = None
+    plot_background_color: Optional[str] = None
+    grid_lines: Optional[bool] = None
+    grid_line_color: Optional[str] = None
+    grid_line_width: Optional[float] = None
+    minor_grid_lines: Optional[bool] = None
+    minor_grid_line_width: Optional[float] = None
+    only_axes: Optional[bool] = None
+    discrete_scale_margin: Optional[float] = None
+    x_range: Optional[Scale] = None
+    y_range: Optional[Scale] = None
+    x_margin: Optional[float] = None
+    x_margin_range: Scale = None
+    y_margin: Optional[float] = None
+    y_margin_range: Scale = None
+    x_outside_range: Optional[OutsideRangeKind] = None
+    y_outside_range: Optional[OutsideRangeKind] = None
+    plot_margin_left: Optional[float] = None
+    plot_margin_right: Optional[float] = None
+    plot_margin_top: Optional[float] = None
+    plot_margin_bottom: Optional[float] = None
+    facet_margin: Optional[float] = None
+    prefer_rows_over_columns: Optional[bool] = None
+
+
+@dataclass
+class Facet(Enum):
+    columns = List[str]
+    scale_free_kind = "ScaleFreeKind"
+
+
+@dataclass
+class GgPlot:
+    data: pd.DataFrame
+    title: str
+    sub_title: str
+    aes: Aesthetics
+    facet: Optional[Any]
+    ridges: Optional[Ridges]
+    geoms: List[Any]
+    annotations: List[Any]
+    theme: Theme
+    backend: str
+
+
+@dataclass
+class Annotation:
+    left: Optional[float]
+    bottom: Optional[float]
+    x: Optional[float]
+    y: Optional[float]
+    text: str
+    font: "Font"
+    rotate: Optional[float]
+    background_color: "Color"
+
+
+@dataclass
+class StyleLabel:
+    style: "GGStyle"
+    label: "Value"
+
+
+@dataclass
+class ThemeMarginLayout:
+    left: "Quantity"
+    right: "Quantity"
+    top: "Quantity"
+    bottom: "Quantity"
+    requires_legend: bool
+
+
+@dataclass
+class JsonDummyDraw:
+    fname: str
+    width: Optional[float]
+    height: Optional[float]
+    backend: "BackendKind"
+
+
+@dataclass
+class VegaTex:
+    fname: str
+    width: Optional[float]
+    height: Optional[float]
+    tex_options: "TeXOptions"
+
+
+@dataclass
+class Geom:
+    gid: int
+    data: Optional[pd.DataFrame] = None
+    user_style: Optional["GGStyle"] = None
+    position: Optional["PositionKind"] = None
+    aes: Optional["Aesthetics"] = None
+    bin_position: Optional["BinPositionKind"] = None
+    kind: GeomKind

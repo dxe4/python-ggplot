@@ -30,6 +30,7 @@ from python_ggplot.graphics.initialize import (
     InitRectInput,
     TickLabelsInput,
     init_axis,
+    init_coord,
     init_error_bar_from_point,
     init_grid_lines,
     init_point_from_point,
@@ -42,7 +43,6 @@ from python_ggplot.graphics.initialize import (
     xticks,
     ylabel_from_float,
     yticks,
-    init_coord,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 
