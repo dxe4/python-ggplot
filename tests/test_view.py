@@ -64,9 +64,7 @@ if DEBUG:
 def test_view():
     cairo_test()
 
-    img = ViewPort.from_coords(
-        CoordsInput(left=0, bottom=0, width=1, height=1), ViewPortInput()
-    )
+    img = ViewPort.from_coords(CoordsInput(), ViewPortInput())
     view1 = img.add_viewport_from_coords(
         CoordsInput(left=0.1, bottom=0.1, width=0.8, height=0.8),
         ViewPortInput(

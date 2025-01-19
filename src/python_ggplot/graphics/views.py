@@ -30,39 +30,30 @@ class ViewPortInput:
     children: List["ViewPort"] = field(default_factory=list)
     w_view: Optional["Quantity"] = None
     h_view: Optional["Quantity"] = None
+    h_parent_view: Optional["Quantity"] = None
+    w_parent_view: Optional["Quantity"] = None
 
-    def update_from_viewport(self, view: "ViewPort"):
-        self.h_img = view.h_img.to_points()
-        self.w_img = view.w_img.to_points()
+    def __post_init__(self):
+        self.update_views()
 
-        self.h_view = view.point_height()
-        self.w_view = view.point_width()
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name in ("h_parent_view", "w_parent_view"):
+            # prefer to have this here guaranteed,
+            # this can cause weird bugs if not called manually
+            self.update_views()
 
-    @staticmethod
-    def get_views(
-        w_view_quantity: Optional[Quantity] = None,
-        h_view_quantity: Optional[Quantity] = None,
-    ) -> Tuple["Quantity", "Quantity"]:
-        if w_view_quantity is not None and h_view_quantity is not None:
-            if {w_view_quantity.unit_type, h_view_quantity.unit_type} != {
+    def update_views(self):
+        self.h_view = self.h_img
+        self.w_view = self.w_img
+
+        if self.w_parent_view is not None and self.h_parent_view is not None:
+            if {self.w_parent_view.unit_type, self.h_parent_view.unit_type} != {
                 UnitType.POINT
             }:
                 raise GGException("parent view must have a point unit")
-            return (deepcopy(w_view_quantity), deepcopy(h_view_quantity))
-        return (PointUnit(640.0), PointUnit(480.0))
-
-    @staticmethod
-    def new(
-        w_view_quantity: Optional[Quantity] = None,
-        h_view_quantity: Optional[Quantity] = None,
-    ) -> "ViewPortInput":
-        w_view, h_view = ViewPortInput.get_views(w_view_quantity, h_view_quantity)
-        return ViewPortInput(
-            w_view=w_view,
-            h_view=h_view,
-            h_img=PointUnit(h_view.val),
-            w_img=PointUnit(w_view.val),
-        )
+            self.h_view = self.h_parent_view
+            self.w_view = self.w_parent_view
 
 
 @dataclass
@@ -118,7 +109,6 @@ class ViewPort:
     def from_input(
         origin: Coord, width: Quantity, height: Quantity, input_data: ViewPortInput
     ) -> "ViewPort":
-        w_view, h_view = ViewPortInput.get_views(input_data.w_view, input_data.h_view)
 
         result = ViewPort(
             origin=origin,
@@ -131,8 +121,8 @@ class ViewPort:
             y_scale=input_data.y_scale,
             rotate=input_data.rotate,
             scale=input_data.scale,
-            w_view=w_view,
-            h_view=h_view,
+            w_view=input_data.w_view,
+            h_view=input_data.h_view,
             w_img=input_data.w_img,
             h_img=input_data.h_img,
         )
@@ -147,9 +137,14 @@ class ViewPort:
     ) -> "ViewPort":
         origin = path_coord_view_port(origin, self)
 
-        input_data.update_from_viewport(self)
+        input_data.h_img = self.h_img.to_points()
+        input_data.w_img = self.w_img.to_points()
 
-        return ViewPort.from_input(origin, width, height, input_data)
+        input_data.h_parent_view = self.point_height()
+        input_data.w_parent_view = self.point_width()
+
+        result = ViewPort.from_input(origin, width, height, input_data)
+        return result
 
     @staticmethod
     def from_coords(coords_input: CoordsInput, view_input: ViewPortInput) -> "ViewPort":
@@ -159,7 +154,8 @@ class ViewPort:
         )
         width = RelativeUnit(coords_input.width)
         height = RelativeUnit(coords_input.height)
-        return ViewPort.from_input(origin, width, height, view_input)
+        result = ViewPort.from_input(origin, width, height, view_input)
+        return result
 
     def add_viewport_from_coords(
         self, coords_input: CoordsInput, input_data: ViewPortInput
