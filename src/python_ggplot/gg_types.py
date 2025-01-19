@@ -8,12 +8,12 @@ from typing import (
     List,
     Optional,
     OrderedDict,
+    Tuple,
     Union,
 )
 
 import pandas as pd
 
-from python_ggplot.core.units.objects import Quantity
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -25,13 +25,17 @@ from python_ggplot.core.objects import (
     Scale,
     TexOptions,
 )
+from python_ggplot.core.units.objects import Quantity
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
-    from python_ggplot.gg_scales import ScaleFreeKind, ScaleKind, ScaleValue
+    from python_ggplot.gg_scales import ColorScale, ScaleFreeKind, ScaleKind, ScaleValue
+
+    # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
+    from python_ggplot.graphics.view import ViewPort
 
 
 class Value:
@@ -123,30 +127,18 @@ class StatSmooth(StatKind):
         return StatType.SMOOTH
 
 
-# todo refactor
-DiscreteFormat = Callable[["Value"], str]
-ContinuousFormat = Callable[[float], str]
+class DiscreteType(Enum):
+    DISCRETE = auto()
+    CONTINUOUS = auto()
 
 
 class DiscreteKind:
     pass
 
 
-class Discrete(DiscreteKind):
-    # used in gg scale
-    value_map: OrderedDict[Value, "ScaleValue"]
-    label_seq: List[Value]
-    format_discrete_label: DiscreteFormat
-
-
-class Continuous(DiscreteKind):
-    # used in gg scale
-    data_scale: Scale
-    format_continuous_label: ContinuousFormat
-
-    def map_data(self, df) -> List["ScaleValue"]:
-        # TODO does this need to be a param or static func is fune?
-        raise GGException("todo")
+# todo refactor
+DiscreteFormat = Callable[["Value"], str]
+ContinuousFormat = Callable[[float], str]
 
 
 @dataclass
@@ -235,62 +227,62 @@ class GeoType:
 
 @dataclass
 class GeomKind:
-    pass
+    @property
+    def geom_type(self):
+        raise GGException("not implemented for interface")
 
 
 class GeomPoint(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_POINT
 
 
 class GeomBar(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_BAR
 
 
 class GeomHistogram(GeomKind):
-    histogram_drawing_style: "HistogramDrawingStyle"
-
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_HISTOGRAM
 
 
 class GeomFreqPoly(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_FREQ_POLY
 
 
 class GeomTile(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_TILE
 
 
 class GeomLine(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_LINE
 
 
 class GeomErrorBar(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_ERROR_BAR
 
 
 class GeomText(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_TEXT
 
 
 class GeomRaster(GeomKind):
     @property
-    def geo_type(self):
+    def geom_type(self):
         return GeoType.GEOM_RASTER
 
 
@@ -370,9 +362,6 @@ class GGStyle:
 @dataclass
 class Theme:
     base_font_size: Optional[float] = None
-    font_size_scale: Optional[float] = None
-    label_font: Optional[dict] = None
-    title_font: Optional[dict] = None
     sub_title_font: Optional[dict] = None
     tick_label_font: Optional[dict] = None
     hide_ticks: Optional[bool] = None
@@ -492,3 +481,130 @@ class Geom:
     position: Optional["PositionKind"] = None
     aes: Optional["Aesthetics"] = None
     bin_position: Optional["BinPositionKind"] = None
+    # used for geom_type histogram
+    histogram_drawing_style: Optional["HistogramDrawingStyle"] = None
+
+    def __post_init__(self):
+        if (
+            self.kind.geom_type == GeoType.GEOM_HISTOGRAM
+            and not self.histogram_drawing_style
+        ):
+            raise GGException("histogram geom needs to specify histogram_drawing_style")
+
+
+class FilledGeomDiscreteKind(DiscreteKind):
+    pass
+
+
+class GGScaleDiscrete(FilledGeomDiscreteKind):
+    label_seq: List[Value]
+
+    @property
+    def discrete_type(self):
+        return DiscreteType.DISCRETE
+
+
+class GGScaleContinuous(FilledGeomDiscreteKind):
+    @property
+    def discrete_type(self):
+        return DiscreteType.CONTINUOUS
+
+
+class FilledGeomErrorBar(GeomErrorBar):
+    xmin: Optional[str]
+    ymin: Optional[str]
+    xmax: Optional[str]
+    ymax: Optional[str]
+
+
+@dataclass
+class TitleRasterData:
+    fill_col: str
+    fill_data_scale: Scale
+    width: Optional[str]
+    height: Optional[str]
+    color_scale: "ColorScale"
+
+
+class FilledGeomTitle(GeomTile):
+    data: TitleRasterData
+
+
+class FilledGeomRaster(GeomRaster):
+    data: TitleRasterData
+
+
+class FilledGeomText(GeomText):
+    text: str
+
+
+class FilledGeomHistogram(GeomHistogram):
+    histogram_drawing_style: HistogramDrawingStyle
+
+
+@dataclass
+class FilledGeom:
+    """
+    todo, spend some time thinking on this
+    the original code is using an enum for geom_type
+    to decide what attributes are defined on the class
+    we have many choices here but maybe we can settle with something like this?
+    FilledGeom(geom=Geom(kind=FilledGeomHistogram))
+    we could also use FilledGeom(geom=Geom(), kind=FilledGeomHistogram)
+    the second method allows us to define a union of the types,
+    so we make sure we dont end up with the wrong types accidentally
+    """
+
+    geom: Geom
+    x_col: str
+    y_col: str
+    x_scale: Scale
+    y_scale: Scale
+    reversed_x: bool
+    reversed_y: bool
+    yield_data: OrderedDict[Value, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
+    num_x: int
+    num_y: int
+    x_discrete_kind: FilledGeomDiscreteKind
+    y_discrete_kind: FilledGeomDiscreteKind
+
+
+MainAddScales = Tuple[Optional[Scale], List[Scale]]
+
+
+@dataclass
+class FilledScales:
+    x_scale: Scale
+    y_scale: Scale
+    reversed_x: bool
+    reversed_y: bool
+    discrete_x: bool
+    discrete_y: bool
+    geoms: List[FilledGeom]
+    x: MainAddScales
+    y: MainAddScales
+    color: MainAddScales
+    fill: MainAddScales
+    alpha: MainAddScales
+    size: MainAddScales
+    shape: MainAddScales
+    x_min: MainAddScales
+    x_max: MainAddScales
+    y_min: MainAddScales
+    y_max: MainAddScales
+    width: MainAddScales
+    height: MainAddScales
+    text: MainAddScales
+    y_ridges: MainAddScales
+    weight: MainAddScales
+    facets: List[Scale]
+
+
+@dataclass
+class PlotView:
+    filled_scales: FilledScales
+    view: "ViewPort"
+
+
+class VegaError(Exception):
+    pass

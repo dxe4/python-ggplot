@@ -1,23 +1,23 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import (
-    List,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import List, Optional, OrderedDict, Set, Tuple
 
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
     Duration,
+    GGException,
     LineType,
     MarkerKind,
+    Scale,
 )
 from python_ggplot.gg_types import (
+    ContinuousFormat,
     DataKind,
     DateTickAlgorithmKind,
+    DiscreteFormat,
     DiscreteKind,
+    DiscreteType,
     FormulaNode,
     SecondaryAxis,
     Value,
@@ -220,6 +220,33 @@ class LinearDataScaleValue(ScaleValue):
         return ScaleType.LINEAR_DATA
 
 
+class GGScaleDiscreteKind(DiscreteKind):
+    pass
+
+
+class GGScaleDiscrete(DiscreteKind):
+    value_map: OrderedDict[Value, "ScaleValue"]
+    label_seq: List[Value]
+    format_discrete_label: DiscreteFormat
+
+    @property
+    def discrete_type(self):
+        return DiscreteType.DISCRETE
+
+
+class GGScaleContinuous(DiscreteKind):
+    data_scale: Scale
+    format_continuous_label: ContinuousFormat
+
+    @property
+    def discrete_type(self):
+        return DiscreteType.CONTINUOUS
+
+    def map_data(self, df) -> List["ScaleValue"]:
+        # TODO does this need to be a param or static func is fune?
+        raise GGException("todo")
+
+
 @dataclass
 class GGScale:
     col: FormulaNode
@@ -231,7 +258,7 @@ class GGScale:
     breaks: Optional[List[float]]
     data_kind: DataKind
     scale_kind: ScaleKind
-    discrete_kind: DiscreteKind
+    discrete_kind: GGScaleDiscreteKind
 
 
 class ScaleFreeKind(Enum):
