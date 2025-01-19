@@ -1,26 +1,18 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import (
-    TYPE_CHECKING,
-    Callable,
     List,
     Optional,
-    OrderedDict,
     Set,
     Tuple,
-    Union,
 )
 
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
     Duration,
-    ErrorBarKind,
-    Font,
-    GGException,
     LineType,
     MarkerKind,
-    Scale,
 )
 from python_ggplot.gg_types import (
     DataKind,
@@ -34,8 +26,6 @@ from python_ggplot.gg_types import (
 
 @dataclass
 class DateScale:
-    """Represents a date scale with various options for formatting and computation."""
-
     name: str
     ax_kind: AxisKind
     is_timestamp: bool
@@ -232,14 +222,14 @@ class LinearDataScaleValue(ScaleValue):
 
 @dataclass
 class GGScale:
-    col: FormulaNode  # The column which this scale corresponds to
-    name: str  # Name of the scale
-    ids: Set[int]  # Set of ids (uint16 in original, mapped to int in Python)
-    value_kind: Value  # Value kind of the data of `col`
-    has_discreteness: bool  # Whether discreteness is present
-    num_ticks: Optional[int]  # Optional: Desired number of ticks for this scale
-    breaks: Optional[List[float]]  # Optional: Position for all ticks in data units
-    data_kind: DataKind  # Data kind (type of data used in this scale)
+    col: FormulaNode
+    name: str
+    ids: Set[int]
+    value_kind: Value
+    has_discreteness: bool
+    num_ticks: Optional[int]
+    breaks: Optional[List[float]]
+    data_kind: DataKind
     scale_kind: ScaleKind
     discrete_kind: DiscreteKind
 

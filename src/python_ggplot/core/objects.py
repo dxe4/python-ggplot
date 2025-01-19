@@ -334,3 +334,14 @@ GREY20 = Color(r=0.20, g=0.20, b=0.20, a=1.0)
 BLACK = Color(r=0.0, g=0.0, b=0.0, a=1.0)
 WHITE = Color(r=1.0, g=1.0, b=1.0, a=1.0)
 TRANSPARENT = Color(r=0.0, g=0.0, b=0.0, a=0.0)
+
+
+@dataclass
+class TexOptions:
+    use_te_x: bool
+    tex_template: Optional[str]
+    standalone: bool
+    only_tik_z: bool
+    caption: Optional[str]
+    label: Optional[str]
+    placement: str

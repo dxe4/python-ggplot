@@ -8,23 +8,22 @@ from typing import (
     List,
     Optional,
     OrderedDict,
-    Set,
-    Tuple,
     Union,
 )
 
 import pandas as pd
 
+from python_ggplot.core.units.objects import Quantity
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
-    Duration,
     ErrorBarKind,
     Font,
     GGException,
     LineType,
     MarkerKind,
     Scale,
+    TexOptions,
 )
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
@@ -186,12 +185,12 @@ continuous_format = Callable[[float], str]
 
 
 class DateTickAlgorithmKind(Enum):
-
-    DTA_FILTER = auto()  # Compute date ticks by filtering to closest matches
-    DTA_ADD_DURATION = (
-        auto()
-    )  # Compute date ticks by adding given duration to start time
-    DTA_CUSTOM_BREAKS = auto()  # Use user-given custom breaks (as UNIX timestamps)
+    # Compute date ticks by filtering to closest matches
+    DTA_FILTER = auto()
+    # Compute date ticks by adding given duration to start time
+    DTA_ADD_DURATION = auto()
+    # Use user-given custom breaks (as UNIX timestamps)
+    DTA_CUSTOM_BREAKS = auto()
 
 
 class Missing:
@@ -335,7 +334,7 @@ class Draw:
     fname: str
     width: Optional[float] = None
     height: Optional[float] = None
-    tex_options: Optional["TeXOptions"] = None
+    tex_options: Optional[TexOptions] = None
     backend: Optional[str] = None
 
 
@@ -408,9 +407,9 @@ class Theme:
     x_range: Optional[Scale] = None
     y_range: Optional[Scale] = None
     x_margin: Optional[float] = None
-    x_margin_range: Scale = None
+    x_margin_range: Optional[Scale] = None
     y_margin: Optional[float] = None
-    y_margin_range: Scale = None
+    y_margin_range: Optional[Scale] = None
     x_outside_range: Optional[OutsideRangeKind] = None
     y_outside_range: Optional[OutsideRangeKind] = None
     plot_margin_left: Optional[float] = None
@@ -461,10 +460,10 @@ class StyleLabel:
 
 @dataclass
 class ThemeMarginLayout:
-    left: "Quantity"
-    right: "Quantity"
-    top: "Quantity"
-    bottom: "Quantity"
+    left: Quantity
+    right: Quantity
+    top: Quantity
+    bottom: Quantity
     requires_legend: bool
 
 
@@ -473,7 +472,7 @@ class JsonDummyDraw:
     fname: str
     width: Optional[float]
     height: Optional[float]
-    backend: "BackendKind"
+    backend: str  # we only support cairo for now
 
 
 @dataclass
@@ -481,15 +480,15 @@ class VegaTex:
     fname: str
     width: Optional[float]
     height: Optional[float]
-    tex_options: "TeXOptions"
+    tex_options: TexOptions
 
 
 @dataclass
 class Geom:
     gid: int
+    kind: GeomKind
     data: Optional[pd.DataFrame] = None
     user_style: Optional["GGStyle"] = None
     position: Optional["PositionKind"] = None
     aes: Optional["Aesthetics"] = None
     bin_position: Optional["BinPositionKind"] = None
-    kind: GeomKind
