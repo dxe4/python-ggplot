@@ -198,6 +198,12 @@ def _init_axis_data(axis: AxisKind) -> _AxisData:
 
 
 def init_axis(axis_kind: AxisKind, init_axis_input: InitAxisInput) -> GraphicsObject:
+    '''
+    TODO:
+    x_axis works fine, y_axis starts at 0.0
+    so its painted at the edge of the image and is barely visible
+    this may be fine with other settings on we have to sanity check down the line
+    '''
     start, stop, name = _init_axis_data(axis_kind)
 
     graphics_obj = GOAxis(
