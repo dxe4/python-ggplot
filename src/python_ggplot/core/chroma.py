@@ -1,6 +1,12 @@
 # ported code from num chroma
 # todo port the unit tests too
-from typing import Union, Tuple
+from typing import Union, Tuple, TypedDict
+
+class RGBADict(TypedDict):
+    r: float
+    g: float
+    b: float
+    a: float
 
 
 def c2n(hex_str: str, i: int) -> int:
@@ -15,7 +21,7 @@ def c2n(hex_str: str, i: int) -> int:
     else:
         raise ValueError("format is not hex")
 
-def parse_hex(hex_str: str) -> tuple[float, float, float, float]:
+def parse_hex(hex_str: str) -> Tuple[float, float, float, float]:
     """
     Parses colors like:
     * FF0000 -> red
@@ -55,7 +61,7 @@ def fixup_color(
     return r, g, b
 
 
-def color_from_hsl(h: float, s: float, l: float):
+def color_from_hsl(h: float, s: float, l: float) -> RGBADict:
     # port from nim chroma
     # https://github.com/treeform/chroma/blob/master/src/chroma/transformations.nim
     h = h / 360.0
