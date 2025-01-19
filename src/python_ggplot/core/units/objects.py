@@ -97,22 +97,36 @@ class Quantity:
         if self.unit_type == other.unit_type:
             cls = unit_type_from_type(self.unit_type)
             return cls(operator(self.val, other.val))
-        elif self.unit_type.is_length():
-            other_converted = other.to(UnitType.POINT, length=length)
-            result_val = operator(self.to(UnitType.POINT).val, other_converted.val)
-            return PointUnit(result_val).to(self.unit_type, length, scale)
-        elif self.unit_type == RelativeUnit and self.unit_type == RelativeUnit:
-            raise ValueError("Cannot perform arithmetic on two RELATIVE quantities")
-        elif self.unit_type == RelativeUnit:
-            other_converted = other.to(UnitType.POINT, length=length)
-            cls = unity_type_to_quantity_cls(self.unit_type)
-            return cls(operator(self.val, other_converted.val))
-        elif isinstance(self.unit_type, DataUnit):
+
+        elif self.unit_type.is_length() and other.unit_type.is_length():
+            return PointUnit(
+                operator(self.to_points().val, other.to_points(length=length).val)
+            ).to(self.unit_type, length=length, scale=scale)
+
+        elif self.unit_type.is_length() and other.unit_type == UnitType.RELATIVE:
+            result = deepcopy(self)
+            result.val = operator(self.val, other.val)
+            return result
+
+        elif (
+            self.unit_type == UnitType.RELATIVE and self.unit_type == UnitType.RELATIVE
+        ):
+            raise GGException("Cannot perform arithmetic on two RELATIVE quantities")
+
+        elif self.unit_type == UnitType.RELATIVE and other.unit_type.is_length():
+            result = deepcopy(other)
+            result.val = operator(self.val, other.val)
+            return result
+
+        elif self.unit_type == UnitType.DATA:
             if not scale or not as_coordinate:
                 raise GGException("TODO re evaluate nim version of this")
-
-            left = self.to(UnitType.RELATIVE, length=length, scale=scale).val
-            right = other.to(UnitType.RELATIVE, length=length, scale=scale).val
+            left = (
+                DataUnit(self.val - scale.low)
+                .to_relative(length=length, scale=scale)
+                .val
+            )
+            right = other.to_relative(length=length, scale=scale).val
             return RelativeUnit(operator(left, right))
         else:
             raise GGException(f"Unsupported unit arithmetic for {self.unit_type}")
