@@ -1,6 +1,7 @@
 # ported code from num chroma
 # todo port the unit tests too
-from typing import Union, Tuple, TypedDict
+from typing import Tuple, TypedDict, Union
+
 
 class RGBADict(TypedDict):
     r: float
@@ -12,22 +13,23 @@ class RGBADict(TypedDict):
 def c2n(hex_str: str, i: int) -> int:
     """Format int as a two digit HEX."""
     c = ord(hex_str[i])
-    if ord('0') <= c <= ord('9'):
-        return c - ord('0')
-    elif ord('a') <= c <= ord('f'):
-        return 10 + c - ord('a')
-    elif ord('A') <= c <= ord('F'):
-        return 10 + c - ord('A')
+    if ord("0") <= c <= ord("9"):
+        return c - ord("0")
+    elif ord("a") <= c <= ord("f"):
+        return 10 + c - ord("a")
+    elif ord("A") <= c <= ord("F"):
+        return 10 + c - ord("A")
     else:
         raise ValueError("format is not hex")
 
-def parse_hex(hex_str: str) -> Tuple[float, float, float, float]:
+
+def parse_hex(hex_str: str) -> RGBADict:
     """
     Parses colors like:
     * FF0000 -> red
     * 0000FF -> blue
     * FFFFFF -> white
-    
+
     Returns:
         tuple of (r, g, b, a) values normalized between 0 and 1
     """
@@ -35,7 +37,8 @@ def parse_hex(hex_str: str) -> Tuple[float, float, float, float]:
     r = float(c2n(hex_str, 0) * 16 + c2n(hex_str, 1)) / 255
     g = float(c2n(hex_str, 2) * 16 + c2n(hex_str, 3)) / 255
     b = float(c2n(hex_str, 4) * 16 + c2n(hex_str, 5)) / 255
-    return (r, g, b, 1.0)
+    return {"r": r, "g": g, "b": b, "a": 1.0}
+
 
 def fixup_color(
     r: Union[int, float], g: Union[int, float], b: Union[int, float]
@@ -100,4 +103,4 @@ def color_from_hsl(h: float, s: float, l: float) -> RGBADict:
     a = 1.0
     r, g, b = fixup_color(r, g, b)
 
-    return {"r":r, "g":g, "b":b, "a":a}
+    return {"r": r, "g": g, "b": b, "a": a}
