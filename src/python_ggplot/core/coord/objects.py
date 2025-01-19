@@ -528,10 +528,10 @@ class StrWidthCoordType(Coord1D):
 
     def relative_dimension(self):
         text_extend = self.data.get_text_extend()
-        return text_extend.width()
+        return text_extend.width
 
     def text_extend_dimension(self, text_extend):
-        return text_extend.width()
+        return text_extend.width
 
 
 @dataclass

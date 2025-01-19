@@ -13,6 +13,7 @@ from python_ggplot.core.coord.objects import (
     PointCoordType,
     RelativeCoordType,
     StrHeightCoordType,
+    StrWidthCoordType,
 )
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, UnitType
 from python_ggplot.core.units.objects import Quantity
@@ -132,9 +133,12 @@ def text_to_relative(data: CoordConversionData) -> Coord1D:
         raise GGException(
             "Conversion from StrWidth to relative requires a length scale!"
         )
-    if not isinstance(data.coord, (StrHeightCoordType, StrHeightCoordType)):
+    if not isinstance(data.coord, (StrWidthCoordType, StrHeightCoordType)):
         raise GGException("unexpected")
 
+    # todo double check this, it seeems the y tick labels are a bit off
+    # it may be related the text extend.
+    # it could be that its calculated on a font and the font changes after
     text_extend = CairoBackend.get_text_extend(
         data.coord.data.text, data.coord.data.font
     )

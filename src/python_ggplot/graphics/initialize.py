@@ -458,14 +458,14 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
             "data.point has to be of type coord, if its point use init_error_bar_from_point"
         )
 
-    style = data.style or Style(
+    data.style = data.style or Style(
         line_width=1.0,
         color=BLACK,
         size=10.0,
     )
     result = GOComposite(
         name=data.name or "error_bar",
-        config=GraphicsObjectConfig(style=style),
+        config=GraphicsObjectConfig(style=data.style),
         kind=CompositeKind.ERROR_BAR,
     )
     if result.config.children is None:
@@ -473,19 +473,19 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
 
     create_lines_data = data.create_lines_input()
     new_line: GraphicsObject = create_lines(**create_lines_data)
-    result.config.children = [new_line]
+    result.config.children.append(new_line)
 
     if data.error_bar_kind == ErrorBarKind.LINES:
         # this only needs initialising the children array
         pass
     elif data.error_bar_kind == ErrorBarKind.LINEST:
-        if not style.size:
+        if not data.style.size:
             raise GGException("expected style size")
 
         if data.axis_kind == AxisKind.X:
             scale2: Scale = data.point.y.get_scale()
 
-            local_abs: Quantity = Quantity.points(style.size).to_data(
+            local_abs: Quantity = Quantity.points(data.style.size).to_data(
                 scale=scale2, length=data.view.point_height()
             )
 
@@ -495,19 +495,19 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
             right: GraphicsObject = init_line(
                 start=Coord(x=data.error_up, y=low),
                 stop=Coord(x=data.error_up, y=high),
-                init_line_input=InitLineInput(style=style),
+                init_line_input=InitLineInput(style=data.style),
             )
             left = init_line(
                 start=Coord(x=data.error_down, y=low),
                 stop=Coord(x=data.error_down, y=high),
-                init_line_input=InitLineInput(style=style),
+                init_line_input=InitLineInput(style=data.style),
             )
 
             result.config.children.extend([right, left])
 
         else:  # AxisKind.Y
             scale2 = data.point.x.get_scale()
-            local_abs2: Quantity = Quantity.points(style.size).to_data(
+            local_abs2: Quantity = Quantity.points(data.style.size).to_data(
                 scale=scale2, length=data.view.point_width()
             )
 
@@ -517,13 +517,13 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
             up = init_line(
                 start=Coord(x=left_point, y=data.error_up),
                 stop=Coord(x=right_point, y=data.error_up),
-                init_line_input=InitLineInput(style=style),
+                init_line_input=InitLineInput(style=data.style),
             )
 
             down = init_line(
                 start=Coord(x=left_point, y=data.error_down),
                 stop=Coord(x=right_point, y=data.error_down),
-                init_line_input=InitLineInput(style=style),
+                init_line_input=InitLineInput(style=data.style),
             )
 
             result.config.children.extend([up, down])
@@ -625,9 +625,9 @@ def init_axis_label(
     name = name or ""
 
     if is_custom_margin:
-        margin_val = Quantity.centimeters(0.5).to_points().val
-    else:
         margin_val = 0.0
+    else:
+        margin_val = Quantity.centimeters(0.5).to_points().val
 
     margin_min = Quantity.centimeters(1.0).to_points().val
 
@@ -644,9 +644,6 @@ def init_axis_label(
         axis_kind, view, margin_val, is_secondary or False, name
     )
 
-    if rotate is not None:
-        rotate_val += rotate
-
     data = TextData(
         text=label,
         font=font or Font(),
@@ -654,11 +651,16 @@ def init_axis_label(
         align=TextAlignKind.CENTER,
     )
 
-    return GOText(
+    if rotate is not None:
+        rotate_val = rotate_val + rotate
+
+    result = GOText(
         name=name or "",
         config=GraphicsObjectConfig(rotate=rotate_val),
         data=data,
     )
+
+    return result
 
 
 def xlabel(
@@ -814,7 +816,7 @@ def init_tick_label_with_override(
         return init_text(view, origin, data)
 
     elif tick.axis == AxisKind.Y:
-        x_offset = margin or y_label_origin_offset(view, font_, is_secondary)
+        x_offset = margin or x_label_origin_offset(view, font_, is_secondary)
         origin = Coord(x=(loc.x + x_offset).to_relative(None), y=loc.y)
         return init_text(view, origin, data)
     else:

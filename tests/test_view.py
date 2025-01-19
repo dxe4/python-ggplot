@@ -42,6 +42,7 @@ from python_ggplot.graphics.initialize import (
     xticks,
     ylabel_from_float,
     yticks,
+    init_coord,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 
@@ -92,11 +93,9 @@ def test_view():
     gobj_errors = []
 
     for point in points:
-        pos = Coord(
-            x=Coord1D.create_relative(point.x), y=Coord1D.create_relative(point.y)
-        )
-        new_point = init_point_without_style(
-            pos,
+        new_point = init_point_from_point(
+            view2,
+            point,
             marker=MarkerKind.CROSS,
         )
         gobj_points.append(new_point)
@@ -114,7 +113,7 @@ def test_view():
             point=point,
             error_up=CentimeterCoordType.from_view(view2, AxisKind.X, 0.25),
             error_down=CentimeterCoordType.from_view(view2, AxisKind.X, 0.25),
-            axis_kind=AxisKind.X,
+            axis_kind=AxisKind.Y,
             error_bar_kind=ErrorBarKind.LINEST,
         )
         error1 = init_error_bar_from_point(init_error_data1)
@@ -141,13 +140,21 @@ def test_view():
         view2, data, CoordsInput(left=0.0, bottom=0.0, width=1, height=1)
     )
 
-    origin = Coord.relative(0.1, 0.1)
-    width = Quantity.centimeters(1.0)
-    height = Quantity.centimeters(1.0)
-    cm_square = init_rect(view1, origin, width, height, InitRectInput())
+    cm_square = init_rect(
+        view1,
+        Coord.relative(0.1, 0.1),
+        Quantity.centimeters(1.0),
+        Quantity.centimeters(1.0),
+        InitRectInput(),
+    )
 
-    origin = Coord.relative(0.3, 0.3)
-    inch_square = init_rect(view1, origin, width, height, InitRectInput())
+    inch_square = init_rect(
+        view1,
+        Coord.relative(0.3, 0.3),
+        Quantity.inches(1.0),
+        Quantity.inches(1.0),
+        InitRectInput(),
+    )
 
     x_label = xlabel_from_float(view1, "Energy")
     y_label = ylabel_from_float(view1, "Count")

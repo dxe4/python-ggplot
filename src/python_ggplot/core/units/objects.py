@@ -41,6 +41,10 @@ class Quantity:
         return PointUnit(val=val)
 
     @staticmethod
+    def inches(val: float) -> "Quantity":
+        return InchUnit(val=val)
+
+    @staticmethod
     def relative(val: float) -> "Quantity":
         return RelativeUnit(val=val)
 
