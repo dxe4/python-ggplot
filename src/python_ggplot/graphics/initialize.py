@@ -198,12 +198,12 @@ def _init_axis_data(axis: AxisKind) -> _AxisData:
 
 
 def init_axis(axis_kind: AxisKind, init_axis_input: InitAxisInput) -> GraphicsObject:
-    '''
+    """
     TODO:
     x_axis works fine, y_axis starts at 0.0
     so its painted at the edge of the image and is barely visible
     this may be fine with other settings on we have to sanity check down the line
-    '''
+    """
     start, stop, name = _init_axis_data(axis_kind)
 
     graphics_obj = GOAxis(
@@ -590,15 +590,21 @@ def init_poly_line_from_points(
     return init_poly_line(positions, style, name)
 
 
-def _init_axis_label_data(axis_kind, view, margin_val, is_secondary, name):
+def _init_axis_label_data(
+    axis_kind: AxisKind,
+    view: ViewPort,
+    margin_val: float,
+    is_secondary: bool,
+    name: str,
+):
     if axis_kind == AxisKind.X:
         y_pos = x_axis_y_pos(view=view, margin=margin_val, is_secondary=is_secondary)
         pos = Coord(x=Coord1D.create_relative(0.5), y=y_pos)
-        name = f"y{name}"
+        name = f"x{name}"
         rotate_val = 0.0
         return pos, name, rotate_val
     else:  # AxisKind.Y
-        x_pos = x_axis_y_pos(view=view, margin=margin_val, is_secondary=is_secondary)
+        x_pos = y_axis_x_pos(view=view, margin=margin_val, is_secondary=is_secondary)
         pos = Coord(x=x_pos, y=Coord1D.create_relative(0.5))
         name = f"y{name}"
         rotate_val = -90.0
@@ -618,7 +624,11 @@ def init_axis_label(
 ) -> GraphicsObject:
     name = name or ""
 
-    margin_val = Quantity.centimeters(0.5).to_points().val if is_custom_margin else 0.0
+    if is_custom_margin:
+        margin_val = Quantity.centimeters(0.5).to_points().val
+    else:
+        margin_val = 0.0
+
     margin_min = Quantity.centimeters(1.0).to_points().val
 
     # todo improve this part
@@ -631,7 +641,7 @@ def init_axis_label(
         margin_val = margin_min
 
     pos, name, rotate_val = _init_axis_label_data(
-        axis_kind, view, margin_val, is_secondary, name
+        axis_kind, view, margin_val, is_secondary or False, name
     )
 
     if rotate is not None:
@@ -639,7 +649,7 @@ def init_axis_label(
 
     data = TextData(
         text=label,
-        font=Font() if font is None else font,
+        font=font or Font(),
         pos=pos,
         align=TextAlignKind.CENTER,
     )

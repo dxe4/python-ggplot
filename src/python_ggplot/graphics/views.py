@@ -6,6 +6,8 @@ from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
     CoordsInput,
+    LengthCoord,
+    PointCoordType,
     RelativeCoordType,
     path_coord_view_port,
 )
@@ -306,25 +308,57 @@ def x_axis_y_pos(
     is_secondary: bool = False,
 ) -> Coord1D:
     if view:
-        pos = view.height.val + margin if is_secondary else -margin
-        coord = quantitiy_to_coord(view.height, pos)
-        coord.pos = pos
-        return coord
+        pos = -margin if is_secondary else view.point_height().val + margin
+        length = view.point_height() if is_secondary else view.h_img
+        result = PointCoordType(pos, LengthCoord(length=length))
+        return result
     else:
         pos = 0.0 if is_secondary else 1.0
         return RelativeCoordType(pos)
 
 
 def y_axis_x_pos(
-    viewport: Optional[ViewPort] = None,
+    view: Optional[ViewPort] = None,
     margin: float = 0.0,
     is_secondary: bool = False,
 ) -> Coord1D:
-    if viewport:
-        pos = viewport.width.val + margin if is_secondary else -margin
-        coord = quantitiy_to_coord(viewport.width, pos)
-        coord.pos = pos
-        return coord
+    if view:
+        pos = view.point_width().val + margin if is_secondary else -margin
+        length = view.w_img if is_secondary else view.point_width()
+        result = PointCoordType(pos, LengthCoord(length=length))
+        return result
     else:
         pos = 1.0 if is_secondary else 0.0
         return RelativeCoordType(pos)
+
+
+# TODO This is old logic and probably need to be deleted,
+# but keeping for now until i double check why it was there
+# def x_axis_y_pos(
+#     view: Optional[ViewPort] = None,
+#     margin: float = 0.0,
+#     is_secondary: bool = False,
+# ) -> Coord1D:
+#     if view:
+#         pos = view.height.val + margin if is_secondary else -margin
+#         coord = quantitiy_to_coord(view.height, pos)
+#         coord.pos = pos
+#         return coord
+#     else:
+#         pos = 0.0 if is_secondary else 1.0
+#         return RelativeCoordType(pos)
+
+
+# def y_axis_x_pos(
+#     view: Optional[ViewPort] = None,
+#     margin: float = 0.0,
+#     is_secondary: bool = False,
+# ) -> Coord1D:
+#     if view:
+#         pos = view.width.val + margin if is_secondary else -margin
+#         coord = quantitiy_to_coord(view.width, pos)
+#         coord.pos = pos
+#         return coord
+#     else:
+#         pos = 1.0 if is_secondary else 0.0
+#         return RelativeCoordType(pos)
