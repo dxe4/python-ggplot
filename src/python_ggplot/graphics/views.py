@@ -109,6 +109,9 @@ class ViewPort:
         raise GGException("unexpected")
 
     def add_obj(self, obj: GraphicsObject):
+        if obj.config.style is None:
+            obj.config.style = self.style
+
         self.objects.append(obj)
 
     @staticmethod

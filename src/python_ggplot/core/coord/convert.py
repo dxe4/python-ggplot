@@ -185,7 +185,7 @@ def to_point_relative_via_point(data: CoordViaPointData) -> Coord1D:
         raise GGException("expected abs_length")
 
     return PointCoordType(
-        data.coord.pos * data.abs_length.to_points().val / DPI,
+        data.coord.pos * data.abs_length.to_points().val,
         data=LengthCoord(length=data.abs_length.to_points()),
     )
 
@@ -332,7 +332,7 @@ def convert_via_point(
 
         return func(data)
     else:
-        rel = coord.to_relative()
+        rel = coord.to_relative(length=abs_length)
         data = CoordViaPointData(
             rel,
             to_kind=to_kind,

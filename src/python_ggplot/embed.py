@@ -78,18 +78,20 @@ def relative_quantity_embed_into(
     quantity: Quantity, axis: AxisKind, view: "ViewPort"
 ) -> "Quantity":
     new_quantity, length, scale = quantity_embed_into_origin(view, axis)
-    return quantity.multiply(
+    result = quantity.multiply(
         new_quantity, length=length, scale=scale, as_coordinate=False
     )
+    return result
 
 
 def data_quantity_embed_into(
     quantity: Quantity, axis: AxisKind, view: "ViewPort"
 ) -> "Quantity":
     new_quantity, length, scale = quantity_embed_into_origin(view, axis)
-    return quantity.multiply(
+    result = quantity.multiply(
         new_quantity, length=length, scale=scale, as_coordinate=False
     )
+    return result
 
 
 quantity_embed_into_lookup = {

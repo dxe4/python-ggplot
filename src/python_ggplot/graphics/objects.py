@@ -26,8 +26,8 @@ if TYPE_CHECKING:
 
 
 def coord1d_to_abs_image(coord, img, axis_kind):
-    length_val = img.height if axis_kind == AxisKind.X else img.width
-    abs_length = Quantity.points(float(length_val))
+    length_val = img.height if axis_kind == AxisKind.Y else img.width
+    abs_length = Quantity.points(length_val)
 
     return coord.to_via_points(UnitType.POINT, abs_length=abs_length)
 
@@ -215,12 +215,8 @@ class GORect(GraphicsObject):
 
     def to_global_coords(self, img: Image):
         self.origin = mut_coord_to_abs_image(self.origin, img)
-        self.width = self.width.to_points(
-            scale=None, length=Quantity.points(float(img.width))
-        )
-        self.height = self.height.to_points(
-            scale=None, length=Quantity.points(float(img.height))
-        )
+        self.width = self.width.to_points(length=Quantity.points(float(img.width)))
+        self.height = self.height.to_points(length=Quantity.points(float(img.height)))
 
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
