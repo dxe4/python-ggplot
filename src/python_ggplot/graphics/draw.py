@@ -631,3 +631,4 @@ def draw_to_file(view: "ViewPort", filename: str):
     draw_viewport(img, view)
     # Save the surface to a PNG file
     img.backend.canvas.write_to_png(filename)
+    del img

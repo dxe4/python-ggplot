@@ -119,6 +119,7 @@ class CairoBackend:
             )
             self.set_line_style(context, style.line_type, style.line_width)
             context.set_line_width(style.line_width)
+
             context.move_to(start.x, start.y)
             context.line_to(stop.x, stop.y)
             context.stroke()
@@ -162,6 +163,8 @@ class CairoBackend:
         fill_color=None,
         rotate_angle=None,
     ):
+        from python_ggplot.core.objects import Color
+
         if not fill_color:
             fill_color = Color(r=0.0, g=0.0, b=0.0, a=0.0)
 

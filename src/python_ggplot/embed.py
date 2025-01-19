@@ -54,7 +54,7 @@ def coord1d_embed_into(
         return origin_abs + coord
     else:
         origin, abs_length = _coord_embed_into_origin(into, axis_kind)
-        pos = (origin.pos * abs_length.val) * coord.to_relative().pos
+        pos = (origin.pos + abs_length.val) * coord.to_relative().pos
         return RelativeCoordType(pos)
 
 

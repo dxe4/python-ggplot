@@ -33,7 +33,7 @@ class ViewPortInput:
 
     def update_from_viewport(self, view: "ViewPort"):
         self.h_img = view.h_img.to_points()
-        self.w_img = view.h_img.to_points()
+        self.w_img = view.w_img.to_points()
 
         self.h_view = view.point_height()
         self.w_view = view.point_width()
@@ -44,7 +44,9 @@ class ViewPortInput:
         h_view_quantity: Optional[Quantity] = None,
     ) -> Tuple["Quantity", "Quantity"]:
         if w_view_quantity is not None and h_view_quantity is not None:
-            if {w_view_quantity.unit_type, h_view_quantity} != {UnitType.POINT}:
+            if {w_view_quantity.unit_type, h_view_quantity.unit_type} != {
+                UnitType.POINT
+            }:
                 raise GGException("parent view must have a point unit")
             return (deepcopy(w_view_quantity), deepcopy(h_view_quantity))
         return (PointUnit(640.0), PointUnit(480.0))
@@ -89,14 +91,12 @@ class ViewPort:
     h_view: Optional[Quantity] = None
 
     def get_center(self) -> Tuple[float, float]:
-        center_x = self.left().pos + (
-            self.get_width().to_relative(scale=None, length=self.point_width()).val
-            / 2.0
+        center_x: float = self.left().pos + (
+            self.get_width().to_relative(length=self.point_width()).val / 2.0
         )
 
-        center_y = self.bottom().pos + (
-            self.get_height().to_relative(scale=None, length=self.point_height()).val
-            / 2.0
+        center_y: float = self.bottom().pos + (
+            self.get_height().to_relative(length=self.point_height()).val / 2.0
         )
 
         return center_x, center_y
@@ -116,7 +116,8 @@ class ViewPort:
         origin: Coord, width: Quantity, height: Quantity, input_data: ViewPortInput
     ) -> "ViewPort":
         w_view, h_view = ViewPortInput.get_views(input_data.w_view, input_data.h_view)
-        return ViewPort(
+
+        result = ViewPort(
             origin=origin,
             width=width,
             height=height,
@@ -132,6 +133,7 @@ class ViewPort:
             w_img=input_data.w_img,
             h_img=input_data.h_img,
         )
+        return result
 
     def add_viewport(
         self,
@@ -160,8 +162,8 @@ class ViewPort:
         self, coords_input: CoordsInput, input_data: ViewPortInput
     ):
         origin = Coord(
-            x=RelativeCoordType(coords_input.width),
-            y=RelativeCoordType(coords_input.height),
+            x=RelativeCoordType(coords_input.left),
+            y=RelativeCoordType(coords_input.bottom),
         )
         width = RelativeUnit(coords_input.width)
         height = RelativeUnit(coords_input.height)
@@ -169,7 +171,7 @@ class ViewPort:
         input_data.x_scale = self.x_scale or input_data.x_scale
         input_data.y_scale = self.y_scale or input_data.y_scale
 
-        return ViewPort.from_input(origin, width, height, input_data)
+        return self.add_viewport(origin, width, height, input_data)
 
     def update_data_scale(self):
         self.update_data_scale_for_objects(self.objects)
@@ -268,37 +270,35 @@ class ViewPort:
     def update_item_at(self, idx, view: "ViewPort"):
         self.children[idx] = deepcopy(view)
 
-    def point_width_height(self, dimension: "Quantity") -> "Quantity":
+    def point_width(self) -> "Quantity":
         if not self.w_view:
             raise GGException("expected w view")
 
         if self.w_view.unit_type != UnitType.POINT:
-            raise ValueError(f"Expected Point, found {self.w_view.unit_type}")
+            raise GGException(f"Expected Point, found {self.w_view.unit_type}")
 
-        other = self.width.to_relative(length=dimension)
-        return self.w_view.multiply(other, length=dimension)
-
-    def point_width(self) -> "Quantity":
-        if not self.w_view:
-            raise GGException("expected w_view")
-
-        return self.point_width_height(self.w_view)
+        other = self.width.to_relative(length=self.w_view)
+        result = self.w_view.multiply(other, length=self.w_view)
+        return result
 
     def point_height(self) -> "Quantity":
         if not self.h_view:
-            raise GGException("expected w_view")
+            raise GGException("expected w view")
 
-        return self.point_width_height(self.h_view)
+        if self.h_view.unit_type != UnitType.POINT:
+            raise GGException(f"Expected Point, found {self.h_view.unit_type}")
 
-    def __rich_repr__(self):
-        yield "width", self.width
-        yield "height", self.height
-        yield "x", self.x
-        yield "y", self.y
-        yield "w_img", self.w_img
-        yield "h_img", self.h_img
-        yield "w_view", self.w_view
-        yield "h_view", self.h_view
+        other = self.height.to_relative(length=self.h_view)
+        result = self.h_view.multiply(other, length=self.h_view)
+        return result
+
+    # def __rich_repr__(self):
+    #     yield "width", self.width
+    #     yield "height", self.height
+    #     yield "w_img", self.w_img
+    #     yield "h_img", self.h_img
+    #     yield "w_view", self.w_view
+    #     yield "h_view", self.h_view
 
 
 def x_axis_y_pos(

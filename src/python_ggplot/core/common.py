@@ -2,7 +2,6 @@ import logging
 import math
 from typing import TYPE_CHECKING, List, Optional
 
-from rich.console import Console
 from rich.traceback import install
 
 if TYPE_CHECKING:

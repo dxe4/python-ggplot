@@ -72,9 +72,7 @@ def point_to_inch(data: QuantityConversionData):
 def point_to_relative(data: QuantityConversionData):
     if data.length is None:
         raise GGException("need to provide length")
-    return RelativeUnit(
-        val=data.quantity.val / data.length.to_points().val
-    )
+    return RelativeUnit(val=data.quantity.val / data.length.to_points().val)
 
 
 def point_to_point(data: QuantityConversionData):
@@ -103,10 +101,7 @@ def centimeter_to_inch(data: QuantityConversionData):
 def centimeter_to_relative(data: QuantityConversionData):
     if data.length is None:
         raise GGException("need to provide length")
-    new_val = (
-        data.quantity.to_points().val
-        / data.length.to_points().val
-    )
+    new_val = data.quantity.to_points().val / data.length.to_points().val
     return RelativeUnit(val=new_val)
 
 
@@ -135,10 +130,7 @@ def inch_to_inch(data: QuantityConversionData):
 def inch_to_relative(data: QuantityConversionData):
     if data.length is None:
         raise GGException("need to provide length")
-    new_val = (
-        data.quantity.to_points().val
-        / data.length.to_points().val
-    )
+    new_val = data.quantity.to_points().val / data.length.to_points().val
     return RelativeUnit(val=new_val)
 
 
@@ -159,7 +151,7 @@ def relative_to_relative(data: QuantityConversionData):
 
 def relative_to_points(data: QuantityConversionData):
     if data.length:
-        return PointUnit(val=data.quantity.val * data.length.val)
+        return PointUnit(val=data.quantity.val * data.length.to_points().val)
     raise GGException("un expected")
 
 

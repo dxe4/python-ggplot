@@ -203,9 +203,9 @@ def to_inch_relative_via_point(data: CoordViaPointData) -> Coord1D:
 def to_centimeter_relative_via_point(data: CoordViaPointData) -> Coord1D:
     if data.abs_length is None:
         raise GGException("expected abs_length")
-
+    inch = 2.54
     return CentimeterCoordType(
-        data.coord.pos * data.abs_length.to_points().val / DPI,
+        data.coord.pos * data.abs_length.to_points().val / DPI * inch,
         data=LengthCoord(length=data.abs_length.to_centimeter()),
     )
 

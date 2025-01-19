@@ -182,14 +182,15 @@ def init_rect(
     style = init_rect_input.style or Style(
         gradient=init_rect_input.gradient,
         fill_color=init_rect_input.color,
+        line_type=LineType.SOLID,
         color=BLACK,
         line_width=0.0,
         size=0.0,
     )
 
     return GORect(
-        name=init_rect_input.name or "",
-        config=GraphicsObjectConfig(style=style),
+        name=init_rect_input.name or "rect",
+        config=GraphicsObjectConfig(style=style, rotate=init_rect_input.rotate),
         origin=path_coord_view_port(origin, view),
         width=width,
         height=height,
@@ -403,7 +404,9 @@ def create_lines(
 def init_error_bar(data: InitErrorBarData) -> GOComposite:
     # TODO this code can improve
     if not isinstance(data.point, Coord):
-        raise GGException("data.point has to be of type coord, if its point use init_error_bar_from_point")
+        raise GGException(
+            "data.point has to be of type coord, if its point use init_error_bar_from_point"
+        )
 
     style = data.style or Style(
         line_width=1.0,
@@ -442,12 +445,12 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
             right: GraphicsObject = init_line(
                 start=Coord(x=data.error_up, y=low),
                 stop=Coord(x=data.error_up, y=high),
-                init_line_input=InitLineInput(style=style)
+                init_line_input=InitLineInput(style=style),
             )
             left = init_line(
                 start=Coord(x=data.error_down, y=low),
                 stop=Coord(x=data.error_down, y=high),
-                init_line_input=InitLineInput(style=style)
+                init_line_input=InitLineInput(style=style),
             )
 
             result.config.children.extend([right, left])
@@ -464,13 +467,13 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
             up = init_line(
                 start=Coord(x=left_point, y=data.error_up),
                 stop=Coord(x=right_point, y=data.error_up),
-                init_line_input=InitLineInput(style=style)
+                init_line_input=InitLineInput(style=style),
             )
 
             down = init_line(
-                start= Coord(x=left_point, y=data.error_down),
+                start=Coord(x=left_point, y=data.error_down),
                 stop=Coord(x=right_point, y=data.error_down),
-                init_line_input=InitLineInput(style=style)
+                init_line_input=InitLineInput(style=style),
             )
 
             result.config.children.extend([up, down])
@@ -480,7 +483,9 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
 
 def init_error_bar_from_point(data: InitErrorBarData) -> GraphicsObject:
     if not isinstance(data.point, Point):
-        raise GGException("data.point has to be of type point, if its coord use init_error_bar")
+        raise GGException(
+            "data.point has to be of type point, if its coord use init_error_bar"
+        )
 
     if data.view.x_scale is None or data.view.y_scale is None:
         raise GGException("view needs to have x and y scale")
@@ -879,10 +884,7 @@ def init_tick(
     name = name or "tick"
     tick_kind = tick_kind or TickKind.ONE_SIDE
     style = style or Style(
-        line_width=1.0,
-        color=BLACK,
-        size=5.0,
-        line_type=LineType.SOLID
+        line_width=1.0, color=BLACK, size=5.0, line_type=LineType.SOLID
     )
 
     return GOTick(
