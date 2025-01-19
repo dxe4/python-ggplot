@@ -1,5 +1,5 @@
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type, cast
 
@@ -19,12 +19,31 @@ if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort
 
 
-@dataclass
-class CoordsInput:
-    left: float = 0.0
-    bottom: float = 0.0
-    width: float = 1.0
-    height: float = 1.0
+def coord_type_from_unit_type(unit_type: UnitType):
+    lookup = {
+        UnitType.POINT: PointCoordType,
+        UnitType.CENTIMETER: CentimeterCoordType,
+        UnitType.INCH: InchCoordType,
+        UnitType.RELATIVE: RelativeCoordType,
+        UnitType.DATA: DataCoordType,
+        UnitType.CENTIMETER: InchCoordType,
+        UnitType.STR_HEIGHT: StrHeightCoordType,
+        UnitType.STR_WIDTH: StrWidthCoordType,
+    }
+    return lookup[unit_type]
+
+
+def default_coord_view_location(view: "ViewPort", kind: AxisKind):
+    length_data = {
+        AxisKind.X: (view.point_width(), view.x_scale),
+        AxisKind.Y: (view.point_height(), view.y_scale),
+    }
+    return length_data[kind]
+
+
+def default_length_and_scale(view: "ViewPort", kind: AxisKind):
+    length, scale = default_coord_view_location(view, kind)
+    return length, scale
 
 
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
@@ -43,13 +62,6 @@ def path_coord_view_port(coord: "Coord", view: "ViewPort") -> "Coord":
 
 
 Operator = Callable[[float, float], float]
-
-
-class OperatorType(Enum):
-    DIV = "DIV"
-    ADD = "ADD"
-    SUB = "SUB"
-    MUL = "MUL"
 
 
 def add_two_absolute_coord(
@@ -86,7 +98,7 @@ def add_coord_one_length(
 
 
 def coord_operator(
-    lhs: "Coord1D", rhs: "Coord1D", operator: Operator, operator_type: OperatorType
+    lhs: "Coord1D", rhs: "Coord1D", operator: Operator, operator_type: "OperatorType"
 ) -> "Coord1D":
     """
     # TODO this allows you to pass operator=lambda x,y: x-y and OperatorType.DIV
@@ -149,6 +161,21 @@ def coord_quantity_div(coord: "Coord1D", quantity: Quantity) -> "Coord1D":
 
 
 @dataclass
+class CoordsInput:
+    left: float = 0.0
+    bottom: float = 0.0
+    width: float = 1.0
+    height: float = 1.0
+
+
+class OperatorType(Enum):
+    DIV = "DIV"
+    ADD = "ADD"
+    SUB = "SUB"
+    MUL = "MUL"
+
+
+@dataclass
 class ToCord:
     cord: "Coord1D"
     to_kind: UnitType = UnitType.RELATIVE
@@ -158,20 +185,6 @@ class ToCord:
     axis: Optional[AxisKind] = None
     str_text: Optional[str] = None
     str_font: Optional[str] = None
-
-
-def default_coord_view_location(view: "ViewPort", kind: AxisKind):
-    if kind == AxisKind.X:
-        return view.point_width(), view.x_scale
-    elif kind == AxisKind.Y:
-        return view.point_height(), view.y_scale
-    else:
-        raise GGException("")
-
-
-def default_length_and_scale(view: "ViewPort", kind: AxisKind):
-    length, scale = default_coord_view_location(view, kind)
-    return length, scale
 
 
 @dataclass
@@ -216,7 +229,8 @@ class Coord1D:
     def create_default_coord_type(
         view: "ViewPort", at: float, axis_kind: AxisKind, kind: UnitType
     ) -> "Coord1D":
-        raise GGException("not implemented")
+        cls = coord_type_from_unit_type(kind)
+        return cls.create_default_coord_type(view, at, axis_kind, kind)
 
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
@@ -328,8 +342,8 @@ class LengthCoord:
 
 @dataclass
 class DataCoord:
-    scale: Scale
     axis_kind: AxisKind
+    scale: Scale
 
 
 @dataclass
@@ -357,7 +371,7 @@ class RelativeCoordType(Coord1D):
 
 @dataclass
 class PointCoordType(Coord1D):
-    data: LengthCoord
+    data: LengthCoord = field(default_factory=LengthCoord)
 
     @property
     def unit_type(self) -> UnitType:

@@ -302,12 +302,9 @@ class ViewPort:
 
 def x_axis_y_pos(
     view: Optional[ViewPort] = None,
-    margin: Optional[float] = 0.0,
-    is_secondary: Optional[bool] = False,
+    margin: float = 0.0,
+    is_secondary: bool = False,
 ) -> Coord1D:
-    is_secondary = is_secondary if is_secondary is not None else False
-    margin = margin if margin is not None else 0.0
-
     if view:
         pos = view.height.val + margin if is_secondary else -margin
         coord = quantitiy_to_coord(view.height, pos)
@@ -320,12 +317,9 @@ def x_axis_y_pos(
 
 def y_axis_x_pos(
     viewport: Optional[ViewPort] = None,
-    margin: Optional[float] = 0.0,
-    is_secondary: Optional[bool] = False,
+    margin: float = 0.0,
+    is_secondary: bool = False,
 ) -> Coord1D:
-    is_secondary = is_secondary if is_secondary is not None else False
-    margin = margin if margin is not None else 0.0
-
     if viewport:
         pos = viewport.width.val + margin if is_secondary else -margin
         coord = quantitiy_to_coord(viewport.width, pos)

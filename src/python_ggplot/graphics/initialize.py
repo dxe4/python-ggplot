@@ -1,5 +1,6 @@
 # todo this has to be split up into multiple files
 import math
+from collections import namedtuple
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
@@ -10,8 +11,10 @@ from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
     CoordsInput,
+    DataCoord,
     coord_quantity_add,
     coord_quantity_sub,
+    coord_type_from_unit_type,
     path_coord_view_port,
 )
 from python_ggplot.core.objects import BLACK  # GREY20,; GREY92,;
@@ -142,31 +145,73 @@ class InitErrorBarData:
         return data[self.axis_kind]
 
 
-def _init_axis_data(axis: AxisKind):
-    if axis == AxisKind.X:
-        name = "x_axis"
-        start = Coord.relative(0.0, 1.0)
-        stop = Coord.relative(1.0, 1.0)
-        return start, stop, name
+def init_coord_1d_from_view(
+    view: "ViewPort", at: float, axis_kind: AxisKind, kind: UnitType = UnitType.POINT
+) -> Coord1D:
+    result = Coord1D.create_default_coord_type(view, at, axis_kind, kind)
+    return result
+
+
+def init_coord_1d(
+    at: float, axis_kind: AxisKind, kind: UnitType = UnitType.RELATIVE
+) -> Coord1D:
+    """
+    TODO
+    some weird logic in original code,
+    it seems data is initialised without scale which is required
+    same goes for STR_WIDTH and STR_HEIGHT
+    this need some investigation
+    for now we make an empty scale
+    """
+    cls = coord_type_from_unit_type(kind)
+    if kind == UnitType.DATA:
+        print("WARNING: init_coord_1d(unit+_type=DATA) may not work as expected")
+        result = cls(
+            pos=at,
+            data=DataCoord(
+                axis_kind=axis_kind,
+                scale=Scale(low=0, high=0),
+            ),
+        )
     else:
-        name = "y_axis"
-        start = Coord.relative(0.0, 0.0)
-        stop = Coord.relative(0.0, 1.0)
-        return start, stop, name
+        result = cls(pos=at)
+
+    return result
+
+
+def init_coord(x: float, y: float, kind: UnitType = UnitType.RELATIVE):
+    return Coord(
+        x=init_coord_1d(x, AxisKind.X, kind),
+        y=init_coord_1d(y, AxisKind.Y, kind),
+    )
+
+
+_AxisData = namedtuple("_AxisData", ["start", "stop", "name"])
+
+
+def _init_axis_data(axis: AxisKind) -> _AxisData:
+    data = {
+        AxisKind.X: _AxisData((0.0, 1.0), (1.0, 1.0), "x_axis"),
+        AxisKind.Y: _AxisData((0.0, 0.0), (0.0, 1.0), "y_axis"),
+    }
+    return data[axis]
 
 
 def init_axis(axis_kind: AxisKind, init_axis_input: InitAxisInput) -> GraphicsObject:
     start, stop, name = _init_axis_data(axis_kind)
-    start_stop_data = StartStopData(start=start, stop=stop)
-    style = Style(
-        line_width=init_axis_input.width,
-        color=init_axis_input.color,
-    )
 
     graphics_obj = GOAxis(
         name=name,
-        config=GraphicsObjectConfig(style=style),
-        data=start_stop_data,
+        config=GraphicsObjectConfig(
+            style=Style(
+                line_width=init_axis_input.width,
+                color=init_axis_input.color,
+            )
+        ),
+        data=StartStopData(
+            start=init_coord(start[0], start[1]),
+            stop=init_coord(stop[0], stop[1]),
+        ),
     )
 
     return graphics_obj
@@ -357,7 +402,6 @@ def init_point_from_point(
     color=BLACK,
     name=None,
 ):
-
     if view.x_scale is None or view.y_scale is None:
         raise GGException("x and y scale need to be setup")
 
@@ -762,12 +806,12 @@ def init_tick_label_with_override(
 
 
 def axis_coord(
-    coord: Coord1D, axis_kind: AxisKind, is_secondary: Optional[bool] = None
+    coord: Coord1D, axis_kind: AxisKind, is_secondary: bool = False
 ) -> Coord:
     if axis_kind == AxisKind.X:
-        return Coord(x=coord, y=x_axis_y_pos(None, None, is_secondary))
+        return Coord(x=coord, y=x_axis_y_pos(is_secondary=is_secondary))
     else:  # AxisKind.Y
-        return Coord(x=y_axis_x_pos(None, None, is_secondary), y=coord)
+        return Coord(x=y_axis_x_pos(is_secondary=is_secondary), y=coord)
 
 
 TickFormat = Callable[[float], str]
@@ -776,7 +820,7 @@ TickFormat = Callable[[float], str]
 @dataclass
 class TickLabelsInput:
     font: Optional[Font] = None
-    is_secondary: Optional[bool] = None
+    is_secondary: bool = False
     margin: Optional[Coord1D] = None
     format_fn: Optional[TickFormat] = None
     rotate: Optional[float] = None
