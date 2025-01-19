@@ -22,17 +22,18 @@ from python_ggplot.core.objects import (
 from python_ggplot.core.units.objects import Quantity
 
 if TYPE_CHECKING:
+    from python_ggplot.core.objects import Image
     from python_ggplot.graphics.views import ViewPort
 
 
-def coord1d_to_abs_image(coord, img, axis_kind):
+def coord1d_to_abs_image(coord: Coord1D, img: "Image", axis_kind: AxisKind):
     length_val = img.height if axis_kind == AxisKind.Y else img.width
     abs_length = Quantity.points(length_val)
 
     return coord.to_via_points(UnitType.POINT, abs_length=abs_length)
 
 
-def mut_coord_to_abs_image(coord, img):
+def mut_coord_to_abs_image(coord: Coord, img: "Image"):
     coord.x = coord1d_to_abs_image(coord.x, img, AxisKind.X)
     coord.y = coord1d_to_abs_image(coord.y, img, AxisKind.Y)
     return coord

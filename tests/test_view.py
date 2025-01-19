@@ -133,11 +133,13 @@ def test_view():
     data = InitRectInput(
         style=Style(
             line_width=2.0,
-            color=Color(r=1.0, g=0.0, b=0.0, a=0.0),
+            color=Color(r=1.0, g=0.0, b=0.0, a=1.0),
             fill_color=Color(r=0.0, g=0.0, b=0.0, a=0.5),
         )
     )
-    rect2 = init_rect_from_coord(view2, data, coords_input)
+    rect2 = init_rect_from_coord(
+        view2, data, CoordsInput(left=0.0, bottom=0.0, width=1, height=1)
+    )
 
     origin = Coord.relative(0.1, 0.1)
     width = Quantity.centimeters(1.0)

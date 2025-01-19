@@ -30,19 +30,19 @@ if TYPE_CHECKING:
 
 # coord
 def _coord_embed_into_origin_for_length(view: "ViewPort", axis_kind: AxisKind):
-    if axis_kind == AxisKind.X:
-        return view.origin.x, view.w_img
-    if axis_kind == AxisKind.Y:
-        return view.origin.y, view.h_img
-    raise GGException("unexpected")
+    data = {
+        AxisKind.X: (view.origin.x, view.w_img),
+        AxisKind.Y: (view.origin.y, view.h_img),
+    }
+    return data[axis_kind]
 
 
 def _coord_embed_into_origin(view: "ViewPort", axis_kind: AxisKind):
-    if axis_kind == AxisKind.X:
-        return view.left(), view.get_width()
-    if axis_kind == AxisKind.Y:
-        return view.bottom(), view.get_height()
-    raise GGException("unexpected")
+    data = {
+        AxisKind.X: (view.left(), view.get_width()),
+        AxisKind.Y: (view.bottom(), view.get_height()),
+    }
+    return data[axis_kind]
 
 
 def coord1d_embed_into(
@@ -54,7 +54,7 @@ def coord1d_embed_into(
         return origin_abs + coord
     else:
         origin, abs_length = _coord_embed_into_origin(into, axis_kind)
-        pos = (origin.pos + abs_length.val) * coord.to_relative().pos
+        pos = origin.pos + abs_length.val * coord.to_relative().pos
         return RelativeCoordType(pos)
 
 

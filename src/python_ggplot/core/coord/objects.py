@@ -49,7 +49,7 @@ def default_length_and_scale(view: "ViewPort", kind: AxisKind):
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
     if isinstance(coord, (CentimeterCoordType, InchCoordType, PointCoordType)):
         length = coord.get_length()
-        if length is not None:
+        if length is None:
             coord.data.length = length
     return coord
 
