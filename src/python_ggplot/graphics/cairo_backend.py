@@ -273,10 +273,11 @@ class CairoBackend:
                 pattern = create_gradient(style.gradient, left, bottom, height, width)
                 context.set_source(pattern)
             else:
-                context.set_source_rgb(
+                context.set_source_rgba(
                     style.fill_color.r,
                     style.fill_color.g,
                     style.fill_color.b,
+                    style.fill_color.a,
                 )
             context.fill()
 
