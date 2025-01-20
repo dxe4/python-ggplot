@@ -1,7 +1,8 @@
 import json
 import os
-from python_ggplot.gg_scales import ColorScale
+
 from python_ggplot.core.objects import ColorRGBA
+from python_ggplot.gg_scales import ColorScale
 
 
 class ColorMapsData:

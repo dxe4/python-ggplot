@@ -1196,8 +1196,16 @@ def init_grid_lines(
     x_ticks=None, y_ticks=None, major: bool = True, style=None, name="grid_lines"
 ) -> GOGrid:
     default_style = Style(
-        size=1.0 if major else 0.3, color=WHITE, line_type=LineType.SOLID
+        size=1.0 if major else 0.3,
+        color=WHITE,
+        line_type=LineType.SOLID,
     )
+    # Double check this, the original version seems to have some attributes setup
+    # they are probably defaults but we have to double check to be sure
+    # line_width=1.0,
+    # fill_color=TRANSPARENT,
+    # marker=MarkerKind.CIRCLE,
+    # error_bar_kind=ErrorBarKind.LINES,
 
     style = style or default_style
     x_ticks = x_ticks or []

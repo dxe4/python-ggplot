@@ -10,6 +10,9 @@ from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
     CoordsInput,
+    DataCoord,
+    DataCoordType,
+    RelativeCoordType,
 )
 from python_ggplot.core.objects import (
     AxisKind,
@@ -228,3 +231,45 @@ def test_colds():
     img.children.append(axis_vp)
 
     draw_to_file(img, "test_gg_cols.png")
+
+
+def test_coord_add():
+    data = [
+        DataCoordType(
+            pos=0.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=1.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=2.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=3.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=4.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=5.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=6.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+        DataCoordType(
+            pos=7.0,
+            data=DataCoord(axis_kind=AxisKind.X, scale=Scale(low=0.0, high=7.0)),
+        ),
+    ]
+    rel1 = RelativeCoordType(pos=0.1)
+    rel2 = RelativeCoordType(pos=0.8)
+    result = [(rel1 + rel2 + i) for i in data]
+    result = [round(i.pos * 100) for i in result]
+    assert result == [90, 104, 119, 133, 147, 161, 176, 190]

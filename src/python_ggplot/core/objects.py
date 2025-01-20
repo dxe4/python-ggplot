@@ -188,6 +188,8 @@ class Point(Generic[T]):
 
 @dataclass
 class Style:
+    # TODO think about default for line width and color.
+    # 0.0 or 1.0? transparent or black?
     line_width: float = 0.0
     color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0))
     size: float = 0.0

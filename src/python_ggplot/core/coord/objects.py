@@ -70,29 +70,37 @@ def add_two_absolute_coord(
     left_point = left.to(UnitType.POINT)
     right_point = right.to(UnitType.POINT)
 
-    length = left_point.get_length()
     pos = operator(left_point.pos, right_point.pos)
-    data = LengthCoord(length=length)
+    data = LengthCoord(length=deepcopy(left_point.get_length()))
     return PointCoordType(pos, data)
 
 
 def add_coord_one_length(
-    length_coord: "Coord1D", other_coord: "Coord1D", operator: Operator
+    left_coord: "Coord1D",
+    other_coord: "Coord1D",
+    operator: Operator,
+    scale: Scale,
+    result_to_clone: "Coord1D",
 ) -> "Coord1D":
-    scale: Scale = other_coord.get_scale()
-    length: Quantity = length_coord.get_length()
+    length: Quantity = left_coord.get_length()
 
-    left_cls = unit_type_from_type(length_coord.unit_type)
+    left_cls = unit_type_from_type(left_coord.unit_type)
     right_cls = unit_type_from_type(other_coord.unit_type)
-    left = left_cls(val=length_coord.pos)
+    left = left_cls(val=left_coord.pos)
     right = right_cls(val=other_coord.pos)
 
-    quantity = left.apply_operator(right, operator, length, scale, True)
+    quantity = left.apply_operator(
+        other=right,
+        length=length,
+        scale=scale,
+        as_coordinate=True,
+        operator=operator,
+    )
 
     if quantity.unit_type == UnitType.RELATIVE:
         return RelativeCoordType(pos=quantity.val)
     else:
-        result = deepcopy(length_coord)
+        result = deepcopy(result_to_clone)
         result.pos = quantity.val
         return result
 
@@ -119,9 +127,9 @@ def coord_operator(
             res.pos = operator(lhs.pos, rhs.pos)
             return res
     elif lhs.unit_type.is_length():
-        return add_coord_one_length(lhs, rhs, operator)
+        return add_coord_one_length(lhs, rhs, operator, rhs.get_scale(), lhs)
     elif rhs.unit_type.is_length():
-        return add_coord_one_length(rhs, lhs, operator)
+        return add_coord_one_length(lhs, rhs, operator, lhs.get_scale(), rhs)
     else:
         left = lhs.to(UnitType.RELATIVE)
         right = rhs.to(UnitType.RELATIVE)
@@ -299,9 +307,11 @@ class Coord1D:
             return False
 
         if self.unit_type.is_length():
-            return self == other
+            left_length = self.get_length()
+            right_length = self.get_length()
+            return left_length == right_length
 
-        if self.unit_type == UnitType.DATA and other.unit_type == UnitType.DATA:
+        if {self.unit_type, other.unit_type} == {UnitType.DATA}:
             self_ = cast(DataCoordType, self)
             other_ = cast(DataCoordType, other)
             return (

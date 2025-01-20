@@ -102,26 +102,17 @@ class Quantity:
             cls = unit_type_from_type(self.unit_type)
             return cls(operator(self.val, other.val))
 
-        elif self.unit_type.is_length() and other.unit_type.is_length():
+        elif self.unit_type.is_length() and (
+            other.unit_type.is_length() or other.unit_type == UnitType.RELATIVE
+        ):
             return PointUnit(
                 operator(self.to_points().val, other.to_points(length=length).val)
             ).to(self.unit_type, length=length, scale=scale)
 
-        elif self.unit_type.is_length() and other.unit_type == UnitType.RELATIVE:
-            result = deepcopy(self)
-            result.val = operator(self.val, other.val)
-            return result
-
-        elif (
-            self.unit_type == UnitType.RELATIVE and self.unit_type == UnitType.RELATIVE
-        ):
-            raise GGException("Cannot perform arithmetic on two RELATIVE quantities")
-
         elif self.unit_type == UnitType.RELATIVE and other.unit_type.is_length():
-            result = deepcopy(other)
-            result.val = operator(self.val, other.val)
-            return result
-
+            return PointUnit(
+                operator(self.to_points(length=length).val, other.to_points().val)
+            ).to(other.unit_type, length=length, scale=scale)
         elif self.unit_type == UnitType.DATA:
             if not scale or not as_coordinate:
                 raise GGException("TODO re evaluate nim version of this")

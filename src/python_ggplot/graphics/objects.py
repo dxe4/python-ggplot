@@ -233,6 +233,10 @@ class GOGrid(GraphicsObject):
     y_pos: List[Coord1D]
     origin: Optional[Coord] = None
     origin_diagonal: Optional[Coord] = None
+    # TODO double check this, original package seems to start with
+    # Relative 0.0 for both origin and origin diagonal
+    # embed_into sets the right origin later, so it doesnt seem to matter
+    # need to check if this has any impact
 
     def to_global_coords(self, img: Image):
         if self.origin is None:
