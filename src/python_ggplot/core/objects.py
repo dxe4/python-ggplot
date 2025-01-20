@@ -120,12 +120,17 @@ class CFontSlant(Enum):
     OBLIQUE = auto()
 
 
+# TODO Move all color logic in chroma
 @dataclass
 class Color:
     r: float
     g: float
     b: float
-    a: float
+    a: float  # TODO add default alpha = 1.0
+
+
+# TODO refactor / rename this so that default col is RGBA
+ColorRGBA = Color
 
 
 @dataclass
