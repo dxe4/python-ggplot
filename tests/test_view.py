@@ -165,7 +165,6 @@ def test_view():
     background(view1)
 
     grid_lines = init_grid_lines(x_ticks=x_ticks, y_ticks=y_ticks)
-
     grid_lines_major = init_grid_lines(x_ticks=x_ticks, y_ticks=y_ticks, major=False)
 
     objects = [
@@ -200,11 +199,37 @@ def test_view():
     draw_to_file(img, "simple_test.png")
 
 
+def test_grid_lines():
+    '''
+    TODO theres an issue with gridlines now drawing,
+    everything else from the main test seems fine
+    need to decide which is the best way to debug this
+    ginger tests are mostly integration tests
+    one possible path is to sit down and write tests for ginger
+    then the rest of the work for this will be less demanding
+    another option is to create a universal output format to compare
+    will skip for now given that is only for grid and revist
+    '''
+    img = ViewPort.from_coords(CoordsInput(), ViewPortInput(
+        x_scale=Scale(low=0.0, high=2.0 * math.pi),
+        y_scale=Scale(low=-1.0, high=1.0),
+    ))
+    x_ticks = xticks(img, [])
+    y_ticks = yticks(img, [])
+    grid_lines = init_grid_lines(x_ticks=x_ticks, y_ticks=y_ticks)
+    grid_lines_major = init_grid_lines(x_ticks=x_ticks, y_ticks=y_ticks, major=False)
+    img.objects.append(grid_lines)
+    img.objects.append(grid_lines_major)
+    draw_to_file(img, "grid_lines.png")
+
+
 def test_colds():
     img = ViewPort.from_coords(
         CoordsInput(),
         ViewPortInput(
-            w_img=Quantity.points(800), h_img=Quantity.points(100), name="view"
+            w_img=Quantity.points(800),
+            h_img=Quantity.points(100),
+            name="view"
         ),
     )
     axis_vp = img.add_viewport_from_coords(
