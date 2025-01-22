@@ -201,7 +201,7 @@ def change_style(style: GGStyle, scale_value: ScaleValue) -> GGStyle:
     try:
         scale_value.update_style(style)
         return style
-    except NotImplemented:
+    except NotImplementedError:
         raise GGException(
             f"Setting style of {scale_value.scale_type} not supported at the moment!"
         )
