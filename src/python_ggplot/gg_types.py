@@ -41,6 +41,10 @@ if TYPE_CHECKING:
 
 @dataclass
 class GGValue:
+    """
+    TODO high priority. find a proxy mechanism for this
+    """
+
     pass
 
 
@@ -232,20 +236,15 @@ class BinPositionKind(str, Enum):
 
 
 class GeomType(Enum):
-    """
-    todo refactor later, do we really need double geom?
-    GeomType.GEOM_POINT -> GeomType.POINT
-    """
-
-    GEOM_POINT = auto()
-    GEOM_BAR = auto()
-    GEOM_HISTOGRAM = auto()
-    GEOM_FREQ_POLY = auto()
-    GEOM_TILE = auto()
-    GEOM_LINE = auto()
-    GEOM_ERROR_BAR = auto()
-    GEOM_TEXT = auto()
-    GEOM_RASTER = auto()
+    POINT = auto()
+    BAR = auto()
+    HISTOGRAM = auto()
+    FREQ_POLY = auto()
+    TILE = auto()
+    LINE = auto()
+    ERROR_BAR = auto()
+    TEXT = auto()
+    RASTER = auto()
 
 
 @dataclass
@@ -260,55 +259,55 @@ class GeomKind(ABC):
 class GeomPoint(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_POINT
+        return GeomType.POINT
 
 
 class GeomBar(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_BAR
+        return GeomType.BAR
 
 
 class GeomHistogram(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_HISTOGRAM
+        return GeomType.HISTOGRAM
 
 
 class GeomFreqPoly(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_FREQ_POLY
+        return GeomType.FREQ_POLY
 
 
 class GeomTile(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_TILE
+        return GeomType.TILE
 
 
 class GeomLine(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_LINE
+        return GeomType.LINE
 
 
 class GeomErrorBar(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_ERROR_BAR
+        return GeomType.ERROR_BAR
 
 
 class GeomText(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_TEXT
+        return GeomType.TEXT
 
 
 class GeomRaster(GeomKind):
     @property
     def geom_type(self):
-        return GeomType.GEOM_RASTER
+        return GeomType.RASTER
 
 
 class HistogramDrawingStyle(str, Enum):
@@ -351,12 +350,17 @@ class Draw:
     fname: str
     width: Optional[float] = None
     height: Optional[float] = None
+    # LATER: wont use TEX for now
     tex_options: Optional[TexOptions] = None
     backend: Optional[str] = None
 
 
 @dataclass
 class VegaDraw:
+    """
+    # LATER: no need to start with vega, finish cairo first
+    """
+
     fname: str
     width: Optional[float] = None
     height: Optional[float] = None
@@ -483,6 +487,10 @@ class ThemeMarginLayout:
 
 @dataclass
 class JsonDummyDraw:
+    """
+    LATER: wont implement for now
+    """
+
     fname: str
     width: Optional[float]
     height: Optional[float]
@@ -491,6 +499,10 @@ class JsonDummyDraw:
 
 @dataclass
 class VegaTex:
+    """
+    LATER: wont implement for now
+    """
+
     fname: str
     width: Optional[float]
     height: Optional[float]
@@ -512,7 +524,7 @@ class Geom:
 
     def __post_init__(self):
         if (
-            self.kind.geom_type == GeomType.GEOM_HISTOGRAM
+            self.kind.geom_type == GeomType.HISTOGRAM
             and not self.histogram_drawing_style
         ):
             raise GGException("histogram geom needs to specify histogram_drawing_style")

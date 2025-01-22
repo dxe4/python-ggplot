@@ -1,11 +1,8 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
-from python_ggplot.core.coord.objects import (
-    Coord,
-    Coord1D,
-    RelativeCoordType,
-)
+
+from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core.objects import AxisKind, GGException, UnitType
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.graphics.objects import (

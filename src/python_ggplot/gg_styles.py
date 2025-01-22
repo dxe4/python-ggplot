@@ -89,22 +89,22 @@ DEFAULT_ALPHA_RANGE: Dict[str, float] = {"low": 0.1, "high": 1.0}
 
 DEFAULT_COLOR_SCALE = VIRIDIS_RAW_COLOR_SCALE
 _style_lookup: Dict[GeomType, Style] = {
-    GeomType.GEOM_POINT: POINT_DEFAULT_STYLE,
-    GeomType.GEOM_BAR: BAR_DEFAULT_STYLE,
-    GeomType.GEOM_HISTOGRAM: HISTO_DEFAULT_STYLE,
-    GeomType.GEOM_TILE: TILE_DEFAULT_STYLE,
-    GeomType.GEOM_TEXT: TEXT_DEFAULT_STYLE,
+    GeomType.POINT: POINT_DEFAULT_STYLE,
+    GeomType.BAR: BAR_DEFAULT_STYLE,
+    GeomType.HISTOGRAM: HISTO_DEFAULT_STYLE,
+    GeomType.TILE: TILE_DEFAULT_STYLE,
+    GeomType.TEXT: TEXT_DEFAULT_STYLE,
 }
 
 
 def default_style(geom_type: GeomType, stat_type: StatType) -> Style:
-    if geom_type == GeomType.GEOM_RASTER:
+    if geom_type == GeomType.RASTER:
         raise GGException("Warning raster does not have default style")
 
     if geom_type in [
-        GeomType.GEOM_LINE,
-        GeomType.GEOM_FREQ_POLY,
-        GeomType.GEOM_ERROR_BAR,
+        GeomType.LINE,
+        GeomType.FREQ_POLY,
+        GeomType.ERROR_BAR,
     ]:
         if stat_type == StatType.SMOOTH:
             return SMOOTH_DEFAULT_STYLE
@@ -169,19 +169,19 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
     if u_style.alpha is not None:
         result.fill_color.a = u_style.alpha  # type: ignore
         if geom_type in {
-            GeomType.GEOM_POINT,
-            GeomType.GEOM_LINE,
-            GeomType.GEOM_ERROR_BAR,
-            GeomType.GEOM_TEXT,
+            GeomType.POINT,
+            GeomType.LINE,
+            GeomType.ERROR_BAR,
+            GeomType.TEXT,
         }:
             result.color.a = u_style.alpha
     elif style.alpha is not None:
         result.fill_color.a = style.alpha  # type: ignore
         if geom_type in {
-            GeomType.GEOM_POINT,
-            GeomType.GEOM_LINE,
-            GeomType.GEOM_ERROR_BAR,
-            GeomType.GEOM_TEXT,
+            GeomType.POINT,
+            GeomType.LINE,
+            GeomType.ERROR_BAR,
+            GeomType.TEXT,
         }:
             result.color.a = u_style.alpha  # type: ignore
 

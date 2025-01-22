@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod
 import typing
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Optional, OrderedDict, Set, Tuple
-
 
 from python_ggplot.core.objects import (
     AxisKind,

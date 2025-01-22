@@ -88,7 +88,6 @@ class GenericColumn(BaseColumn):
         return ColumnType.GENERIC
 
 
-# Type alias for all possible column types
 Column = Union[
     FloatColumn,
     IntColumn,
