@@ -38,36 +38,49 @@ if TYPE_CHECKING:
     from python_ggplot.graphics.view import ViewPort
 
 
-class Value:
+@dataclass
+class GGValue:
     pass
 
 
-class VString(Value):
+@dataclass
+class VString(GGValue):
     data: str
 
 
-class VInt(Value):
+@dataclass
+class VInt(GGValue):
     data: int
 
 
-class VFloat(Value):
+@dataclass
+class VFloat(GGValue):
     data: float
 
 
-class VBool(Value):
+@dataclass
+class VBool(GGValue):
     data: bool
 
 
-class VObject(Value):
-    fields: OrderedDict[str, Value]
+@dataclass
+class VObject(GGValue):
+    fields: OrderedDict[str, GGValue]
 
 
-class VNull(Value):
+@dataclass
+class VNull(GGValue):
     pass
 
 
 class FormulaNode:
-    pass
+
+    def evalueate(self):
+        # TODO high priority
+        # this is the logic from datamancer, once enough logic is in place
+        # this has to be ported
+        # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2515
+        return VString("TODO")
 
 
 class AestheticError(Exception):
@@ -90,7 +103,9 @@ class StatType(Enum):
 
 @dataclass
 class StatKind:
-    pass
+    @property
+    def stat_type(self) -> StatType:
+        raise NotImplemented("Implemented in subclass")
 
 
 class StatIdentity(StatKind):
@@ -213,7 +228,12 @@ class BinPositionKind(str, Enum):
     RIGHT = auto()
 
 
-class GeoType:
+class GeomType(Enum):
+    """
+    todo refactor later, do we really need double geom?
+    GeomType.GEOM_POINT -> GeomType.POINT
+    """
+
     GEOM_POINT = auto()
     GEOM_BAR = auto()
     GEOM_HISTOGRAM = auto()
@@ -235,55 +255,55 @@ class GeomKind:
 class GeomPoint(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_POINT
+        return GeomType.GEOM_POINT
 
 
 class GeomBar(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_BAR
+        return GeomType.GEOM_BAR
 
 
 class GeomHistogram(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_HISTOGRAM
+        return GeomType.GEOM_HISTOGRAM
 
 
 class GeomFreqPoly(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_FREQ_POLY
+        return GeomType.GEOM_FREQ_POLY
 
 
 class GeomTile(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_TILE
+        return GeomType.GEOM_TILE
 
 
 class GeomLine(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_LINE
+        return GeomType.GEOM_LINE
 
 
 class GeomErrorBar(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_ERROR_BAR
+        return GeomType.GEOM_ERROR_BAR
 
 
 class GeomText(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_TEXT
+        return GeomType.GEOM_TEXT
 
 
 class GeomRaster(GeomKind):
     @property
     def geom_type(self):
-        return GeoType.GEOM_RASTER
+        return GeomType.GEOM_RASTER
 
 
 class HistogramDrawingStyle(str, Enum):
@@ -318,7 +338,7 @@ class Ridges:
     col: FormulaNode
     overlap: float
     show_ticks: bool
-    label_order: Dict[Value, int]
+    label_order: Dict[GGValue, int]
 
 
 @dataclass
@@ -348,15 +368,15 @@ class VegaDraw:
 
 @dataclass
 class GGStyle:
-    color: Optional[str] = None
+    color: Optional[Color] = None
     size: Optional[float] = None
-    line_type: Optional[str] = None
+    line_type: Optional[LineType] = None
     line_width: Optional[float] = None
-    fill_color: Optional[str] = None
-    marker: Optional[str] = None
-    error_bar_kind: Optional[str] = None
+    fill_color: Optional[Color] = None
+    marker: Optional[MarkerKind] = None
+    error_bar_kind: Optional[ErrorBarKind] = None
     alpha: Optional[float] = None
-    font: Optional[dict] = None
+    font: Optional[Font] = None
 
 
 @dataclass
@@ -476,6 +496,7 @@ class VegaTex:
 class Geom:
     gid: int
     kind: GeomKind
+    stat_kind: StatKind
     data: Optional[pd.DataFrame] = None
     user_style: Optional["GGStyle"] = None
     position: Optional["PositionKind"] = None
@@ -486,7 +507,7 @@ class Geom:
 
     def __post_init__(self):
         if (
-            self.kind.geom_type == GeoType.GEOM_HISTOGRAM
+            self.kind.geom_type == GeomType.GEOM_HISTOGRAM
             and not self.histogram_drawing_style
         ):
             raise GGException("histogram geom needs to specify histogram_drawing_style")
@@ -497,7 +518,7 @@ class FilledGeomDiscreteKind(DiscreteKind):
 
 
 class GGScaleDiscrete(FilledGeomDiscreteKind):
-    label_seq: List[Value]
+    label_seq: List[GGValue]
 
     @property
     def discrete_type(self):
@@ -562,7 +583,7 @@ class FilledGeom:
     y_scale: Scale
     reversed_x: bool
     reversed_y: bool
-    yield_data: OrderedDict[Value, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
+    yield_data: OrderedDict[GGValue, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
     num_x: int
     num_y: int
     x_discrete_kind: FilledGeomDiscreteKind

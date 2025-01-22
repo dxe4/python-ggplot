@@ -1,3 +1,4 @@
+import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Optional, OrderedDict, Set, Tuple
@@ -19,9 +20,12 @@ from python_ggplot.gg_types import (
     DiscreteKind,
     DiscreteType,
     FormulaNode,
+    GGValue,
     SecondaryAxis,
-    Value,
 )
+
+if typing.TYPE_CHECKING:
+    from python_ggplot.gg_types import GGStyle
 
 
 @dataclass
@@ -62,7 +66,10 @@ class ScaleType(Enum):
 
 
 class ScaleKind:
-    pass
+
+    @property
+    def scale_type(self):
+        raise NotImplemented("implemented in subclass")
 
 
 @dataclass
@@ -121,7 +128,10 @@ class FillColorScale(ScaleKind):
 
 
 class AlphaScale(ScaleKind):
-    size_range = Tuple[float, float]
+    alpha: float
+
+    def update_style(self, style: "GGStyle"):
+        style.alpha = self.alpha
 
     @property
     def scale_type(self):
@@ -138,6 +148,10 @@ class ShapeScale(ScaleKind):
 class SizeScale(ScaleKind):
     # low and high
     size_range = Tuple[float, float]
+    size: float
+
+    def update_style(self, style: "GGStyle"):
+        style.size = self.size
 
     @property
     def scale_type(self):
@@ -153,7 +167,13 @@ class TextScale(ScaleKind):
 
 @dataclass
 class ScaleValue:
-    pass
+
+    def update_style(self, style: "GGStyle"):
+        raise NotImplemented("Implementedi in subclass")
+
+    @property
+    def scale_type(self):
+        raise NotImplemented("Implemented in subclass")
 
 
 class TextScaleValue(ScaleValue):
@@ -175,6 +195,10 @@ class ShapeScaleValue(ScaleValue):
     marker: Optional[MarkerKind] = None
     line_type: Optional[LineType] = None
 
+    def update_style(self, style: "GGStyle"):
+        style.marker = self.marker
+        style.line_type = self.line_type
+
     @property
     def scale_type(self):
         return ScaleType.SHAPE
@@ -191,6 +215,10 @@ class AlphaScaleValue(ScaleValue):
 class FillColorScaleValue(ScaleValue):
     color: Optional[Color] = None
 
+    def update_style(self, style: "GGStyle"):
+        style.fill_color = self.color
+        style.color = self.color
+
     @property
     def scale_type(self):
         return ScaleType.FILL_COLOR
@@ -199,13 +227,16 @@ class FillColorScaleValue(ScaleValue):
 class ColorScaleValue(ScaleValue):
     color: Optional[Color] = None
 
+    def update_style(self, style: "GGStyle"):
+        style.color = self.color
+
     @property
     def scale_type(self):
         return ScaleType.COLOR
 
 
 class TransformedDataScaleValue(ScaleValue):
-    val: Optional[Value] = None
+    val: Optional[GGValue] = None
 
     @property
     def scale_type(self):
@@ -213,7 +244,7 @@ class TransformedDataScaleValue(ScaleValue):
 
 
 class LinearDataScaleValue(ScaleValue):
-    val: Optional[Value] = None
+    val: Optional[GGValue] = None
 
     @property
     def scale_type(self):
@@ -221,16 +252,19 @@ class LinearDataScaleValue(ScaleValue):
 
 
 class GGScaleDiscreteKind(DiscreteKind):
-    pass
+
+    @property
+    def discrete_type(self) -> DiscreteType:
+        raise NotImplemented("implemented in subclass")
 
 
 class GGScaleDiscrete(DiscreteKind):
-    value_map: OrderedDict[Value, "ScaleValue"]
-    label_seq: List[Value]
+    value_map: OrderedDict[GGValue, "ScaleValue"]
+    label_seq: List[GGValue]
     format_discrete_label: DiscreteFormat
 
     @property
-    def discrete_type(self):
+    def discrete_type(self) -> DiscreteType:
         return DiscreteType.DISCRETE
 
 
@@ -239,7 +273,7 @@ class GGScaleContinuous(DiscreteKind):
     format_continuous_label: ContinuousFormat
 
     @property
-    def discrete_type(self):
+    def discrete_type(self) -> DiscreteType:
         return DiscreteType.CONTINUOUS
 
     def map_data(self, df) -> List["ScaleValue"]:
@@ -252,7 +286,7 @@ class GGScale:
     col: FormulaNode
     name: str
     ids: Set[int]
-    value_kind: Value
+    value_kind: GGValue
     has_discreteness: bool
     num_ticks: Optional[int]
     breaks: Optional[List[float]]
