@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable, Optional
@@ -23,14 +24,15 @@ def unity_type_to_quantity_cls(kind: UnitType):
 
 
 @dataclass
-class Quantity:
+class Quantity(ABC):
     val: float
     str_type = None
     is_length_unit: bool = False
 
     @property
+    @abstractmethod
     def unit_type(self) -> UnitType:
-        raise GGException("should never reach")
+        pass
 
     @staticmethod
     def centimeters(val: float) -> "Quantity":

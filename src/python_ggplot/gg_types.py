@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import (
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
     from python_ggplot.gg_scales import ColorScale, ScaleFreeKind, ScaleKind, ScaleValue
 
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
-    from python_ggplot.graphics.view import ViewPort
+    from python_ggplot.graphics.views import ViewPort
 
 
 @dataclass
@@ -102,10 +103,12 @@ class StatType(Enum):
 
 
 @dataclass
-class StatKind:
+class StatKind(ABC):
+
     @property
+    @abstractmethod
     def stat_type(self) -> StatType:
-        raise NotImplemented("Implemented in subclass")
+        pass
 
 
 class StatIdentity(StatKind):
@@ -152,7 +155,7 @@ class DiscreteKind:
 
 
 # todo refactor
-DiscreteFormat = Callable[["Value"], str]
+DiscreteFormat = Callable[["GGValue"], str]
 ContinuousFormat = Callable[[float], str]
 
 
@@ -246,10 +249,12 @@ class GeomType(Enum):
 
 
 @dataclass
-class GeomKind:
+class GeomKind(ABC):
+
     @property
+    @abstractmethod
     def geom_type(self):
-        raise GGException("not implemented for interface")
+        pass
 
 
 class GeomPoint(GeomKind):
@@ -464,7 +469,7 @@ class Annotation:
 @dataclass
 class StyleLabel:
     style: "GGStyle"
-    label: "Value"
+    label: "GGValue"
 
 
 @dataclass

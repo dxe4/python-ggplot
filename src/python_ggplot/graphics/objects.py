@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
@@ -67,22 +68,25 @@ class GOType(Enum):
 
 
 @dataclass
-class GraphicsObject:
+class GraphicsObject(ABC):
     name: str
     config: GraphicsObjectConfig
 
     @property
+    @abstractmethod
     def go_type(self) -> GOType:
-        raise GGException("not implemented")
+        pass
 
+    @abstractmethod
     def to_global_coords(self, img: Image):
-        raise GGException("Not implented")
+        pass
 
+    @abstractmethod
     def get_pos(self):
-        raise GGException("graphics object has no position")
+        pass
 
     def update_view_scale(self, view: "ViewPort"):
-        raise GGException("this should never reach")
+        pass
 
     def embed_into(self, view: "ViewPort") -> "GraphicsObject":
         from python_ggplot.embed import (
@@ -126,6 +130,9 @@ class GOAxis(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.AXIS
 
+    def get_pos(self):
+        raise GGException("not implemented")
+
 
 @dataclass
 class GOLine(GraphicsObject):
@@ -141,6 +148,9 @@ class GOLine(GraphicsObject):
     @property
     def go_type(self) -> GOType:
         return GOType.LINE
+
+    def get_pos(self):
+        raise GGException("not implemented")
 
 
 @dataclass
@@ -222,6 +232,9 @@ class GORect(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
 
+    def get_pos(self):
+        raise GGException("not implemented")
+
     @property
     def go_type(self) -> GOType:
         return GOType.RECT_DATA
@@ -265,6 +278,9 @@ class GOGrid(GraphicsObject):
             view.update_scale_1d(x_pos)
         for y_pos in self.y_pos:
             view.update_scale_1d(y_pos)
+
+    def get_pos(self):
+        raise GGException("not implemented")
 
     @property
     def go_type(self) -> GOType:
@@ -355,6 +371,9 @@ class GOPoint(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.POINT_DATA
 
+    def update_view_scale(self, view: "ViewPort"):
+        raise GGException("not implemented")
+
 
 @dataclass
 class GOManyPoints(GraphicsObject):
@@ -374,6 +393,9 @@ class GOManyPoints(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.MANY_POINTS_DATA
 
+    def get_pos(self):
+        raise GGException("not implemented")
+
 
 @dataclass
 class GOPolyLine(GraphicsObject):
@@ -389,6 +411,9 @@ class GOPolyLine(GraphicsObject):
     @property
     def go_type(self) -> GOType:
         return GOType.POLYLINE_DATA
+
+    def get_pos(self):
+        raise GGException("not implemented")
 
 
 @dataclass
@@ -416,10 +441,16 @@ class GORaster(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.RASTER_DATA
 
+    def get_pos(self):
+        raise GGException("not implemented")
+
 
 @dataclass
 class GOComposite(GraphicsObject):
     kind: CompositeKind
+
+    def get_pos(self):
+        raise GGException("not implemented")
 
     def to_global_coords(self, img: Image):
         # nothing to do in this case

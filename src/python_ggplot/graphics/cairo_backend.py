@@ -1,6 +1,8 @@
 from math import pi
 
 import cairo
+
+# TODO make mypy detect this imports
 from cairo import (
     FONT_SLANT_ITALIC,
     FONT_SLANT_NORMAL,

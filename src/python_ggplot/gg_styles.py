@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Dict, List, Tuple, cast
 
 import pandas as pd
 
@@ -29,7 +29,6 @@ from python_ggplot.gg_scales import (
 from python_ggplot.gg_types import (
     DiscreteType,
     FilledGeom,
-    FormulaNode,
     GeomType,
     GGStyle,
     GGValue,
@@ -201,6 +200,7 @@ def change_style(style: GGStyle, scale_value: ScaleValue) -> GGStyle:
     try:
         scale_value.update_style(style)
         return style
+    # TODO this needs refactoring
     except NotImplementedError:
         raise GGException(
             f"Setting style of {scale_value.scale_type} not supported at the moment!"

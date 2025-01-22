@@ -18,8 +18,6 @@ from python_ggplot.core.objects import (
     Scale,
     Style,
     TextAlignKind,
-    TickKind,
-    UnitType,
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.graphics.cairo_backend import init_image

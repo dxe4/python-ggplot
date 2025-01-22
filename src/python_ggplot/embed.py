@@ -1,11 +1,9 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, cast
-
+from typing import TYPE_CHECKING, cast
 from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
-    LengthCoord,
     RelativeCoordType,
 )
 from python_ggplot.core.objects import AxisKind, GGException, UnitType
@@ -29,8 +27,6 @@ from python_ggplot.graphics.objects import (
 
 if TYPE_CHECKING:
     from python_ggplot.graphics.views import ViewPort
-
-# todo maybe split in few files
 
 
 # coord

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
@@ -196,12 +197,13 @@ class ToCord:
 
 
 @dataclass
-class Coord1D:
+class Coord1D(ABC):
     pos: float
 
     @property
+    @abstractmethod
     def unit_type(self) -> UnitType:
-        raise GGException("not implemented")
+        pass
 
     @staticmethod
     def create_str_height(pos: float, font: Font) -> "StrHeightCoordType":
@@ -241,19 +243,22 @@ class Coord1D:
         return cls.create_default_coord_type(view, at, axis_kind, kind)
 
     @staticmethod
+    @abstractmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
-        raise GGException("Not implemented")
+        pass
 
     def embed_into(self, axis_kind: AxisKind, into: "ViewPort") -> "Coord1D":
         from python_ggplot.embed import coord1d_embed_into
 
         return coord1d_embed_into(self, axis_kind, into)
 
+    @abstractmethod
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
-        raise GGException("not implemented")
+        pass
 
+    @abstractmethod
     def from_length(self, length: "LengthCoord"):
-        raise GGException("This should never be used")
+        pass
 
     def get_length(self):
         # todo fix this, fine for now
@@ -367,6 +372,16 @@ class TextCoordData:
 
 @dataclass
 class RelativeCoordType(Coord1D):
+
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
+        raise GGException("not implemented")
+
+    def from_length(self, length: "LengthCoord"):
+        raise GGException("not implemented")
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
+        raise GGException("not implemented")
 
     @property
     def unit_type(self) -> UnitType:
@@ -487,6 +502,12 @@ class InchCoordType(Coord1D):
 class DataCoordType(Coord1D):
     data: DataCoord
 
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
+        raise GGException("not implemented")
+
+    def from_length(self, length: "LengthCoord"):
+        raise GGException("not implemented")
+
     @property
     def unit_type(self) -> UnitType:
         return UnitType.DATA
@@ -528,6 +549,16 @@ class DataCoordType(Coord1D):
 class StrWidthCoordType(Coord1D):
     data: TextCoordData
 
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
+        raise GGException("not implemented")
+
+    def from_length(self, length: "LengthCoord"):
+        raise GGException("not implemented")
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
+        raise GGException("not implemented")
+
     @property
     def unit_type(self) -> UnitType:
         return UnitType.STR_WIDTH
@@ -547,6 +578,16 @@ class StrWidthCoordType(Coord1D):
 @dataclass
 class StrHeightCoordType(Coord1D):
     data: TextCoordData
+
+    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
+        raise GGException("not implemented")
+
+    def from_length(self, length: "LengthCoord"):
+        raise GGException("not implemented")
+
+    @staticmethod
+    def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
+        raise GGException("not implemented")
 
     @property
     def unit_type(self) -> UnitType:

@@ -3,7 +3,6 @@ import math
 from collections import namedtuple
 from copy import deepcopy
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Callable, List, Optional, Tuple, Union
 
 from python_ggplot.core.common import linspace, nice_number

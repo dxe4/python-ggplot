@@ -1,7 +1,9 @@
+from abc import ABC, abstractmethod
 import typing
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Optional, OrderedDict, Set, Tuple
+
 
 from python_ggplot.core.objects import (
     AxisKind,
@@ -65,11 +67,12 @@ class ScaleType(Enum):
     TEXT = auto()
 
 
-class ScaleKind:
+class ScaleKind(ABC):
 
     @property
+    @abstractmethod
     def scale_type(self):
-        raise NotImplemented("implemented in subclass")
+        pass
 
 
 @dataclass
@@ -166,14 +169,16 @@ class TextScale(ScaleKind):
 
 
 @dataclass
-class ScaleValue:
+class ScaleValue(ABC):
 
+    @abstractmethod
     def update_style(self, style: "GGStyle"):
-        raise NotImplemented("Implementedi in subclass")
+        pass
 
     @property
+    @abstractmethod
     def scale_type(self):
-        raise NotImplemented("Implemented in subclass")
+        pass
 
 
 class TextScaleValue(ScaleValue):
@@ -251,14 +256,15 @@ class LinearDataScaleValue(ScaleValue):
         return ScaleType.LINEAR_DATA
 
 
-class GGScaleDiscreteKind(DiscreteKind):
+class GGScaleDiscreteKind(DiscreteKind, ABC):
 
     @property
+    @abstractmethod
     def discrete_type(self) -> DiscreteType:
-        raise NotImplemented("implemented in subclass")
+        pass
 
 
-class GGScaleDiscrete(DiscreteKind):
+class GGScaleDiscrete(GGScaleDiscreteKind):
     value_map: OrderedDict[GGValue, "ScaleValue"]
     label_seq: List[GGValue]
     format_discrete_label: DiscreteFormat
@@ -268,7 +274,7 @@ class GGScaleDiscrete(DiscreteKind):
         return DiscreteType.DISCRETE
 
 
-class GGScaleContinuous(DiscreteKind):
+class GGScaleContinuous(GGScaleDiscreteKind):
     data_scale: Scale
     format_continuous_label: ContinuousFormat
 
