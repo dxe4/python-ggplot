@@ -24,6 +24,7 @@ dev = [
     "ipython>=8.31.0",
     "isort>=5.13.2",
     "mypy>=1.14.1",
+    "pandas-stubs>=2.2.3.241126",
     "pylint>=3.3.3",
     "pytest>=8.3.4",
 ]
