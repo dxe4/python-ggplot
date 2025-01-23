@@ -1,17 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum, auto, cast
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    OrderedDict,
-    Tuple,
-    Union,
-)
+from enum import Enum, auto
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -20,7 +10,6 @@ from python_ggplot.core.objects import (
     Color,
     ErrorBarKind,
     Font,
-    GGException,
     LineType,
     MarkerKind,
     Scale,
@@ -34,6 +23,7 @@ PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
+    from python_ggplot.gg_geom import FilledScales
     from python_ggplot.gg_scales import ColorScale, ScaleFreeKind, ScaleKind, ScaleValue
 
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
@@ -187,86 +177,6 @@ class BinPositionType(Enum):
     RIGHT = auto()
 
 
-class GeomType(Enum):
-    POINT = auto()
-    BAR = auto()
-    HISTOGRAM = auto()
-    FREQ_POLY = auto()
-    TILE = auto()
-    LINE = auto()
-    ERROR_BAR = auto()
-    TEXT = auto()
-    RASTER = auto()
-
-
-@dataclass
-class GeomKind(ABC):
-
-    @property
-    @abstractmethod
-    def geom_type(self):
-        pass
-
-
-class GeomPoint(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.POINT
-
-
-class GeomBar(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.BAR
-
-
-class GeomHistogram(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.HISTOGRAM
-
-
-class GeomFreqPoly(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.FREQ_POLY
-
-
-class GeomTile(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.TILE
-
-
-class GeomLine(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.LINE
-
-
-class GeomErrorBar(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.ERROR_BAR
-
-
-class GeomText(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.TEXT
-
-
-class GeomRaster(GeomKind):
-    @property
-    def geom_type(self):
-        return GeomType.RASTER
-
-
-class HistogramDrawingStyle(str, Enum):
-    BARS = auto()
-    OUTLINE = auto()
-
-
 class SmoothMethodKind(str, Enum):
     SVG = auto()
     LM = auto()
@@ -282,11 +192,6 @@ class OutsideRangeKind(str, Enum):
     NONE = auto()
     DROP = auto()
     CLIP = auto()
-
-
-class VegaBackend(str, Enum):
-    WEBVIEW = auto()
-    BROWSER = auto()
 
 
 @dataclass
@@ -305,26 +210,6 @@ class Draw:
     # LATER: wont use TEX for now
     tex_options: Optional[TexOptions] = None
     backend: Optional[str] = None
-
-
-@dataclass
-class VegaDraw:
-    """
-    # LATER: no need to start with vega, finish cairo first
-    """
-
-    fname: str
-    width: Optional[float] = None
-    height: Optional[float] = None
-    as_pretty_json: Optional[bool] = None
-    show: bool = True
-    backend: VegaBackend = VegaBackend.WEBVIEW
-    remove_file: bool = False
-    div_name: str = "vega-div"
-    vega_libs_path: str = "https://cdn.jsdelivr.net/npm/"
-    vega_version: str = "5"
-    vega_lite_version: str = "4"
-    vega_embed_version: str = "6"
 
 
 @dataclass
@@ -449,6 +334,44 @@ class JsonDummyDraw:
     backend: str  # we only support cairo for now
 
 
+MainAddScales = Tuple[Optional[Scale], List[Scale]]
+
+
+@dataclass
+class PlotView:
+    filled_scales: "FilledScales"
+    view: "ViewPort"
+
+
+class VegaError(Exception):
+    pass
+
+
+class VegaBackend(str, Enum):
+    WEBVIEW = auto()
+    BROWSER = auto()
+
+
+@dataclass
+class VegaDraw:
+    """
+    # LATER: no need to start with vega, finish cairo first
+    """
+
+    fname: str
+    width: Optional[float] = None
+    height: Optional[float] = None
+    as_pretty_json: Optional[bool] = None
+    show: bool = True
+    backend: VegaBackend = VegaBackend.WEBVIEW
+    remove_file: bool = False
+    div_name: str = "vega-div"
+    vega_libs_path: str = "https://cdn.jsdelivr.net/npm/"
+    vega_version: str = "5"
+    vega_lite_version: str = "4"
+    vega_embed_version: str = "6"
+
+
 @dataclass
 class VegaTex:
     """
@@ -459,163 +382,3 @@ class VegaTex:
     width: Optional[float]
     height: Optional[float]
     tex_options: TexOptions
-
-
-@dataclass
-class Geom:
-    gid: int
-    kind: GeomKind
-    stat_kind: StatKind
-    data: Optional[pd.DataFrame] = None
-    user_style: Optional["GGStyle"] = None
-    position: Optional["PositionType"] = None
-    aes: Optional["Aesthetics"] = None
-    bin_position: Optional["BinPositionType"] = None
-    # used for geom_type histogram
-    histogram_drawing_style: Optional["HistogramDrawingStyle"] = None
-
-    def __post_init__(self):
-        if (
-            self.kind.geom_type == GeomType.HISTOGRAM
-            and not self.histogram_drawing_style
-        ):
-            raise GGException("histogram geom needs to specify histogram_drawing_style")
-
-
-class FilledGeomDiscreteKind(ABC, DiscreteKind):
-
-    @property
-    @abstractmethod
-    def discrete_type(self):
-        return DiscreteType.DISCRETE
-
-
-class FilledGeomDiscrete(FilledGeomDiscreteKind):
-    label_seq: List[GGValue]
-
-    @property
-    def discrete_type(self):
-        return DiscreteType.DISCRETE
-
-
-class FilledGeomContinuous(FilledGeomDiscreteKind):
-    @property
-    def discrete_type(self):
-        return DiscreteType.CONTINUOUS
-
-
-class FilledGeomErrorBar(GeomErrorBar):
-    x_min: Optional[str]
-    y_min: Optional[str]
-    x_max: Optional[str]
-    y_max: Optional[str]
-
-
-@dataclass
-class TitleRasterData:
-    fill_col: str
-    fill_data_scale: Scale
-    width: Optional[str]
-    height: Optional[str]
-    color_scale: "ColorScale"
-
-
-class FilledGeomTitle(GeomTile):
-    data: TitleRasterData
-
-
-class FilledGeomRaster(GeomRaster):
-    data: TitleRasterData
-
-
-class FilledGeomText(GeomText):
-    text: str
-
-
-class FilledGeomHistogram(GeomHistogram):
-    histogram_drawing_style: HistogramDrawingStyle
-
-
-@dataclass
-class FilledGeom:
-    """
-    todo, spend some time thinking on this
-    the original code is using an enum for geom_type
-    to decide what attributes are defined on the class
-    we have many choices here but maybe we can settle with something like this?
-    FilledGeom(geom=Geom(kind=FilledGeomHistogram))
-    we could also use FilledGeom(geom=Geom(), kind=FilledGeomHistogram)
-    the second method allows us to define a union of the types,
-    so we make sure we dont end up with the wrong types accidentally
-    """
-
-    geom: Geom
-    x_col: str
-    y_col: str
-    x_scale: Scale
-    y_scale: Scale
-    reversed_x: bool
-    reversed_y: bool
-    yield_data: OrderedDict[GGValue, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
-    num_x: int
-    num_y: int
-    x_discrete_kind: FilledGeomDiscreteKind
-    y_discrete_kind: FilledGeomDiscreteKind
-
-    def get_x_label_seq(self):
-        if self.x_discrete_kind.discrete_type == DiscreteType.DISCRETE:
-            temp = cast(FilledGeomDiscrete, self.x_discrete_kind)
-            return temp.x_discrete_kind.label_seq
-        else:
-            raise GGException("attempt to get discrete values on continiuous kind")
-
-    def get_y_label_seq(self):
-        if self.y_discrete_kind.discrete_type == DiscreteType.DISCRETE:
-            temp = cast(FilledGeomDiscrete, self.x_discrete_kind)
-            return temp.y_discrete_kind.label_seq
-        else:
-            raise GGException("attempt to get discrete values on continiuous kind")
-
-    def geom_type(self) -> GeomType:
-        return self.geom.kind.geom_type()
-
-
-MainAddScales = Tuple[Optional[Scale], List[Scale]]
-
-
-@dataclass
-class FilledScales:
-    x_scale: Scale
-    y_scale: Scale
-    reversed_x: bool
-    reversed_y: bool
-    discrete_x: bool
-    discrete_y: bool
-    geoms: List[FilledGeom]
-    x: MainAddScales
-    y: MainAddScales
-    color: MainAddScales
-    fill: MainAddScales
-    alpha: MainAddScales
-    size: MainAddScales
-    shape: MainAddScales
-    x_min: MainAddScales
-    x_max: MainAddScales
-    y_min: MainAddScales
-    y_max: MainAddScales
-    width: MainAddScales
-    height: MainAddScales
-    text: MainAddScales
-    y_ridges: MainAddScales
-    weight: MainAddScales
-    facets: List[Scale]
-
-
-@dataclass
-class PlotView:
-    filled_scales: FilledScales
-    view: "ViewPort"
-
-
-class VegaError(Exception):
-    pass

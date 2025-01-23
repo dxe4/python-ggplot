@@ -378,7 +378,7 @@ def init_line(
     )
 
 
-def init_point(pos: Coord, style: Style, name: Optional[str]) -> GraphicsObject:
+def init_point(pos: Coord, style: Style, name: Optional[str] = None) -> GraphicsObject:
     if not style.size or not style.marker:
         raise GGException("expected size and market on style")
 
@@ -392,25 +392,31 @@ def init_point(pos: Coord, style: Style, name: Optional[str]) -> GraphicsObject:
     )
 
 
-def init_point_without_style(
-    pos: Coord, size=3.0, marker=MarkerKind.CIRCLE, color=BLACK, name=None
+def init_point_from_coord(
+    pos: Coord,
+    size: float = 3.0,
+    marker: MarkerKind = MarkerKind.CIRCLE,
+    color: Color = BLACK,
+    name: Optional[str] = None,
+    style: Optional[Style] = None,
 ):
-    style = Style(marker=marker, size=size, color=color)
+    style = style or Style(marker=marker, size=size, color=color)
     return init_point(pos, style, name)
 
 
 def init_point_from_point(
     view: ViewPort,
     pos: Point,
-    size=3.0,
-    marker=MarkerKind.CIRCLE,
-    color=BLACK,
-    name=None,
-):
+    size: float = 3.0,
+    marker: MarkerKind = MarkerKind.CIRCLE,
+    color: Color = BLACK,
+    name: Optional[str] = None,
+    syle: Optional[Style] = None,
+) -> GraphicsObject:
     if view.x_scale is None or view.y_scale is None:
         raise GGException("x and y scale need to be setup")
 
-    style = Style(marker=marker, size=size, color=color)
+    style = syle or Style(marker=marker, size=size, color=color)
     coord_pos = Coord(
         x=Coord1D.create_data(pos.x, view.x_scale, AxisKind.X),
         y=Coord1D.create_data(pos.y, view.y_scale, AxisKind.Y),

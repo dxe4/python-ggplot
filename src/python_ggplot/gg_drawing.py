@@ -12,26 +12,29 @@ from python_ggplot.core.coord.objects import (
 from python_ggplot.core.objects import AxisKind, GGException, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, RelativeUnit, UnitType
 from python_ggplot.datamancer_pandas_compat import GGValue, VNull
-from python_ggplot.gg_styles import GGStyle
-from python_ggplot.gg_types import BinPositionType  # OutsideRangeKind,
-from python_ggplot.gg_types import (
-    DiscreteType,
+from python_ggplot.gg_geom import (
     FilledGeom,
     FilledGeomDiscrete,
     FilledGeomErrorBar,
     FilledGeomRaster,
     GeomType,
     HistogramDrawingStyle,
-    PositionType,
-    Theme,
 )
+from python_ggplot.gg_styles import GGStyle
+from python_ggplot.gg_types import BinPositionType  # OutsideRangeKind,
+from python_ggplot.gg_types import DiscreteType, PositionType, Theme
 from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
     InitErrorBarData,
     InitRasterData,
+    InitRectInput,
+    InitTextInput,
     init_coord_1d,
     init_error_bar,
+    init_point,
     init_raster,
+    init_rect,
+    init_text,
 )
 from python_ggplot.graphics.objects import GOComposite
 from python_ggplot.graphics.views import ViewPort
@@ -62,7 +65,9 @@ def get_xy(x_t, y_t, i):
     return (x, y)
 
 
-def read_or_calc_bin_width(df, idx, data_col, dc_kind: DiscreteType, col="binWidths"):
+def read_or_calc_bin_width(
+    df: pd.DataFrame, idx: int, data_col: str, dc_kind: DiscreteType, col="binWidths"
+):
     # TODO clean up later
     if dc_kind == DiscreteType.CONTINUOUS:
         if col in df.columns:
@@ -189,14 +194,14 @@ def calc_view_map(fg: FilledGeom) -> Dict[Any, Any]:
     elif cols == 1 and rows > 1:
         x = VNull()
         for i in range(rows):
-            y = fg.get_y_label_seq()[i]
-            result[(x, y)] = i + 1
+            x_ = fg.x_discrete_kind.get_label_seq()[i]
+            result[(x_, y)] = i + 1
     else:
         for i in range(rows):
-            y = fg.get_y_label_seq()[i]
+            y_ = fg.y_discrete_kind.get_label_seq()[i]
             for j in range(cols):
                 x = fg.get_x_label_seq()[j]
-                result[(x, y)] = (i + 1) * (cols + 2) + (j + 1)
+                result[(x, y_)] = (i + 1) * (cols + 2) + (j + 1)
 
     return result
 
@@ -428,6 +433,10 @@ def draw_error_bar(
 def draw_raster(
     view: ViewPort, fg: FilledGeom, fg_raster: FilledGeomRaster, df: pd.DataFrame
 ):
+    """
+    TODO high priority -> FilledGeomRaster should be either
+    a subclass of FilledGeom or included inside
+    """
     max_x_col = fg.x_scale.high
     min_x_col = fg.x_scale.low
     max_y_col = fg.y_scale.high
@@ -437,7 +446,6 @@ def draw_raster(
     height = max_y_col - min_y_col + hv
     width = max_x_col - min_x_col + wv
 
-    # compute number of elements in each dimension
     num_x = round(width / wv)
     num_y = round(height / hv)
     c_map = fg_raster.data.color_scale
@@ -480,3 +488,25 @@ def draw_raster(
         init_raster_data=data,
     )
     view.add_obj(raster)
+
+
+def draw(
+    view: ViewPort,
+    fg: FilledGeom,
+    pos: Coord,
+    y,
+    bin_widths: Tuple[float, float],
+    df: pd.DataFrame,
+    idx: int,
+    style: Style,
+):
+    fg.geom.kind.draw(
+        view,
+        fg,
+        pos,
+        y,
+        bin_widths,
+        df,
+        idx,
+        style,
+    )

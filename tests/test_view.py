@@ -37,7 +37,6 @@ from python_ggplot.graphics.initialize import (
     init_error_bar_from_point,
     init_grid_lines,
     init_point_from_point,
-    init_point_without_style,
     init_poly_line_from_points,
     init_rect,
     init_rect_from_coord,
