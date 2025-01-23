@@ -1,23 +1,39 @@
-from typing import Any, Dict, Generator, List, Tuple, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
 
-from python_ggplot.core.coord.objects import Coord1D, RelativeCoordType
-from python_ggplot.core.objects import AxisKind, GGException
-from python_ggplot.core.units.objects import Quantity, RelativeUnit, UnitType
+from python_ggplot.core.coord.objects import (
+    Coord,
+    Coord1D,
+    DataCoordType,
+    RelativeCoordType,
+)
+from python_ggplot.core.objects import AxisKind, GGException, Style
+from python_ggplot.core.units.objects import DataUnit, Quantity, RelativeUnit, UnitType
 from python_ggplot.datamancer_pandas_compat import GGValue, VNull
 from python_ggplot.gg_styles import GGStyle
+from python_ggplot.gg_types import BinPositionType  # OutsideRangeKind,
 from python_ggplot.gg_types import (
-    BinPositionType,
     DiscreteType,
     FilledGeom,
     FilledGeomDiscrete,
-    OutsideRangeKind,
+    FilledGeomErrorBar,
+    FilledGeomRaster,
+    GeomType,
+    HistogramDrawingStyle,
+    PositionType,
     Theme,
 )
 from python_ggplot.graphics.draw import layout
-from python_ggplot.graphics.initialize import init_coord_1d
+from python_ggplot.graphics.initialize import (
+    InitErrorBarData,
+    InitRasterData,
+    init_coord_1d,
+    init_error_bar,
+    init_raster,
+)
+from python_ggplot.graphics.objects import GOComposite
 from python_ggplot.graphics.views import ViewPort
 
 
@@ -77,7 +93,9 @@ def move_bin_position(x, bp_kind: BinPositionType, bin_width):
     return lookup[bp_kind]
 
 
-def read_error_data(df, idx, fg):
+def read_error_data(
+    df: pd.DataFrame, idx: int, fg: FilledGeomErrorBar
+) -> Tuple[Optional[float], Optional[float], Optional[float], Optional[float]]:
     result = {"x_min": None, "x_max": None, "y_min": None, "y_max": None}
 
     if fg.x_min is not None:
@@ -189,5 +207,276 @@ def get_discrete_histogram(width: float, ax_kind: AxisKind) -> Coord1D:
 
         return init_coord_1d(left, AxisKind.X, UnitType.RELATIVE)
     else:
+        # TODO high priority double check this.
+        # templace c1 in ginger has default AxisKind.X which is used in this case
         top = 1.0
-        return RelativeCoordType(top)
+        return init_coord_1d(top, AxisKind.X, UnitType.RELATIVE)
+
+
+def get_discrete_point() -> Coord1D:
+    return RelativeCoordType(0.5)
+
+
+def get_discrete_line(view: ViewPort, axis_kind: AxisKind) -> Coord1D:
+    center_x, center_y = view.get_center()
+    lookup = {
+        AxisKind.X: init_coord_1d(center_x, AxisKind.X, UnitType.RELATIVE),
+        AxisKind.Y: init_coord_1d(center_y, AxisKind.X, UnitType.RELATIVE),
+    }
+
+    return lookup[axis_kind]
+
+
+def get_continuous(
+    view: ViewPort, fg: FilledGeom, val: float, ax_kind: AxisKind
+) -> Coord1D:
+    scale_lookup = {AxisKind.X: view.x_scale, AxisKind.Y: view.y_scale}
+    scale = scale_lookup[ax_kind]
+    if scale is None:
+        raise GGException("expected a scale")
+    return Coord1D.create_data(val, scale, ax_kind)
+
+
+def get_draw_pos_impl(
+    view: ViewPort,
+    fg: FilledGeom,
+    val,
+    width: float,
+    discrete_type: DiscreteType,
+    ax_kind: AxisKind,
+):
+
+    fg_geom_type = fg.geom_type()
+    if discrete_type == DiscreteType.DISCRETE:
+        if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT}:
+            return get_discrete_point()
+        elif fg_geom_type in (GeomType.LINE, GeomType.FREQ_POLY):
+            return get_discrete_line(view, ax_kind)
+        elif fg_geom_type in (GeomType.HISTOGRAM, GeomType.BAR):
+            return get_discrete_histogram(width, ax_kind)
+        elif fg_geom_type == GeomType.TILE:
+            return get_discrete_histogram(width, ax_kind)
+        elif fg_geom_type == GeomType.RASTER:
+            return get_discrete_histogram(1.0, ax_kind)
+
+    elif discrete_type == DiscreteType.CONTINUOUS:
+        if fg_geom_type in {
+            GeomType.POINT,
+            GeomType.ERROR_BAR,
+            GeomType.LINE,
+            GeomType.FREQ_POLY,
+            GeomType.HISTOGRAM,
+            GeomType.BAR,
+            GeomType.TILE,
+            GeomType.RASTER,
+            GeomType.TEXT,
+        }:
+            return get_continuous(view, fg, val, ax_kind)
+    else:
+        raise GGException("unknown discrete type")
+
+
+def get_draw_pos(
+    view: ViewPort,
+    view_idx: int,
+    fg: FilledGeom,
+    p: Tuple[float, float],
+    bin_widths: Tuple[float, float],
+    df: pd.DataFrame,
+    idx: int,
+):
+
+    coords_flipped = False
+
+    geom_type = fg.geom_type()
+    position = fg.geom.position
+    histogram_drawing_style = fg.geom.histogram_drawing_style
+
+    if position == PositionType.IDENTITY:
+        mp = list(p)
+        if geom_type == GeomType.BAR or (
+            geom_type == GeomType.HISTOGRAM
+            and histogram_drawing_style == HistogramDrawingStyle.BARS
+        ):
+            if not coords_flipped:
+                mp[1] = 0.0
+            else:
+                mp[0] = 0.0
+
+        result_x = get_draw_pos_impl(
+            view,
+            fg,
+            mp[0],
+            bin_widths[0],
+            fg.x_discrete_kind.discrete_type(),
+            AxisKind.X,
+        )
+        result_y = get_draw_pos_impl(
+            view,
+            fg,
+            mp[1],
+            bin_widths[1],
+            fg.y_discrete_kind.discrete_type(),
+            AxisKind.Y,
+        )
+
+    elif position == PositionType.STACK:
+        if not (
+            (
+                fg.geom.kind == "histogram"
+                and histogram_drawing_style == HistogramDrawingStyle.BARS
+            )
+            or fg.geom.kind == "bar"
+        ):
+            cur_stack = p[1]
+        else:
+            cur_stack = df["PrevVals"].iloc[idx]
+
+        if not coords_flipped:
+            result_x = get_draw_pos_impl(
+                view,
+                fg,
+                p[0],
+                bin_widths[0],
+                fg.x_discrete_kind.discrete_type(),
+                AxisKind.X,
+            )
+            result_y = get_draw_pos_impl(
+                view,
+                fg,
+                cur_stack,
+                bin_widths[1],
+                fg.y_discrete_kind.discrete_type(),
+                AxisKind.Y,
+            )
+        else:
+            result_x = get_draw_pos_impl(
+                view,
+                fg,
+                cur_stack,
+                bin_widths[0],
+                fg.x_discrete_kind.discrete_type(),
+                AxisKind.X,
+            )
+            result_y = get_draw_pos_impl(
+                view,
+                fg,
+                p[1],
+                bin_widths[1],
+                fg.y_discrete_kind.discrete_type(),
+                AxisKind.Y,
+            )
+    else:
+        raise GGException("not implemented yet")
+
+    return Coord(x=result_x, y=result_y)
+
+
+def draw_error_bar(
+    view: ViewPort,
+    fg: FilledGeomErrorBar,
+    pos: Coord,
+    df: pd.DataFrame,
+    idx: int,
+    style: Style,
+) -> GOComposite:
+    x_min, x_max, y_min, y_max = read_error_data(df, idx, fg)
+
+    if x_min is not None or x_max is not None:
+        if view.x_scale is None:
+            raise GGException("exected view.x_scale")
+        if style.error_bar_kind is None:
+            raise GGException("exepcted error bar")
+
+        error_up = Coord1D.create_data(x_max or pos.x.pos, view.x_scale, AxisKind.X)
+        error_down = Coord1D.create_data(x_min or pos.x.pos, view.x_scale, AxisKind.X)
+        data = InitErrorBarData(
+            view=view,
+            point=pos,
+            error_up=error_up,
+            error_down=error_down,
+            axis_kind=AxisKind.X,
+            error_bar_kind=style.error_bar_kind,
+            style=style,
+        )
+        result = init_error_bar(data)
+        return result
+    if y_min is not None or y_max is not None:
+        if view.y_scale is None:
+            raise GGException("exected view.x_scale")
+        if style.error_bar_kind is None:
+            raise GGException("exepcted error bar")
+
+        error_up = Coord1D.create_data(y_max or pos.y.pos, view.y_scale, AxisKind.Y)
+        error_down = Coord1D.create_data(y_min or pos.y.pos, view.y_scale, AxisKind.Y)
+
+        data = InitErrorBarData(
+            view=view,
+            point=pos,
+            error_up=error_up,
+            error_down=error_down,
+            axis_kind=AxisKind.X,
+            error_bar_kind=style.error_bar_kind,
+            style=style,
+        )
+        result = init_error_bar(data)
+        return result
+
+    raise GGException("expected x_min or x_max or y_min or y_max")
+
+
+def draw_raster(
+    view: ViewPort, fg: FilledGeom, fg_raster: FilledGeomRaster, df: pd.DataFrame
+):
+    max_x_col = fg.x_scale.high
+    min_x_col = fg.x_scale.low
+    max_y_col = fg.y_scale.high
+    min_y_col = fg.y_scale.low
+    wv, hv = read_width_height(df, 0, fg)
+
+    height = max_y_col - min_y_col + hv
+    width = max_x_col - min_x_col + wv
+
+    # compute number of elements in each dimension
+    num_x = round(width / wv)
+    num_y = round(height / hv)
+    c_map = fg_raster.data.color_scale
+
+    def draw_callback():
+        result = np.zeros(len(df), dtype=np.uint32)
+        x_t = df[fg.x_col].to_numpy(dtype=float)
+        y_t = df[fg.y_col].to_numpy(dtype=float)
+        z_t = df[fg.fill_col].to_numpy(dtype=float)
+        z_scale = fg.fill_data_scale
+
+        for idx in range(len(df)):
+            x = round((x_t[idx] - min_x_col) / wv)
+            y = round((y_t[idx] - min_y_col) / hv)
+            colors_high = len(c_map.colors) - 1
+
+            color_idx = round(
+                colors_high * ((z_t[idx] - z_scale.low) / (z_scale.high - z_scale.low))
+            )
+            color_idx = max(0, min(colors_high, color_idx))
+            c_val = c_map.colors[color_idx]
+
+            result[((num_y - y - 1) * num_x) + x] = c_val
+
+        return result
+
+    def data_c1(at: float, ax: AxisKind, view) -> Coord1D:
+        scale = view.x_scale if ax == AxisKind.X else view.y_scale
+        return Coord1D.create_data(pos=at, scale=scale, axis_kind=ax)
+
+    def c_data(px: float, py: float, view) -> Coord:
+        return Coord(x=data_c1(px, AxisKind.X, view), y=data_c1(py, AxisKind.Y, view))
+
+    data = InitRasterData(callback=draw_callback, num_x=num_x, num_y=num_y)
+    raster = init_raster(
+        view=view,
+        origin=c_data(min_x_col, max_y_col + hv, view),
+        width=DataUnit(width),
+        height=DataUnit(height),
+        init_raster_data=data,
+    )
+    view.add_obj(raster)

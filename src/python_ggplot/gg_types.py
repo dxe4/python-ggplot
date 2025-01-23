@@ -44,7 +44,7 @@ class AestheticError(Exception):
     pass
 
 
-class PositionKind(Enum):
+class PositionType(Enum):
     IDENTITY = auto()
     STACK = auto()
     DODGE = auto()
@@ -118,7 +118,7 @@ ContinuousFormat = Callable[[float], str]
 @dataclass
 class Aesthetics:
     scale_kind: "ScaleKind"
-    position_kind: PositionKind
+    position_kind: PositionType
     stat_kind: StatKind
     discrete_kind: DiscreteKind
     x: Optional["ScaleKind"] = None
@@ -468,7 +468,7 @@ class Geom:
     stat_kind: StatKind
     data: Optional[pd.DataFrame] = None
     user_style: Optional["GGStyle"] = None
-    position: Optional["PositionKind"] = None
+    position: Optional["PositionType"] = None
     aes: Optional["Aesthetics"] = None
     bin_position: Optional["BinPositionType"] = None
     # used for geom_type histogram
@@ -505,10 +505,10 @@ class FilledGeomContinuous(FilledGeomDiscreteKind):
 
 
 class FilledGeomErrorBar(GeomErrorBar):
-    xmin: Optional[str]
-    ymin: Optional[str]
-    xmax: Optional[str]
-    ymax: Optional[str]
+    x_min: Optional[str]
+    y_min: Optional[str]
+    x_max: Optional[str]
+    y_max: Optional[str]
 
 
 @dataclass
@@ -575,6 +575,9 @@ class FilledGeom:
             return temp.y_discrete_kind.label_seq
         else:
             raise GGException("attempt to get discrete values on continiuous kind")
+
+    def geom_type(self) -> GeomType:
+        return self.geom.kind.geom_type()
 
 
 MainAddScales = Tuple[Optional[Scale], List[Scale]]
