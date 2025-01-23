@@ -14,8 +14,6 @@ class GGValue:
     TODO high priority. find a proxy mechanism for this
     """
 
-    pass
-
 
 @dataclass
 class VString(GGValue):
@@ -178,7 +176,7 @@ Column = Union[
 ColumnLike = TypeVar("ColumnLike")
 
 
-class FormulaKind(Enum):
+class FormulaType(Enum):
     VARIABLE = auto()
     ASSIGN = auto()
     VECTOR = auto()
@@ -187,61 +185,101 @@ class FormulaKind(Enum):
 
 
 @dataclass
-class Formula(Generic[ColumnLike]):
+class Formula(ABC):
     name: str
-    kind: FormulaKind
+    kind: FormulaType
+
+    @abstractmethod
+    def formula_type(self) -> FormulaType:
+        pass
+
+    @abstractmethod
+    def evaluate(self, df: pd.DataFrame) -> Any:
+        pass
 
 
 @dataclass
-class VariableFormula(Formula[ColumnLike]):
+class VariableFormula(Formula):
     val: GGValue
 
-    def formula_type(self) -> FormulaKind:
-        return FormulaKind.VARIABLE
+    def formula_type(self) -> FormulaType:
+        return FormulaType.VARIABLE
+
+    def evaluate(self, df: pd.DataFrame) -> Any:
+        return None
 
 
 @dataclass
-class AssignFormula(Formula[ColumnLike]):
+class AssignFormula(Formula):
     lhs: str
     rhs: GGValue
 
-    def formula_type(self) -> FormulaKind:
-        return FormulaKind.ASSIGN
+    def formula_type(self) -> FormulaType:
+        return FormulaType.ASSIGN
+
+    def evaluate(self, df: pd.DataFrame) -> Any:
+        return df[str(self.rhs)]
 
 
 @dataclass
-class VectorFormula(Formula[ColumnLike]):
+class VectorFormula(Formula):
     col_name: str
     res_type: Any
-    fn_v: Callable[[pd.Series], ColumnLike]
+    fn_v: Callable[[pd.DataFrame], ColumnLike]
 
-    def formula_type(self) -> FormulaKind:
-        return FormulaKind.VECTOR
+    def formula_type(self) -> FormulaType:
+        return FormulaType.VECTOR
+
+    def evaluate(self, df: pd.DataFrame) -> Any:
+        return self.fn_v(df)
 
 
 @dataclass
-class ScalarFormula(Formula[ColumnLike]):
+class ScalarFormula(Formula):
     val_name: str
     val_kind: Any
-    fn_s: Callable[[pd.Series], GGValue]
+    fn_s: Callable[[pd.DataFrame], GGValue]
 
-    def formula_type(self) -> FormulaKind:
-        return FormulaKind.SCALAR
+    def reduce_(self, df: pd.DataFrame) -> GGValue:
+        return self.fn_s(df)
+
+    def formula_type(self) -> FormulaType:
+        return FormulaType.SCALAR
+
+    def evaluate(self, df: pd.DataFrame) -> Any:
+        # call constantColumn(self.fn_v(df))
+        return self.fn_s(df)
 
 
 @dataclass
-class NoneFormula(Formula[ColumnLike]):
+class NoneFormula(Formula):
 
-    def formula_type(self) -> FormulaKind:
-        return FormulaKind.NONE
+    def formula_type(self) -> FormulaType:
+        return FormulaType.NONE
+
+    def evaluate(self, df: pd.DataFrame) -> Any:
+        # newColumn(colNone, df.len)
+        return None
 
 
 class FormulaNode:
-    kind: FormulaKind
+    kind: Formula
 
-    def evalueate(self):
-        # TODO high priority
-        # this is the logic from datamancer, once enough logic is in place
-        # this has to be ported
-        # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2515
-        return VString("TODO")
+    def is_column(self):
+        """
+        # TODO high priority / urgent
+        the nim logic is:
+        if node.isColumn(df):
+            result = df[node.val.toStr]
+        else:
+            result = C.constantColumn(node.val, df.len)
+        we need to figure out
+        a) how datamancer does consts
+        b) how pandas does them internally
+        for now we support column only, need to get it working first
+        """
+        return True
+
+    def evaluate(self, df: pd.DataFrame):
+        # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2529
+        return self.kind.evaluate(df)

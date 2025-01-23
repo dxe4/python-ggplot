@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum, auto, cast
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -180,7 +180,7 @@ class DataKind:
     setting: str = "setting"
 
 
-class BinPositionKind(str, Enum):
+class BinPositionType(Enum):
     NONE = auto()
     CENTER = auto()
     LEFT = auto()
@@ -470,7 +470,7 @@ class Geom:
     user_style: Optional["GGStyle"] = None
     position: Optional["PositionKind"] = None
     aes: Optional["Aesthetics"] = None
-    bin_position: Optional["BinPositionKind"] = None
+    bin_position: Optional["BinPositionType"] = None
     # used for geom_type histogram
     histogram_drawing_style: Optional["HistogramDrawingStyle"] = None
 
@@ -482,11 +482,15 @@ class Geom:
             raise GGException("histogram geom needs to specify histogram_drawing_style")
 
 
-class FilledGeomDiscreteKind(DiscreteKind):
-    pass
+class FilledGeomDiscreteKind(ABC, DiscreteKind):
+
+    @property
+    @abstractmethod
+    def discrete_type(self):
+        return DiscreteType.DISCRETE
 
 
-class GGScaleDiscrete(FilledGeomDiscreteKind):
+class FilledGeomDiscrete(FilledGeomDiscreteKind):
     label_seq: List[GGValue]
 
     @property
@@ -494,7 +498,7 @@ class GGScaleDiscrete(FilledGeomDiscreteKind):
         return DiscreteType.DISCRETE
 
 
-class GGScaleContinuous(FilledGeomDiscreteKind):
+class FilledGeomContinuous(FilledGeomDiscreteKind):
     @property
     def discrete_type(self):
         return DiscreteType.CONTINUOUS
@@ -557,6 +561,20 @@ class FilledGeom:
     num_y: int
     x_discrete_kind: FilledGeomDiscreteKind
     y_discrete_kind: FilledGeomDiscreteKind
+
+    def get_x_label_seq(self):
+        if self.x_discrete_kind.discrete_type == DiscreteType.DISCRETE:
+            temp = cast(FilledGeomDiscrete, self.x_discrete_kind)
+            return temp.x_discrete_kind.label_seq
+        else:
+            raise GGException("attempt to get discrete values on continiuous kind")
+
+    def get_y_label_seq(self):
+        if self.y_discrete_kind.discrete_type == DiscreteType.DISCRETE:
+            temp = cast(FilledGeomDiscrete, self.x_discrete_kind)
+            return temp.y_discrete_kind.label_seq
+        else:
+            raise GGException("attempt to get discrete values on continiuous kind")
 
 
 MainAddScales = Tuple[Optional[Scale], List[Scale]]
