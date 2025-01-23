@@ -1,13 +1,50 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable, Dict, Generic, TypeVar, Union
+from typing import Any, Callable, Dict, Generic, OrderedDict, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from python_ggplot.gg_types import GGValue
+
+@dataclass
+class GGValue:
+    """
+    TODO high priority. find a proxy mechanism for this
+    """
+
+    pass
+
+
+@dataclass
+class VString(GGValue):
+    data: str
+
+
+@dataclass
+class VInt(GGValue):
+    data: int
+
+
+@dataclass
+class VFloat(GGValue):
+    data: float
+
+
+@dataclass
+class VBool(GGValue):
+    data: bool
+
+
+@dataclass
+class VObject(GGValue):
+    fields: OrderedDict[str, GGValue]
+
+
+@dataclass
+class VNull(GGValue):
+    pass
 
 
 class ColumnType(Enum):
@@ -19,6 +56,9 @@ class ColumnType(Enum):
     OBJECT = auto()
     CONSTANT = auto()
     GENERIC = auto()
+
+    def is_scalar(self):
+        return self in {ColumnType.FLOAT, ColumnType.INT}
 
 
 PANDAS_TYPES: Dict[str, ColumnType] = {
@@ -191,8 +231,17 @@ class ScalarFormula(Formula[ColumnLike]):
 
 @dataclass
 class NoneFormula(Formula[ColumnLike]):
+
     def formula_type(self) -> FormulaKind:
         return FormulaKind.NONE
 
 
-FormulaNode = Formula[Column]
+class FormulaNode:
+    kind: FormulaKind
+
+    def evalueate(self):
+        # TODO high priority
+        # this is the logic from datamancer, once enough logic is in place
+        # this has to be ported
+        # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2515
+        return VString("TODO")

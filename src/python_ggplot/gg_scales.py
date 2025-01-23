@@ -13,6 +13,7 @@ from python_ggplot.core.objects import (
     MarkerKind,
     Scale,
 )
+from python_ggplot.datamancer_pandas_compat import FormulaNode, GGValue
 from python_ggplot.gg_types import (
     ContinuousFormat,
     DataKind,
@@ -20,8 +21,6 @@ from python_ggplot.gg_types import (
     DiscreteFormat,
     DiscreteKind,
     DiscreteType,
-    FormulaNode,
-    GGValue,
     SecondaryAxis,
 )
 

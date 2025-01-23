@@ -15,6 +15,7 @@ from python_ggplot.core.objects import (
     MarkerKind,
     Style,
 )
+from python_ggplot.datamancer_pandas_compat import GGValue, VNull, VString
 from python_ggplot.gg_scales import (
     ColorScale,
     GGScale,
@@ -26,16 +27,7 @@ from python_ggplot.gg_scales import (
 # TODO this will probably cause circular imports
 # keep for now, we think of the project structure a bit more
 # i have a few ideas for the structure but will be easier to connect the dots first
-from python_ggplot.gg_types import (
-    DiscreteType,
-    FilledGeom,
-    GeomType,
-    GGStyle,
-    GGValue,
-    StatType,
-    VNull,
-    VString,
-)
+from python_ggplot.gg_types import DiscreteType, FilledGeom, GeomType, GGStyle, StatType
 
 # Define color constants
 STAT_SMOOTH_COLOR: Color = Color(

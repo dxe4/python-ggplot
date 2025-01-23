@@ -27,6 +27,7 @@ from python_ggplot.core.objects import (
     TexOptions,
 )
 from python_ggplot.core.units.objects import Quantity
+from python_ggplot.datamancer_pandas_compat import FormulaNode, GGValue
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
@@ -37,55 +38,6 @@ if TYPE_CHECKING:
 
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
     from python_ggplot.graphics.views import ViewPort
-
-
-@dataclass
-class GGValue:
-    """
-    TODO high priority. find a proxy mechanism for this
-    """
-
-    pass
-
-
-@dataclass
-class VString(GGValue):
-    data: str
-
-
-@dataclass
-class VInt(GGValue):
-    data: int
-
-
-@dataclass
-class VFloat(GGValue):
-    data: float
-
-
-@dataclass
-class VBool(GGValue):
-    data: bool
-
-
-@dataclass
-class VObject(GGValue):
-    fields: OrderedDict[str, GGValue]
-
-
-@dataclass
-class VNull(GGValue):
-    pass
-
-
-class FormulaNode:
-
-    def evalueate(self):
-        # TODO high priority
-        # this is the logic from datamancer, once enough logic is in place
-        # this has to be ported
-        # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2515
-        return VString("TODO")
 
 
 class AestheticError(Exception):
@@ -159,7 +111,7 @@ class DiscreteKind:
 
 
 # todo refactor
-DiscreteFormat = Callable[["GGValue"], str]
+DiscreteFormat = Callable[[GGValue], str]
 ContinuousFormat = Callable[[float], str]
 
 
