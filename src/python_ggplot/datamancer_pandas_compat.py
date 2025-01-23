@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable, Generic, TypeVar, Union
+from typing import Any, Callable, Dict, Generic, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,42 @@ class ColumnType(Enum):
     OBJECT = auto()
     CONSTANT = auto()
     GENERIC = auto()
+
+
+PANDAS_TYPES: Dict[str, ColumnType] = {
+    "int64": ColumnType.INT,
+    "int32": ColumnType.INT,
+    "float64": ColumnType.FLOAT,
+    "float32": ColumnType.FLOAT,
+    "bool": ColumnType.BOOL,
+    "object": ColumnType.OBJECT,  # todo
+    "string": ColumnType.STRING,
+    # TODO generic or object?
+    "category": ColumnType.OBJECT,
+    # TODO why no DT type in data mancer? figure this out
+    "datetime64[ns]": ColumnType.OBJECT,
+    "datetime64[ns, tz]": ColumnType.OBJECT,
+    # TODO why no TD type in data mancer? figure this out
+    "timedelta64[ns]": ColumnType.OBJECT,
+    # TODO figure this out too, complex numbers maybe of lower priority
+    "complex64": ColumnType.OBJECT,
+    "complex128": ColumnType.OBJECT,
+}
+
+
+def pandas_series_to_column(series: pd.Series) -> ColumnType:
+    """
+    TODO this is incomplete impl
+    but this will allow to port the other logic
+    and as we go along we adapt it
+    once we find cases of datetimes we come back here and add it
+    """
+    if series.isna().all():
+        # TODO is there a better way for this?
+        # can this cause bottle neck? maybe its fine
+        return ColumnType.NONE
+    result = PANDAS_TYPES[str(series.dtype)]
+    return result
 
 
 @dataclass
