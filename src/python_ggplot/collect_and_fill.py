@@ -13,11 +13,11 @@ from python_ggplot.gg_scales import GGScale
 
 def add_identity_data(col: "str", df: pd.DataFrame, scale: GGScale):
     # TODO partially ported, needs some thinking
-    data = pandas_series_to_column(df[col])
+    pandas_series_to_column(df[col])
 
     if scale.col.kind.formula_type == FormulaType.SCALAR:
         temp = cast(ScalarFormula, scale.col.kind)
-        contanst_col = temp.reduce_(df[col]).data
+        temp.reduce_(df[col]).data
         # a scalar may happen if the user uses a reducing operation as a formula
         # for an aes, e.g. ``x = f{float -> float: getMean(`bins`, `counts`)``
 
@@ -25,12 +25,12 @@ def add_identity_data(col: "str", df: pd.DataFrame, scale: GGScale):
         # if we add in one col, does that mean every other col gets a new row?
         # this is a case for constant,
         # so my guess is theres some special logic that replaces everything with 1 val
-        res = temp.reduce_(df)
+        temp.reduce_(df)
     else:
         # col.add(res)  => nim version does this
         # need to figure out exactly what is the outcome of this before adding it
 
-        res = scale.col.evaluate(df)
+        scale.col.evaluate(df)
 
 
 def draw_sample_idx(s_high: int, num: int = 100, seed: int = 42) -> np.ndarray:

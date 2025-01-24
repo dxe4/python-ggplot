@@ -2,9 +2,8 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Type, cast
+from typing import TYPE_CHECKING, Callable, List, Optional, Type, cast, Tuple
 
-from python_ggplot.core.common import LOG_LEVEL, abs_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core.objects import (
     AxisKind,
     Font,
@@ -34,7 +33,7 @@ def coord_type_from_unit_type(unit_type: UnitType):
     return lookup[unit_type]
 
 
-def default_coord_view_location(view: "ViewPort", kind: AxisKind):
+def default_coord_view_location(view: "ViewPort", kind: AxisKind) -> Tuple[Quantity, Optional[Scale]]:
     length_data = {
         AxisKind.X: (view.point_width(), view.x_scale),
         AxisKind.Y: (view.point_height(), view.y_scale),
@@ -42,15 +41,14 @@ def default_coord_view_location(view: "ViewPort", kind: AxisKind):
     return length_data[kind]
 
 
-def default_length_and_scale(view: "ViewPort", kind: AxisKind):
+def default_length_and_scale(view: "ViewPort", kind: AxisKind) -> Tuple[Quantity, Optional[Scale]]:
     length, scale = default_coord_view_location(view, kind)
     return length, scale
 
 
 def path_coord_quantity(coord: "Coord1D", length: Quantity):
     if isinstance(coord, (CentimeterCoordType, InchCoordType, PointCoordType)):
-        length = coord.get_length()
-        if length is None:
+        if coord.get_length() is None:
             coord.data.length = length
     return coord
 
@@ -83,7 +81,9 @@ def add_coord_one_length(
     scale: Scale,
     result_to_clone: "Coord1D",
 ) -> "Coord1D":
-    length: Quantity = left_coord.get_length()
+    length = left_coord.get_length()
+    if length is None:
+        raise GGException("Length must not be None")
 
     left_cls = unit_type_from_type(left_coord.unit_type)
     right_cls = unit_type_from_type(other_coord.unit_type)
@@ -128,9 +128,15 @@ def coord_operator(
             res.pos = operator(lhs.pos, rhs.pos)
             return res
     elif lhs.unit_type.is_length():
-        return add_coord_one_length(lhs, rhs, operator, rhs.get_scale(), lhs)
+        scale = rhs.get_scale()
+        if not scale:
+            raise GGException("expected a scale")
+        return add_coord_one_length(lhs, rhs, operator, scale, lhs)
     elif rhs.unit_type.is_length():
-        return add_coord_one_length(lhs, rhs, operator, lhs.get_scale(), rhs)
+        scale = lhs.get_scale()
+        if not scale:
+            raise GGException("expected a scale")
+        return add_coord_one_length(lhs, rhs, operator, scale, rhs)
     else:
         left = lhs.to(UnitType.RELATIVE)
         right = rhs.to(UnitType.RELATIVE)
@@ -257,14 +263,14 @@ class Coord1D(ABC):
         pass
 
     @abstractmethod
-    def from_length(self, length: "LengthCoord"):
+    def from_length(self, length: "LengthCoord") -> 'PointCoordType':
         pass
 
-    def get_length(self):
+    def get_length(self) -> Optional[Quantity]:
         # todo fix this, fine for now
         return None
 
-    def get_scale(self):
+    def get_scale(self) -> Optional[Scale]:
         # todo fix this, fine for now
         return None
 
@@ -376,7 +382,7 @@ class RelativeCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         raise GGException("not implemented")
 
-    def from_length(self, length: "LengthCoord"):
+    def from_length(self, length: "LengthCoord") -> 'PointCoordType':
         raise GGException("not implemented")
 
     @staticmethod
@@ -418,10 +424,10 @@ class PointCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
-    def from_length(self, length: LengthCoord):
+    def from_length(self, length: LengthCoord) -> 'PointCoordType':
         return PointCoordType(self.pos, length)
 
-    def get_length(self):
+    def get_length(self) -> Optional[Quantity]:
         # todo fix this, fine for now
         return self.data.length
 
@@ -451,10 +457,10 @@ class CentimeterCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
-    def from_length(self, length: LengthCoord):
+    def from_length(self, length: LengthCoord) -> 'PointCoordType':
         return PointCoordType(self.pos, length)
 
-    def get_length(self):
+    def get_length(self) -> Optional[Quantity]:
         # todo fix this, fine for now
         return self.data.length
 
@@ -487,10 +493,10 @@ class InchCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
-    def from_length(self, length: LengthCoord):
+    def from_length(self, length: LengthCoord) -> 'PointCoordType':
         return PointCoordType(self.pos, length)
 
-    def get_length(self):
+    def get_length(self) -> Optional[Quantity]:
         # todo fix this, fine for now
         return self.data.length
 
@@ -502,10 +508,7 @@ class InchCoordType(Coord1D):
 class DataCoordType(Coord1D):
     data: DataCoord
 
-    def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
-        raise GGException("not implemented")
-
-    def from_length(self, length: "LengthCoord"):
+    def from_length(self, length: "LengthCoord") -> 'PointCoordType':
         raise GGException("not implemented")
 
     @property
@@ -518,7 +521,7 @@ class DataCoordType(Coord1D):
         if self.data.axis_kind == AxisKind.Y:
             self.scale = view.y_scale
 
-    def get_scale(self):
+    def get_scale(self) -> Optional[Scale]:
         # todo fix this, fine for now
         return self.data.scale
 
@@ -527,6 +530,8 @@ class DataCoordType(Coord1D):
         view: "ViewPort", at: float, axis_kind: AxisKind, kind: UnitType
     ) -> "Coord1D":
         _, scale = default_length_and_scale(view, axis_kind)
+        if scale is None:
+            raise GGException("expected a scale")
         data = DataCoord(scale=scale, axis_kind=axis_kind)
         return DataCoordType(at, data)
 
@@ -565,7 +570,7 @@ class StrWidthCoordType(Coord1D):
 
     def point_dimension(self):
         text_extend = self.data.get_text_extend()
-        return text_extend.x_bearing() + text_extend.x_advance()
+        return text_extend.x_bearing + text_extend.x_advance
 
     def relative_dimension(self):
         text_extend = self.data.get_text_extend()
@@ -599,7 +604,7 @@ class StrHeightCoordType(Coord1D):
 
     def point_dimension(self):
         text_extend = self.data.get_text_extend()
-        return text_extend.y_bearing() + text_extend.y_advance()
+        return text_extend.y_bearing + text_extend.y_advance
 
     def text_extend_dimension(self, text_extend):
         return text_extend.height

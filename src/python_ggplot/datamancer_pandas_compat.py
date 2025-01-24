@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable, Dict, Generic, OrderedDict, TypeVar, Union
+from typing import Any, Callable, Dict, OrderedDict, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -225,7 +225,7 @@ class AssignFormula(Formula):
 class VectorFormula(Formula):
     col_name: str
     res_type: Any
-    fn_v: Callable[[pd.DataFrame], ColumnLike]
+    fn_v: Callable[[pd.DataFrame], Any]
 
     def formula_type(self) -> FormulaType:
         return FormulaType.VECTOR

@@ -306,8 +306,8 @@ class GOTick(GraphicsObject):
             return start, end
 
         elif self.kind == TickKind.BOTH_SIDES:
-            start_ = self.pos.point().y + length
-            end_ = self.pos.point().y - length
+            self.pos.point().y + length
+            self.pos.point().y - length
             start = Point(x=x, y=self.pos.point().y + length)
             end = Point(x=x, y=self.pos.point().y - length)
             return start, end
@@ -322,8 +322,8 @@ class GOTick(GraphicsObject):
             return start, end
 
         elif self.kind == TickKind.BOTH_SIDES:
-            start_ = self.pos.point().y + length
-            end_ = self.pos.point().y - length
+            self.pos.point().y + length
+            self.pos.point().y - length
             start = Point(x=self.pos.point().x + length, y=y)
             end = Point(x=self.pos.point().x - length, y=y)
             return start, end

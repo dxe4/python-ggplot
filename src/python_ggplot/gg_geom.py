@@ -26,7 +26,6 @@ from python_ggplot.graphics.initialize import (
     InitRectInput,
     InitTextInput,
     init_coord_1d,
-    init_error_bar,
     init_point,
     init_raster,
     init_rect,
@@ -71,13 +70,13 @@ class GeomKind(ABC):
 
     @property
     @abstractmethod
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         pass
 
 
 class GeomPoint(GeomKind):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.POINT
 
     def draw(
@@ -110,7 +109,7 @@ class GeomRectDrawMixin:
         from python_ggplot.gg_drawing import read_or_calc_bin_width
 
         bin_width = read_or_calc_bin_width(
-            df, idx, fg.x_col, dc_kind=fg.x_discrete_kind.discrete_type()
+            df, idx, fg.x_col, dc_kind=fg.x_discrete_kind.discrete_type
         )
         if bin_width != bin_widths[0]:
             raise GGException("Invalid bin width generated")
@@ -126,19 +125,19 @@ class GeomRectDrawMixin:
 
 class GeomBar(GeomKind, GeomRectDrawMixin):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.BAR
 
 
 class GeomHistogram(GeomKind, GeomRectDrawMixin):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.HISTOGRAM
 
 
 class GeomFreqPoly(GeomKind):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.FREQ_POLY
 
     def draw(
@@ -174,13 +173,13 @@ class GeomErrorBar(GeomKind):
         view.add_obj(new_error_bar)
 
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.ERROR_BAR
 
 
 class GeomText(GeomKind):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.TEXT
 
     def draw(
@@ -216,7 +215,7 @@ class GeomText(GeomKind):
 
 class GeomRaster(GeomKind):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.RASTER
 
     def draw(
@@ -235,7 +234,7 @@ class GeomRaster(GeomKind):
 
 class GeomTile(GeomKind):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.TILE
 
     def draw(
@@ -261,7 +260,7 @@ class GeomTile(GeomKind):
 
 class GeomLine(GeomKind):
     @property
-    def geom_type(self):
+    def geom_type(self) -> GeomType:
         return GeomType.LINE
 
     def draw(
@@ -307,7 +306,7 @@ class FilledGeomDiscreteKind(ABC, DiscreteKind):
 
     @property
     @abstractmethod
-    def discrete_type(self):
+    def discrete_type(self) -> DiscreteType:
         return DiscreteType.DISCRETE
 
 
@@ -319,7 +318,7 @@ class FilledGeomDiscrete(FilledGeomDiscreteKind):
         return self.label_seq
 
     @property
-    def discrete_type(self):
+    def discrete_type(self) -> DiscreteType:
         return DiscreteType.DISCRETE
 
 
@@ -328,7 +327,7 @@ class FilledGeomContinuous(FilledGeomDiscreteKind):
         raise GGException("attempt to get discrete values on continiuous kind")
 
     @property
-    def discrete_type(self):
+    def discrete_type(self) -> DiscreteType:
         return DiscreteType.CONTINUOUS
 
 
@@ -397,7 +396,7 @@ class FilledGeom:
         return self.y_discrete_kind.get_label_seq()
 
     def geom_type(self) -> GeomType:
-        return self.geom.kind.geom_type()
+        return self.geom.kind.geom_type
 
 
 @dataclass

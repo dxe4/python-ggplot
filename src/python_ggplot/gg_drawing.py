@@ -6,7 +6,6 @@ import pandas as pd
 from python_ggplot.core.coord.objects import (
     Coord,
     Coord1D,
-    DataCoordType,
     RelativeCoordType,
 )
 from python_ggplot.core.objects import AxisKind, GGException, Style
@@ -27,7 +26,6 @@ from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
     InitErrorBarData,
     InitRasterData,
-    InitRectInput,
     InitTextInput,
     init_coord_1d,
     init_error_bar,
@@ -67,12 +65,12 @@ def get_xy(x_t, y_t, i):
 
 def read_or_calc_bin_width(
     df: pd.DataFrame, idx: int, data_col: str, dc_kind: DiscreteType, col="binWidths"
-):
+) -> float:
     # TODO clean up later
     if dc_kind == DiscreteType.CONTINUOUS:
         if col in df.columns:
             if pd.isna(df.iloc[idx][col]):
-                return None
+                return 0.0
             return df.iloc[idx][col]
         elif idx < len(df) - 1:
             high_val = df.iloc[idx + 1][data_col]
@@ -115,7 +113,7 @@ def read_error_data(
     return result["x_min"], result["x_max"], result["y_min"], result["y_max"]
 
 
-def read_width_height(df, idx, fg):
+def read_width_height(df, idx, fg) -> Tuple[float, float]:
     width = 1.0
     height = 1.0
 
@@ -194,14 +192,14 @@ def calc_view_map(fg: FilledGeom) -> Dict[Any, Any]:
     elif cols == 1 and rows > 1:
         x = VNull()
         for i in range(rows):
-            x_ = fg.x_discrete_kind.get_label_seq()[i]
-            result[(x_, y)] = i + 1
+            y = fg.x_discrete_kind.get_label_seq()[i]
+            result[(x, y)] = i + 1
     else:
         for i in range(rows):
-            y_ = fg.y_discrete_kind.get_label_seq()[i]
+            y = fg.y_discrete_kind.get_label_seq()[i]
             for j in range(cols):
                 x = fg.get_x_label_seq()[j]
-                result[(x, y_)] = (i + 1) * (cols + 2) + (j + 1)
+                result[(x, y)] = (i + 1) * (cols + 2) + (j + 1)
 
     return result
 
@@ -249,7 +247,7 @@ def get_draw_pos_impl(
     width: float,
     discrete_type: DiscreteType,
     ax_kind: AxisKind,
-):
+) -> Coord1D:
 
     fg_geom_type = fg.geom_type()
     if discrete_type == DiscreteType.DISCRETE:
@@ -277,8 +275,7 @@ def get_draw_pos_impl(
             GeomType.TEXT,
         }:
             return get_continuous(view, fg, val, ax_kind)
-    else:
-        raise GGException("unknown discrete type")
+    raise GGException("could not get point")
 
 
 def get_draw_pos(
@@ -313,7 +310,7 @@ def get_draw_pos(
             fg,
             mp[0],
             bin_widths[0],
-            fg.x_discrete_kind.discrete_type(),
+            fg.x_discrete_kind.discrete_type,
             AxisKind.X,
         )
         result_y = get_draw_pos_impl(
@@ -321,7 +318,7 @@ def get_draw_pos(
             fg,
             mp[1],
             bin_widths[1],
-            fg.y_discrete_kind.discrete_type(),
+            fg.y_discrete_kind.discrete_type,
             AxisKind.Y,
         )
 
@@ -343,7 +340,7 @@ def get_draw_pos(
                 fg,
                 p[0],
                 bin_widths[0],
-                fg.x_discrete_kind.discrete_type(),
+                fg.x_discrete_kind.discrete_type,
                 AxisKind.X,
             )
             result_y = get_draw_pos_impl(
@@ -351,16 +348,17 @@ def get_draw_pos(
                 fg,
                 cur_stack,
                 bin_widths[1],
-                fg.y_discrete_kind.discrete_type(),
+                fg.y_discrete_kind.discrete_type,
                 AxisKind.Y,
             )
+            return Coord(x=result_x, y=result_y)
         else:
             result_x = get_draw_pos_impl(
                 view,
                 fg,
                 cur_stack,
                 bin_widths[0],
-                fg.x_discrete_kind.discrete_type(),
+                fg.x_discrete_kind.discrete_type,
                 AxisKind.X,
             )
             result_y = get_draw_pos_impl(
@@ -368,13 +366,12 @@ def get_draw_pos(
                 fg,
                 p[1],
                 bin_widths[1],
-                fg.y_discrete_kind.discrete_type(),
+                fg.y_discrete_kind.discrete_type,
                 AxisKind.Y,
             )
+            return Coord(x=result_x, y=result_y)
     else:
         raise GGException("not implemented yet")
-
-    return Coord(x=result_x, y=result_y)
 
 
 def draw_error_bar(
@@ -510,3 +507,31 @@ def draw(
         idx,
         style,
     )
+
+
+def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, float]:
+    x_width = 0.0
+    y_width = 0.0
+    coord_flipped = False
+    # geom_type = fg.geom.
+    # .geom_type()
+    geom_type = fg.geom_type()
+    discrete_type = fg.geom.discrete_type
+    if geom_type in [
+        GeomType.HISTOGRAM,
+        GeomType.BAR,
+        GeomType.POINT,
+        GeomType.LINE,
+        GeomType.FREQ_POLY,
+        GeomType.ERROR_BAR,
+        GeomType.TEXT,
+    ]:
+        if not coord_flipped:
+            x_width = read_or_calc_bin_width(df, idx, fg.x_col, dc_kind=discrete_type)
+        else:
+            y_width = read_or_calc_bin_width(df, idx, fg.y_col, dc_kind=discrete_type)
+
+    elif geom_type in [GeomType.TILE, GeomType.RASTER]:
+        x_width, y_width = read_width_height(df, idx, fg)
+
+    return x_width, y_width

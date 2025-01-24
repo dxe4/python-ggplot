@@ -276,9 +276,9 @@ class Theme:
 
 
 @dataclass
-class Facet(Enum):
-    columns = List[str]
-    scale_free_kind = "ScaleFreeKind"
+class Facet:
+    columns: List[str]
+    scale_free_kind: "ScaleFreeKind"
 
 
 @dataclass

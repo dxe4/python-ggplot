@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "autoflake>=2.3.1",
     "pandas>=2.2.3",
     "pycairo>=1.27.0",
     "rich>=13.9.4",
@@ -27,4 +28,5 @@ dev = [
     "pandas-stubs>=2.2.3.241126",
     "pylint>=3.3.3",
     "pytest>=8.3.4",
+    "ruff>=0.9.3",
 ]

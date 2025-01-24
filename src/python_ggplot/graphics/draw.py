@@ -199,6 +199,7 @@ def layout(
 
     current_row = Coord1D.create_relative(0.0)
     for i in range(rows):
+        j = 0
         current_col = Coord1D.create_relative(0.0)
         for j in range(cols):
             margin_x = margin.to_relative(scale=view.x_scale, length=view.point_width())

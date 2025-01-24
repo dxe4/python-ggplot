@@ -444,6 +444,9 @@ def is_scale_not_trivial(coord: Coord1D):
         raise GGException("needed coord with data")
 
     scale = coord.get_scale()
+    if scale is None:
+        # TODO medium priority need to fix the get scale and get length logic, for now add checks
+        raise GGException("scale should not be none")
     return scale.low != scale.high
 
 

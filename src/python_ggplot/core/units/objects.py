@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Optional, Protocol
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Callable, Optional
 
-from python_ggplot.core.common import abs_to_inch, cm_to_inch, inch_to_abs, inch_to_cm
 from python_ggplot.core.objects import AxisKind, GGException, Scale, UnitType
 
 if TYPE_CHECKING:
