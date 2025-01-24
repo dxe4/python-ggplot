@@ -1,10 +1,14 @@
 {
-  "venvPath": "./.venv",
-  // need to find a way to support cairo
+  "venvPath": "./.venv/bin/activate",
+  "venv": ".venv",
+  "include": ["src"],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "strict",
   "exclude": [
     "venv",
     ".venv",
     "**/cairo_backend.py",
     "src/python_ggplot/graphics/cairo_backend.py"
   ]
+  // need to find a way to support cairo
 }
