@@ -24,7 +24,7 @@ SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
     from python_ggplot.gg_geom import FilledScales
-    from python_ggplot.gg_scales import ColorScale, ScaleFreeKind, ScaleKind, ScaleValue
+    from python_ggplot.gg_scales import ScaleFreeKind, ScaleKind
 
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
     from python_ggplot.graphics.views import ViewPort

@@ -69,7 +69,7 @@ class ScaleKind(ABC):
 
     @property
     @abstractmethod
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         pass
 
 
@@ -93,7 +93,7 @@ class LinearDataScale(ScaleKind):
     data: Optional[LinearAndTransformScaleData] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.LINEAR_DATA
 
 
@@ -102,7 +102,7 @@ class TransformedDataScale(ScaleKind):
     data: Optional[LinearAndTransformScaleData] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.TRANSFORMED_DATA
 
     def transform(self):
@@ -116,7 +116,7 @@ class ColorScaleKind(ScaleKind):
     data: Optional[ColorScaleData] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.COLOR
 
 
@@ -124,7 +124,7 @@ class FillColorScale(ScaleKind):
     data: Optional[ColorScaleData] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.FILL_COLOR
 
 
@@ -135,14 +135,14 @@ class AlphaScale(ScaleKind):
         style.alpha = self.alpha
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.ALPHA
 
 
 class ShapeScale(ScaleKind):
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.SHAPE
 
 
@@ -155,14 +155,14 @@ class SizeScale(ScaleKind):
         style.size = self.size
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.SIZE
 
 
 class TextScale(ScaleKind):
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.TEXT
 
 
@@ -175,14 +175,14 @@ class ScaleValue(ABC):
 
     @property
     @abstractmethod
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         pass
 
 
 class TextScaleValue(ScaleValue):
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.TEXT
 
 
@@ -190,7 +190,7 @@ class SizeScaleValue(ScaleValue):
     size: Optional[float] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.SIZE
 
 
@@ -203,7 +203,7 @@ class ShapeScaleValue(ScaleValue):
         style.line_type = self.line_type
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.SHAPE
 
 
@@ -211,7 +211,7 @@ class AlphaScaleValue(ScaleValue):
     alpha: Optional[float] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.ALPHA
 
 
@@ -223,7 +223,7 @@ class FillColorScaleValue(ScaleValue):
         style.color = self.color
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.FILL_COLOR
 
 
@@ -234,7 +234,7 @@ class ColorScaleValue(ScaleValue):
         style.color = self.color
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.COLOR
 
 
@@ -242,7 +242,7 @@ class TransformedDataScaleValue(ScaleValue):
     val: Optional[GGValue] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.TRANSFORMED_DATA
 
 
@@ -250,7 +250,7 @@ class LinearDataScaleValue(ScaleValue):
     val: Optional[GGValue] = None
 
     @property
-    def scale_type(self):
+    def scale_type(self) -> ScaleType:
         return ScaleType.LINEAR_DATA
 
 

@@ -1,0 +1,10 @@
+{
+  "venvPath": "./.venv",
+  // need to find a way to support cairo
+  "exclude": [
+    "venv",
+    ".venv",
+    "**/cairo_backend.py",
+    "src/python_ggplot/graphics/cairo_backend.py"
+  ]
+}

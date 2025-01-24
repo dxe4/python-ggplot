@@ -26,13 +26,9 @@ from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
     InitErrorBarData,
     InitRasterData,
-    InitTextInput,
     init_coord_1d,
     init_error_bar,
-    init_point,
     init_raster,
-    init_rect,
-    init_text,
 )
 from python_ggplot.graphics.objects import GOComposite
 from python_ggplot.graphics.views import ViewPort

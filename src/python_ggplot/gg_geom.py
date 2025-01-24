@@ -21,13 +21,9 @@ from python_ggplot.gg_types import (
     StatKind,
 )
 from python_ggplot.graphics.initialize import (
-    InitErrorBarData,
-    InitRasterData,
     InitRectInput,
     InitTextInput,
-    init_coord_1d,
     init_point,
-    init_raster,
     init_rect,
     init_text,
 )
