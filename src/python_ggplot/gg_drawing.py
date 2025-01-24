@@ -1,4 +1,5 @@
-from typing import Any, Dict, Generator, List, Optional, Tuple, cast
+from ast import Str
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -18,10 +19,16 @@ from python_ggplot.gg_geom import (
     FilledGeomRaster,
     GeomType,
     HistogramDrawingStyle,
+    FilledGeomTitle,
 )
 from python_ggplot.gg_styles import GGStyle
 from python_ggplot.gg_types import BinPositionType  # OutsideRangeKind,
-from python_ggplot.gg_types import DiscreteType, PositionType, Theme
+from python_ggplot.gg_types import (
+    PREV_VALS_COL,
+    DiscreteType,
+    PositionType,
+    Theme
+)
 from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
     InitErrorBarData,
@@ -34,7 +41,7 @@ from python_ggplot.graphics.objects import GOComposite
 from python_ggplot.graphics.views import ViewPort
 
 
-def is_num(x):
+def is_num(x: Any):
     if isinstance(x, (int, float)):
         return True
     if not getattr(x, "dtype", None):
@@ -49,7 +56,7 @@ def enumerate_data(
         yield label, tup[0], tup[1], tup[2]
 
 
-def get_xy(x_t, y_t, i):
+def get_xy(x_t: Any, y_t: Any, i: Any):
     x = 0.0 if pd.isna(x_t[i]) else x_t[i]
     y = 0.0 if pd.isna(y_t[i]) else y_t[i]
 
@@ -60,29 +67,29 @@ def get_xy(x_t, y_t, i):
 
 
 def read_or_calc_bin_width(
-    df: pd.DataFrame, idx: int, data_col: str, dc_kind: DiscreteType, col="binWidths"
+    df: pd.DataFrame, idx: int, data_col: str, dc_kind: DiscreteType, col:str="binWidths"
 ) -> float:
     # TODO clean up later
     if dc_kind == DiscreteType.CONTINUOUS:
         if col in df.columns:
-            if pd.isna(df.iloc[idx][col]):
+            if pd.isna(df.iloc[idx][col]):  # type: ignore
                 return 0.0
-            return df.iloc[idx][col]
+            return df.iloc[idx][col] # type: ignore
         elif idx < len(df) - 1:
-            high_val = df.iloc[idx + 1][data_col]
+            high_val = float(df.iloc[idx + 1][data_col])  # tpye: ignore
             if pd.isna(high_val):
                 if idx <= 0:
                     raise GGException("expected idx> 0")
-                return df.iloc[idx][data_col] - df.iloc[idx - 1][data_col]
+                return df.iloc[idx][data_col] - df.iloc[idx - 1][data_col]  # type: ignore
             else:
-                return high_val - df.iloc[idx][data_col]
+                return high_val - df.iloc[idx][data_col] # type: ignore
     elif dc_kind == DiscreteType.DISCRETE:
         return 0.8
 
     raise GGException()
 
 
-def move_bin_position(x, bp_kind: BinPositionType, bin_width):
+def move_bin_position(x: float, bp_kind: BinPositionType, bin_width: float):
     lookup = {
         BinPositionType.LEFT: x,
         BinPositionType.NONE: x,
@@ -98,32 +105,40 @@ def read_error_data(
     result = {"x_min": None, "x_max": None, "y_min": None, "y_max": None}
 
     if fg.x_min is not None:
-        result["x_min"] = df[fg.x_min].iloc[idx]
+        result["x_min"] = float(df[fg.x_min].iloc[idx]) # type: ignore
     if fg.x_max is not None:
-        result["x_max"] = df[fg.x_max].iloc[idx]
+        result["x_max"] = float(df[fg.x_max].iloc[idx]) # type: ignore
     if fg.y_min is not None:
-        result["y_min"] = df[fg.y_min].iloc[idx]
+        result["y_min"] = float(df[fg.y_min].iloc[idx]) # type: ignore
     if fg.y_max is not None:
-        result["y_max"] = df[fg.y_max].iloc[idx]
+        result["y_max"] = float(df[fg.y_max].iloc[idx]) # type: ignore
 
     return result["x_min"], result["x_max"], result["y_min"], result["y_max"]
 
 
-def read_width_height(df, idx, fg) -> Tuple[float, float]:
+def read_width_height(df: pd.DataFrame, idx: int, fg: FilledGeom, geom: Union[FilledGeomTitle, FilledGeomRaster]) -> Tuple[float, float]:
+    '''
+    Todo high priority
+        geom: Union[FilledGeomTitle, FilledGeomRaster] is a temp fix
+        i think we need filled_geom.geom = FilledGeomTitle|FilledGeomRaster
+        this fucntionality is mostly done, but needs some rewiring
+    '''
     width = 1.0
     height = 1.0
 
-    if fg.width is not None:
-        width = df[fg.width].iloc[idx]
+    # TODO deal with pyright iloc types down the line
+    # this is more of a global issue, other priorties for now
+    if geom.data.width is not None:
+        width = float(df[geom.data.width].iloc[idx])  # type: ignore
 
-    if fg.height is not None:
-        height = df[fg.height].iloc[idx]
+    if geom.data.height is not None:
+        height = float(df[geom.data.height].iloc[idx]) # type: ignore
 
     return width, height
 
 
-def read_text(df, idx, fg):
-    return df[fg.text].iloc[idx]
+def read_text(df: pd.DataFrame, idx: int, fg: FilledGeom) -> str:
+    return df[fg.text].iloc[idx]  # type: ignore
 
 
 def get_cols_and_rows(fg: FilledGeom) -> Tuple[int, int]:
@@ -239,7 +254,8 @@ def get_continuous(
 def get_draw_pos_impl(
     view: ViewPort,
     fg: FilledGeom,
-    val,
+    # TODO Value in source, change later
+    val: Any,
     width: float,
     discrete_type: DiscreteType,
     ax_kind: AxisKind,
@@ -321,14 +337,14 @@ def get_draw_pos(
     elif position == PositionType.STACK:
         if not (
             (
-                fg.geom.kind == "histogram"
+                fg.geom.kind.geom_type == GeomType.HISTOGRAM
                 and histogram_drawing_style == HistogramDrawingStyle.BARS
             )
-            or fg.geom.kind == "bar"
+            or fg.geom.kind.geom_type == GeomType.BAR
         ):
             cur_stack = p[1]
         else:
-            cur_stack = df["PrevVals"].iloc[idx]
+            cur_stack = df[PREV_VALS_COL].iloc[idx]  # type: ignore
 
         if not coords_flipped:
             result_x = get_draw_pos_impl(
@@ -434,6 +450,8 @@ def draw_raster(
     min_x_col = fg.x_scale.low
     max_y_col = fg.y_scale.high
     min_y_col = fg.y_scale.low
+    # TODO high priority this takes an additional parameter,
+    # we have to ensure filled geom is of type raster and it has the right data
     wv, hv = read_width_height(df, 0, fg)
 
     height = max_y_col - min_y_col + hv
@@ -487,7 +505,8 @@ def draw(
     view: ViewPort,
     fg: FilledGeom,
     pos: Coord,
-    y,
+    # TODO Value in origin, this will be fixed at later stage
+    y: Any,
     bin_widths: Tuple[float, float],
     df: pd.DataFrame,
     idx: int,
@@ -512,7 +531,7 @@ def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, 
     # geom_type = fg.geom.
     # .geom_type()
     geom_type = fg.geom_type()
-    discrete_type = fg.geom.discrete_type
+
     if geom_type in [
         GeomType.HISTOGRAM,
         GeomType.BAR,
@@ -523,11 +542,37 @@ def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, 
         GeomType.TEXT,
     ]:
         if not coord_flipped:
-            x_width = read_or_calc_bin_width(df, idx, fg.x_col, dc_kind=discrete_type)
+            x_width = read_or_calc_bin_width(df, idx, fg.x_col, dc_kind=fg.discrete_type_x)
         else:
-            y_width = read_or_calc_bin_width(df, idx, fg.y_col, dc_kind=discrete_type)
+            y_width = read_or_calc_bin_width(df, idx, fg.y_col, dc_kind=fg.discrete_type_y)
 
     elif geom_type in [GeomType.TILE, GeomType.RASTER]:
+        # TODO this needs to pass the tile/raster data
+        # once the objects are restructured we can take in the right type
         x_width, y_width = read_width_height(df, idx, fg)
 
     return x_width, y_width
+
+def move_bin_positions(point: Tuple[float, float], bin_widths: tuple[float, float], fg: FilledGeom):
+    if fg.geom.bin_position is None:
+        raise GGException("expected a bin position")
+
+    coord_flipped = False
+    x, y = point
+    bin_width_x, bin_width_y = bin_widths
+
+    if fg.geom.kind.geom_type == GeomType.TILE:
+        x = move_bin_position(x, fg.geom.bin_position, bin_width_x)
+        y = move_bin_position(y, fg.geom.bin_position, bin_width_y)
+        return x, y
+    else:
+        if coord_flipped is False:
+            x = move_bin_position(x, fg.geom.bin_position, bin_width_x)
+        else:
+            y = move_bin_position(y, fg.geom.bin_position, bin_width_y)
+        return x, y
+
+def get_view(view_map: Dict[Any, Any], point: Tuple[float, float], fg: FilledGeom):
+    px = point[0] if fg.is_discrete_x() else None
+    py = point[1] if fg.is_discrete_y() else None
+    return view_map[(px, py)]

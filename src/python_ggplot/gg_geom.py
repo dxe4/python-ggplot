@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, OrderedDict, Tuple, cast
+from typing import List, Optional, OrderedDict, Tuple, cast, Any
 
 import pandas as pd
 
@@ -56,7 +56,7 @@ class GeomKind(ABC):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -80,7 +80,7 @@ class GeomPoint(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -96,7 +96,8 @@ class GeomRectDrawMixin:
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        # TODO this is Value
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -141,7 +142,7 @@ class GeomFreqPoly(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -156,7 +157,7 @@ class GeomErrorBar(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -183,7 +184,7 @@ class GeomText(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -219,7 +220,7 @@ class GeomRaster(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -238,7 +239,7 @@ class GeomTile(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -264,7 +265,7 @@ class GeomLine(GeomKind):
         view: ViewPort,
         fg: "FilledGeom",
         pos: Coord,
-        y,
+        y: Any,
         bin_widths: Tuple[float, float],
         df: pd.DataFrame,
         idx: int,
@@ -384,6 +385,28 @@ class FilledGeom:
     num_y: int
     x_discrete_kind: FilledGeomDiscreteKind
     y_discrete_kind: FilledGeomDiscreteKind
+
+    def is_discrete_y(self) -> bool:
+        return self.y_discrete_kind.discrete_type == DiscreteType.DISCRETE
+
+    def is_discrete_x(self) -> bool:
+        return self.x_discrete_kind.discrete_type == DiscreteType.DISCRETE
+
+    @property
+    def discrete_type_y(self):
+        return self.y_discrete_kind.discrete_type
+
+    @property
+    def discrete_type_x(self):
+        return self.x_discrete_kind.discrete_type
+
+    @property
+    def discrete_type(self) -> Optional[DiscreteType]:
+        left = self.x_discrete_kind.discrete_type
+        right = self.y_discrete_kind.discrete_type
+        if left != right:
+            return None
+        return left
 
     def get_x_label_seq(self) -> List[GGValue]:
         return self.x_discrete_kind.get_label_seq()
