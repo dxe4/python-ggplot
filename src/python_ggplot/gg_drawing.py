@@ -815,3 +815,15 @@ def draw_sub_df(
         # TODO: currently ignores the line_points completely
         # TODO high priority fix GEOM object structure
         draw_raster(view, fg, cast(FilledGeomRaster, fg), df)
+
+
+def create_gobj_from_geom(view: ViewPort, fg: FilledGeom, theme: Theme, label_val:Optional[Any]=None):
+    prepare_views(view, fg, theme)
+    view_map = calc_view_map(fg)
+
+    for lab, _, styles, sub_df in enumerate_data(fg):
+        if label_val is not None:
+            if label_val not in lab:
+                # skip this label
+                continue
+        draw_sub_df(view, fg, view_map, sub_df, styles, theme)
