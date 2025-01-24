@@ -67,26 +67,41 @@ class Quantity(ABC):
 
         return to_relative_from_view(self, view, axis_kind)
 
-    def to(self, kind: UnitType, length=None, scale=None):
+    def to(
+        self,
+        kind: UnitType,
+        length: Optional["Quantity"] = None,
+        scale: Optional[Scale] = None,
+    ) -> "Quantity":
         from python_ggplot.core.units.convert import (
             convert_quantity,
         )  # pylint: disable=all
 
         return convert_quantity(self, kind, length=length, scale=scale)
 
-    def to_data(self, length=None, scale=None):
+    def to_data(
+        self, length: Optional["Quantity"] = None, scale: Optional[Scale] = None
+    ) -> "Quantity":
         return self.to(UnitType.DATA, length=length, scale=scale)
 
-    def to_centimeter(self, length=None, scale=None):
+    def to_centimeter(
+        self, length: Optional["Quantity"] = None, scale: Optional[Scale] = None
+    ) -> "Quantity":
         return self.to(UnitType.CENTIMETER, length=length, scale=scale)
 
-    def to_inch(self, length=None, scale=None):
+    def to_inch(
+        self, length: Optional["Quantity"] = None, scale: Optional[Scale] = None
+    ) -> "Quantity":
         return self.to(UnitType.INCH, length=length, scale=scale)
 
-    def to_points(self, length=None, scale=None):
+    def to_points(
+        self, length: Optional["Quantity"] = None, scale: Optional[Scale] = None
+    ) -> "Quantity":
         return self.to(UnitType.POINT, length=length, scale=scale)
 
-    def to_relative(self, length=None, scale=None):
+    def to_relative(
+        self, length: Optional["Quantity"] = None, scale: Optional[Scale] = None
+    ) -> "Quantity":
         return self.to(UnitType.RELATIVE, length=length, scale=scale)
 
     def apply_operator(

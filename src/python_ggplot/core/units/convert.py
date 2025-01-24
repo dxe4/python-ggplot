@@ -207,7 +207,12 @@ def convert_quantity_data(data: QuantityConversionData, to_type: UnitType):
     return conversion_func(data)
 
 
-def convert_quantity(quantity, to_type: UnitType, length=None, scale=None):
+def convert_quantity(
+    quantity: Quantity,
+    to_type: UnitType,
+    length: Optional[Quantity] = None,
+    scale: Optional[Scale] = None,
+) -> Quantity:
     data = QuantityConversionData(quantity=quantity, length=length, scale=scale)
     return convert_quantity_data(data, to_type)
 

@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, coord_type_from_type
 from python_ggplot.core.objects import (
@@ -133,7 +133,7 @@ def fill_empty_sizes_evenly(
     if not ignore_overflow and remain_width < 0.0:
         raise GGException("given layout sizes exceed the viewport size.")
 
-    result = []
+    result: List[Quantity] = []
     for i in range(num):
         # same here, convert to int
         if quantities[i].to_relative(length=length, scale=scale).val == 0.0:
@@ -265,7 +265,7 @@ def background(view: ViewPort, style: Optional[Style] = None):
     view.objects.append(new_obj)
 
 
-def draw_line(img, gobj: Union[GOAxis, GOLine]):
+def draw_line(img: Image, gobj: Union[GOAxis, GOLine]):
     start = gobj.data.start.point()
     stop = gobj.data.stop.point()
     if gobj.config.style is None:
@@ -275,10 +275,12 @@ def draw_line(img, gobj: Union[GOAxis, GOLine]):
     if gobj.config.rotate_in_view:
         rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
 
-    img.backend.draw_line(img, start, stop, gobj.config.style, rotate_in_view)
+    img.backend.draw_line(  # type: ignore
+        img, start, stop, gobj.config.style, rotate_in_view
+    )
 
 
-def draw_rect(img, gobj: GORect):
+def draw_rect(img: Image, gobj: GORect):
     if gobj.config.style is None:
         raise GGException("expected style")
 
@@ -290,7 +292,7 @@ def draw_rect(img, gobj: GORect):
     if gobj.config.rotate_in_view:
         rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
 
-    img.backend.draw_rectangle(
+    img.backend.draw_rectangle(  # type: ignore -> pycairo headache
         img,
         left,
         bottom,
@@ -302,7 +304,7 @@ def draw_rect(img, gobj: GORect):
     )
 
 
-def draw_raster(img, gobj: GORaster):
+def draw_raster(img: Image, gobj: GORaster):
     left = gobj.origin.point().x
     bottom = gobj.origin.point().y
 
@@ -314,7 +316,7 @@ def draw_raster(img, gobj: GORaster):
     if gobj.config.rotate_in_view:
         rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
 
-    img.backend.draw_raster(
+    img.backend.draw_raster(  # type: ignore -> pycairo headache
         img,
         left,
         bottom,
@@ -329,12 +331,12 @@ def draw_raster(img, gobj: GORaster):
 
 
 def rotate_obj(
-    rotate_in_view: Optional[tuple[float, Point]],
+    rotate_in_view: Optional[tuple[float, Point[float]]],
     marker: MarkerKind,
     angle: float,
-    pos: Point,
+    pos: Point[float],
     kind: Set[MarkerKind],
-) -> Optional[Tuple[float, Point]]:
+) -> Optional[Tuple[float, Point[float]]]:
     if marker not in kind:
         return None
 
@@ -350,14 +352,14 @@ def draw_point_impl(
     marker: MarkerKind,
     size: float,
     color: Color,
-    rotate_in_view: Optional[Tuple[float, Point]] = None,
+    rotate_in_view: Optional[Tuple[float, Point[float]]] = None,
     style: Optional[Style] = None,
 ):
     if marker in (MarkerKind.CIRCLE, MarkerKind.EMPTY_CIRCLE):
         fill_color = color if marker == MarkerKind.CIRCLE else TRANSPARENT
         stroke_color = TRANSPARENT if marker == MarkerKind.CIRCLE else color
 
-        img.backend.draw_circle(
+        img.backend.draw_circle(  # type: ignore -> pycairo headache
             img,
             pos,
             size,
@@ -382,12 +384,12 @@ def draw_point_impl(
         # Draw horizontal line
         start = Point(x=pos.x - size, y=pos.y)
         stop = Point(x=pos.x + size, y=pos.y)
-        img.backend.draw_line(img, start, stop, style, rotate)
+        img.backend.draw_line(img, start, stop, style, rotate)  # type: ignore -> pycairo headache
 
         # Draw vertical line
         start = Point(x=pos.x, y=pos.y - size)
         stop = Point(x=pos.x, y=pos.y + size)
-        img.backend.draw_line(img, start, stop, style, rotate)
+        img.backend.draw_line(img, start, stop, style, rotate)  # type: ignore -> pycairo headache
 
     elif marker in (MarkerKind.TRIANGLE, MarkerKind.EMPTY_RECTANGLE):
         # TODO sanity check this
@@ -403,7 +405,9 @@ def draw_point_impl(
             Point(x=pos.x + step, y=pos.y + step),  # bottom right
         ]
 
-        img.backend.draw_polyline(img, points, style, rotate)
+        img.backend.draw_polyline(  # type: ignore -> pycairo headache
+            img, points, style, rotate
+        )
 
     elif marker in (
         MarkerKind.RHOMBUS,
@@ -430,7 +434,9 @@ def draw_point_impl(
         left = pos.x - (size / 2.0)
         bottom = pos.y - (size / 2.0)
 
-        img.backend.draw_rectangle(img, left, bottom, size, size, style, None, rotate)
+        img.backend.draw_rectangle(  # type: ignore -> pycairo headache
+            img, left, bottom, size, size, style, None, rotate
+        )
 
 
 def draw_point(img: Image, gobj: GOPoint):
@@ -472,7 +478,9 @@ def draw_polyline(img: Image, gobj: GOPolyLine):
         rotate_in_view = gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1]
 
     img_copy = img
-    img_copy.backend.draw_polyline(img, points, gobj.config.style, rotate_in_view)
+    img_copy.backend.draw_polyline(  # type: ignore -> pycairo headache
+        img, points, gobj.config.style, rotate_in_view
+    )
 
 
 def draw_text(img: Image, gobj: Union[GOText, GOLabel, GOTickLabel]):
@@ -483,7 +491,7 @@ def draw_text(img: Image, gobj: Union[GOText, GOLabel, GOTickLabel]):
     align_kind = data.align
 
     img_copy = img
-    img_copy.backend.draw_text(
+    img_copy.backend.draw_text(  # type: ignore -> pycairo headache
         img, text, font, at, align_kind, gobj.config.rotate, None
     )
 
@@ -494,8 +502,6 @@ def draw_tick(img: Image, gobj: GOTick):
         raise GGException("expected style")
 
     length = style.size
-    if length is None:
-        raise GGException("expected size on style")
 
     if not gobj.major:
         length = length / 2.0
@@ -505,7 +511,7 @@ def draw_tick(img: Image, gobj: GOTick):
         length = -length
 
     start, stop = gobj.get_start_stop_point(length)
-    img.backend.draw_line(
+    img.backend.draw_line(  # type: ignore -> pycairo headache
         img, start, stop, style, rotate_angle=gobj.config.rotate_in_view
     )
 
@@ -524,7 +530,7 @@ def draw_grid(img: Image, gobj: GOGrid):
         start = Point(x=x.pos, y=origin.y.pos)
         stop = Point(x=x.pos, y=origin_diag.y.pos)
 
-        img.backend.draw_line(
+        img.backend.draw_line(  # type: ignore
             img,
             start,
             stop,
@@ -541,7 +547,7 @@ def draw_grid(img: Image, gobj: GOGrid):
         start = Point(x=origin.x.pos, y=y.pos)
         stop = Point(x=origin_diag.x.pos, y=y.pos)
 
-        img.backend.draw_line(
+        img.backend.draw_line(  # type: ignore -> pycairo headache
             img,
             start,
             stop,
@@ -550,7 +556,7 @@ def draw_grid(img: Image, gobj: GOGrid):
         )
 
 
-def scale_point(point: Point, width: float, height: float):
+def scale_point(point: Point[float], width: float, height: float) -> Point[float]:
     return Point(x=point.x * width, y=point.y * height)
 
 
@@ -558,7 +564,7 @@ def to_global_coords(gobj: GraphicsObject, img: Image):
     gobj.to_global_coords(img)
 
 
-draw_lookup = {
+draw_lookup: Dict[GOType, Callable[..., Any]] = {
     # start/stop data
     GOType.LINE: draw_line,
     GOType.AXIS: draw_line,
@@ -629,5 +635,5 @@ def draw_to_file(view: "ViewPort", filename: str):
     img = init_image(filename, width, height, FileTypeKind.PNG)
     draw_viewport(img, view)
     # Save the surface to a PNG file
-    img.backend.canvas.write_to_png(filename)
+    img.backend.canvas.write_to_png(filename)  # type: ignore
     del img

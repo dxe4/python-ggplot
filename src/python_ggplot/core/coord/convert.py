@@ -20,7 +20,7 @@ from python_ggplot.core.units.objects import Quantity
 from python_ggplot.graphics.cairo_backend import CairoBackend
 
 
-def unit_to_point(kind: UnitType, pos):
+def unit_to_point(kind: UnitType, pos: float) -> float:
     data = {
         UnitType.CENTIMETER: lambda: inch_to_abs(abs_to_inch(pos)),
         UnitType.POINT: lambda: pos,
@@ -71,14 +71,20 @@ def length_to_relative(data: CoordConversionData) -> Coord1D:
 
 def length_to_centimeter(data: CoordConversionData) -> Coord1D:
     pos = inch_to_cm(abs_to_inch(data.coord.pos))
-    length = data.coord.get_length().to_centimeter()
-    return CentimeterCoordType(pos, LengthCoord(length=length))
+    length = data.coord.get_length()
+    if length is None:
+        # TODO this is just design issue, but low priority
+        raise GGException("expepcted length coord type")
+    return CentimeterCoordType(pos, LengthCoord(length=length.to_centimeter()))
 
 
 def length_to_inch(data: CoordConversionData) -> Coord1D:
     pos = abs_to_inch(data.coord.pos)
-    length = data.coord.get_length().to_inch()
-    return InchCoordType(pos, LengthCoord(length=length))
+    length = data.coord.get_length()
+    if length is None:
+        # TODO this is just design issue, but low priority
+        raise GGException("expepcted length coord type")
+    return InchCoordType(pos, LengthCoord(length=length.to_inch()))
 
 
 def coord_to_self(data: CoordConversionData) -> Coord1D:
@@ -171,14 +177,20 @@ def length_to_point_via_point(data: CoordViaPointData) -> Coord1D:
 
 def length_to_centimeter_via_point(data: CoordViaPointData) -> Coord1D:
     new_pos = inch_to_cm(abs_to_inch(data.coord.to_points().pos))
-    length = data.coord.get_length().to_centimeter()
-    return PointCoordType(new_pos, data=LengthCoord(length=length))
+    length = data.coord.get_length()
+    if length is None:
+        # TODO this is just design issue, but low priority
+        raise GGException("expepcted length coord type")
+    return PointCoordType(new_pos, data=LengthCoord(length=length.to_centimeter()))
 
 
 def length_to_inch_via_point(data: CoordViaPointData) -> Coord1D:
     new_pos = abs_to_inch(data.coord.to_points().pos)
-    length = data.coord.get_length().to_inch()
-    return PointCoordType(new_pos, data=LengthCoord(length=length))
+    length = data.coord.get_length()
+    if length is None:
+        # TODO this is just design issue, but low priority
+        raise GGException("expepcted length coord type")
+    return PointCoordType(new_pos, data=LengthCoord(length=length.to_inch()))
 
 
 # via point relative conversion
@@ -300,7 +312,9 @@ def coord_convert_data(data: CoordConversionData, to_type: UnitType) -> Coord1D:
     return conversion_func(data)
 
 
-def convert_coord(coord: Coord1D, to_type: UnitType, length=None) -> Coord1D:
+def convert_coord(
+    coord: Coord1D, to_type: UnitType, length: Optional[Quantity] = None
+) -> Coord1D:
     data = CoordConversionData(coord, length=length)
     return coord_convert_data(data, to_type)
 
@@ -308,12 +322,12 @@ def convert_coord(coord: Coord1D, to_type: UnitType, length=None) -> Coord1D:
 def convert_via_point(
     coord: Coord1D,
     to_kind: UnitType,
-    length=None,
-    abs_length=None,
-    scale=None,
-    axis=None,
-    text=None,
-    font=None,
+    length: Optional[Quantity] = None,
+    abs_length: Optional[Quantity] = None,
+    scale: Optional[Scale] = None,
+    axis: Optional[AxisKind] = None,
+    text: Optional[str] = None,
+    font: Optional[Font] = None,
 ) -> Coord1D:
     if coord.unit_type == to_kind:
         return deepcopy(coord)

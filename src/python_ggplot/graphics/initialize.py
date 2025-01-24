@@ -1,9 +1,8 @@
 # todo this has to be split up into multiple files
 import math
-from collections import namedtuple
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 from python_ggplot.core.common import linspace, nice_number
 from python_ggplot.core.coord.objects import (
@@ -11,6 +10,7 @@ from python_ggplot.core.coord.objects import (
     Coord1D,
     CoordsInput,
     DataCoord,
+    DataCoordType,
     coord_quantity_add,
     coord_quantity_sub,
     coord_type_from_unit_type,
@@ -124,7 +124,7 @@ class InitErrorBarData:
     style: Optional[Style] = None
     name: Optional[str] = None
 
-    def create_lines_input(self):
+    def create_lines_input(self) -> Dict[str, Any]:
         data = {
             AxisKind.X: {
                 "x1": self.error_up,
@@ -165,7 +165,7 @@ def init_coord_1d(
     cls = coord_type_from_unit_type(kind)
     if kind == UnitType.DATA:
         print("WARNING: init_coord_1d(unit+_type=DATA) may not work as expected")
-        result = cls(
+        result = DataCoordType(
             pos=at,
             data=DataCoord(
                 axis_kind=axis_kind,
@@ -173,7 +173,8 @@ def init_coord_1d(
             ),
         )
     else:
-        result = cls(pos=at)
+        # TODO fix this, i think pyright is a bit wrong, but it can be done in a better way
+        result = cls(pos=at)  # type: ignore
 
     return result
 
@@ -185,7 +186,10 @@ def init_coord(x: float, y: float, kind: UnitType = UnitType.RELATIVE):
     )
 
 
-_AxisData = namedtuple("_AxisData", ["start", "stop", "name"])
+class _AxisData(NamedTuple):
+    start: Tuple[float, float]
+    stop: Tuple[float, float]
+    name: str
 
 
 def _init_axis_data(axis: AxisKind) -> _AxisData:
@@ -412,7 +416,7 @@ def init_point_from_coord(
 
 def init_point_from_point(
     view: ViewPort,
-    pos: Point,
+    pos: Point[float],
     size: float = 3.0,
     marker: MarkerKind = MarkerKind.CIRCLE,
     color: Color = BLACK,
@@ -482,9 +486,6 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
         config=GraphicsObjectConfig(style=data.style),
         kind=CompositeKind.ERROR_BAR,
     )
-    if result.config.children is None:
-        raise GGException("unexpected")
-
     create_lines_data = data.create_lines_input()
     new_line: GraphicsObject = create_lines(**create_lines_data)
     result.config.children.append(new_line)
@@ -986,14 +987,14 @@ def tick_labels_from_coord(
     rotate: Optional[float] = None,
     margin: Optional[Coord1D] = None,
     align_override: Optional[TextAlignKind] = None,
-) -> list[tuple[GOTick, GOText]]:
+) -> List[Tuple[GOTick, GOText]]:
 
     if len(tick_pos) != len(tick_labels_list):
         raise GGException("Must have as many tick positions as labels")
 
     font = font or Font(size=8.0)
 
-    result = []
+    result: List[Tuple[GOTick, GOText]] = []
     for idx, pos in enumerate(tick_pos):
         at = axis_coord(pos, axis_kind, is_secondary)
         tick = init_tick(
@@ -1189,7 +1190,7 @@ def yticks(
 
 
 def calc_minor_ticks(ticks: List[GOTick], axis_kind: AxisKind) -> List[Coord1D]:
-    result = []
+    result: List[Coord1D] = []
     first = ticks[0]
 
     scale = first.scale_for_axis(axis_kind)
@@ -1209,7 +1210,11 @@ def calc_minor_ticks(ticks: List[GOTick], axis_kind: AxisKind) -> List[Coord1D]:
 
 
 def init_grid_lines(
-    x_ticks=None, y_ticks=None, major: bool = True, style=None, name="grid_lines"
+    x_ticks: Optional[List[GOTick]] = None,
+    y_ticks: Optional[List[GOTick]] = None,
+    major: bool = True,
+    style: Style = None,
+    name: str = "grid_lines",
 ) -> GOGrid:
     default_style = Style(
         size=1.0 if major else 0.3,
@@ -1224,19 +1229,23 @@ def init_grid_lines(
     # error_bar_kind=ErrorBarKind.LINES,
 
     style = style or default_style
-    x_ticks = x_ticks or []
-    y_ticks = y_ticks or []
+    x_ticks_: List[GOTick] = x_ticks or []
+    y_ticks_: List[GOTick] = y_ticks or []
+
+    new_x_ticks: List[Coord1D] = []
+    new_y_ticks: List[Coord1D] = []
 
     if major:
-        x_ticks = [obj.get_pos().x for obj in x_ticks]
-        y_ticks = [obj.get_pos().y for obj in y_ticks]
+        # TODO this type check can be fixed but lower priority
+        new_x_ticks = [obj.get_pos().x for obj in x_ticks_]  # type: ignore
+        new_y_ticks = [obj.get_pos().y for obj in y_ticks_]  # type: ignore
     else:
-        x_ticks = calc_minor_ticks(x_ticks, AxisKind.X)
-        y_ticks = calc_minor_ticks(y_ticks, AxisKind.Y)
+        new_x_ticks = calc_minor_ticks(x_ticks_, AxisKind.X)
+        new_y_ticks = calc_minor_ticks(y_ticks_, AxisKind.Y)
 
     return GOGrid(
         name=name,
         config=GraphicsObjectConfig(style=style),
-        x_pos=x_ticks,
-        y_pos=y_ticks,
+        x_pos=new_x_ticks,
+        y_pos=new_y_ticks,
     )

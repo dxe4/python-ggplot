@@ -4,7 +4,6 @@ from enum import Enum, auto
 from typing import Any, List, Optional, OrderedDict, Tuple, cast
 
 import pandas as pd
-from numpy import prod
 
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGException, Scale, Style

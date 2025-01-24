@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, cast
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, cast
 
 from python_ggplot.core.objects import (
     AxisKind,
@@ -239,7 +239,7 @@ class Coord1D(ABC):
         # only applicable to DataCoord
         pass
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: "Coord1D") -> bool:  # type: ignore
         if self.unit_type.is_length() and other.unit_type.is_length():
             return self.to_points().pos == other.to_points().pos
         else:
@@ -278,16 +278,16 @@ class Coord1D(ABC):
         # todo fix this, fine for now
         return None
 
-    def to_inches(self, length=None):
+    def to_inches(self, length: Optional[Quantity] = None) -> "Coord1D":
         return self.to(UnitType.INCH, length=length)
 
-    def to_centimeters(self, length=None):
+    def to_centimeters(self, length: Optional[Quantity] = None) -> "Coord1D":
         return self.to(UnitType.CENTIMETER, length=length)
 
-    def to_points(self, length=None):
+    def to_points(self, length: Optional[Quantity] = None) -> "Coord1D":
         return self.to(UnitType.POINT, length=length)
 
-    def to_relative(self, length=None) -> "Coord1D":
+    def to_relative(self, length: Optional[Quantity] = None) -> "Coord1D":
         return self.to(UnitType.RELATIVE, length=length)
 
     def to_via_points(
@@ -314,10 +314,13 @@ class Coord1D(ABC):
         return convert_coord(coord=self, to_type=to_kind, length=length)
 
     @staticmethod
-    def create(view: "ViewPort", at: float, axis_kind: "AxisKind", kind: Type):
-        return kind.create_default_coord_type(view, at, axis_kind, kind)
+    def create(
+        view: "ViewPort", at: float, axis_kind: "AxisKind", kind: "Coord1D"
+    ) -> "Coord1D":
+        unity_type = coord_type_from_class(kind)
+        return kind.create_default_coord_type(view, at, axis_kind, unity_type)
 
-    def equal_kind_and_scale(self, other: "Coord1D"):
+    def equal_kind_and_scale(self, other: "Coord1D") -> bool:
         if self.unit_type != other.unit_type:
             return False
 
@@ -329,10 +332,12 @@ class Coord1D(ABC):
         if {self.unit_type, other.unit_type} == {UnitType.DATA}:
             self_ = cast(DataCoordType, self)
             other_ = cast(DataCoordType, other)
+            # TODO why the pyright result of this is "unknown or bool?"
+            # and operator on 2 equal statements is unknown?
             return (
                 self_.data.scale == other_.data.scale
                 and self_.data.axis_kind == other_.data.axis_kind
-            )
+            )  # type: ignore
 
         if self.unit_type == UnitType.RELATIVE:
             return True
@@ -468,7 +473,7 @@ class CentimeterCoordType(Coord1D):
         # todo fix this, fine for now
         return self.data.length
 
-    def compare(self, other):
+    def compare(self, other: "CentimeterCoordType") -> bool:
         return self.data.length == other.data.length
 
 
@@ -504,7 +509,7 @@ class InchCoordType(Coord1D):
         # todo fix this, fine for now
         return self.data.length
 
-    def compare(self, other):
+    def compare(self, other: "InchCoordType") -> bool:
         return self.data.length == other.data.length
 
 
@@ -580,7 +585,7 @@ class StrWidthCoordType(Coord1D):
         text_extend = self.data.get_text_extend()
         return text_extend.width
 
-    def text_extend_dimension(self, text_extend):
+    def text_extend_dimension(self, text_extend: Any) -> float:
         return text_extend.width
 
 
@@ -610,7 +615,7 @@ class StrHeightCoordType(Coord1D):
         text_extend = self.data.get_text_extend()
         return text_extend.y_bearing + text_extend.y_advance
 
-    def text_extend_dimension(self, text_extend):
+    def text_extend_dimension(self, text_extend: Any) -> float:
         return text_extend.height
 
 
@@ -643,8 +648,8 @@ class Coord:
         y = self.y.to(UnitType.RELATIVE)
         return Coord(x=x, y=y)
 
-    def __eq__(self, other) -> bool:
-        return self.x == other.x and self.y == other.y
+    def __eq__(self, other) -> bool:  # type: ignore
+        return self.x == other.x and self.y == other.y  # type: ignore
 
     def embed_into(self, into: "ViewPort") -> "Coord":
         from python_ggplot.embed import coord_embed_into
@@ -660,7 +665,7 @@ class GridCoord:
     y: List[Coord]
 
 
-def coord_type_from_type(kind: UnitType):
+def coord_type_from_type(kind: UnitType) -> Coord1D:
     data = {
         UnitType.POINT: PointCoordType,
         UnitType.CENTIMETER: CentimeterCoordType,
@@ -668,6 +673,19 @@ def coord_type_from_type(kind: UnitType):
         UnitType.RELATIVE: RelativeCoordType,
         UnitType.DATA: DataCoordType,
         UnitType.STR_WIDTH: StrWidthCoordType,
-        UnitType.STR_HEIGHT: StrWidthCoordType,
+        UnitType.STR_HEIGHT: StrHeightCoordType,
     }
-    return data[kind]
+    return data[kind]  # type: ignore
+
+
+def coord_type_from_class(kind: Coord1D) -> UnitType:
+    data = {
+        PointCoordType: UnitType.POINT,
+        CentimeterCoordType: UnitType.CENTIMETER,
+        InchCoordType: UnitType.INCH,
+        RelativeCoordType: UnitType.RELATIVE,
+        DataCoordType: UnitType.DATA,
+        StrWidthCoordType: UnitType.STR_WIDTH,
+        StrHeightCoordType: UnitType.STR_HEIGHT,
+    }
+    return data[kind]  # type: ignore

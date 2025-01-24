@@ -2,10 +2,9 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
-from pandas._config.config import Options
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
-from python_ggplot.core.objects import AxisKind, GGException, Point, Style
+from python_ggplot.core.objects import AxisKind, GGException, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, RelativeUnit, UnitType
 from python_ggplot.datamancer_pandas_compat import GGValue, VNull
 from python_ggplot.gg_geom import FilledGeomDiscrete  # Geom,
@@ -20,13 +19,7 @@ from python_ggplot.gg_geom import (
 )
 from python_ggplot.gg_styles import GGStyle, merge_user_style
 from python_ggplot.gg_types import PREV_VALS_COL  # OutsideRangeKind,
-from python_ggplot.gg_types import (
-    BinPositionType,
-    DiscreteType,
-    OutsideRangeKind,
-    PositionType,
-    Theme,
-)
+from python_ggplot.gg_types import BinPositionType, DiscreteType, PositionType, Theme
 from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
     InitErrorBarData,
@@ -699,6 +692,7 @@ def convert_points_to_histogram(
         result.append(point)
 
     return result
+
 
 def draw_sub_df(
     view: ViewPort,

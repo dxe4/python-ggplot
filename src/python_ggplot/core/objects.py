@@ -216,7 +216,10 @@ class OptionError(Exception):
     pass
 
 
-def either(a, b):
+K = TypeVar("K")
+
+
+def either(a: Optional[K], b: Optional[K]):
     if a is not None:
         return a
     if b is not None:
@@ -229,8 +232,8 @@ class Scale:
     low: float
     high: float
 
-    def __eq__(self, o):
-        return self.low == o.low and self.high == o.high
+    def __eq__(self, o) -> bool:  # type: ignore
+        return self.low == o.low and self.high == o.high  # type: ignore
 
 
 class GGException(Exception):

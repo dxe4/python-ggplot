@@ -23,7 +23,7 @@ logging.basicConfig(
 )
 
 
-def get_logger(name):
+def get_logger(name: str):
     logger = logging.getLogger(name)
     logger.setLevel(LOG_LEVEL)
     return logger

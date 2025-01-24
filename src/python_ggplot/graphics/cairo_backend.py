@@ -1,8 +1,10 @@
+# type: ignore
+# maybe write cairo stubs manually if there is no better way?
+# the entire file is red from pyright
+# TODO research this later
 from math import pi
+from typing import TYPE_CHECKING, Any
 
-import cairo
-
-# TODO make mypy detect this imports
 from cairo import (
     FONT_SLANT_ITALIC,
     FONT_SLANT_NORMAL,
@@ -17,8 +19,13 @@ from cairo import (
     TextExtents,
 )
 
+from python_ggplot.core.objects import FileTypeKind, Font
 
-def to_cairo_font_slaint(c_font_slant):
+if TYPE_CHECKING:
+    from python_ggplot.core.objects import CFontSlant
+
+
+def to_cairo_font_slaint(c_font_slant: "CFontSlant"):
     from python_ggplot.core.objects import CFontSlant
 
     data = {
@@ -29,7 +36,7 @@ def to_cairo_font_slaint(c_font_slant):
     return data[c_font_slant]
 
 
-def to_cairo_font_weight(font):
+def to_cairo_font_weight(font: Font):
     data = {True: FontWeight.NORMAL, False: FontWeight.BOLD}
     return data[font.bold]
 
@@ -195,11 +202,11 @@ class CairoBackend:
             self.rotate(context, rotate_angle[0], rotate_angle[1])
 
     @classmethod
-    def get_text_extends_from_context(cls, context, text) -> TextExtents:
+    def get_text_extends_from_context(cls, context: Any, text: str) -> TextExtents:
         return context.text_extents(text)
 
     @classmethod
-    def get_text_extend(cls, text, font) -> TextExtents:
+    def get_text_extend(cls, text: str, font: Font) -> TextExtents:
         width = len(text) * font.size * 2.0
         height = font.size * 2.0
         surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
@@ -337,7 +344,7 @@ class CairoBackend:
         return bytearray(input_data)
 
 
-def init_image(filename, width, height, ftype):
+def init_image(filename: str, width: int, height: int, ftype: FileTypeKind):
     # todo fix this later
     from python_ggplot.core.objects import FileTypeKind, GGException, Image
 

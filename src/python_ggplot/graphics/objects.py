@@ -42,7 +42,7 @@ def mut_coord_to_abs_image(coord: Coord, img: "Image"):
 class GraphicsObjectConfig:
     children: List["GraphicsObject"] = field(default_factory=list)
     style: Optional[Style] = None
-    rotate_in_view: Optional[tuple[float, Point]] = None
+    rotate_in_view: Optional[tuple[float, Point[float]]] = None
     rotate: Optional[float] = None
 
 
@@ -296,7 +296,7 @@ class GOTick(GraphicsObject):
     def to_global_coords(self, img: Image):
         self.pos = mut_coord_to_abs_image(self.pos, img)
 
-    def _x_axis_start_stop(self, length: float) -> Tuple[Point, Point]:
+    def _x_axis_start_stop(self, length: float) -> Tuple[Point[float], Point[float]]:
         x = self.pos.point().x
         if self.kind == TickKind.ONE_SIDE:
             start = Point(x=x, y=self.pos.point().y + length)
@@ -310,7 +310,7 @@ class GOTick(GraphicsObject):
         else:
             raise GGException("unexpected type")
 
-    def _y_axis_start_stop(self, length: float) -> Tuple[Point, Point]:
+    def _y_axis_start_stop(self, length: float) -> Tuple[Point[float], Point[float]]:
         y = self.pos.point().y
         if self.kind == TickKind.ONE_SIDE:
             start = Point(x=self.pos.point().x, y=y)
@@ -324,7 +324,7 @@ class GOTick(GraphicsObject):
         else:
             raise GGException("unexpected type")
 
-    def get_start_stop_point(self, length: float) -> Tuple[Point, Point]:
+    def get_start_stop_point(self, length: float) -> Tuple[Point[float], Point[float]]:
         if self.axis == AxisKind.X:
             return self._x_axis_start_stop(length)
 
@@ -337,10 +337,11 @@ class GOTick(GraphicsObject):
         return self.pos
 
     def scale_for_axis(self, axis: AxisKind) -> Scale:
+        # TODO fix the type here, its not critical and it will work fine
         if axis == AxisKind.X:
-            return self.pos.x.get_scale()
+            return self.pos.x.get_scale()  # type: ignore
         if axis == AxisKind.Y:
-            return self.pos.y.get_scale()
+            return self.pos.y.get_scale()  # type: ignore
         raise GGException("unexpected")
 
     @property
@@ -451,9 +452,6 @@ class GOComposite(GraphicsObject):
         pass
 
     def update_view_scale(self, view: "ViewPort"):
-        if self.config.children is None:
-            return
-
         for go in self.config.children:
             go.update_view_scale(view)
 
