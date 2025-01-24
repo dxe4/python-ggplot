@@ -260,11 +260,17 @@ def init_rect_from_coord(
     return init_rect(view, origin, width, height, init_rect_input)
 
 
-def init_raster(view, origin, width, height, init_raster_data: InitRasterData):
+def init_raster(
+    view: ViewPort,
+    origin: Coord,
+    width: Quantity,
+    height: Quantity,
+    init_raster_data: InitRasterData,
+):
     return GORaster(
         name=init_raster_data.name or "raster",
         config=GraphicsObjectConfig(rotate=init_raster_data.rotate),
-        origin=origin.path_coord_view_port(view),
+        origin=path_coord_view_port(origin, view),
         pixel_width=width,
         pixel_height=height,
         block_x=init_raster_data.num_x,
@@ -582,7 +588,7 @@ def init_poly_line(
 
 def init_poly_line_from_points(
     view: ViewPort,
-    pos: List[Point],
+    pos: List[Point[float]],
     style: Optional[Style] = None,
     name: Optional[str] = None,
 ) -> GraphicsObject:

@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, OrderedDict, Tuple, cast, Any
+from typing import Any, List, Optional, OrderedDict, Tuple, cast
 
 import pandas as pd
+from numpy import prod
 
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGException, Scale, Style
@@ -19,6 +20,7 @@ from python_ggplot.gg_types import (
     MainAddScales,
     PositionType,
     StatKind,
+    StatType,
 )
 from python_ggplot.graphics.initialize import (
     InitRectInput,
@@ -393,11 +395,11 @@ class FilledGeom:
         return self.x_discrete_kind.discrete_type == DiscreteType.DISCRETE
 
     @property
-    def discrete_type_y(self):
+    def discrete_type_y(self) -> DiscreteType:
         return self.y_discrete_kind.discrete_type
 
     @property
-    def discrete_type_x(self):
+    def discrete_type_x(self) -> DiscreteType:
         return self.x_discrete_kind.discrete_type
 
     @property
@@ -414,8 +416,20 @@ class FilledGeom:
     def get_y_label_seq(self) -> List[GGValue]:
         return self.y_discrete_kind.get_label_seq()
 
+    @property
     def geom_type(self) -> GeomType:
         return self.geom.kind.geom_type
+
+    @property
+    def stat_type(self) -> StatType:
+        return self.geom.stat_kind.stat_type
+
+    def get_histogram_draw_style(self) -> HistogramDrawingStyle:
+        # todo this will be fixed eventually just provide convinience for now
+        if not self.geom_type == GeomType.HISTOGRAM:
+            raise GGException("attempted to get histogram on non histogram type")
+        temp = cast(FilledGeomHistogram, self)
+        return temp.histogram_drawing_style
 
 
 @dataclass

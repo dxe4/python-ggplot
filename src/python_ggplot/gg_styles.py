@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Tuple, cast
 
 import pandas as pd
 
@@ -16,6 +16,11 @@ from python_ggplot.core.objects import (
     Style,
 )
 from python_ggplot.datamancer_pandas_compat import GGValue, VNull, VString
+
+# TODO this will probably cause circular imports
+# keep for now, we think of the project structure a bit more
+# i have a few ideas for the structure but will be easier to connect the dots first
+from python_ggplot.gg_geom import DiscreteType, FilledGeom, GeomType, GGStyle, StatType
 from python_ggplot.gg_scales import (
     ColorScale,
     GGScale,
@@ -23,11 +28,6 @@ from python_ggplot.gg_scales import (
     ScaleType,
     ScaleValue,
 )
-
-# TODO this will probably cause circular imports
-# keep for now, we think of the project structure a bit more
-# i have a few ideas for the structure but will be easier to connect the dots first
-from python_ggplot.gg_types import DiscreteType, FilledGeom, GeomType, GGStyle, StatType
 
 # Define color constants
 STAT_SMOOTH_COLOR: Color = Color(
@@ -138,10 +138,10 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         raise GGException("User style not provided")
 
     u_style = fg.geom.user_style
-    geom_type = fg.geom.kind.geom_type
+    geom_type: GeomType = fg.geom_type
     stat_type = fg.geom.stat_kind.stat_type
 
-    style_dict = {}
+    style_dict: Dict[Any, Any] = {}
     for field in [
         "color",
         "size",
@@ -228,10 +228,8 @@ def apply_style(
                 discrete_scale = cast(GGScaleDiscrete, scale.discrete_kind)
 
                 if not is_col:
-                    # Constant value
                     style_val = discrete_scale.value_map[scale.col.evalueate()]
                 elif str(col) == str(scale.col):
-                    # Handle column value
                     if (
                         isinstance(val, VNull)
                         and VString(data=str(col)) in discrete_scale.value_map

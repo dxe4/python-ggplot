@@ -80,7 +80,7 @@ class GraphicsObject(ABC):
         pass
 
     @abstractmethod
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         pass
 
     def update_view_scale(self, view: "ViewPort"):
@@ -128,7 +128,7 @@ class GOAxis(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.AXIS
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
 
@@ -147,7 +147,7 @@ class GOLine(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.LINE
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
 
@@ -169,7 +169,7 @@ class GOText(GraphicsObject):
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         return self.data.pos
 
     def update_view_scale(self, view: "ViewPort"):
@@ -187,7 +187,7 @@ class GOLabel(GraphicsObject):
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         return self.data.pos
 
     def update_view_scale(self, view: "ViewPort"):
@@ -205,7 +205,7 @@ class GOTickLabel(GraphicsObject):
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         return self.data.pos
 
     def update_view_scale(self, view: "ViewPort"):
@@ -230,7 +230,7 @@ class GORect(GraphicsObject):
     def update_view_scale(self, view: "ViewPort"):
         view.update_scale(self.origin)
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
     @property
@@ -277,7 +277,7 @@ class GOGrid(GraphicsObject):
         for y_pos in self.y_pos:
             view.update_scale_1d(y_pos)
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
     @property
@@ -333,7 +333,7 @@ class GOTick(GraphicsObject):
         else:
             raise GGException("unexpected")
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         return self.pos
 
     def scale_for_axis(self, axis: AxisKind) -> Scale:
@@ -358,7 +358,7 @@ class GOPoint(GraphicsObject):
     def to_global_coords(self, img: Image):
         self.pos = mut_coord_to_abs_image(self.pos, img)
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         return self.pos
 
     @property
@@ -387,7 +387,7 @@ class GOManyPoints(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.MANY_POINTS_DATA
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
 
@@ -406,7 +406,7 @@ class GOPolyLine(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.POLYLINE_DATA
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
 
@@ -435,7 +435,7 @@ class GORaster(GraphicsObject):
     def go_type(self) -> GOType:
         return GOType.RASTER_DATA
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
 
@@ -443,7 +443,7 @@ class GORaster(GraphicsObject):
 class GOComposite(GraphicsObject):
     kind: CompositeKind
 
-    def get_pos(self) -> 'Coord':
+    def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
     def to_global_coords(self, img: Image):

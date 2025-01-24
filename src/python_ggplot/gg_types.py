@@ -228,8 +228,8 @@ class GGStyle:
 @dataclass
 class Theme:
     base_font_size: Optional[float] = None
-    sub_title_font: Optional[dict] = None
-    tick_label_font: Optional[dict] = None
+    sub_title_font: Optional[Dict[Any, Any]] = None
+    tick_label_font: Optional[Dict[Any, Any]] = None
     hide_ticks: Optional[bool] = None
     hide_tick_labels: Optional[bool] = None
     hide_labels: Optional[bool] = None
@@ -247,7 +247,7 @@ class Theme:
     y_ticks_rotate: Optional[float] = None
     y_ticks_text_align: Optional[str] = None
     y_tick_label_margin: Optional[float] = None
-    legend_position: Optional[tuple] = None
+    legend_position: Optional[Tuple[float]] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
     canvas_color: Optional[str] = None

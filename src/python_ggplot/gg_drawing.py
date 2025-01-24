@@ -1,33 +1,31 @@
-from ast import Str
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
+from pandas._config.config import Options
 
-from python_ggplot.core.coord.objects import (
-    Coord,
-    Coord1D,
-    RelativeCoordType,
-)
-from python_ggplot.core.objects import AxisKind, GGException, Style
+from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
+from python_ggplot.core.objects import AxisKind, GGException, Point, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, RelativeUnit, UnitType
 from python_ggplot.datamancer_pandas_compat import GGValue, VNull
+from python_ggplot.gg_geom import FilledGeomDiscrete  # Geom,
 from python_ggplot.gg_geom import (
     FilledGeom,
-    FilledGeomDiscrete,
     FilledGeomErrorBar,
+    FilledGeomHistogram,
     FilledGeomRaster,
+    FilledGeomTitle,
     GeomType,
     HistogramDrawingStyle,
-    FilledGeomTitle,
 )
-from python_ggplot.gg_styles import GGStyle
-from python_ggplot.gg_types import BinPositionType  # OutsideRangeKind,
+from python_ggplot.gg_styles import GGStyle, merge_user_style
+from python_ggplot.gg_types import PREV_VALS_COL  # OutsideRangeKind,
 from python_ggplot.gg_types import (
-    PREV_VALS_COL,
+    BinPositionType,
     DiscreteType,
+    OutsideRangeKind,
     PositionType,
-    Theme
+    Theme,
 )
 from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
@@ -35,6 +33,7 @@ from python_ggplot.graphics.initialize import (
     InitRasterData,
     init_coord_1d,
     init_error_bar,
+    init_poly_line_from_points,
     init_raster,
 )
 from python_ggplot.graphics.objects import GOComposite
@@ -67,14 +66,18 @@ def get_xy(x_t: Any, y_t: Any, i: Any):
 
 
 def read_or_calc_bin_width(
-    df: pd.DataFrame, idx: int, data_col: str, dc_kind: DiscreteType, col:str="binWidths"
+    df: pd.DataFrame,
+    idx: int,
+    data_col: str,
+    dc_kind: DiscreteType,
+    col: str = "binWidths",
 ) -> float:
     # TODO clean up later
     if dc_kind == DiscreteType.CONTINUOUS:
         if col in df.columns:
             if pd.isna(df.iloc[idx][col]):  # type: ignore
                 return 0.0
-            return df.iloc[idx][col] # type: ignore
+            return df.iloc[idx][col]  # type: ignore
         elif idx < len(df) - 1:
             high_val = float(df.iloc[idx + 1][data_col])  # tpye: ignore
             if pd.isna(high_val):
@@ -82,7 +85,7 @@ def read_or_calc_bin_width(
                     raise GGException("expected idx> 0")
                 return df.iloc[idx][data_col] - df.iloc[idx - 1][data_col]  # type: ignore
             else:
-                return high_val - df.iloc[idx][data_col] # type: ignore
+                return high_val - df.iloc[idx][data_col]  # type: ignore
     elif dc_kind == DiscreteType.DISCRETE:
         return 0.8
 
@@ -105,24 +108,29 @@ def read_error_data(
     result = {"x_min": None, "x_max": None, "y_min": None, "y_max": None}
 
     if fg.x_min is not None:
-        result["x_min"] = float(df[fg.x_min].iloc[idx]) # type: ignore
+        result["x_min"] = float(df[fg.x_min].iloc[idx])  # type: ignore
     if fg.x_max is not None:
-        result["x_max"] = float(df[fg.x_max].iloc[idx]) # type: ignore
+        result["x_max"] = float(df[fg.x_max].iloc[idx])  # type: ignore
     if fg.y_min is not None:
-        result["y_min"] = float(df[fg.y_min].iloc[idx]) # type: ignore
+        result["y_min"] = float(df[fg.y_min].iloc[idx])  # type: ignore
     if fg.y_max is not None:
-        result["y_max"] = float(df[fg.y_max].iloc[idx]) # type: ignore
+        result["y_max"] = float(df[fg.y_max].iloc[idx])  # type: ignore
 
     return result["x_min"], result["x_max"], result["y_min"], result["y_max"]
 
 
-def read_width_height(df: pd.DataFrame, idx: int, fg: FilledGeom, geom: Union[FilledGeomTitle, FilledGeomRaster]) -> Tuple[float, float]:
-    '''
+def read_width_height(
+    df: pd.DataFrame,
+    idx: int,
+    fg: FilledGeom,
+    geom: Union[FilledGeomTitle, FilledGeomRaster],
+) -> Tuple[float, float]:
+    """
     Todo high priority
         geom: Union[FilledGeomTitle, FilledGeomRaster] is a temp fix
         i think we need filled_geom.geom = FilledGeomTitle|FilledGeomRaster
         this fucntionality is mostly done, but needs some rewiring
-    '''
+    """
     width = 1.0
     height = 1.0
 
@@ -132,7 +140,7 @@ def read_width_height(df: pd.DataFrame, idx: int, fg: FilledGeom, geom: Union[Fi
         width = float(df[geom.data.width].iloc[idx])  # type: ignore
 
     if geom.data.height is not None:
-        height = float(df[geom.data.height].iloc[idx]) # type: ignore
+        height = float(df[geom.data.height].iloc[idx])  # type: ignore
 
     return width, height
 
@@ -261,7 +269,7 @@ def get_draw_pos_impl(
     ax_kind: AxisKind,
 ) -> Coord1D:
 
-    fg_geom_type = fg.geom_type()
+    fg_geom_type = fg.geom_type
     if discrete_type == DiscreteType.DISCRETE:
         if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT}:
             return get_discrete_point()
@@ -298,11 +306,11 @@ def get_draw_pos(
     bin_widths: Tuple[float, float],
     df: pd.DataFrame,
     idx: int,
-):
+) -> Coord:
 
     coords_flipped = False
 
-    geom_type = fg.geom_type()
+    geom_type = fg.geom_type
     position = fg.geom.position
     histogram_drawing_style = fg.geom.histogram_drawing_style
 
@@ -317,7 +325,7 @@ def get_draw_pos(
             else:
                 mp[0] = 0.0
 
-        result_x = get_draw_pos_impl(
+        result_x: Coord1D = get_draw_pos_impl(
             view,
             fg,
             mp[0],
@@ -325,7 +333,7 @@ def get_draw_pos(
             fg.x_discrete_kind.discrete_type,
             AxisKind.X,
         )
-        result_y = get_draw_pos_impl(
+        result_y: Coord1D = get_draw_pos_impl(
             view,
             fg,
             mp[1],
@@ -333,6 +341,7 @@ def get_draw_pos(
             fg.y_discrete_kind.discrete_type,
             AxisKind.Y,
         )
+        return Coord(x=result_x, y=result_y)
 
     elif position == PositionType.STACK:
         if not (
@@ -462,6 +471,7 @@ def draw_raster(
     c_map = fg_raster.data.color_scale
 
     def draw_callback():
+        # TODO this needs fixing, fine for now
         result = np.zeros(len(df), dtype=np.uint32)
         x_t = df[fg.x_col].to_numpy(dtype=float)
         y_t = df[fg.y_col].to_numpy(dtype=float)
@@ -501,7 +511,7 @@ def draw_raster(
     view.add_obj(raster)
 
 
-def draw(
+def gg_draw(
     view: ViewPort,
     fg: FilledGeom,
     pos: Coord,
@@ -525,12 +535,10 @@ def draw(
 
 
 def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, float]:
-    x_width = 0.0
-    y_width = 0.0
+    x_width: float = 0.0
+    y_width: float = 0.0
     coord_flipped = False
-    # geom_type = fg.geom.
-    # .geom_type()
-    geom_type = fg.geom_type()
+    geom_type: GeomType = fg.geom_type
 
     if geom_type in [
         GeomType.HISTOGRAM,
@@ -542,9 +550,13 @@ def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, 
         GeomType.TEXT,
     ]:
         if not coord_flipped:
-            x_width = read_or_calc_bin_width(df, idx, fg.x_col, dc_kind=fg.discrete_type_x)
+            x_width = read_or_calc_bin_width(
+                df, idx, fg.x_col, dc_kind=fg.discrete_type_x
+            )
         else:
-            y_width = read_or_calc_bin_width(df, idx, fg.y_col, dc_kind=fg.discrete_type_y)
+            y_width = read_or_calc_bin_width(
+                df, idx, fg.y_col, dc_kind=fg.discrete_type_y
+            )
 
     elif geom_type in [GeomType.TILE, GeomType.RASTER]:
         # TODO this needs to pass the tile/raster data
@@ -553,7 +565,10 @@ def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, 
 
     return x_width, y_width
 
-def move_bin_positions(point: Tuple[float, float], bin_widths: tuple[float, float], fg: FilledGeom):
+
+def move_bin_positions(
+    point: Tuple[float, float], bin_widths: tuple[float, float], fg: FilledGeom
+):
     if fg.geom.bin_position is None:
         raise GGException("expected a bin position")
 
@@ -572,7 +587,237 @@ def move_bin_positions(point: Tuple[float, float], bin_widths: tuple[float, floa
             y = move_bin_position(y, fg.geom.bin_position, bin_width_y)
         return x, y
 
-def get_view(view_map: Dict[Any, Any], point: Tuple[float, float], fg: FilledGeom):
+
+def get_view(
+    view_map: Dict[Any, Any], point: Tuple[float, float], fg: FilledGeom
+) -> int:
     px = point[0] if fg.is_discrete_x() else None
     py = point[1] if fg.is_discrete_y() else None
     return view_map[(px, py)]
+
+
+def extend_line_to_axis(
+    line_points: List[Coord],
+    ax_kind: AxisKind,
+    df: pd.DataFrame,
+    filled_geom: FilledGeom,
+) -> List[Coord]:
+    """
+    TODO medium/low priority clean up this logic, after geom re structrure is done
+    """
+    l_start: Coord = line_points[0]
+    l_end: Coord = line_points[-1]
+
+    geom_type: GeomType = filled_geom.geom_type
+    discrete_type_x: DiscreteType = filled_geom.discrete_type_x
+    discrete_type_y: DiscreteType = filled_geom.discrete_type_y
+
+    if ax_kind == AxisKind.X:
+        l_start.y.pos = 0.0
+        if geom_type == GeomType.FREQ_POLY:
+            bin_width = read_or_calc_bin_width(
+                df, 0, filled_geom.x_col, dc_kind=discrete_type_x
+            )
+            l_start.x.pos = l_start.x.pos - bin_width
+
+        line_points.insert(0, l_start)
+
+        l_end.y.pos = 0.0
+        if geom_type == GeomType.FREQ_POLY:
+            bin_width = read_or_calc_bin_width(
+                df, len(df) - 2, filled_geom.x_col, dc_kind=discrete_type_x
+            )
+            l_end.x.pos = l_end.x.pos + bin_width
+
+        line_points.append(l_end)
+
+    elif ax_kind == AxisKind.Y:
+        l_start.x.pos = 0.0
+        if geom_type == GeomType.FREQ_POLY:
+            bin_width = read_or_calc_bin_width(
+                df, 0, filled_geom.y_col, dc_kind=discrete_type_y
+            )
+            l_start.y.pos = l_start.y.pos - bin_width
+
+        line_points.insert(0, l_start)
+
+        l_end.x.pos = 0.0
+        if geom_type == GeomType.FREQ_POLY:
+            bin_width = read_or_calc_bin_width(
+                df, len(df) - 2, filled_geom.y_col, dc_kind=discrete_type_y
+            )
+            l_end.y.pos = l_end.y.pos + bin_width
+
+        line_points.append(l_end)
+
+    return line_points
+
+
+def convert_points_to_histogram(
+    df: pd.DataFrame, filled_geom: FilledGeom, line_points: List[Coord]
+) -> List[Coord]:
+    """
+    TODO sanity check / unit test:
+        is it safe to mutate the points or do we need to clone them?
+        unclear at this stage
+    """
+    result: List[Coord] = []
+    point = line_points[0]
+    cur_x: float = point.x.pos
+    cur_y: float = 0.0
+
+    discrete_type_x: DiscreteType = filled_geom.discrete_type_x
+
+    bin_width = read_or_calc_bin_width(
+        df, 0, filled_geom.x_col, dc_kind=discrete_type_x
+    )
+
+    point.x.pos = cur_x
+    point.y.pos = cur_y
+    result.append(point)
+
+    cur_y = line_points[0].y.pos
+    point.y.pos = cur_y
+    result.append(point)
+
+    cur_x = cur_x + bin_width
+    point.x.pos = cur_x
+    result.append(point)
+
+    for idx in range(1, len(line_points)):
+        bin_width = read_or_calc_bin_width(
+            df, 0, filled_geom.x_col, dc_kind=discrete_type_x
+        )
+        cur_p = line_points[idx]
+
+        cur_y = cur_p.y.pos
+        point.y.pos = cur_y
+        result.append(point)
+
+        cur_x = cur_x + bin_width
+        point.x.pos = cur_x
+        result.append(point)
+
+    return result
+
+def draw_sub_df(
+    view: ViewPort,
+    fg: FilledGeom,
+    view_map: Dict[Tuple[Any, Any], int],
+    df: pd.DataFrame,
+    styles: List[GGStyle],
+    theme: Theme,
+) -> None:
+    """
+    TODO restructure this down the line
+    """
+    # this was used in get_x_y, we may need that soon
+    # x_outside_range = theme.x_outside_range or OutsideRangeKind.CLIP
+    # y_outside_range = theme.y_outside_range or OutsideRangeKind.CLIP
+    bin_widths: Tuple[float, float] = tuple()
+    geom_type = fg.geom_type
+
+    style = merge_user_style(styles[0], fg)
+    loc_view: ViewPort = view
+    view_idx = 0
+
+    need_bin_width = geom_type in {
+        GeomType.BAR,
+        GeomType.HISTOGRAM,
+        GeomType.TILE,
+        GeomType.RASTER,
+    } or fg.geom.bin_position in {BinPositionType.CENTER, BinPositionType.RIGHT}
+
+    line_points: List[Coord] = []
+    if geom_type not in {GeomType.RASTER}:
+        x_tensor = df[fg.x_col]  # type: ignore
+        y_tensor = df[fg.y_col]  # type: ignore
+
+        last_element: int = len(df) - 2
+        if fg.geom.bin_position == BinPositionType.NONE:
+            last_element = len(df) - 1
+
+        for i in range(last_element + 1):
+            if len(styles) > 1:
+                style = merge_user_style(styles[i], fg)
+
+            # TODO high priority: double check this logic
+            # the origin get_xy has a lot of logic, that seemed redundant
+            # this has a high chance of introducing a bug
+            point = get_xy(
+                x_tensor,
+                y_tensor,
+                i,
+            )
+
+            if view_map:
+                view_idx = get_view(view_map, point, fg)
+                loc_view = view.children[view_idx]
+
+            if need_bin_width:
+                bin_widths = calc_bin_widths(df, i, fg)
+                move_bin_positions(point, bin_widths, fg)
+
+            pos = get_draw_pos(loc_view, view_idx, fg, point, bin_widths, df, i)
+
+            if fg.geom.position in {PositionType.IDENTITY, PositionType.STACK}:
+                if geom_type in {
+                    GeomType.LINE,
+                    GeomType.FREQ_POLY,
+                    GeomType.RASTER,
+                }:
+                    line_points.append(pos)
+                elif geom_type == GeomType.HISTOGRAM:
+                    temp = cast(FilledGeomHistogram, fg)
+                    if temp.histogram_drawing_style == HistogramDrawingStyle.OUTLINE:
+                        line_points.append(pos)
+                    else:
+                        if pos is None:
+                            raise GGException("pos shouldnt be none")
+                        gg_draw(loc_view, fg, pos, point[1], bin_widths, df, i, style)
+                else:
+                    if pos is None:
+                        raise GGException("pos shouldnt be none")
+                    gg_draw(loc_view, fg, pos, point[1], bin_widths, df, i, style)
+
+            if view_map:
+                view[view_idx] = loc_view
+
+    if not view_map:
+        view = loc_view
+
+    if geom_type == GeomType.HISTOGRAM and fg.get_histogram_draw_style():
+        return
+    elif geom_type == GeomType.HISTOGRAM:
+        line_points = convert_points_to_histogram(df, fg, line_points)
+
+    if geom_type in {GeomType.LINE, GeomType.FREQ_POLY, GeomType.HISTOGRAM}:
+        if len(styles) == 1:
+            style = merge_user_style(styles[0], fg)
+            if style.fill_color is None:
+                raise GGException("expected fill color")
+            if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
+                line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+            poly_line = init_poly_line_from_points(
+                view, [i.point() for i in line_points], style
+            )
+            view.add_obj(poly_line)
+        else:
+            # Since we don't support gradients on lines, we just draw from
+            # (x1/y1) to (x2/y2) with the style of (x1/x2)
+            print("WARNING: using non-gradient drawing of line with multiple colors!")
+            if style.fill_color is None:
+                raise GGException("expected fill color")
+
+            if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
+                line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+            for i in range(len(styles) - 1):
+                style = merge_user_style(styles[i], fg)
+                poly_line = init_poly_line_from_points(
+                    view, [line_points[i].point(), line_points[i + 1].point()], style
+                )
+                view.add_obj(poly_line)
+    elif geom_type == GeomType.RASTER:
+        # TODO: currently ignores the line_points completely
+        # TODO high priority fix GEOM object structure
+        draw_raster(view, fg, cast(FilledGeomRaster, fg), df)

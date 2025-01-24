@@ -280,6 +280,6 @@ class FormulaNode:
         """
         return True
 
-    def evaluate(self, df: pd.DataFrame):
+    def evaluate(self, df: pd.DataFrame) -> Any:
         # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2529
         return self.kind.evaluate(df)

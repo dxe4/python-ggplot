@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, List, Optional, Type, cast, Tuple
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, cast
 
 from python_ggplot.core.objects import (
     AxisKind,
@@ -33,7 +33,9 @@ def coord_type_from_unit_type(unit_type: UnitType):
     return lookup[unit_type]
 
 
-def default_coord_view_location(view: "ViewPort", kind: AxisKind) -> Tuple[Quantity, Optional[Scale]]:
+def default_coord_view_location(
+    view: "ViewPort", kind: AxisKind
+) -> Tuple[Quantity, Optional[Scale]]:
     length_data = {
         AxisKind.X: (view.point_width(), view.x_scale),
         AxisKind.Y: (view.point_height(), view.y_scale),
@@ -41,7 +43,9 @@ def default_coord_view_location(view: "ViewPort", kind: AxisKind) -> Tuple[Quant
     return length_data[kind]
 
 
-def default_length_and_scale(view: "ViewPort", kind: AxisKind) -> Tuple[Quantity, Optional[Scale]]:
+def default_length_and_scale(
+    view: "ViewPort", kind: AxisKind
+) -> Tuple[Quantity, Optional[Scale]]:
     length, scale = default_coord_view_location(view, kind)
     return length, scale
 
@@ -263,7 +267,7 @@ class Coord1D(ABC):
         pass
 
     @abstractmethod
-    def from_length(self, length: "LengthCoord") -> 'PointCoordType':
+    def from_length(self, length: "LengthCoord") -> "PointCoordType":
         pass
 
     def get_length(self) -> Optional[Quantity]:
@@ -382,7 +386,7 @@ class RelativeCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         raise GGException("not implemented")
 
-    def from_length(self, length: "LengthCoord") -> 'PointCoordType':
+    def from_length(self, length: "LengthCoord") -> "PointCoordType":
         raise GGException("not implemented")
 
     @staticmethod
@@ -424,7 +428,7 @@ class PointCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
-    def from_length(self, length: LengthCoord) -> 'PointCoordType':
+    def from_length(self, length: LengthCoord) -> "PointCoordType":
         return PointCoordType(self.pos, length)
 
     def get_length(self) -> Optional[Quantity]:
@@ -457,7 +461,7 @@ class CentimeterCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
-    def from_length(self, length: LengthCoord) -> 'PointCoordType':
+    def from_length(self, length: LengthCoord) -> "PointCoordType":
         return PointCoordType(self.pos, length)
 
     def get_length(self) -> Optional[Quantity]:
@@ -493,7 +497,7 @@ class InchCoordType(Coord1D):
     def update_from_view(self, view: "ViewPort", axis_kind: AxisKind):
         self.data.length = view.length_from_axis(axis_kind)
 
-    def from_length(self, length: LengthCoord) -> 'PointCoordType':
+    def from_length(self, length: LengthCoord) -> "PointCoordType":
         return PointCoordType(self.pos, length)
 
     def get_length(self) -> Optional[Quantity]:
@@ -508,7 +512,7 @@ class InchCoordType(Coord1D):
 class DataCoordType(Coord1D):
     data: DataCoord
 
-    def from_length(self, length: "LengthCoord") -> 'PointCoordType':
+    def from_length(self, length: "LengthCoord") -> "PointCoordType":
         raise GGException("not implemented")
 
     @property
