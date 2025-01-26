@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from ast import Try
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
@@ -49,7 +50,7 @@ class StatType(Enum):
     SMOOTH = auto()
 
 
-@dataclass
+@dataclass(frozen=True)
 class StatKind(ABC):
 
     @property
@@ -251,10 +252,10 @@ class Theme:
     legend_position: Optional[Tuple[float]] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
-    canvas_color: Optional[str] = None
-    plot_background_color: Optional[str] = None
+    canvas_color: Optional[Color] = None
+    plot_background_color: Optional[Color] = None
     grid_lines: Optional[bool] = None
-    grid_line_color: Optional[str] = None
+    grid_line_color: Optional[Color] = None
     grid_line_width: Optional[float] = None
     minor_grid_lines: Optional[bool] = None
     minor_grid_line_width: Optional[float] = None

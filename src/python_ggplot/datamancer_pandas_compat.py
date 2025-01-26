@@ -264,6 +264,7 @@ class NoneFormula(Formula):
 
 class FormulaNode:
     kind: Formula
+    name: str = ""
 
     def is_column(self):
         """

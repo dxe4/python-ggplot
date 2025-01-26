@@ -433,8 +433,8 @@ class FilledGeom:
 
 @dataclass
 class FilledScales:
-    x_scale: GGScale
-    y_scale: GGScale
+    x_scale: Scale
+    y_scale: Scale
     reversed_x: bool
     reversed_y: bool
     discrete_x: bool
