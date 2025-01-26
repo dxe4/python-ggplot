@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
+from gg_ticks import GGException
+
 
 @dataclass
 class GGValue:
@@ -284,3 +286,7 @@ class FormulaNode:
     def evaluate(self, df: pd.DataFrame) -> Any:
         # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2529
         return self.kind.evaluate(df)
+
+    def __call__(self) -> float:
+        # TODO this is used for transformation
+        raise GGException()

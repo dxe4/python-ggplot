@@ -7,6 +7,7 @@ from typing import Any, Generator, List, Optional, OrderedDict, Set, Tuple
 import numpy as np
 import pandas as pd
 
+from gg_utils import Callable
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -68,8 +69,7 @@ class ColorScale:
     colors: List[int]
 
 
-class ScaleTransform:
-    pass
+ScaleTransform = Callable[[float], float]
 
 
 class ScaleType(Enum):

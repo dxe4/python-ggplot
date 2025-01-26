@@ -15,6 +15,7 @@ from python_ggplot.core.objects import (
     MarkerKind,
     Scale,
     TexOptions,
+    TextAlignKind,
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.datamancer_pandas_compat import FormulaNode, GGValue
@@ -229,9 +230,12 @@ class GGStyle:
 
 @dataclass
 class Theme:
+    x_margin_range: Scale
+    y_margin_range: Scale
     base_font_size: Optional[float] = None
     sub_title_font: Optional[Dict[Any, Any]] = None
-    tick_label_font: Optional[Dict[Any, Any]] = None
+    # tick_label_font: Optional[Dict[Any, Any]] = None
+    tick_label_font: Optional[Font] = None
     hide_ticks: Optional[bool] = None
     hide_tick_labels: Optional[bool] = None
     hide_labels: Optional[bool] = None
@@ -244,11 +248,11 @@ class Theme:
     y_label_margin: Optional[float] = None
     y_label_secondary: Optional[str] = None
     x_ticks_rotate: Optional[float] = None
-    x_ticks_text_align: Optional[str] = None
+    x_ticks_text_align: Optional[TextAlignKind] = None
     x_tick_label_margin: Optional[float] = None
     y_ticks_rotate: Optional[float] = None
-    y_ticks_text_align: Optional[str] = None
-    y_tick_label_margin: Optional[float] = None
+    y_ticks_text_align: Optional[TextAlignKind] = None
+    y_tick_label_margin: Optional[str] = None
     legend_position: Optional[Tuple[float]] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
@@ -264,9 +268,7 @@ class Theme:
     x_range: Optional[Scale] = None
     y_range: Optional[Scale] = None
     x_margin: Optional[float] = None
-    x_margin_range: Optional[Scale] = None
     y_margin: Optional[float] = None
-    y_margin_range: Optional[Scale] = None
     x_outside_range: Optional[OutsideRangeKind] = None
     y_outside_range: Optional[OutsideRangeKind] = None
     plot_margin_left: Optional[float] = None
