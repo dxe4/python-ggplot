@@ -316,6 +316,12 @@ class GGScale:
     breaks: Optional[List[float]] = None
     name: str = ""
 
+    def __eq__(self, other: "GGScale") -> bool:
+        return (
+            self.discrete_kind == other.discrete_kind
+            and self.col.name == other.col.name
+        )
+
 
 class ScaleFreeKind(Enum):
     FIXED = auto()
