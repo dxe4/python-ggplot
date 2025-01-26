@@ -1,8 +1,11 @@
 import typing
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import List, Optional, OrderedDict, Set, Tuple
+from typing import Any, Generator, List, Optional, OrderedDict, Set, Tuple
+
+import numpy as np
+import pandas as pd
 
 from python_ggplot.core.objects import (
     AxisKind,
@@ -13,7 +16,15 @@ from python_ggplot.core.objects import (
     MarkerKind,
     Scale,
 )
-from python_ggplot.datamancer_pandas_compat import FormulaNode, GGValue
+from python_ggplot.datamancer_pandas_compat import (
+    ColumnType,
+    FormulaNode,
+    GGValue,
+    VNull,
+    pandas_series_to_column,
+)
+from python_ggplot.gg_drawing import gg_draw
+from python_ggplot.gg_geom import FilledGeom, Geom
 from python_ggplot.gg_types import (
     ContinuousFormat,
     DataKind,
@@ -21,11 +32,18 @@ from python_ggplot.gg_types import (
     DiscreteFormat,
     DiscreteKind,
     DiscreteType,
+    GgPlot,
     SecondaryAxis,
 )
 
 if typing.TYPE_CHECKING:
+    from python_ggplot.gg_geom import FilledScales
     from python_ggplot.gg_types import GGStyle
+
+
+# TODO port those 2 macros, wont port until they are needed
+# macro genGetOptScale
+# macro genGetScale
 
 
 @dataclass
@@ -83,8 +101,8 @@ class LinearAndTransformScaleData:
     axis_kind: AxisKind
     reversed: bool
     transform: ScaleTransform
-    secondary_axis: Optional["SecondaryAxis"]
-    date_scale: Optional["DateScale"]
+    secondary_axis: Optional["SecondaryAxis"] = None
+    date_scale: Optional["DateScale"] = None
 
 
 @dataclass
@@ -280,7 +298,7 @@ class GGScaleContinuous(GGScaleDiscreteKind):
     def discrete_type(self) -> DiscreteType:
         return DiscreteType.CONTINUOUS
 
-    def map_data(self, df) -> List["ScaleValue"]:
+    def map_data(self) -> List["ScaleValue"]:
         # TODO does this need to be a param or static func is fune?
         raise GGException("todo")
 
@@ -288,15 +306,15 @@ class GGScaleContinuous(GGScaleDiscreteKind):
 @dataclass
 class GGScale:
     col: FormulaNode
-    name: str
     ids: Set[int]
     value_kind: GGValue
     has_discreteness: bool
-    num_ticks: Optional[int]
-    breaks: Optional[List[float]]
     data_kind: DataKind
     scale_kind: ScaleKind
     discrete_kind: GGScaleDiscreteKind
+    num_ticks: Optional[int] = None
+    breaks: Optional[List[float]] = None
+    name: str = ""
 
 
 class ScaleFreeKind(Enum):
@@ -304,3 +322,150 @@ class ScaleFreeKind(Enum):
     FREE_X = auto()
     FREE_Y = auto()
     FREE = auto()
+
+
+def scale_from_data(
+    column: pd.Series[Any], scale: GGScale, ignore_inf: bool = True
+) -> Scale:
+    if column.len == 0:
+        return Scale(low=0.0, high=0.0)
+
+    column_type = pandas_series_to_column(column)
+
+    if column_type in [ColumnType.FLOAT, ColumnType.INT, ColumnType.OBJECT]:
+        t = column.dropna()
+        if len(t) == 0:
+            return Scale(low=0.0, high=0.0)
+
+        if ignore_inf:
+            t = t[~np.isinf(t)]
+            if len(t) == 0:
+                return Scale(low=0.0, high=0.0)
+
+        return Scale(low=float(t.min()), high=float(t.max()))  # type: ignore
+
+    elif len(column.unique()) == 1:  # type: ignore
+        # TODO i think this case is a bit different in pandas.
+        # but keep it simple for now
+        if not column.empty and column_type in [ColumnType.INT, ColumnType.FLOAT]:
+            val = float(column.iloc[0])  # type: ignore
+            return Scale(low=val, high=val)
+        else:
+            raise ValueError(
+                f"The input column `{scale.col}` is constant Cannot compute a numeric scale from it."
+            )
+
+    elif column_type in [ColumnType.BOOL, ColumnType.STRING, ColumnType.NONE]:
+        raise ValueError(
+            f"The input column `{scale.col}` is of kind {column_type} and thus discrete. "
+            "`scale_from_data` should never be called."
+        )
+
+    elif column_type == ColumnType.GENERIC:
+        raise ValueError(
+            f"The input column `{scale.col}` is of kind {column.kind}. "
+            "Generic columns are not supported yet."
+        )
+
+    return Scale(low=0.0, high=0.0)
+
+
+def get_col_name(scale: GGScale) -> str:
+    if scale.scale_kind.scale_type == ScaleType.TRANSFORMED_DATA:
+        # scale.col.evaluate()
+        # TODO: This falls into datamancer / pandas compatibility
+        # it will eventually fall into place, but for now we have to keep as is until the rest is working
+        scale_name = str(scale)
+        return f"log10({scale_name})"
+    else:
+        # scale.col.evaluate()  TODO: same here
+        return str(scale.col)
+
+
+def enumerate_scales_by_id(filled_scales: "FilledScales") -> Generator[Any]:
+    fields = [
+        "x",
+        "y",
+        "color",
+        "fill",
+        "size",
+        "shape",
+        "yRidges",
+    ]
+    for field in fields:
+        field_ = getattr(filled_scales, field, None)  # type: ignore
+        if field_:
+            yield field_
+            # TODO sanity check that i understand the logic of .more in nim
+            # cant seem to find docs for it, it maybe a template in the codebase
+            for _, sub_field in asdict(field_).items():
+                yield sub_field
+
+
+def enable_scales_by_id_vega():
+    # TODO vega is not supported at stage 1
+    raise GGException("Vega not supported yet")
+
+
+def enumerate_scales(filled_scales: FilledScales, geom: Geom) -> Generator[Any]:
+    # TODO this will have to make a bunch of objects hashable
+    # we may want to implement it for all
+    result: Set[Any] = set()
+    for scale in enumerate_scales_by_id(filled_scales):
+        if geom.gid in scale.ids and scale not in result:
+            result.add(scale)
+            yield scale
+
+
+def update_aes_ridges(plot: GgPlot) -> "GgPlot":
+    if plot.ridges is None:
+        raise GGException("expected ridges")
+
+    ridge = plot.ridges
+    data = LinearAndTransformScaleData(
+        # TODO, reversed and transform are required,
+        # but update ridges doesn't explicitly set them
+        axis_kind=AxisKind.Y,
+        reversed=False,
+        transform=ScaleTransform(),
+    )
+    scale = GGScale(
+        scale_kind=LinearDataScale(data=data),
+        col=ridge.col,
+        has_discreteness=True,
+        discrete_kind=GGScaleDiscrete(),
+        ids=set(range(65536)),
+        data_kind=DataKind(),
+        value_kind=VNull(),
+    )
+
+    plot.aes.y_ridges = scale
+    return plot
+
+
+def get_secondary_axis(
+    filled_scales: FilledScales, ax_kind: AxisKind
+) -> Optional["SecondaryAxis"]:
+    """Assumes a secondary axis must exist!"""
+    scale_getters = {
+        AxisKind.X: filled_scales.x_scale,
+        AxisKind.Y: filled_scales.y_scale,
+    }
+
+    gg_scale: GGScale = scale_getters[ax_kind]
+    # TODO medium priority if we had FilledScales[LinearData]
+    # there would be no type error
+    # for now, assume correct type is passed in and fix later
+    return gg_scale.scale_kind.data.secondary_axis  # type: ignore
+
+
+def has_secondary(
+    filled_scales: FilledScales, ax_kind: AxisKind
+) -> Optional["SecondaryAxis"]:
+    scale_getters = {
+        AxisKind.X: filled_scales.x_scale,
+        AxisKind.Y: filled_scales.y_scale,
+    }
+    gg_scale: GGScale = scale_getters[ax_kind]
+    # TODO medium priority, same as `get_secondary_axis`
+    return gg_scale.scale_kind.data.secondary_axis  # type: ignore

@@ -80,14 +80,14 @@ PANDAS_TYPES: Dict[str, ColumnType] = {
 }
 
 
-def pandas_series_to_column(series: pd.Series) -> ColumnType:
+def pandas_series_to_column(series: pd.Series[Any]) -> ColumnType:
     """
     TODO this is incomplete impl
     but this will allow to port the other logic
     and as we go along we adapt it
     once we find cases of datetimes we come back here and add it
     """
-    if series.isna().all():
+    if series.isna().all():  # type: ignore
         # TODO is there a better way for this?
         # can this cause bottle neck? maybe its fine
         return ColumnType.NONE
@@ -218,7 +218,7 @@ class AssignFormula(Formula):
         return FormulaType.ASSIGN
 
     def evaluate(self, df: pd.DataFrame) -> Any:
-        return df[str(self.rhs)]
+        return df[str(self.rhs)]  # type: ignore
 
 
 @dataclass

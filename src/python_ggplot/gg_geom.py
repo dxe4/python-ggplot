@@ -9,7 +9,7 @@ from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.datamancer_pandas_compat import GGValue
-from python_ggplot.gg_scales import ColorScale
+from python_ggplot.gg_scales import ColorScale, GGScale
 from python_ggplot.gg_types import (
     Aesthetics,
     BinPositionType,
@@ -433,8 +433,8 @@ class FilledGeom:
 
 @dataclass
 class FilledScales:
-    x_scale: Scale
-    y_scale: Scale
+    x_scale: GGScale
+    y_scale: GGScale
     reversed_x: bool
     reversed_y: bool
     discrete_x: bool
@@ -456,4 +456,4 @@ class FilledScales:
     text: MainAddScales
     y_ridges: MainAddScales
     weight: MainAddScales
-    facets: List[Scale]
+    facets: List[GGScale]

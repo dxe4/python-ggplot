@@ -17,6 +17,7 @@ from python_ggplot.core.objects import (
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.datamancer_pandas_compat import FormulaNode, GGValue
+from python_ggplot.gg_scales import GGScale
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
@@ -111,22 +112,22 @@ class Aesthetics:
     position_kind: PositionType
     stat_kind: StatKind
     discrete_kind: DiscreteKind
-    x: Optional["ScaleKind"] = None
-    x_min: Optional["ScaleKind"] = None
-    x_max: Optional["ScaleKind"] = None
-    y: Optional["ScaleKind"] = None
-    y_min: Optional["ScaleKind"] = None
-    y_max: Optional["ScaleKind"] = None
-    fill: Optional["ScaleKind"] = None
-    color: Optional["ScaleKind"] = None
-    alpha: Optional["ScaleKind"] = None
-    size: Optional["ScaleKind"] = None
-    shape: Optional["ScaleKind"] = None
-    width: Optional["ScaleKind"] = None
-    height: Optional["ScaleKind"] = None
-    text: Optional["ScaleKind"] = None
-    y_ridges: Optional["ScaleKind"] = None
-    weight: Optional["ScaleKind"] = None
+    x: Optional["GGScale"] = None
+    x_min: Optional["GGScale"] = None
+    x_max: Optional["GGScale"] = None
+    y: Optional["GGScale"] = None
+    y_min: Optional["GGScale"] = None
+    y_max: Optional["GGScale"] = None
+    fill: Optional["GGScale"] = None
+    color: Optional["GGScale"] = None
+    alpha: Optional["GGScale"] = None
+    size: Optional["GGScale"] = None
+    shape: Optional["GGScale"] = None
+    width: Optional["GGScale"] = None
+    height: Optional["GGScale"] = None
+    text: Optional["GGScale"] = None
+    y_ridges: Optional["GGScale"] = None
+    weight: Optional["GGScale"] = None
 
 
 @dataclass
