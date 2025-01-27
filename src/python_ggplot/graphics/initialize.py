@@ -1068,8 +1068,8 @@ def filter_by_bound_scale(
 def init_ticks(
     view: ViewPort,
     axis_kind: AxisKind,
-    tick_locs: List[Coord],
-    num_ticks: Optional[int] = None,
+    tick_locs: Optional[List[Coord]] = None,
+    num_ticks: int = 0,
     tick_kind: Optional[TickKind] = None,
     major: bool = True,
     style: Optional[Style] = None,
@@ -1080,6 +1080,9 @@ def init_ticks(
     result: List[GraphicsObject] = []
     num_ticks = num_ticks or 0
     tick_kind = tick_kind or TickKind.ONE_SIDE
+
+    if tick_locs is None:
+        tick_locs = []
 
     if num_ticks == 0 and not tick_locs:
         raise GGException("need to provide num_ticks or tick_locks")
