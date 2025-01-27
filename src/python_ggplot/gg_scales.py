@@ -1,11 +1,13 @@
 import typing
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from enum import Enum, auto
 from typing import Any, Generator, List, Optional, OrderedDict, Set, Tuple
 
 import numpy as np
 import pandas as pd
+from pandas._libs.tslibs.timedeltas import Timedelta
 
 from gg_utils import Callable
 from python_ggplot.core.objects import (
@@ -29,7 +31,7 @@ from python_ggplot.gg_geom import FilledGeom, Geom
 from python_ggplot.gg_types import (
     ContinuousFormat,
     DataKind,
-    DateTickAlgorithmKind,
+    DateTickAlgorithmType,
     DiscreteFormat,
     DiscreteKind,
     DiscreteType,
@@ -53,14 +55,14 @@ class DateScale:
     ax_kind: AxisKind
     is_timestamp: bool
     breaks: List[float]
-    format_string: Optional[str] = None
-    date_spacing: Optional[Duration] = None
-    date_algo: DateTickAlgorithmKind = DateTickAlgorithmKind.DTA_FILTER
+    format_string: str
+    date_spacing: Timedelta
+    date_algo: DateTickAlgorithmType = DateTickAlgorithmType.FILTER
 
-    def parse_date(self, date: str):
-        # todo this should return datetime
+    def parse_date(self, date: str) -> datetime:
+        # TODO high priority this should return datetime
         # TODO sanity check down the line, do we allow this being dynamic?
-        pass
+        raise GGException("implement me")
 
 
 @dataclass

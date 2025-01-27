@@ -143,13 +143,10 @@ discrete_format = Callable[[Union[int, str]], str]
 continuous_format = Callable[[float], str]
 
 
-class DateTickAlgorithmKind(Enum):
-    # Compute date ticks by filtering to closest matches
-    DTA_FILTER = auto()
-    # Compute date ticks by adding given duration to start time
-    DTA_ADD_DURATION = auto()
-    # Use user-given custom breaks (as UNIX timestamps)
-    DTA_CUSTOM_BREAKS = auto()
+class DateTickAlgorithmType(Enum):
+    FILTER = auto()
+    ADD_DURATION = auto()
+    CUSTOM_BREAKS = auto()
 
 
 class Missing:
@@ -232,9 +229,13 @@ class GGStyle:
 class Theme:
     x_margin_range: Scale
     y_margin_range: Scale
+    x_ticks_rotate: float
+    y_ticks_rotate: float
+    x_ticks_text_align: TextAlignKind
+    y_ticks_text_align: TextAlignKind
+
     base_font_size: Optional[float] = None
     sub_title_font: Optional[Dict[Any, Any]] = None
-    # tick_label_font: Optional[Dict[Any, Any]] = None
     tick_label_font: Optional[Font] = None
     hide_ticks: Optional[bool] = None
     hide_tick_labels: Optional[bool] = None
@@ -247,12 +248,10 @@ class Theme:
     y_label: Optional[str] = None
     y_label_margin: Optional[float] = None
     y_label_secondary: Optional[str] = None
-    x_ticks_rotate: Optional[float] = None
-    x_ticks_text_align: Optional[TextAlignKind] = None
+
     x_tick_label_margin: Optional[float] = None
-    y_ticks_rotate: Optional[float] = None
-    y_ticks_text_align: Optional[TextAlignKind] = None
-    y_tick_label_margin: Optional[str] = None
+
+    y_tick_label_margin: Optional[float] = None
     legend_position: Optional[Tuple[float]] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
@@ -264,7 +263,7 @@ class Theme:
     minor_grid_lines: Optional[bool] = None
     minor_grid_line_width: Optional[float] = None
     only_axes: Optional[bool] = None
-    discrete_scale_margin: Optional[float] = None
+    discrete_scale_margin: Optional[Quantity] = None
     x_range: Optional[Scale] = None
     y_range: Optional[Scale] = None
     x_margin: Optional[float] = None
