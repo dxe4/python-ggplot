@@ -146,6 +146,7 @@ class FillColorScale(ScaleKind):
         return ScaleType.FILL_COLOR
 
 
+@dataclass
 class AlphaScale(ScaleKind):
     alpha: float
 
@@ -209,6 +210,9 @@ class TextScaleValue(ScaleValue):
 class SizeScaleValue(ScaleValue):
     size: Optional[float] = None
 
+    def update_style(self, style: "GGStyle"):
+        pass
+
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.SIZE
@@ -231,6 +235,9 @@ class ShapeScaleValue(ScaleValue):
 @dataclass
 class AlphaScaleValue(ScaleValue):
     alpha: Optional[float] = None
+
+    def update_style(self, style: "GGStyle"):
+        pass
 
     @property
     def scale_type(self) -> ScaleType:

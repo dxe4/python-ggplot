@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from gg_ticks import DiscreteType
+from gg_ticks import DiscreteType, FormulaNode
 from gg_utils import GGException
 from python_ggplot.colormaps.color_maps import int_to_color
-from python_ggplot.core.objects import ColorHCL, Scale
+from python_ggplot.core.objects import ColorHCL, LineType, MarkerKind, Scale
 from python_ggplot.datamancer_pandas_compat import (  # FormulaType,; ScalarFormula,; pandas_series_to_column,
     GGValue,
     series_is_bool,
@@ -19,11 +19,17 @@ from python_ggplot.datamancer_pandas_compat import (  # FormulaType,; ScalarForm
     series_value_type,
 )
 from python_ggplot.gg_scales import (
+    AlphaScale,
+    AlphaScaleValue,
     FillColorScaleValue,
     GGScale,
     GGScaleDiscrete,
     ScaleKind,
     ScaleValue,
+    ShapeScale,
+    ShapeScaleValue,
+    SizeScale,
+    SizeScaleValue,
 )
 from python_ggplot.gg_types import DataKind
 
@@ -123,6 +129,144 @@ def fill_discrete_color_scale(
         value_kind=value_kind,
         has_discreteness=True,
         data_kind=data_kind,
+        discrete_kind=discrete_kind,
+    )
+    return result
+
+def fill_discrete_size_scale(
+    v_kind: GGValue,
+    col: FormulaNode,
+    data_kind: DataKind,
+    label_seq: List[GGValue],
+    value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
+    size_range: Tuple[float, float]
+):
+    if size_range[0] != size_range[1]:
+        raise GGException("Size range must be defined in this context!")
+
+    value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict()
+
+    if value_map_opt is not None:
+        value_map = value_map_opt
+    else:
+        num_sizes = min(len(label_seq), 5)
+        min_size = size_range[0]
+        max_size = size_range[1]
+        step_size = (max_size - min_size) / float(num_sizes)
+
+        for i, k in enumerate(label_seq):
+            if data_kind == DataKind.MAPPING:
+                size = min_size + float(i) * step_size
+            elif data_kind == DataKind.SETTING:
+                assert isinstance(k, (int, float)), "Value used to set size must be Int or Float!"
+                size = float(k)
+            else:
+                raise GGException("unexpected data kind")
+
+            value_map[k] = SizeScaleValue(size=size)
+
+    scale_kind = SizeScale()
+    discrete_kind = GGScaleDiscrete(
+        value_map=OrderedDict(),
+        label_seq=label_seq  # type ignore
+    )
+    result = GGScale(
+        col=col,
+        ids=set(),  # type: ignore
+        scale_kind=scale_kind,
+        value_kind=v_kind,
+        has_discreteness=True,
+        data_kind=data_kind,
+        discrete_kind=discrete_kind,
+    )
+    return result
+
+
+def fill_discrete_alpha_scale(
+    v_kind: GGValue,
+    col: FormulaNode,
+    data_kind: DataKind,
+    label_seq: List[GGValue],
+    value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
+    alpha_range: Tuple[float, float]
+):
+    # TODO refactor this
+    if alpha_range[0] != alpha_range[1]:
+        raise GGException("Size range must be defined in this context!")
+
+    value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict()
+
+    if value_map_opt is not None:
+        value_map = value_map_opt
+    else:
+        num_alphas = len(label_seq)
+        min_alpha = alpha_range[0]
+        max_alpha = alpha_range[1]
+        step_alpha = (max_alpha - min_alpha) / float(num_alphas)
+
+        for i, k in enumerate(label_seq):
+            if data_kind == DataKind.MAPPING:
+                alpha = min_alpha + float(i) * step_alpha
+            elif data_kind == DataKind.SETTING:
+                if not isinstance(k, (int, float)):
+                    raise GGException("Value used to set alpha must be Int or Float!")
+                alpha = float(k)
+            else:
+                raise GGException("unexpected data kind")
+
+            value_map[k] = AlphaScaleValue(alpha=alpha)
+
+    # TODO: CRITICAL Scale kinds Geoms and Discrete types have to be refactored
+    # high priority, this 0.0 alpha will cause bugs
+    scale_kind = AlphaScale(alpha=0.0)
+    discrete_kind = GGScaleDiscrete(
+        value_map=OrderedDict(),
+        label_seq=label_seq  # type ignore
+    )
+    result = GGScale(
+        col=col,
+        ids=set(),  # type: ignore
+        scale_kind=scale_kind,
+        value_kind=v_kind,
+        has_discreteness=True,
+        data_kind=data_kind,
+        discrete_kind=discrete_kind,
+    )
+
+    return result
+
+
+def fill_discrete_shape_scale(
+    v_kind: GGValue,
+    col: FormulaNode,
+    label_seq: List[GGValue],
+    value_map_opt:Optional[OrderedDict[GGValue, ScaleValue]] = None,
+):
+    value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict()
+    if value_map_opt is not None:
+        value_map = value_map_opt
+    else:
+        # TODO medium priority i dislike this modulo arithmetic here
+        # re-write as a static dict so everyone can read it
+        # nice and simple
+        for i, k in enumerate(label_seq):
+            shape = ShapeScaleValue(
+                marker=MarkerKind(i % len(MarkerKind)),
+                line_type=LineType((i % (len(LineType) - 1)) + 1),
+            )
+            value_map[k] = shape
+
+    scale_kind = ShapeScale()
+    discrete_kind = GGScaleDiscrete(
+        value_map=OrderedDict(),
+        label_seq=label_seq  # type ignore
+    )
+    result = GGScale(
+        col=col,
+        ids=set(),  # type: ignore
+        scale_kind=scale_kind,
+        value_kind=v_kind,
+        has_discreteness=True,
         discrete_kind=discrete_kind,
     )
     return result
