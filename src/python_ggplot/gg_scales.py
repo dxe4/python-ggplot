@@ -13,7 +13,6 @@ from gg_utils import Callable
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
-    Duration,
     GGException,
     LineType,
     MarkerKind,
@@ -26,8 +25,7 @@ from python_ggplot.datamancer_pandas_compat import (
     VNull,
     pandas_series_to_column,
 )
-from python_ggplot.gg_drawing import gg_draw
-from python_ggplot.gg_geom import FilledGeom, Geom
+from python_ggplot.gg_geom import Geom
 from python_ggplot.gg_types import (
     ContinuousFormat,
     DataKind,

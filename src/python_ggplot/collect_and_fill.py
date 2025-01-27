@@ -1,12 +1,11 @@
-from ast import Try
 from collections import OrderedDict
-from typing import Any, List, Optional, OrderedDict, Tuple, cast
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from gg_ticks import DiscreteType, ScaleType
+from gg_ticks import DiscreteType
 from gg_utils import GGException
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.core.objects import ColorHCL, Scale

@@ -1,6 +1,6 @@
 # ported code from num chroma
 # todo port the unit tests too
-from typing import Tuple, TypedDict, Union
+from typing import List, Tuple, TypedDict, Union
 
 
 class RGBADict(TypedDict):
@@ -46,7 +46,7 @@ def fixup_color(
     # port from nim chroma
     # https://github.com/treeform/chroma/blob/master/src/chroma/transformations.nim
 
-    def fix_c(c):
+    def fix_c(c: Union[int, float]):
         if c < 0:
             c = type(c)(0)
         if isinstance(c, int):
@@ -80,7 +80,7 @@ def color_from_hsl(h: float, s: float, l: float) -> RGBADict:
             t2 = l + s - l * s
         t1 = 2 * l - t2
 
-        rgb = []
+        rgb: List[float] = []
         for i in range(3):
             t3 = h + (1.0 / 3.0) * -(i - 1.0)
             if t3 < 0:

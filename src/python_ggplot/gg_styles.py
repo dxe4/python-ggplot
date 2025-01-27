@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Tuple, cast
+from typing import Dict, List, Tuple, cast
 
 import pandas as pd
 

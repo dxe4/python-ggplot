@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 from python_ggplot.core.objects import ColorRGBA
 from python_ggplot.gg_scales import ColorScale
@@ -37,7 +38,7 @@ class ColorMapsData:
         return self.data["plasma_raw"]
 
 
-def _to_val(x):
+def _to_val(x: float):
     # TODO, add tests for this and make sure
     # it only happens at the right times
     # i dont like silencing errors by shifting the value to valid bounds
@@ -46,8 +47,8 @@ def _to_val(x):
     return max(0, min(int(round(x * 255.0)), 255))
 
 
-def to_color_scale(name, color_map):
-    colors = []
+def to_color_scale(name: str, color_map: List[List[float]]):
+    colors: List[int] = []
     for r, g, b in color_map:
         new_col = (255 << 24) | (_to_val(r) << 16) | (_to_val(g) << 8) | (_to_val(b))
         colors.append(new_col)
@@ -70,7 +71,7 @@ def int_to_color(c: int) -> ColorRGBA:
     return ColorRGBA(r=r, g=g, b=b, a=a)
 
 
-def parse_html_color(c):
+def parse_html_color(c: str):
     # port from chroma
     raise NotImplemented()
 
