@@ -199,6 +199,7 @@ class ScaleValue(ABC):
         pass
 
 
+@dataclass
 class TextScaleValue(ScaleValue):
 
     @property
@@ -206,6 +207,7 @@ class TextScaleValue(ScaleValue):
         return ScaleType.TEXT
 
 
+@dataclass
 class SizeScaleValue(ScaleValue):
     size: Optional[float] = None
 
@@ -214,6 +216,7 @@ class SizeScaleValue(ScaleValue):
         return ScaleType.SIZE
 
 
+@dataclass
 class ShapeScaleValue(ScaleValue):
     marker: Optional[MarkerKind] = None
     line_type: Optional[LineType] = None
@@ -227,6 +230,7 @@ class ShapeScaleValue(ScaleValue):
         return ScaleType.SHAPE
 
 
+@dataclass
 class AlphaScaleValue(ScaleValue):
     alpha: Optional[float] = None
 
@@ -235,6 +239,7 @@ class AlphaScaleValue(ScaleValue):
         return ScaleType.ALPHA
 
 
+@dataclass
 class FillColorScaleValue(ScaleValue):
     color: Optional[Color] = None
 
@@ -247,6 +252,7 @@ class FillColorScaleValue(ScaleValue):
         return ScaleType.FILL_COLOR
 
 
+@dataclass
 class ColorScaleValue(ScaleValue):
     color: Optional[Color] = None
 
@@ -258,6 +264,7 @@ class ColorScaleValue(ScaleValue):
         return ScaleType.COLOR
 
 
+@dataclass
 class TransformedDataScaleValue(ScaleValue):
     val: Optional[GGValue] = None
 
@@ -266,6 +273,7 @@ class TransformedDataScaleValue(ScaleValue):
         return ScaleType.TRANSFORMED_DATA
 
 
+@dataclass
 class LinearDataScaleValue(ScaleValue):
     val: Optional[GGValue] = None
 
@@ -282,10 +290,11 @@ class GGScaleDiscreteKind(DiscreteKind, ABC):
         pass
 
 
+@dataclass
 class GGScaleDiscrete(GGScaleDiscreteKind):
     value_map: OrderedDict[GGValue, "ScaleValue"]
     label_seq: List[GGValue]
-    format_discrete_label: DiscreteFormat
+    format_discrete_label: Optional[DiscreteFormat] = None
 
     @property
     def discrete_type(self) -> DiscreteType:

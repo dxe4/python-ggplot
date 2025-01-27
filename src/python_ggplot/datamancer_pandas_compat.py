@@ -290,3 +290,65 @@ class FormulaNode:
     def __call__(self) -> float:
         # TODO this is used for transformation
         raise GGException()
+
+
+def series_is_int(series: pd.Series[Any]) -> bool:
+    return str(series.dtype) in [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+    ]
+
+
+def series_is_float(series: pd.Series[Any]) -> bool:
+    return str(series.dtype) in [
+        "float16",
+        "float32",
+        "float64",
+    ]
+
+
+def series_is_bool(series: pd.Series[Any]):
+    return str(series.dtype) == "bool"
+
+
+def series_is_str(series: pd.Series[Any]):
+    return str(series.dtype) == "string"
+
+
+def series_is_obj(series: pd.Series[Any]):
+    return str(series.dtype) == "object"
+
+
+def series_value_type(series: pd.Series[Any]):
+    dtype = str(series.dtype)
+    if dtype in [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+    ]:
+        return "int"
+    elif dtype in [
+        "float16",
+        "float32",
+        "float64",
+    ]:
+        return "float"
+    elif dtype in ["bool"]:
+        return "bool"
+    elif dtype in ["string"]:
+        return "string"
+    elif dtype in ["object"]:
+        return "object"
+
+    raise GGException(f"dtype not supported {dtype}")

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from ast import Try
 from dataclasses import dataclass
 from enum import Enum, auto
+from sys import audit
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -164,10 +165,9 @@ PossibleFont = Union[Missing, Font, Optional[Font]]
 PossibleSecondaryAxis = Union[Missing, SecondaryAxis]
 
 
-@dataclass
-class DataKind:
-    mapping: str = "mapping"
-    setting: str = "setting"
+class DataKind(Enum):
+    MAPPING = auto()
+    SETTING = auto()
 
 
 class BinPositionType(Enum):
