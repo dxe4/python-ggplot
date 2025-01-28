@@ -131,6 +131,8 @@ def view_embed_as_relative(
     current_view: "ViewPort", idx: int, into: "ViewPort"
 ) -> "ViewPort":
     into.relative_to(current_view)
+    # TODO high priority double check this
+    # view_embed_into(into, current_view[idx]) or view_embed_into(current_view[idx], into)
     current_view[idx] = view_embed_into(into, current_view[idx])
     current_view.update_size_new_root()
     return current_view

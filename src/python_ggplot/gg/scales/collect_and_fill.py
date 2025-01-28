@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from gg_ticks import DiscreteType, FormulaNode
-from gg_utils import GGException
+from python_ggplot.gg.utils import GGException
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.core.objects import ColorHCL, LineType, MarkerKind, Scale
-from python_ggplot.datamancer_pandas_compat import (  # FormulaType,; ScalarFormula,; pandas_series_to_column,
+from python_ggplot.gg.datamancer_pandas_compat import (  # FormulaType,; ScalarFormula,; pandas_series_to_column,
+    FormulaNode,
     GGValue,
     series_is_bool,
     series_is_float,
@@ -18,20 +18,23 @@ from python_ggplot.datamancer_pandas_compat import (  # FormulaType,; ScalarForm
     series_is_str,
     series_value_type,
 )
-from python_ggplot.gg_scales import (
+from python_ggplot.gg.scales import (
     AlphaScale,
-    AlphaScaleValue,
-    FillColorScaleValue,
     GGScale,
     GGScaleDiscrete,
-    ScaleKind,
     ScaleValue,
     ShapeScale,
-    ShapeScaleValue,
     SizeScale,
-    SizeScaleValue,
 )
-from python_ggplot.gg_types import DataKind
+from python_ggplot.gg.scales.base import GGScaleData, ScaleType, scale_type_to_cls
+from python_ggplot.gg.scales.values import (
+    ColorScaleValue,
+    ShapeScaleValue,
+    SizeScaleValue,
+    AlphaScaleValue,
+    FillColorScaleValue,
+)
+from python_ggplot.gg.types import DataType, DiscreteType
 
 
 def add_identity_data(col: "str", df: pd.DataFrame, scale: GGScale):
@@ -98,11 +101,12 @@ def discrete_and_type(
     return (_is_discrete(data, scale, dc_kind), series_value_type(data))
 
 
+
 def fill_discrete_color_scale(
-    scale_kind: ScaleKind,
+    scale_kind: ScaleType,
     value_kind: GGValue,
     column: Any,
-    data_kind: DataKind,
+    data_kind: DataType,
     label_seq: List[Any],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]] = None,
 ) -> GGScale:
@@ -114,33 +118,34 @@ def fill_discrete_color_scale(
     else:
         color_cs = ColorHCL.gg_color_hue(len(label_seq))
         for i, k in enumerate(label_seq):
-            # TODO high priority i think the scale can be one of those types only, since the color is passed in
-            # hard code for now, but down the line if this is the case change scale_kind type to be a Union
-            # and provide appropriate functions from scale class
-            # FillColorScaleValue ColorScaleValue
-            scale_value = FillColorScaleValue(
-                color=color_cs[i] if data_kind == DataKind.MAPPING else int_to_color(k)
-            )
-            discrete_kind.value_map[k] = scale_value
-    result = GGScale(
+            color=color_cs[i] if data_kind == DataType.MAPPING else int_to_color(k)
+            if scale_kind == ScaleType.COLOR:
+                discrete_kind.value_map[k] = ColorScaleValue(color=color)
+            else:
+                discrete_kind.value_map[k] = FillColorScaleValue(
+                    color=color
+                )
+
+    cls = scale_type_to_cls(scale_kind)
+    gg_data = GGScaleData(
         col=column,
         ids=set(),  # type: ignore
-        scale_kind=scale_kind,
         value_kind=value_kind,
         has_discreteness=True,
         data_kind=data_kind,
         discrete_kind=discrete_kind,
     )
+    result = cls(gg_data=gg_data)
     return result
 
 def fill_discrete_size_scale(
     v_kind: GGValue,
     col: FormulaNode,
-    data_kind: DataKind,
+    data_kind: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
     size_range: Tuple[float, float]
-):
+) -> GGScale:
     if size_range[0] != size_range[1]:
         raise GGException("Size range must be defined in this context!")
 
@@ -155,41 +160,49 @@ def fill_discrete_size_scale(
         step_size = (max_size - min_size) / float(num_sizes)
 
         for i, k in enumerate(label_seq):
-            if data_kind == DataKind.MAPPING:
+            if data_kind == DataType.MAPPING:
                 size = min_size + float(i) * step_size
-            elif data_kind == DataKind.SETTING:
-                assert isinstance(k, (int, float)), "Value used to set size must be Int or Float!"
+            elif data_kind == DataType.SETTING:
+                if not isinstance(k, (int, float)):
+                    raise GGException("Value used to set size must be Int or Float!")
                 size = float(k)
             else:
                 raise GGException("unexpected data kind")
 
             value_map[k] = SizeScaleValue(size=size)
 
-    scale_kind = SizeScale()
     discrete_kind = GGScaleDiscrete(
-        value_map=OrderedDict(),
+        value_map=value_map,
         label_seq=label_seq  # type ignore
     )
-    result = GGScale(
+    gg_data = GGScaleData(
         col=col,
         ids=set(),  # type: ignore
-        scale_kind=scale_kind,
         value_kind=v_kind,
         has_discreteness=True,
         data_kind=data_kind,
         discrete_kind=discrete_kind,
     )
+    result = SizeScale(
+        gg_data=gg_data,
+        # TODO high priority why does nim not pass  sizeRange*: tuple[low, high: float]?
+        # its passed in the function, but not propagated
+        # is this a bug in nim version? if so we should report it
+        size_range=size_range,
+        size=SizeScaleValue(size=0.0),
+    )
+
     return result
 
 
 def fill_discrete_alpha_scale(
     v_kind: GGValue,
     col: FormulaNode,
-    data_kind: DataKind,
+    data_kind: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
     alpha_range: Tuple[float, float]
-):
+) -> GGScale:
     # TODO refactor this
     if alpha_range[0] != alpha_range[1]:
         raise GGException("Size range must be defined in this context!")
@@ -205,9 +218,9 @@ def fill_discrete_alpha_scale(
         step_alpha = (max_alpha - min_alpha) / float(num_alphas)
 
         for i, k in enumerate(label_seq):
-            if data_kind == DataKind.MAPPING:
+            if data_kind == DataType.MAPPING:
                 alpha = min_alpha + float(i) * step_alpha
-            elif data_kind == DataKind.SETTING:
+            elif data_kind == DataType.SETTING:
                 if not isinstance(k, (int, float)):
                     raise GGException("Value used to set alpha must be Int or Float!")
                 alpha = float(k)
@@ -216,23 +229,21 @@ def fill_discrete_alpha_scale(
 
             value_map[k] = AlphaScaleValue(alpha=alpha)
 
-    # TODO: CRITICAL Scale kinds Geoms and Discrete types have to be refactored
-    # high priority, this 0.0 alpha will cause bugs
-    scale_kind = AlphaScale(alpha=0.0)
     discrete_kind = GGScaleDiscrete(
         value_map=OrderedDict(),
         label_seq=label_seq  # type ignore
     )
-    result = GGScale(
+    gg_data = GGScaleData(
         col=col,
         ids=set(),  # type: ignore
-        scale_kind=scale_kind,
         value_kind=v_kind,
         has_discreteness=True,
         data_kind=data_kind,
         discrete_kind=discrete_kind,
     )
 
+    # TODO high priority, this 0.0 alpha will cause bugs
+    result = AlphaScale(gg_data, alpha=0.0)
     return result
 
 
@@ -256,17 +267,16 @@ def fill_discrete_shape_scale(
             )
             value_map[k] = shape
 
-    scale_kind = ShapeScale()
     discrete_kind = GGScaleDiscrete(
         value_map=OrderedDict(),
         label_seq=label_seq  # type ignore
     )
-    result = GGScale(
+    gg_data = GGScaleData(
         col=col,
         ids=set(),  # type: ignore
-        scale_kind=scale_kind,
         value_kind=v_kind,
         has_discreteness=True,
         discrete_kind=discrete_kind,
     )
+    result = ShapeScale(gg_data=gg_data)
     return result

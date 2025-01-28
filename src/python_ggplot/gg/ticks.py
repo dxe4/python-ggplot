@@ -13,7 +13,6 @@ from typing import (
     cast,
 )
 
-from gg_theme import get_secondary_axis
 from python_ggplot.core.common import linspace
 from python_ggplot.core.coord.objects import (
     Coord1D,
@@ -21,23 +20,16 @@ from python_ggplot.core.coord.objects import (
     StrHeightCoordType,
     TextCoordData,
 )
+from python_ggplot.gg.scales.base import FilledScales, LinearDataScale, TransformedDataScale
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, TextAlignKind
-from python_ggplot.datamancer_pandas_compat import FormulaNode
-from python_ggplot.gg_geom import FilledScales
-from python_ggplot.gg_scales import (
-    DateScale,
+from python_ggplot.gg.datamancer_pandas_compat import FormulaNode
+from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleContinuous,
-    LinearAndTransformScaleData,
-    ScaleKind,
     ScaleTransform,
     ScaleType,
-    get_col_name,
-    get_x_scale,
-    get_y_scale,
-    has_secondary,
 )
-from python_ggplot.gg_types import DateTickAlgorithmType, DiscreteType, GgPlot, Theme
+from python_ggplot.gg.types import DateTickAlgorithmType, DiscreteType, GgPlot, Theme
 from python_ggplot.graphics.initialize import (
     calc_tick_locations,
     init_ticks,
@@ -57,11 +49,11 @@ def get_ticks(scale: Union[GGScale, Scale]) -> int:
 
 
 def get_x_ticks(scale: FilledScales) -> int:
-    return get_ticks(get_x_scale(scale))
+    return get_ticks(scale.get_x_scale())
 
 
 def get_y_ticks(scale: FilledScales) -> int:
-    return get_ticks(get_y_scale(scale))
+    return get_ticks(scale.get_y_scale())
 
 
 def smallest_pow(inv_trans: ScaleTransform, x: float):
@@ -232,7 +224,7 @@ def handle_continuous_ticks(
     p: GgPlot,
     ax_kind: AxisKind,
     data_scale: Scale,
-    sc_kind: ScaleKind,
+    scale_type: ScaleType,
     num_ticks: int,
     theme: Theme,
     breaks: Optional[List[float]] = None,
@@ -259,7 +251,7 @@ def handle_continuous_ticks(
         rotate = theme.y_ticks_rotate
         align_to = theme.y_ticks_text_align
 
-    if sc_kind.scale_type == ScaleType.LINEAR_DATA:
+    if scale_type == ScaleType.LINEAR_DATA:
         scale = apply_scale_trans(data_scale, sec_axis_trans)
         bound_scale = apply_scale_trans(bound_scale, sec_axis_trans)
 
@@ -289,7 +281,7 @@ def handle_continuous_ticks(
 
         return list(tick_objs)
 
-    elif sc_kind.scale_type == ScaleType.TRANSFORMED_DATA:
+    elif scale_type == ScaleType.TRANSFORMED_DATA:
         if inv_trans is None:
             raise GGException("expected inv_trans")
 
@@ -505,8 +497,7 @@ def handle_date_scale_ticks(
     view: ViewPort,
     plot: GgPlot,
     ax_kind: AxisKind,
-    scale: GGScale,
-    scale_data: LinearAndTransformScaleData,  # TODO this needs fixing
+    scale: Union[LinearDataScale, TransformedDataScale],
     theme: Theme,
     hide_tick_labels: bool = False,
     margin: Optional[Coord1D] = None,
@@ -526,7 +517,9 @@ def handle_date_scale_ticks(
     else:
         raise GGException("expected x / y axis")
 
-    date_scale = scale_data.date_scale
+    if scale.data is None:
+        raise GGException("expected scale data")
+    date_scale = scale.data.date_scale
     if date_scale is None:
         # todo double check this logic (if its optional)
         raise GGException("Expected a date scale")
@@ -534,21 +527,18 @@ def handle_date_scale_ticks(
     tick_labels = []
     tick_pos_unix = []
 
-    # TODO fix this
-    scale_kind = cast(DateScale, scale.scale_kind)
-
-    if scale_kind.date_algo == DateTickAlgorithmType.FILTER:
+    if date_scale.date_algo == DateTickAlgorithmType.FILTER:
         # TODO eventually move this logic on the scale class
         data = []
         if date_scale.is_timestamp:
             data = [
                 datetime.fromtimestamp(x, timezone.utc)  # type: ignore
-                for x in plot.data[get_col_name(scale)]  # type: ignore
+                for x in plot.data[scale.get_col_name()]  # type: ignore
             ]
         else:
             data = [
                 date_scale.parse_date(x)  # type: ignore
-                for x in plot.data[get_col_name(scale)]  # type: ignore
+                for x in plot.data[scale.get_col_name()]  # type: ignore
             ]
 
         tick_labels = list(
@@ -563,14 +553,14 @@ def handle_date_scale_ticks(
             tick_pos_unix, tick_labels, int(date_scale.date_spacing.total_seconds())
         )
 
-    elif scale_kind.date_algo == DateTickAlgorithmType.ADD_DURATION:
+    elif date_scale.date_algo == DateTickAlgorithmType.ADD_DURATION:
         # TODO eventually move this logic on the scale class
         if date_scale.is_timestamp:
-            timestamps = plot.data[get_col_name(scale)]  # type: ignore
+            timestamps = plot.data[scale.get_col_name()]  # type: ignore
             first_tick = datetime.fromtimestamp(timestamps.min(), timezone.utc)  # type: ignore
             last_tick = datetime.fromtimestamp(timestamps.max(), timezone.utc)  # type: ignore
         else:
-            dates = sorted([date_scale.parse_date(x) for x in plot.data[get_col_name(scale)]])  # type: ignore TODO
+            dates = sorted([date_scale.parse_date(x) for x in plot.data[scale.get_col_name()]])  # type: ignore TODO
             first_tick = min(dates)
             last_tick = max(dates)
 
@@ -587,7 +577,7 @@ def handle_date_scale_ticks(
             for label in tick_labels
         ]
 
-    elif scale_kind.date_algo == DateTickAlgorithmType.CUSTOM_BREAKS:
+    elif date_scale.date_algo == DateTickAlgorithmType.CUSTOM_BREAKS:
         # TODO eventually move this logic on the scale class
         tick_pos_unix = date_scale.breaks
         if not tick_pos_unix:
@@ -606,7 +596,7 @@ def handle_date_scale_ticks(
 
     # TODO fix this cast
     tick_coord = to_coord_1d(
-        tick_pos_unix, ax_kind, cast(GGScaleContinuous, scale.discrete_kind).data_scale
+        tick_pos_unix, ax_kind, cast(GGScaleContinuous, scale.gg_data.discrete_kind).data_scale
     )
 
     tick_objs, lab_objs = tick_labels_from_coord(
@@ -634,7 +624,6 @@ def handle_ticks(
     p: GgPlot,
     ax_kind: AxisKind,
     theme: Theme,
-    scale_data: LinearAndTransformScaleData,  # TODO this needs fixing
     hide_tick_labels: bool = False,
     num_ticks_opt: Optional[int] = None,
     bound_scale_opt: Optional[Scale] = None,
@@ -646,27 +635,30 @@ def handle_ticks(
     num_ticks: int = 10
 
     if ax_kind == AxisKind.X:
-        scale = get_x_scale(filled_scales)
+        scale = filled_scales.get_x_scale()
         num_ticks = num_ticks_opt if num_ticks_opt is not None else get_ticks(scale)
         if theme.x_tick_label_margin is not None:
             margin_opt = get_tick_label_margin(view, theme, ax_kind)
     elif ax_kind == AxisKind.Y:
-        scale = get_y_scale(filled_scales)
+        scale = filled_scales.get_y_scale()
         num_ticks = num_ticks_opt if num_ticks_opt is not None else get_ticks(scale)
         if theme.y_tick_label_margin is not None:
             margin_opt = get_tick_label_margin(view, theme, ax_kind)
     else:
         raise GGException("expect x/y axis")
 
-    has_scale = len(scale.col.name) > 0 if scale else False
+    if not isinstance(scale, (LinearDataScale, TransformedDataScale)):
+        raise GGException("enexpected scale")
+
+    has_scale = len(scale.gg_data.col.name) > 0 if scale else False
     result = []
-    sscale_discrete_kind = scale.discrete_kind.discrete_type
+    sscale_discrete_kind = scale.gg_data.discrete_kind.discrete_type
 
     if has_scale:
         if sscale_discrete_kind == DiscreteType.DISCRETE:
             format_fn = scale.format_discrete_label or (lambda x: str(x))  # type: ignore
 
-            if scale_data.date_scale is None:
+            if scale.data is not None and scale.data.date_scale is None:
                 result = handle_discrete_ticks(
                     view,
                     p,
@@ -683,13 +675,12 @@ def handle_ticks(
                     p,
                     ax_kind,
                     scale,
-                    LinearAndTransformScaleData(),  # TODO high priority this needs fixing
                     theme,
                     hide_tick_labels,
                     margin_opt,
                 )
 
-            if has_secondary(filled_scales, ax_kind):
+            if filled_scales.has_secondary(ax_kind):
                 additional_ticks = handle_discrete_ticks(
                     view,
                     p,
@@ -704,55 +695,59 @@ def handle_ticks(
                 result.extend(additional_ticks)  # type: ignore
 
         elif sscale_discrete_kind == DiscreteType.CONTINUOUS:
-            data_scale = view.get_correct_data_scale(ax_kind)
-
-            if scale.date_scale is None:
-                result = view.handle_continuous_ticks(
+            data_scale = get_correct_data_scale(view, ax_kind)
+            if scale.data is not None and scale.data.date_scale is not None:
+                result = handle_continuous_ticks(
+                    view,
                     p,
                     ax_kind,
                     data_scale,
-                    scale.sc_kind,
+                    scale.scale_type,
                     num_ticks,
-                    breaks=scale.breaks,  # might be empty
-                    trans=scale.trans,
-                    inv_trans=scale.inv_trans,
+                    breaks=scale.data.date_scale.breaks,  # might be empty
+                    trans=scale.transform,
+                    inv_trans=scale.inverse_transform,  # type: ignore TODO this needs some more work
                     theme=theme,
                     hide_tick_labels=hide_tick_labels,
                     margin=margin_opt,
-                    format=scale.format_continuous_label,
+                    format=scale.format_continuous_label,  # type: ignore TODO this needs more work
                 )
             else:
-                result = view.handle_date_scale_ticks(
-                    p, ax_kind, scale, theme, hide_tick_labels, margin_opt
+                result = handle_date_scale_ticks(
+                    view, p, ax_kind, scale, theme, hide_tick_labels, margin_opt
                 )
 
-            if has_secondary(filled_scales, ax_kind):
-                sec_axis = get_secondary_axis(filled_scales, ax_kind)
+            if filled_scales.has_secondary(ax_kind):
+                sec_axis = filled_scales.get_secondary_axis(ax_kind)
                 # TODO fix this too
                 trans = (
-                    sec_axis.trans
-                    if sec_axis.scale_kind.scale_type == ScaleType.LINEAR_DATA
+                    sec_axis.transform  # type: ignore
+                    if sec_axis.scale.scale_type == ScaleType.LINEAR_DATA
                     else None
                 )
                 trans_fn = (
-                    sec_axis.trans_fn
-                    if sec_axis.scale_kind.scale_type == ScaleType.TRANSFORMED_DATA
+                    sec_axis.transform # type: ignore
+                    if sec_axis.scale.scale_type == ScaleType.TRANSFORMED_DATA
                     else None
                 )
                 inv_trans_fn = (
-                    sec_axis.inv_trans_fn
-                    if sec_axis.scale_kind.scale_type == ScaleType.TRANSFORMED_DATA
+                    sec_axis.inverse_transform # type: ignore
+                    if sec_axis.scale.scale_type == ScaleType.TRANSFORMED_DATA
                     else None
                 )
+
+                if scale.data is None or scale.data.date_scale is None:
+                    # TODO double check this
+                    raise GGException("expected data and date scale")
 
                 handle_continuous_ticks(
                     view,
                     p,
                     ax_kind,
                     data_scale,
-                    sec_axis.scale_kind.scale_type,
+                    sec_axis.scale.scale_type,
                     num_ticks,
-                    breaks=scale.breaks,  # might be empty
+                    breaks=scale.data.date_scale.breaks,  # might be empty
                     trans=trans_fn,
                     inv_trans=inv_trans_fn,
                     sec_axis_trans=trans,
@@ -760,7 +755,7 @@ def handle_ticks(
                     hide_tick_labels=hide_tick_labels,
                     is_secondary=True,
                     margin=margin_opt,
-                    format=scale.format_continuous_label,
+                    format=scale.format_continuous_label,  # type: ignore
                 )
     else:
         # if ax_kind == AxisKind.X:
@@ -770,6 +765,8 @@ def handle_ticks(
         )
         ticks = init_ticks(view, ax_kind, num_ticks=num_ticks, bound_scale=bound_scale)
         ticks = init_ticks(view, ax_kind, num_ticks=num_ticks, bound_scale=bound_scale)
+
+        # TODO urgen thi needs fixing
         tick_labs = tick_labels(
             view, ticks, font=theme.tick_label_font, margin=margin_opt
         )

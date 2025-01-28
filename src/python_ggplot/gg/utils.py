@@ -12,7 +12,7 @@ from python_ggplot.core.objects import (
     LineType,
     MarkerKind,
 )
-from python_ggplot.gg_types import (
+from python_ggplot.gg.types import (
     Aesthetics,
     GGStyle,
     Missing,

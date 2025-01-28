@@ -1,10 +1,9 @@
 from typing import Set
 
 from python_ggplot.core.common import GREY20, TRANSPARENT, WHITE
-from python_ggplot.core.objects import AxisKind, Color, LineType, Scale, Style
-from python_ggplot.gg_geom import FilledScales
-from python_ggplot.gg_scales import get_secondary_axis, get_x_scale, get_y_scale
-from python_ggplot.gg_types import GgPlot, StatBin, Theme
+from python_ggplot.core.objects import AxisKind, Color, GGException, LineType, Scale, Style
+from python_ggplot.gg.types import GgPlot, StatBin, Theme
+from python_ggplot.gg.scales.base import FilledScales
 
 
 def get_plot_background(theme: Theme) -> Style:
@@ -64,26 +63,26 @@ def label_name(filled_scales: "FilledScales", p: "GgPlot", ax_kind: AxisKind) ->
 
 
 def _get_x_label(filled_scales: "FilledScales") -> str:
-    x_scale = get_x_scale(filled_scales)
-    if x_scale.name:
-        return x_scale.name
+    x_scale = filled_scales.get_x_scale()
+    if x_scale.gg_data.name:
+        return x_scale.gg_data.name
 
     # TODO high priority sanity check what str should return
-    return str(x_scale.col)
+    return str(x_scale.gg_data.col)
 
 
 def _get_y_label(filled_scales: "FilledScales") -> str:
-    y_scale = get_y_scale(filled_scales)
-    if y_scale.name:
-        return y_scale.name
-    elif y_scale.col.name:
-        return str(y_scale.col)
+    y_scale = filled_scales.get_y_scale()
+    if y_scale.gg_data.name:
+        return y_scale.gg_data.name
+    elif y_scale.gg_data.col.name:
+        return str(y_scale.gg_data.col)
     else:
         stat_types: Set[StatBin] = {
-            filled_scales.geom.stat_kind
+            filled_scales.gg_data.geom.gg_data.stat_kind
             for filled_scales in filled_scales.geoms
-            if isinstance(filled_scales.geom.stat_kind, StatBin)
-            and filled_scales.geom.stat_kind.density
+            if isinstance(filled_scales.gg_data.geom.gg_data.stat_kind, StatBin)
+            and filled_scales.gg_data.geom.gg_data.stat_kind.density
         }  # type: ignore TODO
 
         if stat_types:
@@ -101,14 +100,16 @@ def build_theme(filled_scales: FilledScales, plot: GgPlot) -> "Theme":
         theme.y_label = label_name(filled_scales, plot, AxisKind.Y)
 
     if theme.x_label_secondary is None and has_secondary(theme, AxisKind.X):
-        theme.x_label_secondary = get_secondary_axis(filled_scales, AxisKind.X).name
+        theme.x_label_secondary = filled_scales.get_secondary_axis(AxisKind.X).name
     if theme.y_label_secondary is None and has_secondary(theme, AxisKind.Y):
-        theme.y_label_secondary = get_secondary_axis(filled_scales, AxisKind.Y).name
+        theme.y_label_secondary = filled_scales.get_secondary_axis(AxisKind.Y).name
 
-    x_scale = theme.x_range or filled_scales.x_scale
+    x_scale = theme.x_range or theme.x_range
+    y_scale = theme.y_range or theme.y_range
+    if x_scale is None or y_scale is None:
+        raise GGException("require x scale and y scale")
+
     theme.x_margin_range = calculate_margin_range(theme, x_scale, AxisKind.X)
-
-    y_scale = theme.y_range or filled_scales.y_scale
     theme.y_margin_range = calculate_margin_range(theme, y_scale, AxisKind.Y)
 
     return theme

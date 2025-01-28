@@ -1,7 +1,8 @@
 import logging
 import math
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
+import numpy as np
 from rich.traceback import install
 
 if TYPE_CHECKING:
@@ -117,3 +118,11 @@ def nice_number(val: float, round_: bool) -> float:
             nice_frac = 10.0
 
     return nice_frac * math.pow(10.0, exponent)
+
+def is_num(x: Any):
+    if isinstance(x, (int, float)):
+        return True
+    dtype = getattr(x, "dtype", None)  # type: ignore
+    if not dtype:
+        return False
+    return np.issubdtype(dtype, np.floating) or np.issubdtype(dtype, np.integer)

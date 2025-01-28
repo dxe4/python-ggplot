@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
 import pandas as pd
 
@@ -15,13 +15,13 @@ from python_ggplot.core.objects import (
     MarkerKind,
     Style,
 )
-from python_ggplot.datamancer_pandas_compat import GGValue, VNull, VString
+from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
 
 # TODO this will probably cause circular imports
 # keep for now, we think of the project structure a bit more
 # i have a few ideas for the structure but will be easier to connect the dots first
-from python_ggplot.gg_geom import DiscreteType, FilledGeom, GeomType, GGStyle, StatType
-from python_ggplot.gg_scales import (
+from python_ggplot.gg.geom import DiscreteType, FilledGeom, GeomType, GGStyle, StatType
+from python_ggplot.gg.scales.base import (
     ColorScale,
     GGScale,
     GGScaleDiscrete,
@@ -133,13 +133,13 @@ def _get_field_for_user_style_merge(
 
 def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
     result = Style()
-    if fg.geom.user_style is None:
+    if fg.gg_data.geom.gg_data.user_style is None:
         # TODO double check this logic but i think its correct
         raise GGException("User style not provided")
 
-    u_style = fg.geom.user_style
+    u_style = fg.gg_data.geom.gg_data.user_style
     geom_type: GeomType = fg.geom_type
-    stat_type = fg.geom.stat_kind.stat_type
+    stat_type = fg.gg_data.geom.gg_data.stat_kind.stat_type
 
     style_dict: Dict[Any, Any] = {}
     for field in [
@@ -216,20 +216,20 @@ def apply_style(
 
     for col, val in keys:
         for scale in scales:
-            if scale.scale_kind.scale_type in {
+            if scale.scale_type in {
                 ScaleType.LINEAR_DATA,
                 ScaleType.TRANSFORMED_DATA,
                 ScaleType.TEXT,
             }:
                 continue
 
-            if scale.discrete_kind.discrete_type == DiscreteType.DISCRETE:
+            if scale.gg_data.discrete_kind.discrete_type == DiscreteType.DISCRETE:
                 is_col = col in df.columns
-                discrete_scale = cast(GGScaleDiscrete, scale.discrete_kind)
+                discrete_scale = cast(GGScaleDiscrete, scale.gg_data.discrete_kind)
 
                 if not is_col:
-                    style_val = discrete_scale.value_map[scale.col.evalueate()]
-                elif str(col) == str(scale.col):
+                    style_val = discrete_scale.value_map[scale.gg_data.col.evaluate(df)]
+                elif str(col) == str(scale.gg_data.col):
                     if (
                         isinstance(val, VNull)
                         and VString(data=str(col)) in discrete_scale.value_map

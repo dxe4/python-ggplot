@@ -258,7 +258,7 @@ class Coord1D(ABC):
         pass
 
     def embed_into(self, axis_kind: AxisKind, into: "ViewPort") -> "Coord1D":
-        from python_ggplot.embed import coord1d_embed_into
+        from python_ggplot.core.embed import coord1d_embed_into
 
         return coord1d_embed_into(self, axis_kind, into)
 
@@ -652,7 +652,7 @@ class Coord:
         return self.x == other.x and self.y == other.y  # type: ignore
 
     def embed_into(self, into: "ViewPort") -> "Coord":
-        from python_ggplot.embed import coord_embed_into
+        from python_ggplot.core.embed import coord_embed_into
 
         return coord_embed_into(self, into)
 

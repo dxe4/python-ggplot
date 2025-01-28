@@ -267,7 +267,7 @@ class ViewPort:
             child.h_img = deepcopy(self.h_img)
             child.update_size_new_root()
 
-    def update_item_at(self, idx, view: "ViewPort"):
+    def update_item_at(self, idx: int, view: "ViewPort"):
         self.children[idx] = deepcopy(view)
 
     def point_width(self) -> "Quantity":

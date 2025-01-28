@@ -10,6 +10,7 @@ from python_ggplot.core.objects import (
     Color,
     ErrorBarKind,
     Font,
+    GGException,
     LineType,
     MarkerKind,
     Scale,
@@ -17,17 +18,15 @@ from python_ggplot.core.objects import (
     TextAlignKind,
 )
 from python_ggplot.core.units.objects import Quantity
-from python_ggplot.datamancer_pandas_compat import FormulaNode, GGValue
-from python_ggplot.gg_scales import GGScale
+from python_ggplot.gg.datamancer_pandas_compat import FormulaNode, GGValue, VNull
+from python_ggplot.gg.scales.base import GGScale, GGScaleData, GGScaleDiscrete, LinearAndTransformScaleData, LinearDataScale
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
-    from python_ggplot.gg_geom import FilledScales
-    from python_ggplot.gg_scales import ScaleFreeKind, ScaleKind
-
+    from python_ggplot.gg.scales import ScaleFreeKind, FilledScales
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
     from python_ggplot.graphics.views import ViewPort
 
@@ -109,7 +108,7 @@ ContinuousFormat = Callable[[float], str]
 
 @dataclass
 class Aesthetics:
-    scale_kind: "ScaleKind"
+    scale: GGScale
     position_kind: PositionType
     stat_kind: StatKind
     discrete_kind: DiscreteKind
@@ -135,7 +134,7 @@ class Aesthetics:
 class SecondaryAxis:
     name: str
     axis_kind: AxisKind
-    scale_kind: "ScaleKind"
+    scale: GGScale
 
 
 discrete_format = Callable[[Union[int, str]], str]
@@ -163,9 +162,12 @@ PossibleFont = Union[Missing, Font, Optional[Font]]
 PossibleSecondaryAxis = Union[Missing, SecondaryAxis]
 
 
-class DataKind(Enum):
+class DataType(Enum):
     MAPPING = auto()
     SETTING = auto()
+    # TODO high priority this shouldnt be there, but is because nim
+    #  doesnt pass it in update_aes_ridges
+    NULL = auto()
 
 
 class BinPositionType(Enum):
@@ -294,6 +296,59 @@ class GgPlot:
     annotations: List[Any]
     theme: Theme
     backend: str
+
+    def update_aes_ridges(self: "GgPlot") -> "GgPlot":
+        '''
+        TODO high priority this seems wrong on nim side
+        how come we have:
+            a) dcKind: dcDiscrete
+            b) no valueMap, labelSeq, formatDiscreteLabel
+        this should not be possible
+        we will pass {} and [] for now,
+        dont want to set them as optioanl it has a cascading effect on doing null checks
+
+        Scale(
+            scKind: scLinearData,
+            col: ridge.col,
+            axKind: akY,
+            hasDiscreteness: true, # force scale to be discrete!
+            dcKind: dcDiscrete,
+            ids: {0'u16 .. high(uint16)}
+        )
+        case dcKind*: DiscreteKind
+        of dcDiscrete:
+          valueMap*: OrderedTable[Value, ScaleValue]
+          labelSeq*: seq[Value]
+          formatDiscreteLabel*: DiscreteFormat
+        '''
+        if self.ridges is None:
+            raise GGException("expected ridges")
+
+        ridge = self.ridges
+        data = LinearAndTransformScaleData(
+            # TODO, reversed and transform are required,
+            # but update ridges doesn't explicitly set them
+            # why ?
+            axis_kind=AxisKind.Y,
+            reversed=False,
+            transform=lambda x: x,
+        )
+        gg_data = GGScaleData(
+            col=ridge.col,
+            has_discreteness=True,
+            discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
+            ids=set(range(65536)),
+            data_kind=DataType.NULL,
+            value_kind=VNull(),
+        )
+        scale = LinearDataScale(
+            gg_data=gg_data,
+            data=data,
+        )
+
+        self.aes.y_ridges = scale
+        return self
+
 
 
 @dataclass
