@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, OrderedDict, TypeVar, Union
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
+
 from python_ggplot.core.objects import GGException
 
 

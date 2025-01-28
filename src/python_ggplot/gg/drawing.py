@@ -18,8 +18,14 @@ from python_ggplot.gg.geom import (
     HistogramDrawingStyle,
 )
 from python_ggplot.gg.styles import merge_user_style
-from python_ggplot.gg.types import PREV_VALS_COL
-from python_ggplot.gg.types import GGStyle, BinPositionType, DiscreteType, PositionType, Theme
+from python_ggplot.gg.types import (
+    PREV_VALS_COL,
+    BinPositionType,
+    DiscreteType,
+    GGStyle,
+    PositionType,
+    Theme,
+)
 from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import (
     InitErrorBarData,
@@ -42,8 +48,11 @@ def get_xy(x_t: Any, y_t: Any, i: Any):
 
     return (x, y)
 
+
 @no_type_check
-def _continuous_bin_width(df: pd.DataFrame, idx: int, column: str, data_col: str) -> float:
+def _continuous_bin_width(
+    df: pd.DataFrame, idx: int, column: str, data_col: str
+) -> float:
     if column in df.columns:
         if pd.isna(df.iloc[idx][column]):
             return 0.0
@@ -56,6 +65,7 @@ def _continuous_bin_width(df: pd.DataFrame, idx: int, column: str, data_col: str
             return df.iloc[idx][data_col] - df.iloc[idx - 1][data_col]
         else:
             return high_val - df.iloc[idx][data_col]
+
 
 def read_or_calc_bin_width(
     df: pd.DataFrame,
@@ -423,9 +433,7 @@ def draw_error_bar(
     raise GGException("expected x_min or x_max or y_min or y_max")
 
 
-def draw_raster(
-    view: ViewPort, fg: FilledGeomRaster, df: pd.DataFrame
-):
+def draw_raster(view: ViewPort, fg: FilledGeomRaster, df: pd.DataFrame):
     max_x_col = fg.gg_data.x_scale.high
     min_x_col = fg.gg_data.x_scale.low
     max_y_col = fg.gg_data.y_scale.high
@@ -444,8 +452,8 @@ def draw_raster(
         # TODO this needs fixing, fine for now
         result = np.zeros(len(df), dtype=np.uint32)
         x_t = df[fg.gg_data.x_col].to_numpy(dtype=float)  # type: ignore
-        y_t = df[fg.gg_data.y_col].to_numpy(dtype=float) # type: ignore
-        z_t = df[fg.data.fill_col].to_numpy(dtype=float) # type: ignore
+        y_t = df[fg.gg_data.y_col].to_numpy(dtype=float)  # type: ignore
+        z_t = df[fg.data.fill_col].to_numpy(dtype=float)  # type: ignore
         z_scale = fg.data.fill_data_scale
 
         for idx in range(len(df)):
@@ -475,7 +483,7 @@ def draw_raster(
     data = InitRasterData(
         callback=draw_callback,  # type: ignore TODO check this later
         num_x=num_x,
-        num_y=num_y
+        num_y=num_y,
     )
     raster = init_raster(
         view=view,
@@ -499,7 +507,14 @@ def gg_draw(
     style: Style,
 ):
     fg.gg_data.geom.draw(
-        view,fg,pos,y,bin_widths,df,idx,style,
+        view,
+        fg,
+        pos,
+        y,
+        bin_widths,
+        df,
+        idx,
+        style,
     )
 
 
@@ -694,7 +709,10 @@ def draw_sub_df(
         GeomType.HISTOGRAM,
         GeomType.TILE,
         GeomType.RASTER,
-    } or fg.gg_data.geom.gg_data.bin_position in {BinPositionType.CENTER, BinPositionType.RIGHT}
+    } or fg.gg_data.geom.gg_data.bin_position in {
+        BinPositionType.CENTER,
+        BinPositionType.RIGHT,
+    }
 
     line_points: List[Coord] = []
     if geom_type not in {GeomType.RASTER}:
@@ -728,7 +746,10 @@ def draw_sub_df(
 
             pos = get_draw_pos(loc_view, view_idx, fg, point, bin_widths, df, i)
 
-            if fg.gg_data.geom.gg_data.position in {PositionType.IDENTITY, PositionType.STACK}:
+            if fg.gg_data.geom.gg_data.position in {
+                PositionType.IDENTITY,
+                PositionType.STACK,
+            }:
                 if geom_type in {
                     GeomType.LINE,
                     GeomType.FREQ_POLY,

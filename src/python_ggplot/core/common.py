@@ -119,6 +119,7 @@ def nice_number(val: float, round_: bool) -> float:
 
     return nice_frac * math.pow(10.0, exponent)
 
+
 def is_num(x: Any):
     if isinstance(x, (int, float)):
         return True

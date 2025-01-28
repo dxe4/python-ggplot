@@ -1,9 +1,16 @@
 from typing import Set
 
 from python_ggplot.core.common import GREY20, TRANSPARENT, WHITE
-from python_ggplot.core.objects import AxisKind, Color, GGException, LineType, Scale, Style
-from python_ggplot.gg.types import GgPlot, StatBin, Theme
+from python_ggplot.core.objects import (
+    AxisKind,
+    Color,
+    GGException,
+    LineType,
+    Scale,
+    Style,
+)
 from python_ggplot.gg.scales.base import FilledScales
+from python_ggplot.gg.types import GgPlot, StatBin, Theme
 
 
 def get_plot_background(theme: Theme) -> Style:

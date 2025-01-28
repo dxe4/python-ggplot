@@ -19,14 +19,21 @@ from python_ggplot.core.objects import (
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import FormulaNode, GGValue, VNull
-from python_ggplot.gg.scales.base import GGScale, GGScaleData, GGScaleDiscrete, LinearAndTransformScaleData, LinearDataScale
+from python_ggplot.gg.scales.base import (
+    GGScale,
+    GGScaleData,
+    GGScaleDiscrete,
+    LinearAndTransformScaleData,
+    LinearDataScale,
+)
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales import ScaleFreeKind, FilledScales
+    from python_ggplot.gg.scales import FilledScales, ScaleFreeKind
+
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
     from python_ggplot.graphics.views import ViewPort
 
@@ -298,7 +305,7 @@ class GgPlot:
     backend: str
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
-        '''
+        """
         TODO high priority this seems wrong on nim side
         how come we have:
             a) dcKind: dcDiscrete
@@ -320,7 +327,7 @@ class GgPlot:
           valueMap*: OrderedTable[Value, ScaleValue]
           labelSeq*: seq[Value]
           formatDiscreteLabel*: DiscreteFormat
-        '''
+        """
         if self.ridges is None:
             raise GGException("expected ridges")
 
@@ -348,7 +355,6 @@ class GgPlot:
 
         self.aes.y_ridges = scale
         return self
-
 
 
 @dataclass

@@ -59,12 +59,22 @@ class GeomData:
     # used for geom_type histogram
     histogram_drawing_style: Optional[HistogramDrawingStyle] = None
 
+
 @dataclass
 class Geom(ABC):
     gg_data: GeomData
 
     @abstractmethod
-    def draw( self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+    def draw(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         pass
 
@@ -72,6 +82,7 @@ class Geom(ABC):
     @abstractmethod
     def geom_type(self) -> GeomType:
         pass
+
 
 @dataclass
 class FilledGeomData:
@@ -85,17 +96,18 @@ class FilledGeomData:
     yield_data: OrderedDict[GGValue, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
     num_x: int
     num_y: int
-    x_discrete_kind: 'FilledGeomDiscreteKind'
-    y_discrete_kind: 'FilledGeomDiscreteKind'
+    x_discrete_kind: "FilledGeomDiscreteKind"
+    y_discrete_kind: "FilledGeomDiscreteKind"
 
 
 @dataclass
 class FilledGeom:
-    '''
+    """
     TODO add some of the nested data accessible here
     eg fg.gg_data.geom.geom_type -> fg.geom_type
     + rename gg_data before alpha
-    '''
+    """
+
     gg_data: FilledGeomData
 
     def is_discrete_y(self) -> bool:
@@ -141,7 +153,9 @@ class FilledGeom:
         temp = cast(FilledGeomHistogram, self)
         return temp.histogram_drawing_style
 
-    def enumerate_data(self: 'FilledGeom') -> Generator[Tuple[GGValue, GGStyle, List[GGStyle], pd.DataFrame]]:
+    def enumerate_data(
+        self: "FilledGeom",
+    ) -> Generator[Tuple[GGValue, GGStyle, List[GGStyle], pd.DataFrame]]:
         for label, tup in self.gg_data.yield_data.items():
             yield label, tup[0], tup[1], tup[2]
 
@@ -151,14 +165,32 @@ class GeomPoint(Geom):
     def geom_type(self) -> GeomType:
         return GeomType.POINT
 
-    def draw( self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+    def draw(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         new_point = init_point(pos, style)
         view.add_obj(new_point)
 
 
 class GeomRectDrawMixin:
-    def draw(self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+    def draw(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         from python_ggplot.gg.drawing import read_or_calc_bin_width
 
@@ -182,10 +214,12 @@ class GeomHistogramMixin(GeomRectDrawMixin):
     def geom_type(self) -> GeomType:
         return GeomType.HISTOGRAM
 
+
 class GeomBarMixin(GeomRectDrawMixin):
     @property
     def geom_type(self) -> GeomType:
         return GeomType.BAR
+
 
 class GeomBar(GeomRectDrawMixin, Geom):
     @property
@@ -205,14 +239,30 @@ class GeomFreqPoly(Geom):
         return GeomType.FREQ_POLY
 
     def draw(
-        self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         raise GGException("Already handled in `draw_sub_df`!")
 
 
 class GeomErrorBarMixin:
     def draw(
-        self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         from python_ggplot.gg.drawing import draw_error_bar
 
@@ -224,6 +274,7 @@ class GeomErrorBarMixin:
     def geom_type(self) -> GeomType:
         return GeomType.ERROR_BAR
 
+
 class GeomErrorBar(GeomErrorBarMixin, Geom):
     pass
 
@@ -234,7 +285,15 @@ class GeomTextMixin:
         return GeomType.TEXT
 
     def draw(
-        self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         from python_ggplot.gg.drawing import read_text
 
@@ -255,6 +314,7 @@ class GeomTextMixin:
         )
         view.add_obj(new_text)
 
+
 class GeomText(GeomTextMixin, Geom):
     pass
 
@@ -265,12 +325,22 @@ class GeomRasterMixin:
         return GeomType.RASTER
 
     def draw(
-        self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         raise GGException("Already handled in `draw_sub_df`!")
 
+
 class GeomRaster(GeomRasterMixin, Geom):
     pass
+
 
 class GeomTileMixin:
     @property
@@ -278,7 +348,15 @@ class GeomTileMixin:
         return GeomType.TILE
 
     def draw(
-        self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         new_rect = init_rect(
             view,
@@ -293,13 +371,22 @@ class GeomTileMixin:
 class GeomTile(GeomTileMixin, Geom):
     pass
 
+
 class GeomLine(Geom):
     @property
     def geom_type(self) -> GeomType:
         return GeomType.LINE
 
     def draw(
-        self, view: ViewPort, fg: "FilledGeom", pos: Coord, y: Any, bin_widths: Tuple[float, float], df: pd.DataFrame, idx: int, style: Style,
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
     ):
         raise GGException("Already handled in `draw_sub_df`!")
 

@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from python_ggplot.gg.utils import GGException
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.core.objects import ColorHCL, LineType, MarkerKind, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (  # FormulaType,; ScalarFormula,; pandas_series_to_column,
@@ -28,13 +27,14 @@ from python_ggplot.gg.scales import (
 )
 from python_ggplot.gg.scales.base import GGScaleData, ScaleType, scale_type_to_cls
 from python_ggplot.gg.scales.values import (
+    AlphaScaleValue,
     ColorScaleValue,
+    FillColorScaleValue,
     ShapeScaleValue,
     SizeScaleValue,
-    AlphaScaleValue,
-    FillColorScaleValue,
 )
 from python_ggplot.gg.types import DataType, DiscreteType
+from python_ggplot.gg.utils import GGException
 
 
 def add_identity_data(col: "str", df: pd.DataFrame, scale: GGScale):
@@ -101,7 +101,6 @@ def discrete_and_type(
     return (_is_discrete(data, scale, dc_kind), series_value_type(data))
 
 
-
 def fill_discrete_color_scale(
     scale_kind: ScaleType,
     value_kind: GGValue,
@@ -118,13 +117,11 @@ def fill_discrete_color_scale(
     else:
         color_cs = ColorHCL.gg_color_hue(len(label_seq))
         for i, k in enumerate(label_seq):
-            color=color_cs[i] if data_kind == DataType.MAPPING else int_to_color(k)
+            color = color_cs[i] if data_kind == DataType.MAPPING else int_to_color(k)
             if scale_kind == ScaleType.COLOR:
                 discrete_kind.value_map[k] = ColorScaleValue(color=color)
             else:
-                discrete_kind.value_map[k] = FillColorScaleValue(
-                    color=color
-                )
+                discrete_kind.value_map[k] = FillColorScaleValue(color=color)
 
     cls = scale_type_to_cls(scale_kind)
     gg_data = GGScaleData(
@@ -138,13 +135,14 @@ def fill_discrete_color_scale(
     result = cls(gg_data=gg_data)
     return result
 
+
 def fill_discrete_size_scale(
     v_kind: GGValue,
     col: FormulaNode,
     data_kind: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
-    size_range: Tuple[float, float]
+    size_range: Tuple[float, float],
 ) -> GGScale:
     if size_range[0] != size_range[1]:
         raise GGException("Size range must be defined in this context!")
@@ -172,8 +170,7 @@ def fill_discrete_size_scale(
             value_map[k] = SizeScaleValue(size=size)
 
     discrete_kind = GGScaleDiscrete(
-        value_map=value_map,
-        label_seq=label_seq  # type ignore
+        value_map=value_map, label_seq=label_seq  # type ignore
     )
     gg_data = GGScaleData(
         col=col,
@@ -201,7 +198,7 @@ def fill_discrete_alpha_scale(
     data_kind: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
-    alpha_range: Tuple[float, float]
+    alpha_range: Tuple[float, float],
 ) -> GGScale:
     # TODO refactor this
     if alpha_range[0] != alpha_range[1]:
@@ -230,8 +227,7 @@ def fill_discrete_alpha_scale(
             value_map[k] = AlphaScaleValue(alpha=alpha)
 
     discrete_kind = GGScaleDiscrete(
-        value_map=OrderedDict(),
-        label_seq=label_seq  # type ignore
+        value_map=OrderedDict(), label_seq=label_seq  # type ignore
     )
     gg_data = GGScaleData(
         col=col,
@@ -251,7 +247,7 @@ def fill_discrete_shape_scale(
     v_kind: GGValue,
     col: FormulaNode,
     label_seq: List[GGValue],
-    value_map_opt:Optional[OrderedDict[GGValue, ScaleValue]] = None,
+    value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]] = None,
 ):
     value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict()
     if value_map_opt is not None:
@@ -268,8 +264,7 @@ def fill_discrete_shape_scale(
             value_map[k] = shape
 
     discrete_kind = GGScaleDiscrete(
-        value_map=OrderedDict(),
-        label_seq=label_seq  # type ignore
+        value_map=OrderedDict(), label_seq=label_seq  # type ignore
     )
     gg_data = GGScaleData(
         col=col,

@@ -20,14 +20,16 @@ from python_ggplot.core.coord.objects import (
     StrHeightCoordType,
     TextCoordData,
 )
-from python_ggplot.gg.scales.base import FilledScales, LinearDataScale, TransformedDataScale
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, TextAlignKind
 from python_ggplot.gg.datamancer_pandas_compat import FormulaNode
 from python_ggplot.gg.scales.base import (
+    FilledScales,
     GGScale,
     GGScaleContinuous,
+    LinearDataScale,
     ScaleTransform,
     ScaleType,
+    TransformedDataScale,
 )
 from python_ggplot.gg.types import DateTickAlgorithmType, DiscreteType, GgPlot, Theme
 from python_ggplot.graphics.initialize import (
@@ -596,7 +598,9 @@ def handle_date_scale_ticks(
 
     # TODO fix this cast
     tick_coord = to_coord_1d(
-        tick_pos_unix, ax_kind, cast(GGScaleContinuous, scale.gg_data.discrete_kind).data_scale
+        tick_pos_unix,
+        ax_kind,
+        cast(GGScaleContinuous, scale.gg_data.discrete_kind).data_scale,
     )
 
     tick_objs, lab_objs = tick_labels_from_coord(
@@ -726,12 +730,12 @@ def handle_ticks(
                     else None
                 )
                 trans_fn = (
-                    sec_axis.transform # type: ignore
+                    sec_axis.transform  # type: ignore
                     if sec_axis.scale.scale_type == ScaleType.TRANSFORMED_DATA
                     else None
                 )
                 inv_trans_fn = (
-                    sec_axis.inverse_transform # type: ignore
+                    sec_axis.inverse_transform  # type: ignore
                     if sec_axis.scale.scale_type == ScaleType.TRANSFORMED_DATA
                     else None
                 )

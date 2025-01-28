@@ -1,14 +1,13 @@
-
 from abc import ABC, abstractmethod
-from dataclasses import  dataclass
-from typing import TYPE_CHECKING, Optional, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Optional
 
 from python_ggplot.core.objects import Color, LineType, MarkerKind
-
 
 if TYPE_CHECKING:
     from python_ggplot.gg.scales import ScaleType
     from python_ggplot.gg.types import GGStyle
+
 
 @dataclass
 class ScaleValue(ABC):
@@ -21,6 +20,7 @@ class ScaleValue(ABC):
     @abstractmethod
     def scale_type(self) -> ScaleType:
         pass
+
 
 @dataclass
 class TextScaleValue(ScaleValue):

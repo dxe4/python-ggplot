@@ -3,16 +3,22 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Generator, List, Optional, OrderedDict, Set, Tuple, Callable, Type
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    List,
+    Optional,
+    OrderedDict,
+    Set,
+    Tuple,
+    Type,
+)
 
 import numpy as np
 import pandas as pd
 
-from python_ggplot.core.objects import (
-    AxisKind,
-    GGException,
-    Scale,
-)
+from python_ggplot.core.objects import AxisKind, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
     FormulaNode,
@@ -20,6 +26,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     pandas_series_to_column,
 )
 from python_ggplot.gg.geom import FilledGeom, Geom
+from python_ggplot.gg.scales.values import SizeScaleValue
 from python_ggplot.gg.types import (
     ContinuousFormat,
     DataType,
@@ -30,11 +37,10 @@ from python_ggplot.gg.types import (
     MainAddScales,
     SecondaryAxis,
 )
-from python_ggplot.gg.scales.values import SizeScaleValue
 
 if typing.TYPE_CHECKING:
-    from python_ggplot.gg.types import GGStyle
     from python_ggplot.gg.scales.values import ScaleValue
+    from python_ggplot.gg.types import GGStyle
 
 
 # TODO port those 2 macros, wont port until they are needed
@@ -42,6 +48,7 @@ if typing.TYPE_CHECKING:
 # macro genGetScale
 
 ScaleTransform = Callable[[float], float]
+
 
 @dataclass
 class ColorScale:
@@ -60,7 +67,6 @@ class ScaleType(Enum):
     TEXT = auto()
 
 
-
 @dataclass
 class LinearAndTransformScaleData:
     axis_kind: AxisKind
@@ -70,7 +76,6 @@ class LinearAndTransformScaleData:
     date_scale: Optional["DateScale"] = None
 
 
-
 @dataclass
 class GGScaleData:
     col: FormulaNode
@@ -78,21 +83,23 @@ class GGScaleData:
     value_kind: GGValue
     has_discreteness: bool
     data_kind: DataType
-    discrete_kind: 'GGScaleDiscreteKind'
+    discrete_kind: "GGScaleDiscreteKind"
     num_ticks: Optional[int] = None
     breaks: Optional[List[float]] = None
     name: str = ""
 
+
 @dataclass
 class GGScale(ABC):
-    '''
+    """
     TODO make some of the nested data available here
     eg scale.gg_data.discrete_kind.discrete_type -> scale.discrete_type
     + rename gg_data before alpha
-    '''
+    """
+
     gg_data: GGScaleData
 
-    def get_col_name(self: 'GGScale') -> str:
+    def get_col_name(self: "GGScale") -> str:
         if self.scale_type == ScaleType.TRANSFORMED_DATA:
             # scale.col.evaluate()
             # TODO: This falls into datamancer / pandas compatibility
@@ -115,7 +122,6 @@ class GGScale(ABC):
     #     )
 
 
-
 @dataclass
 class DateScale(GGScale):
     name: str
@@ -130,6 +136,7 @@ class DateScale(GGScale):
         # TODO high priority this should return datetime
         # TODO sanity check down the line, do we allow this being dynamic?
         raise GGException("implement me")
+
 
 @dataclass
 class LinearDataScale(GGScale):
@@ -157,6 +164,7 @@ class TransformedDataScale(GGScale):
         # todo impl
         raise GGException("not implemented")
 
+
 @dataclass
 class ColorScaleKind(GGScale):
     color_scale: "ColorScale"
@@ -165,6 +173,7 @@ class ColorScaleKind(GGScale):
     def scale_type(self) -> ScaleType:
         return ScaleType.COLOR
 
+
 @dataclass
 class FillColorScale(GGScale):
     color_scale: "ColorScale"
@@ -172,6 +181,7 @@ class FillColorScale(GGScale):
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.FILL_COLOR
+
 
 @dataclass
 class AlphaScale(GGScale):
@@ -184,12 +194,14 @@ class AlphaScale(GGScale):
     def scale_type(self) -> ScaleType:
         return ScaleType.ALPHA
 
+
 @dataclass
 class ShapeScale(GGScale):
 
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.SHAPE
+
 
 @dataclass
 class SizeScale(GGScale):
@@ -205,12 +217,14 @@ class SizeScale(GGScale):
     def scale_type(self) -> ScaleType:
         return ScaleType.SIZE
 
+
 @dataclass
 class TextScale(GGScale):
 
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.TEXT
+
 
 class GGScaleDiscreteKind(DiscreteKind, ABC):
 
@@ -234,7 +248,7 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
 @dataclass
 class GGScaleContinuous(GGScaleDiscreteKind):
     data_scale: Scale
-    format_continuous_label: Optional[ContinuousFormat]=None
+    format_continuous_label: Optional[ContinuousFormat] = None
 
     @property
     def discrete_type(self) -> DiscreteType:
@@ -285,14 +299,13 @@ class FilledScales:
     # for s in filledScales.`field`.more:
     #   if geom.gid == 0 or geom.gid in s.ids:
     #     return s
-    def get_x_scale(self: 'FilledScales') -> GGScale:
+    def get_x_scale(self: "FilledScales") -> GGScale:
         return self.x_scale
 
-
-    def get_y_scale(self: 'FilledScales') -> GGScale:
+    def get_y_scale(self: "FilledScales") -> GGScale:
         return self.y_scale
 
-    def has_secondary(self: 'FilledScales', ax_kind: AxisKind) -> "SecondaryAxis":
+    def has_secondary(self: "FilledScales", ax_kind: AxisKind) -> "SecondaryAxis":
         # this assumes gg_themes.has_secondary was called first to ensure it exists
         # so will raise an exception if no axis
 
@@ -306,7 +319,7 @@ class FilledScales:
             raise GGException("secondary_axis does not exist")
         return gg_scale.scale_kind.data.secondary_axis  # type: ignore
 
-    def get_secondary_axis(self: 'FilledScales', ax_kind: AxisKind) -> "SecondaryAxis":
+    def get_secondary_axis(self: "FilledScales", ax_kind: AxisKind) -> "SecondaryAxis":
         # this assumes gg_themes.has_secondary was called first to ensure it exists
         # so will raise an exception if no axis
         scale_getters = {
@@ -341,7 +354,7 @@ class FilledScales:
                 for _, sub_field in asdict(field_).items():
                     yield sub_field
 
-    def enumerate_scales(self: 'FilledScales', geom: Geom) -> Generator[Any]:
+    def enumerate_scales(self: "FilledScales", geom: Geom) -> Generator[Any]:
         # TODO this will have to make a bunch of objects hashable
         # we may want to implement it for all
         result: Set[Any] = set()
