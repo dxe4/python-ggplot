@@ -19,6 +19,7 @@ from python_ggplot.core.objects import (
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import FormulaNode, GGValue, VNull
+from python_ggplot.gg.geom import Geom
 from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleData,
@@ -299,7 +300,7 @@ class GgPlot:
     aes: Aesthetics
     facet: Optional[Any]
     ridges: Optional[Ridges]
-    geoms: List[Any]
+    geoms: List[Geom]
     annotations: List[Any]
     theme: Theme
     backend: str

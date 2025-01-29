@@ -29,7 +29,7 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
 )
 from python_ggplot.gg.styles import apply_style, change_style, use_or_default
-from python_ggplot.gg.types import PREV_VALS_COL, GgPlot, GGStyle, PositionType
+from python_ggplot.gg.types import PREV_VALS_COL, GgPlot, GGStyle, PositionType, StatType
 from tests.test_view import AxisKind
 
 
@@ -613,75 +613,80 @@ def filled_identity_geom(
 
 
 def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
+    '''
+    TODO refactor this#
+    we need something like geom.fill() with mixins
+    make it work first
+    '''
     x_scale = None
     y_scale = None
 
-    for g in plot.geoms:
-        df = (
-            g.data if g.data is not None else plot.data.copy(deep=False)
-        )  # shallow copy
+    for geom in plot.geoms:
+        geom_data = geom.gg_data.data
+        geom_data = geom_data or plot.data.copy(deep=False)
+        df = geom_data
         filled_geom = None
 
-        if g.kind in ["point", "line", "error_bar", "tile", "text", "raster"]:
+        if geom.geom_type in [GeomType.POINT, GeomType.LINE, GeomType.ERROR_BAR, GeomType.TILE, GeomType.TEXT, GeomType.RASTER]:
             # can be handled the same
             # need x and y data for sure
-            if g.stat_kind == "identity":
-                filled_geom = filled_identity_geom(df, g, filled_scales)
-            elif g.stat_kind == "count":
-                filled_geom = filled_count_geom(df, g, filled_scales)
-            elif g.stat_kind == "smooth":
-                filled_geom = filled_smooth_geom(df, g, filled_scales)
+            if geom.stat_type == StatType.IDENTITY:
+                filled_geom = filled_identity_geom(df, geom, filled_scales)
+            elif geom.stat_type == StatType.COUNT:
+                filled_geom = filled_count_geom(df, geom, filled_scales)
+            elif geom.stat_type == StatType.SMOOTH:
+                filled_geom = filled_smooth_geom(df, geom, filled_scales)
             else:
-                filled_geom = filled_bin_geom(df, g, filled_scales)
+                filled_geom = filled_bin_geom(df, geom, filled_scales)
 
-        elif g.kind in ["histogram", "freq_poly"]:
-            if g.stat_kind == "identity":
+        elif geom.geom_type in [GeomType.HISTOGRAM, GeomType.FREQ_POLY]:
+            if geom.stat_type == StatType.IDENTITY:
                 # essentially take same data as for point
-                filled_geom = filled_identity_geom(df, g, filled_scales)
+                filled_geom = filled_identity_geom(df, geom, filled_scales)
                 # still a histogram like geom, make sure bottom is still at 0!
                 filled_geom.y_scale = {
                     "low": min(0.0, filled_geom.y_scale["low"]),
                     "high": filled_geom.y_scale["high"],
                 }
-            elif g.stat_kind == "bin":
+            elif geom.stat_type == StatType.BIN:
                 # calculate histogram
-                filled_geom = filled_bin_geom(df, g, filled_scales)
-            elif g.stat_kind == "count":
+                filled_geom = filled_bin_geom(df, geom, filled_scales)
+            elif geom.stat_type == StatType.COUNT:
                 raise Exception(
                     "For discrete counts of your data use " "`geom_bar` instead!"
                 )
-            elif g.stat_kind == "smooth":
+            elif geom.stat_type == StatType.SMOOTH:
                 raise Exception(
                     "Smoothing statistics not implemented for histogram & frequency polygons. "
                     "Do you want a `density` plot using `geom_density` instead?"
                 )
 
-        elif g.kind == "bar":
-            if g.stat_kind == "identity":
+        elif geom.geom_type == GeomType.BAR:
+            if geom.stat_type == StatType.IDENTITY:
                 # essentially take same data as for point
-                filled_geom = filled_identity_geom(df, g, filled_scales)
+                filled_geom = filled_identity_geom(df, geom, filled_scales)
                 # still a geom_bar, make sure bottom is still at 0!
                 filled_geom.y_scale = {
                     "low": min(0.0, filled_geom.y_scale["low"]),
                     "high": filled_geom.y_scale["high"],
                 }
-            elif g.stat_kind == "count":
+            elif geom.stat_type == StatType.COUNT:
                 # count values in classes
-                filled_geom = filled_count_geom(df, g, filled_scales)
-            elif g.stat_kind == "bin":
+                filled_geom = filled_count_geom(df, geom, filled_scales)
+            elif geom.stat_type == StatType.BIN:
                 raise Exception(
                     "For continuous binning of your data use "
                     "`geom_histogram` instead!"
                 )
-            elif g.stat_kind == "smooth":
+            elif geom.stat_type == StatType.SMOOTH:
                 raise Exception(
                     "Smoothing statistics not supported for bar plots. Do you want a "
                     "`density` plot using `geom_density` instead?"
                 )
 
         if x_scale is not None:
-            x_scale = merge_scales(x_scale, filled_geom.x_scale)
-            y_scale = merge_scales(y_scale, filled_geom.y_scale)
+            x_scale = x_scale.merge(filled_geom.x_scale)
+            y_scale = y_scale.merge(filled_geom.y_scale)
         else:
             x_scale = filled_geom.x_scale
             y_scale = filled_geom.y_scale
