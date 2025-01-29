@@ -77,7 +77,9 @@ TEXT_DEFAULT_STYLE: Style = Style(
 
 # Define ranges
 DEFAULT_SIZE_RANGE: Dict[str, float] = {"low": 2.0, "high": 7.0}
+DEFAULT_SIZE_RANGE_TUPLE: Tuple[float, float] = tuple(DEFAULT_SIZE_RANGE.values())  # type: ignore
 DEFAULT_ALPHA_RANGE: Dict[str, float] = {"low": 0.1, "high": 1.0}
+DEFAULT_ALPHA_RANGE_TUPLE: Tuple[float, float] = tuple(DEFAULT_ALPHA_RANGE.values())  # type: ignore
 
 DEFAULT_COLOR_SCALE = VIRIDIS_RAW_COLOR_SCALE
 _style_lookup: Dict[GeomType, Style] = {

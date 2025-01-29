@@ -1,5 +1,6 @@
 from collections import OrderedDict
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Literal, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -9,8 +10,11 @@ from typing_extensions import Union
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.core.objects import AxisKind, ColorHCL, LineType, MarkerKind, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (  # FormulaType,; ScalarFormula,; pandas_series_to_column,
+    VTODO,
     FormulaNode,
     GGValue,
+    VNull,
+    VString,
     series_is_bool,
     series_is_float,
     series_is_int,
@@ -27,16 +31,18 @@ from python_ggplot.gg.scales import (
     SizeScale,
 )
 from python_ggplot.gg.scales.base import (
+    AbstractGGScale,
     ColorScale,
     ColorScaleKind,
-    DateScale,
     FillColorScale,
+    FilledScales,
     GGScaleContinuous,
     GGScaleData,
     LinearAndTransformScaleData,
     LinearDataScale,
     ScaleTransform,
     ScaleType,
+    TextScale,
     TransformedDataScale,
     scale_type_to_cls,
 )
@@ -47,7 +53,12 @@ from python_ggplot.gg.scales.values import (
     ShapeScaleValue,
     SizeScaleValue,
 )
-from python_ggplot.gg.types import DataType, DiscreteType
+from python_ggplot.gg.styles import (
+    DEFAULT_ALPHA_RANGE_TUPLE,
+    DEFAULT_COLOR_SCALE,
+    DEFAULT_SIZE_RANGE_TUPLE,
+)
+from python_ggplot.gg.types import DataType, DiscreteType, GgPlot
 from python_ggplot.gg.utils import GGException
 
 
@@ -64,10 +75,16 @@ def draw_sample_idx(s_high: int, num: int = 100, seed: int = 42) -> NDArray[Any]
 
 def is_discrete_data(
     col: pd.Series[Any],
-    s: Scale,
+    scale: GGScale,
     draw_samples: bool = True,
     discrete_threshold: float = 0.125,
 ) -> bool:
+    """
+    TODO: high priority
+    sanity check this logic
+    seems scale was only used for logging and exception messages
+    need to double check it
+    """
 
     if series_is_int(col):
         indices = (
@@ -102,7 +119,7 @@ def is_discrete_data(
 
 
 def _is_discrete(
-    data: pd.Series[Any], scale: Scale, dc_kind: Optional[DiscreteType] = None
+    data: pd.Series[Any], scale: GGScale, dc_kind: Optional[DiscreteType] = None
 ) -> bool:
     if dc_kind is None:
         return is_discrete_data(data, scale, draw_samples=True)
@@ -110,7 +127,7 @@ def _is_discrete(
 
 
 def discrete_and_type(
-    data: pd.Series[Any], scale: Scale, dc_kind: Optional[DiscreteType] = None
+    data: pd.Series[Any], scale: GGScale, dc_kind: Optional[DiscreteType] = None
 ) -> Tuple[bool, str]:
     return (_is_discrete(data, scale, dc_kind), series_value_type(data))
 
@@ -119,7 +136,7 @@ def fill_discrete_color_scale(
     scale_kind: ScaleType,
     value_kind: GGValue,
     column: Any,
-    data_kind: DataType,
+    data_type: DataType,
     label_seq: List[Any],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]] = None,
 ) -> GGScale:
@@ -131,7 +148,7 @@ def fill_discrete_color_scale(
     else:
         color_cs = ColorHCL.gg_color_hue(len(label_seq))
         for i, k in enumerate(label_seq):
-            color = color_cs[i] if data_kind == DataType.MAPPING else int_to_color(k)
+            color = color_cs[i] if data_type == DataType.MAPPING else int_to_color(k)
             if scale_kind == ScaleType.COLOR:
                 discrete_kind.value_map[k] = ColorScaleValue(color=color)
             else:
@@ -143,7 +160,7 @@ def fill_discrete_color_scale(
         ids=set(),  # type: ignore
         value_kind=value_kind,
         has_discreteness=True,
-        data_kind=data_kind,
+        data_type=data_type,
         discrete_kind=discrete_kind,
     )
     result = cls(gg_data=gg_data)
@@ -151,9 +168,9 @@ def fill_discrete_color_scale(
 
 
 def fill_discrete_size_scale(
-    v_kind: GGValue,
+    value_kind: GGValue,
     col: FormulaNode,
-    data_kind: DataType,
+    data_type: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
     size_range: Tuple[float, float],
@@ -172,9 +189,9 @@ def fill_discrete_size_scale(
         step_size = (max_size - min_size) / float(num_sizes)
 
         for i, k in enumerate(label_seq):
-            if data_kind == DataType.MAPPING:
+            if data_type == DataType.MAPPING:
                 size = min_size + float(i) * step_size
-            elif data_kind == DataType.SETTING:
+            elif data_type == DataType.SETTING:
                 if not isinstance(k, (int, float)):
                     raise GGException("Value used to set size must be Int or Float!")
                 size = float(k)
@@ -189,9 +206,9 @@ def fill_discrete_size_scale(
     gg_data = GGScaleData(
         col=col,
         ids=set(),  # type: ignore
-        value_kind=v_kind,
+        value_kind=value_kind,
         has_discreteness=True,
-        data_kind=data_kind,
+        data_type=data_type,
         discrete_kind=discrete_kind,
     )
     result = SizeScale(
@@ -207,9 +224,9 @@ def fill_discrete_size_scale(
 
 
 def fill_discrete_alpha_scale(
-    v_kind: GGValue,
+    value_kind: GGValue,
     col: FormulaNode,
-    data_kind: DataType,
+    data_type: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
     alpha_range: Tuple[float, float],
@@ -229,9 +246,9 @@ def fill_discrete_alpha_scale(
         step_alpha = (max_alpha - min_alpha) / float(num_alphas)
 
         for i, k in enumerate(label_seq):
-            if data_kind == DataType.MAPPING:
+            if data_type == DataType.MAPPING:
                 alpha = min_alpha + float(i) * step_alpha
-            elif data_kind == DataType.SETTING:
+            elif data_type == DataType.SETTING:
                 if not isinstance(k, (int, float)):
                     raise GGException("Value used to set alpha must be Int or Float!")
                 alpha = float(k)
@@ -246,9 +263,9 @@ def fill_discrete_alpha_scale(
     gg_data = GGScaleData(
         col=col,
         ids=set(),  # type: ignore
-        value_kind=v_kind,
+        value_kind=value_kind,
         has_discreteness=True,
-        data_kind=data_kind,
+        data_type=data_type,
         discrete_kind=discrete_kind,
     )
 
@@ -258,7 +275,7 @@ def fill_discrete_alpha_scale(
 
 
 def fill_discrete_shape_scale(
-    v_kind: GGValue,
+    value_kind: GGValue,
     col: FormulaNode,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]] = None,
@@ -283,7 +300,7 @@ def fill_discrete_shape_scale(
     gg_data = GGScaleData(
         col=col,
         ids=set(),  # type: ignore
-        value_kind=v_kind,
+        value_kind=value_kind,
         has_discreteness=True,
         discrete_kind=discrete_kind,
     )
@@ -291,8 +308,47 @@ def fill_discrete_shape_scale(
     return result
 
 
+def fill_discrete_linear_trans_scale(
+    scale_type: ScaleType,
+    col: FormulaNode,
+    ax_kind: AxisKind,
+    value_kind: GGValue,
+    label_seq: List[GGValue],
+    trans: Optional[ScaleTransform] = None,
+    inv_trans: Optional[ScaleTransform] = None,
+) -> GGScale:
+    cls = scale_type_to_cls(scale_type)
+    if not isinstance(cls, (TransformedDataScale, LinearDataScale)):
+        raise GGException("expected transform or linear")
+
+    gg_data = GGScaleData(
+        col=col,
+        ids=set(),  # type: ignore
+        value_kind=value_kind,
+        has_discreteness=True,
+        discrete_kind=GGScaleDiscrete(
+            value_map=OrderedDict(), label_seq=label_seq  # type ignore
+        ),
+    )
+    # TODO high priority, we need to set the axis kind
+    # the original version is a bit confusing,
+    # there's a bunch of required attrs that arent set
+    # result.ax_kind = ax_kind
+    # need to look further
+    result = cls(gg_data=gg_data)  # type: ignore
+
+    if scale_type == ScaleType.TRANSFORMED_DATA:
+        if trans is None:
+            raise ValueError("trans must not be None when sc_kind is TRANSFORMED_DATA")
+        # TODO this needs double checking later
+        result.trans = trans
+        result.inv_trans = inv_trans
+
+    return result  # type: ignore
+
+
 def fill_continuous_linear_scale(
-    col: FormulaNode, ax_kind: AxisKind, v_kind: GGValue, data_scale: Scale
+    col: FormulaNode, ax_kind: AxisKind, value_kind: GGValue, data_scale: Scale
 ):
     discrete_kind = GGScaleContinuous(
         data_scale=data_scale,
@@ -302,7 +358,7 @@ def fill_continuous_linear_scale(
         gg_data=GGScaleData(
             col=col,
             ids=set(),  # type: ignore
-            value_kind=v_kind,
+            value_kind=value_kind,
             has_discreteness=True,
             discrete_kind=discrete_kind,
         ),
@@ -342,7 +398,7 @@ def fill_continuous_transformed_scale(
 def fill_continuous_color_scale(
     scale_type: Union[Literal[ScaleType.COLOR], Literal[ScaleType.FILL_COLOR]],
     col: FormulaNode,
-    data_kind: DataType,
+    data_type: DataType,
     value_kind: GGValue,
     data_scale: Scale,
     color_scale: ColorScale,
@@ -375,7 +431,7 @@ def fill_continuous_color_scale(
         else:
             scale_val = {"kind": "fill_color"}
 
-        if data_kind == DataType.MAPPING:
+        if data_type == DataType.MAPPING:
             t = t_col.to_numpy(dtype=float)
             if len(t) != len(df):
                 raise GGException("Resulting array size does not match df len!")
@@ -391,7 +447,7 @@ def fill_continuous_color_scale(
                 c_val = color_scale.colors[color_idx]
                 scale_val["color"] = int_to_color(c_val)
                 result.append(scale_val.copy())
-        elif data_kind == DataType.SETTING:
+        elif data_type == DataType.SETTING:
             t = t_col.to_numpy()
             if len(t) != len(df):
                 raise GGException("Resulting array size does not match df len!")
@@ -414,7 +470,7 @@ def fill_continuous_color_scale(
 
 def fill_continuous_size_scale(
     col: FormulaNode,
-    data_kind: DataType,
+    data_type: DataType,
     value_kind: GGValue,
     data_scale: Scale,
     size_range: Tuple[float, float],
@@ -450,9 +506,9 @@ def fill_continuous_size_scale(
             raise GGException("Resulting array size does not match df len!")
 
         for val in t:
-            if data_kind == DataType.MAPPING:
+            if data_type == DataType.MAPPING:
                 size = (val - min_size) / (max_size - min_size)
-            elif data_kind == DataType.SETTING:
+            elif data_type == DataType.SETTING:
                 size = val
             else:
                 raise GGException("incorrect mapping type")
@@ -466,7 +522,7 @@ def fill_continuous_size_scale(
 
 def fill_continuous_alpha_scale(
     col: FormulaNode,
-    data_kind: DataType,
+    data_type: DataType,
     value_kind: GGValue,
     data_scale: Scale,
     alpha_range: Tuple[float, float],
@@ -501,9 +557,9 @@ def fill_continuous_alpha_scale(
         assert len(t) == len(df), "Resulting tensor size does not match df len!"
 
         for val in t:
-            if data_kind == DataType.MAPPING:
+            if data_type == DataType.MAPPING:
                 alpha = (val - min_alpha) / (max_alpha - min_alpha)
-            elif data_kind == DataType.SETTING:
+            elif data_type == DataType.SETTING:
                 alpha = val
             else:
                 raise GGException("incorrect mapping type")
@@ -512,3 +568,482 @@ def fill_continuous_alpha_scale(
 
     result.map_data = map_data  # type: ignore
     return result
+
+
+def fill_scale_impl(
+    value_kind: GGValue,
+    is_discrete: bool,
+    col: FormulaNode,
+    scale_type: ScaleType,
+    data_type: DataType,
+    label_seq: Optional[List[GGValue]] = None,
+    value_map: Optional[OrderedDict[GGValue, ScaleValue]] = None,
+    data_scale: Optional[Scale] = None,
+    ax_kind: Optional[AxisKind] = None,
+    trans: Optional[ScaleTransform] = None,
+    inv_trans: Optional[ScaleTransform] = None,
+    color_scale: Optional[List[float]] = DEFAULT_COLOR_SCALE,  # type: ignore
+    size_range: Optional[Tuple[float, float]] = DEFAULT_SIZE_RANGE_TUPLE,
+    alpha_range: Optional[Tuple[float, float]] = DEFAULT_ALPHA_RANGE_TUPLE,
+) -> GGScale:
+    """
+    TODO refactor ASAP
+    this is a mess
+    """
+
+    if is_discrete:
+        labels = label_seq if label_seq is not None else []
+
+        if scale_type == ScaleType.COLOR:
+            return fill_discrete_color_scale(
+                ScaleType.COLOR, value_kind, col, data_type, labels, value_map
+            )
+        elif scale_type == ScaleType.FILL_COLOR:
+            return fill_discrete_color_scale(
+                ScaleType.FILL_COLOR, value_kind, col, data_type, labels, value_map
+            )
+        elif scale_type == ScaleType.SIZE:
+            if not size_range:
+                raise GGException("expected size range")
+
+            return fill_discrete_size_scale(
+                value_kind, col, data_type, labels, value_map, size_range
+            )
+        elif scale_type == ScaleType.ALPHA:
+            if not alpha_range:
+                raise GGException("expected alpha range")
+
+            return fill_discrete_alpha_scale(
+                value_kind, col, data_type, labels, value_map, alpha_range
+            )
+        elif scale_type == ScaleType.LINEAR_DATA:
+            if ax_kind is None:
+                raise GGException("Linear data scales need an axis!")
+            return fill_discrete_linear_trans_scale(
+                ScaleType.LINEAR_DATA, col, ax_kind, value_kind, labels
+            )
+        elif scale_type == ScaleType.TRANSFORMED_DATA:
+            if trans is None:
+                raise GGException("Transform data needs a ScaleTransform procedure!")
+            if inv_trans is None:
+                raise GGException(
+                    "Transform data needs an inverse ScaleTransform procedure!"
+                )
+            if ax_kind is None:
+                raise GGException("Linear data scales need an axis!")
+
+            return fill_discrete_linear_trans_scale(
+                ScaleType.TRANSFORMED_DATA,
+                col,
+                ax_kind,
+                value_kind,
+                labels,
+                trans,
+                inv_trans,
+            )
+        elif scale_type == ScaleType.SHAPE:
+            return fill_discrete_shape_scale(value_kind, col, labels, value_map)
+        elif scale_type == ScaleType.TEXT:
+            # TODO this is missing a bunch of required attributes as well
+            return TextScale(
+                gg_data=GGScaleData(
+                    col=col,
+                    ids=set(),  # type: ignore,
+                    value_kind=VString(data=""),
+                    has_discreteness=True,
+                    discrete_kind=GGScaleDiscrete(
+                        value_map=OrderedDict(),
+                        label_seq=[],
+                    ),
+                    data_type=DataType.MAPPING,
+                )
+            )
+    else:
+        assert data_scale is not None, "Continuous scales require a data scale!"
+
+        if scale_type == ScaleType.LINEAR_DATA:
+            assert ax_kind is not None, "Linear data scales need an axis!"
+            return fill_continuous_linear_scale(col, ax_kind, value_kind, data_scale)
+        elif scale_type == ScaleType.TRANSFORMED_DATA:
+            assert trans is not None, "Transform data needs a ScaleTransform procedure!"
+            assert (
+                inv_trans is not None
+            ), "Transform data needs an inverse ScaleTransform procedure!"
+            assert ax_kind is not None, "Linear data scales need an axis!"
+            return fill_continuous_transformed_scale(
+                col, ax_kind, value_kind, trans, inv_trans, data_scale
+            )
+        elif scale_type == ScaleType.COLOR:
+            # TODO HIGH priority
+            # double check if ColorScale.colors is incorrectly setup as List[int]
+            # or if we need to do some conversion on the color
+            # this is almost guaratneed to be a bug
+            color_scale_ = ColorScale(
+                name="", colors=[int(i) for i in color_scale or []]
+            )
+            return fill_continuous_color_scale(
+                ScaleType.COLOR, col, data_type, value_kind, data_scale, color_scale_
+            )
+        elif scale_type == ScaleType.FILL_COLOR:
+            # TODO HIGH priority
+            # same as ScaleType.COLOR this is almost certain to be a bug
+            color_scale_ = ColorScale(
+                name="", colors=[int(i) for i in color_scale or []]
+            )
+            return fill_continuous_color_scale(
+                ScaleType.FILL_COLOR,
+                col,
+                data_type,
+                value_kind,
+                data_scale,
+                color_scale_,
+            )
+        elif scale_type == ScaleType.SIZE:
+            if size_range is None:
+                raise GGException("expected size range")
+            return fill_continuous_size_scale(
+                col, data_type, value_kind, data_scale, size_range
+            )
+        elif scale_type == ScaleType.ALPHA:
+            if alpha_range is None:
+                raise GGException("expected size range")
+            return fill_continuous_alpha_scale(
+                col, data_type, value_kind, data_scale, alpha_range
+            )
+        elif scale_type == ScaleType.SHAPE:
+            raise ValueError("Shape not supported for continuous variables!")
+        elif scale_type == ScaleType.TEXT:
+            # TODO HIGH priority Same as the discrete version
+            # Original version does not pass many required attrs
+            # i made up some for now
+            return TextScale(
+                gg_data=GGScaleData(
+                    col=col,
+                    ids=set(),  # type: ignore,
+                    value_kind=VString(data=""),
+                    has_discreteness=True,
+                    discrete_kind=GGScaleDiscrete(
+                        value_map=OrderedDict(),
+                        label_seq=[],
+                    ),
+                    data_type=DataType.MAPPING,
+                )
+            )
+
+
+@dataclass
+class _FillScaleData:
+    scale: GGScale
+    df: Optional[pd.DataFrame]
+
+
+def fill_scale(
+    df: pd.DataFrame, scales: List[GGScale], scale_type: ScaleType
+) -> List[GGScale]:
+    """
+    TODO refactor ASAP
+    this is a mess
+    """
+    data: pd.Series[Any] = pd.Series(dtype=object)
+    trans_opt = None
+    inv_trans_opt = None
+    ax_kind_opt = None
+
+    for scale in scales:
+        data = pd.concat([data, df[str(scale.col)]])  # type: ignore
+
+    data_scale_opt = None
+    label_seq_opt = None
+    value_map_opt = None
+    dc_kind_opt = None
+    color_scale = None
+    size_range = (0.0, 0.0)
+    alpha_range = (0.0, 0.0)
+
+    result = []
+    for scale in scales:
+        data_kind = scale.gg_data.data_type
+        dc_kind_opt = scale.gg_data.discrete_kind.discrete_type
+
+        if isinstance(scale, LinearDataScale):
+            if scale.data is None:
+                raise GGException("expected data")
+            ax_kind_opt = scale.data.axis_kind
+        elif isinstance(scale, TransformedDataScale):
+            if scale.data is None:
+                raise GGException("expected data")
+            ax_kind_opt = scale.data.axis_kind
+            trans_opt = scale.transform
+            inv_trans_opt = scale.inverse_transform
+        elif isinstance(scale, (ColorScale, FillColorScale)):
+            color_scale = scale.color_scale
+        elif isinstance(scale, SizeScale):
+            size_range = scale.size_range
+        elif isinstance(scale, AlphaScale):
+            alpha_range = scale.alpha_range
+
+        (is_discrete, value_kind) = discrete_and_type(data, scale, dc_kind_opt)
+        if isinstance(value_kind, VNull):
+            print("WARNING: Unexpected data type!")
+            continue
+
+        if is_discrete:
+            discrete_kind = cast(GGScaleDiscrete, scale.gg_data.discrete_kind)
+            if not discrete_kind.label_seq:
+                if isinstance(scale, (LinearDataScale, TransformedDataScale)):
+                    if scale.data is None:
+                        raise GGException("expected data")
+                    if scale.data.reversed:
+                        label_seq_opt = sorted(data.unique())  # type: ignore
+                    else:
+                        label_seq_opt = sorted(data.unique(), reverse=True)  # type: ignore
+            else:
+                label_seq_opt = discrete_kind.label_seq
+
+            if discrete_kind.value_map:
+                value_map_opt = discrete_kind.value_map
+        else:
+            discrete_kind = cast(GGScaleContinuous, scale.gg_data.discrete_kind)
+            if discrete_kind.data_scale.low != discrete_kind.data_scale.high:
+                data_scale_opt = discrete_kind.data_scale
+            else:
+                data_scale_opt = Scale(min=data.min(), max=data.max())  # type: ignore
+
+        filled = fill_scale_impl(
+            # TODO CRITICAL, this needs to be inferred from the dtype
+            # infact, GGValue should probably be deleted overall eventually
+            # keep for now to finish other things
+            value_kind=VTODO(),
+            is_discrete=is_discrete,
+            col=scale.gg_data.col,
+            scale_type=scale_type,
+            data_type=data_kind,
+            label_seq=label_seq_opt,
+            value_map=value_map_opt,
+            data_scale=data_scale_opt,
+            ax_kind=ax_kind_opt,
+            # TODO CRITICAL
+            # the whole trans logic needs refactoring
+            # for now ignore type
+            trans=trans_opt,  # type: ignore
+            # TODO CRITICAL
+            # the whole inv_trans logic needs refactoring
+            # for now ignore type
+            inv_trans=inv_trans_opt,  # type: ignore
+            # TODO CRITICAL this needs some re-weriring
+            # one side is List[int] and the other is Tuple[float, float]
+            # we ignore for now
+            color_scale=color_scale,  # type: ignore
+            size_range=size_range,
+            alpha_range=alpha_range,
+        )
+
+        # TODO fix this, along with the whole function
+        if isinstance(filled, (LinearDataScale, TransformedDataScale)) and isinstance(
+            scale, (LinearDataScale, TransformedDataScale)
+        ):
+            if filled.data is None or scale.data is None:
+                raise GGException("expected data")
+
+            filled.data.secondary_axis = scale.data.secondary_axis
+            filled.data.date_scale = scale.data.date_scale
+            filled.gg_data.num_ticks = scale.gg_data.num_ticks
+            filled.gg_data.breaks = scale.gg_data.breaks
+
+            if isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete) and is_discrete:
+                scale.gg_data.discrete_kind.format_discrete_label = (
+                    scale.gg_data.discrete_kind.format_discrete_label
+                )
+            elif (
+                isinstance(scale.gg_data.discrete_kind, GGScaleContinuous)
+                and not is_discrete
+            ):
+                # we can ignore type for now this whole thing will be refactored
+                filled.gg_data.discrete_kind.format_continuous_label = scale.gg_data.discrete_kind.format_continuous_label  # type: ignore
+
+        filled.gg_data.ids = scale.gg_data.ids
+        result.append(filled)  # type: ignore
+
+    return result  # type: ignore
+
+
+def call_fill_scale(
+    p_data: pd.DataFrame, scales: List[_FillScaleData], scale_type: ScaleType
+) -> List[GGScale]:
+    separate_idxs = [i for i in range(len(scales)) if scales[i].df is not None]
+    scales_to_use: List[GGScale] = []
+
+    for i, scale_data_ in enumerate(scales):
+        if i not in separate_idxs:
+            scales_to_use.append(scale_data_.scale)
+
+    result: List[GGScale] = []
+    if len(scales_to_use) > 0:
+        filled: List[GGScale] = []
+        if scales_to_use[0].scale_type == ScaleType.TRANSFORMED_DATA:
+            filled = fill_scale(p_data, scales_to_use, ScaleType.TRANSFORMED_DATA)
+        else:
+            filled = fill_scale(p_data, scales_to_use, scale_type)
+
+        result.extend(filled)
+
+    # now separates
+    for i in separate_idxs:
+        additional: List[GGScale] = []
+        if scales[i].scale.scale_type == ScaleType.TRANSFORMED_DATA:
+            additional = fill_scale(
+                scales[i].df,  # type: ignore
+                [scales[i].scale],
+                ScaleType.TRANSFORMED_DATA,
+            )
+        else:
+            additional = fill_scale(
+                scales[i].df, [scales[i].scale], scale_type  # type: ignore
+            )
+
+        assert len(additional) <= 1
+        result.extend(additional)
+
+    return result
+
+
+def add_facets(filled_scales: FilledScales, plot: GgPlot):
+    if plot.facet is None:
+        raise GGException("expected a facet")
+    facet = plot.facet
+
+    for fc in facet.columns:
+
+        # TODO CRITICAL
+        # this needs re-visiting very soon
+        scale_ = AbstractGGScale(
+            gg_data=GGScaleData(
+                ids=set(range(65536)),
+                col=fc,
+                name=fc,
+                has_discreteness=True,
+                discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
+            )
+        )
+        fill_scale_data = _FillScaleData(scale=scale_, df=None)
+
+        result = call_fill_scale(plot.data, [fill_scale_data], ScaleType.LINEAR_DATA)
+        filled_scales.facets.extend(result)
+
+
+def collect(plot: GgPlot, field: Any):
+    scale_data: List[_FillScaleData] = []
+
+    if hasattr(plot.aes, field) and getattr(plot.aes, field) is not None:
+        element = _FillScaleData(df=None, scale=getattr(plot.aes, field))
+        scale_data.append(element)
+
+    # Check all geoms
+    for geom in plot.geoms:
+        if hasattr(geom.aes, field) and getattr(geom.aes, field) is not None:
+            element = _FillScaleData(df=geom.data, scale=getattr(geom.aes, field))
+            scale_data.append(element)
+
+    return scale_data
+
+
+def collect_scales(plot: GgPlot) -> FilledScales:
+    result: Dict[Any, Any] = {}
+
+    def fill_field(field_name: str, arg: List[GGScale]) -> None:
+        if len(arg) > 0 and arg[0].ids == set(range(0, 65535)):  # type: ignore
+            result[field_name] = (arg[0], arg[1:])
+        else:
+            result[field_name] = (None, arg)
+
+    xs = collect(plot, "x")
+    x_filled = call_fill_scale(plot.data, xs, ScaleType.LINEAR_DATA)
+    fill_field("x", x_filled)
+
+    if any(x.scale.is_reversed() for x in xs):
+        result["reversed_x"] = True
+    if any(x.is_discrete() for x in x_filled):
+        result["discrete_x"] = True
+
+    xs_min = collect(plot, "x_min")
+    x_min_filled = call_fill_scale(plot.data, xs_min, ScaleType.LINEAR_DATA)
+    fill_field("x_min", x_min_filled)
+
+    xs_max = collect(plot, "x_max")
+    x_max_filled = call_fill_scale(plot.data, xs_max, ScaleType.LINEAR_DATA)
+    fill_field("x_max", x_max_filled)
+
+    ys = collect(plot, "y")
+    y_filled = call_fill_scale(plot.data, ys, ScaleType.LINEAR_DATA)
+    fill_field("y", y_filled)
+
+    if any(y.scale.is_reversed() for y in ys):
+        result["reversed_y"] = True
+    if any(y.is_discrete() for y in y_filled):
+        result["discrete_y"] = True
+
+    ys_min = collect(plot, "y_min")
+    y_min_filled = call_fill_scale(plot.data, ys_min, ScaleType.LINEAR_DATA)
+    fill_field("y_min", y_min_filled)
+
+    # Handle y_max scales
+    ys_max = collect(plot, "y_max")
+    y_max_filled = call_fill_scale(plot.data, ys_max, ScaleType.LINEAR_DATA)
+    fill_field("y_max", y_max_filled)
+
+    # Handle y_ridges scales
+    ys_ridges = collect(plot, "y_ridges")
+    y_ridges_filled = call_fill_scale(plot.data, ys_ridges, ScaleType.LINEAR_DATA)
+    fill_field("y_ridges", y_ridges_filled)
+
+    # Handle color scales
+    colors = collect(plot, "color")
+    color_filled = call_fill_scale(plot.data, colors, ScaleType.COLOR)
+    fill_field("color", color_filled)
+
+    # Handle fill scales
+    fills = collect(plot, "fill")
+    fill_filled = call_fill_scale(plot.data, fills, ScaleType.FILL_COLOR)
+    fill_field("fill", fill_filled)
+
+    # Handle alpha scales
+    alphas = collect(plot, "alpha")
+    alpha_filled = call_fill_scale(plot.data, alphas, ScaleType.ALPHA)
+    fill_field("alpha", alpha_filled)
+
+    # Handle size scales
+    sizes = collect(plot, "size")
+    size_filled = call_fill_scale(plot.data, sizes, ScaleType.SIZE)
+    fill_field("size", size_filled)
+
+    # Handle shape scales
+    shapes = collect(plot, "shape")
+    shape_filled = call_fill_scale(plot.data, shapes, ScaleType.SHAPE)
+    fill_field("shape", shape_filled)
+
+    # Handle width scales
+    widths = collect(plot, "width")
+    width_filled = call_fill_scale(plot.data, widths, ScaleType.LINEAR_DATA)
+    fill_field("width", width_filled)
+
+    # Handle height scales
+    heights = collect(plot, "height")
+    height_filled = call_fill_scale(plot.data, heights, ScaleType.LINEAR_DATA)
+    fill_field("height", height_filled)
+
+    # Handle text scales (dummy scale, only care about column)
+    texts = collect(plot, "text")
+    text_filled = call_fill_scale(plot.data, texts, ScaleType.TEXT)
+    fill_field("text", text_filled)
+
+    # Handle weight scales
+    weights = collect(plot, "weight")
+    weight_filled = call_fill_scale(plot.data, weights, ScaleType.LINEAR_DATA)
+    fill_field("weight", weight_filled)
+
+    filled_scales_result = FilledScales(**result)  # type: ignore
+    if plot.facet is not None:
+        add_facets(filled_scales_result, plot)
+
+    post_process_scales(result, plot)  # TODO port post process
+    return filled_scales_result

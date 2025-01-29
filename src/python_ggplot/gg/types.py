@@ -345,7 +345,7 @@ class GgPlot:
             has_discreteness=True,
             discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
             ids=set(range(65536)),
-            data_kind=DataType.NULL,
+            data_type=DataType.NULL,
             value_kind=VNull(),
         )
         scale = LinearDataScale(

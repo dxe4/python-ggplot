@@ -47,6 +47,11 @@ class VNull(GGValue):
     pass
 
 
+@dataclass
+class VTODO(GGValue):
+    pass
+
+
 class ColumnType(Enum):
     NONE = auto()
     FLOAT = auto()
@@ -267,6 +272,9 @@ class NoneFormula(Formula):
 class FormulaNode:
     kind: Formula
     name: str = ""
+
+    def __str__(self) -> str:
+        return self.name
 
     def is_column(self):
         """

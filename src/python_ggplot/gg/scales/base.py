@@ -17,6 +17,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
+from numpy.ma import isin
 
 from python_ggplot.core.objects import AxisKind, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
@@ -82,7 +83,7 @@ class GGScaleData:
     ids: Set[int]
     value_kind: GGValue
     has_discreteness: bool
-    data_kind: DataType
+    data_type: DataType
     discrete_kind: "GGScaleDiscreteKind"
     num_ticks: Optional[int] = None
     breaks: Optional[List[float]] = None
@@ -115,6 +116,16 @@ class GGScale(ABC):
     def scale_type(self) -> ScaleType:
         pass
 
+    def is_discrete(self) -> bool:
+        return self.gg_data.discrete_kind.discrete_type == DiscreteType.DISCRETE
+
+    def is_reversed(self) -> bool:
+        if isinstance(self, (LinearDataScale, TransformedDataScale)):
+            if self.data is None:
+                return False
+            return self.data.reversed
+        return False
+
     # def __eq__(self, other) -> bool:  # type: ignore
     #     return (
     #         self.discrete_kind == other.discrete_kind
@@ -125,7 +136,7 @@ class GGScale(ABC):
 @dataclass
 class DateScale(GGScale):
     name: str
-    ax_kind: AxisKind
+    axis_kind: AxisKind
     is_timestamp: bool
     breaks: List[float]
     format_string: str
@@ -186,6 +197,10 @@ class FillColorScale(GGScale):
 @dataclass
 class AlphaScale(GGScale):
     alpha: float
+    # TODO: cirtical
+    # this got lost in translation, we need to revive it
+    # check all usage of alpha scale and pass alpha scale instead of alpha
+    alpha_range: Tuple[float, float] = (0.0, 0.0)
 
     def update_style(self, style: "GGStyle"):
         style.alpha = self.alpha
@@ -224,6 +239,10 @@ class TextScale(GGScale):
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.TEXT
+
+
+class AbstractGGScale(GGScale):
+    pass
 
 
 class GGScaleDiscreteKind(DiscreteKind, ABC):
