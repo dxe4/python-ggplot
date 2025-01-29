@@ -425,10 +425,10 @@ class FilledGeomContinuous(FilledGeomDiscreteKind):
 
 
 class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
-    x_min: Optional[str]
-    y_min: Optional[str]
-    x_max: Optional[str]
-    y_max: Optional[str]
+    x_min: Optional[float]
+    y_min: Optional[float]
+    x_max: Optional[float]
+    y_max: Optional[float]
 
 
 @dataclass

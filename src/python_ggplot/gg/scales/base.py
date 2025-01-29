@@ -119,6 +119,9 @@ class GGScale(ABC):
     def is_discrete(self) -> bool:
         return self.gg_data.discrete_kind.discrete_type == DiscreteType.DISCRETE
 
+    def is_continuous(self) -> bool:
+        return self.gg_data.discrete_kind.discrete_type == DiscreteType.CONTINUOUS
+
     def is_reversed(self) -> bool:
         if isinstance(self, (LinearDataScale, TransformedDataScale)):
             if self.data is None:

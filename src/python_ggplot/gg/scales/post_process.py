@@ -18,7 +18,7 @@ from python_ggplot.gg.scales.base import (
     ScaleType,
 )
 from python_ggplot.gg.styles import change_style
-from python_ggplot.gg.types import GgPlot, GGStyle
+from python_ggplot.gg.types import GgPlot, GGStyle, PositionType
 
 
 def get_scales(
@@ -198,6 +198,206 @@ def apply_cont_scale_if_any(
         result_styles = [base_style]
 
     return (result_style, result_styles, result_df)
+
+
+def add_counts_by_position(
+    col_sum: pd.Series[Any], col: pd.Series[Any], pos: PositionType
+):
+    # TODO use is_numeric_dtype in other places of the code base
+    if pd.api.types.is_numeric_dtype(col):  # type: ignore
+        if pos == PositionType.STACK:
+            if len(col_sum) == 0:
+                col_sum = col.copy()
+            else:
+                col_sum += col
+        elif pos in (PositionType.IDENTITY, PositionType.DODGE):
+            col_sum = col.copy()
+        elif pos == PositionType.FILL:
+            col_sum = pd.Series([1.0])
+    else:
+        col_sum = col.copy()
+
+    return col_sum
+
+
+def add_zero_keys(
+    df: pd.DataFrame, keys: pd.Series[Any], x_col: Any, count_col: str
+) -> pd.DataFrame:
+    exist_keys = df[x_col].unique()  # type: ignore
+    df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore
+    df_zero[count_col] = 0
+    return pd.concat([df, df_zero], ignore_index=True)
+
+
+@no_type_check
+def _get_min_max_scale(left, right, operator):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("needs to be ported")
+
+
+@no_type_check
+def _get_height_scale(left, right):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("needs to be ported")
+
+
+@no_type_check
+def _get_width_scale(left, right):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("needs to be ported")
+
+
+@no_type_check
+def get_y_scale(left, right):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("need to be ported")
+
+
+@no_type_check
+def get_x_scale(left, right):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("need to be ported")
+
+
+@no_type_check
+def get_fill_scale(left, right):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("need to be ported")
+
+
+def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
+    """
+    TODO CRITICAL
+    THIS whole function needs an entire re-write
+    we need to provide the functionality very draft
+    for now for this to stop being a blocker
+
+    this is the case for most of this file,
+    but some things are a lot easier to port
+
+    write unit tests for the original package for this funcs:
+        _get_min_max_scale, _get_width_scale and _get_min_max_scale
+    """
+
+    def assign_if_any(fg: FilledGeom, scale: Optional[GGScale], attr: Any):
+        # TODO this is inherited as tempalte assuming for performanece to avoid func calls
+        # we can refactor later
+        if scale is not None:
+            setattr(fg, attr, scale.get_col_name())
+
+    if fg.geom_type == GeomType.ERROR_BAR:
+        # TODO CRITICAL This logic is semi-wrong
+        # adding type ignore for now, need to port the macro and write a unit test
+        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, min), "x_min")  # type: ignore
+        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, max), "x_max")  # type: ignore
+        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, min), "y_min")  # type: ignore
+        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, min), "y_min")  # type: ignore
+
+    elif fg.geom_type in {GeomType.TILE, GeomType.RASTER}:
+        h_s = _get_height_scale(fs, fg.gg_data.geom)
+        w_s = _get_width_scale(fs, fg.gg_data.geom)
+        x_min_s = _get_min_max_scale(fs, fg.gg_data.geom, min)
+        x_max_s = _get_min_max_scale(fs, fg.gg_data.geom, max)
+        y_min_s = _get_min_max_scale(fs, fg.gg_data.geom, min)
+        y_max_s = _get_min_max_scale(fs, fg.gg_data.geom, max)
+
+        if h_s is not None:
+            # TODO the type: ignore can go away
+            # if we change the if from enum check to isinstance
+            # but id rather make something poly morphic on a secondary wave
+            # for now just port as is
+            fg.data.height = h_s.get_col_name()  # type: ignore
+        elif y_min_s is not None and y_max_s is not None:
+            min_name = y_min_s.get_col_name()
+            max_name = y_max_s.get_col_name()
+
+            # TODO CRITICAL this also comes from macro (non ported yet)
+            y_scale = get_y_scale(fs, fg.geom)  # type: ignore
+            y_col_name = y_scale.get_col_name()
+            df["height"] = df[max_name] - df[min_name]
+            df[y_col_name] = df[min_name]
+            # TODO the type: ignore can go away, just make it polymorphic instead
+            # also not sure why height = some('height') ?????
+            fg.gg_data.height = "height"  # type: ignore
+        elif y_min_s is not None or y_max_s is not None:
+            raise ValueError(
+                f"Invalid combination of aesthetics! If no height given both an `y_min` and `y_max` has to be supplied for geom_{fg.geom_kind}!"
+            )
+        else:
+            if fg.geom_type == GeomType.RASTER:
+                col_name = get_y_scale(fs, fg.geom).get_col_name()  # type: ignore
+                y_col = df[col_name].unique()  # type: ignore
+                # TODO here is the same as before, make polymorphic
+                fg.num_y = len(y_col)  # type: ignore
+                df["height"] = abs(y_col[1] - y_col[0])
+            else:
+                print(
+                    f"INFO: using default height of 1 since no height information supplied. "
+                    "Add `height` or (`y_min`, `y_max`) as aesthetics for different values."
+                )
+                df["height"] = 1.0
+            # TODO here is the same as before, make polymorphic
+            # also not sure why height = some('height') ?????
+            fg.height = "height"  # type: ignore
+
+        # Handle width
+        if w_s is not None:
+            fg.width = w_s.get_col_name()  # type: ignore
+        elif x_min_s is not None and x_max_s is not None:
+            min_name = x_min_s.get_col_name()  # type: ignore
+            max_name = x_max_s.get_col_name()  # type: ignore
+            x_col_name = get_x_scale(fs, fg.geom).get_col_name()  # type: ignore
+            df["width"] = df[max_name] - df[min_name]
+            df[x_col_name] = df[min_name]
+            fg.width = "width"  # type: ignore
+        elif x_min_s is not None or x_max_s is not None:
+            raise GGException(
+                f"Invalid combination of aesthetics! If no width given both an `x_min` and `x_max` has to be supplied for geom_{fg.geom_kind}!"
+            )
+        else:
+            if fg.geom_type == GeomType.RASTER:
+                x_col = df[get_x_scale(fs, fg.geom).get_col_name()].unique()  # type: ignore
+                fg.num_x = len(x_col)  # type: ignore
+                df["width"] = abs(x_col[1] - x_col[0])
+            else:
+                print(
+                    f"INFO: using default width of 1 since no width information supplied. "
+                    "Add `width` or (`x_min`, `x_max`) as aesthetics for different values."
+                )
+                df["width"] = 1.0
+            fg.width = "width"  # type: ignore
+
+        fill_scale = get_fill_scale(fs)  # type: ignore
+        if fill_scale is None:
+            raise GGException("requires a `fill` aesthetic scale!")
+        fg.fill_col = fill_scale.get_col_name()  # type: ignore
+        if fill_scale.is_continuous():  # type: ignore
+            fg.fill_data_scale = fill_scale.data_scale  # type: ignore
+            fg.color_scale = use_or_default(fill_scale.color_scale)  # type: ignore
+
+    elif fg.geom_type == GeomType.TEXT:
+        fg.text = str(get_text_scale(fs, fg.geom).col)  # type: ignore
+
+    elif fg.geom_type == GeomType.HISTOGRAM:
+        fg.hd_kind = fg.geom.hd_kind  # type: ignore
 
 
 def post_process_scales(filled_scales: FilledGeom, plot: GgPlot):
