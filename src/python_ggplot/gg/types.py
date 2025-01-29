@@ -83,7 +83,7 @@ class StatBin(StatKind):
     num_bins: int
     bin_width: Optional[float] = None
     bin_edges: Optional[List[float]] = None
-    bin_by: "BinByKind"
+    bin_by: "BinByType"
     density: bool
 
     @property
@@ -214,7 +214,7 @@ class SmoothMethodType(str, Enum):
     POLY = auto()
 
 
-class BinByKind(str, Enum):
+class BinByType(str, Enum):
     FULL = auto()
     SUBSET = auto()
 

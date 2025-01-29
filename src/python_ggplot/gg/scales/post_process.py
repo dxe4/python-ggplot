@@ -6,18 +6,19 @@ Smoothing in particular we may skip for alpha version
 
 from typing import Any, Dict, List, Optional, Tuple, no_type_check
 
+import numpy as np
 import pandas as pd
-from cairo import Status
 from numpy.typing import NDArray
 
+from python_ggplot.core.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom import (
     FilledGeom,
+    FilledGeomContinuous,
     FilledGeomData,
     FilledGeomErrorBar,
     Geom,
-    GeomErrorBar,
     GeomType,
     HistogramDrawingStyle,
 )
@@ -33,10 +34,13 @@ from python_ggplot.gg.scales.base import (
 from python_ggplot.gg.styles import apply_style, change_style, use_or_default
 from python_ggplot.gg.types import (
     PREV_VALS_COL,
+    SMOOTH_VALS_COL,
+    BinByType,
     GgPlot,
     GGStyle,
     PositionType,
     SmoothMethodType,
+    StatBin,
     StatSmooth,
     StatType,
 )
@@ -639,7 +643,6 @@ def call_smoother(
         return stat_kind.svg_smooth(data)  # type: ignore
 
     elif stat_kind.method_type == SmoothMethodType.POLY:
-        # For polynomial least squares fit we also need the x values
         x_data = df[fg.gg_data.x_col]  # type: ignore
         return stat_kind.polynomial_smooth(x_data, data)  # type: ignore
 
@@ -647,6 +650,187 @@ def call_smoother(
         raise GGException("Levenberg-Marquardt fitting is not implemented yet.")
 
     raise GGException("Unknown smoothing method")
+
+
+def filled_smooth_geom(
+    df: pd.DataFrame, geom: Geom, filled_scales: FilledScales
+) -> FilledGeom:
+    """
+    TODO complete refactor
+    reuse logic with filled_identity_geom
+    doesnt make a difference for now,
+    need a draft version of this to get all the unit tests running
+    """
+
+    x, y, discretes, cont = separate_scales_apply_trafos(df, geom, filled_scales)
+    set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
+
+    if x.is_discrete():
+        raise GGException("expected continuous data")
+    if y is not None and y.is_discrete():
+        raise GGException("expected continuous data")
+
+    if y is None:
+        # TODO i think this logic is wrong, double check
+        raise GGException("y is none")
+
+    fg_data = FilledGeomData(
+        geom=geom,
+        x_col=x.get_col_name(),
+        y_col=SMOOTH_VALS_COL,
+        x_scale=determine_data_scale(x, cont, df),
+        y_scale=determine_data_scale(y, cont, df),
+        x_discrete_kind=FilledGeomContinuous(),
+        y_discrete_kind=FilledGeomContinuous(),
+        # not explicitly passed at initialisisation, we set some defaults
+        # TODO investiage if needed
+        reversed_x=False,
+        reversed_y=False,
+        yield_data={},  # type: ignore
+        num_x=0,
+        num_y=0,
+    )
+    result = FilledGeom(gg_data=fg_data)
+    fill_opt_fields(result, filled_scales, df)
+
+    style = GGStyle()
+    for set_val in set_disc_cols:
+        # same with filled_identity_geom
+        # this may be a bug
+        apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
+
+    if len(map_disc_cols) > 0:
+        df = df.groupby(map_disc_cols)  # type: ignore
+        col = pd.Series(dtype=float)  # type: ignore
+
+        # TODO CRITICAL deal with pandas multi index...
+        # assume this works for now to finish the rest
+        for keys, sub_df in df.sort_values(ascending=False):  # type: ignore
+            apply_style(style, sub_df, discretes, keys)  # type: ignore
+            yield_df = sub_df.copy()  # type: ignore
+
+            smoothed = call_smoother(
+                result,
+                yield_df,  # type: ignore
+                y,
+                range=x.gg_data.discrete_kind.data_scale,  # type: ignore
+            )
+            yield_df[SMOOTH_VALS_COL] = smoothed
+            set_x_attributes(result, yield_df, x)  # type: ignore
+
+            if geom.gg_data.position == PositionType.STACK:
+                yield_df[PREV_VALS_COL] = pd.Series(0.0, index=yield_df.index) if len(col) == 0 else col.copy()  # type: ignore
+
+            # possibly modify `col` if stacking
+            add_counts_by_position(
+                yield_df[result.y_col],  # type: ignore
+                col,  # type: ignore
+                geom.gg_data.position,
+            )
+
+            if geom.gg_data.position == PositionType.STACK and not (
+                (
+                    geom.geom_type == GeomType.HISTOGRAM
+                    and geom.gg_data.histogram_drawing_style
+                    == HistogramDrawingStyle.BARS
+                )
+                or (geom.geom_type == GeomType.BAR)
+            ):
+                yield_df[result.y_col] = col  # type: ignore
+
+            maybe_filter_unique(yield_df, result)  # type: ignore
+            result.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
+                yield_df, cont, style, geom.geom_type, to_clone=True  # type: ignore
+            )
+
+        if geom.gg_data.position == PositionType.STACK and not result.is_discrete_y():
+            # only update required if stacking, as we've computed the range beforehand
+            result.gg_data.y_scale = result.gg_data.y_scale.merge(
+                Scale(low=result.gg_data.y_scale.low, high=col.max())  # type: ignore
+            )
+
+        if (
+            geom.geom_type == GeomType.HISTOGRAM
+            and geom.gg_data.position == PositionType.STACK
+            and geom.gg_data.histogram_drawing_style == HistogramDrawingStyle.OUTLINE
+        ):
+            result.gg_data.yield_data = dict(reversed(list(result.gg_data.yield_data.items())))  # type: ignore
+    else:
+        yield_df = df.copy()
+        smoothed = call_smoother(
+            result, yield_df, y, range=x.data_scale  # type: ignore TODO critical FIX
+        )
+        yield_df[PREV_VALS_COL] = pd.Series(0.0, index=yield_df.index)  # type: ignore
+        yield_df[SMOOTH_VALS_COL] = smoothed
+        maybe_filter_unique(yield_df, result)
+        set_x_attributes(result, yield_df, x)
+        key = ("", VNull())
+        result.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+            yield_df, cont, style, geom.geom_type
+        )
+
+    result.gg_data.num_y = result.gg_data.num_x
+
+    return result
+
+
+def call_histogram(
+    geom: Geom,
+    df: pd.DataFrame,
+    scale: GGScale,
+    weight_scale: Optional[GGScale],
+    range_scale: Scale,
+) -> Tuple[
+    List[float],
+    List[float],
+    List[float],
+]:
+    """
+    TODO revisti this once public interface is ready
+    """
+    stat_kind = geom.gg_data.stat_kind
+    if not isinstance(stat_kind, StatBin):
+        raise GGException("expected bin stat type")
+
+    def read_tmpl(sc: Any):
+        return sc.col.evaluate(df).to_numpy(dtype=float)
+
+    data = read_tmpl(scale)
+    hist = []
+    bin_edges = []
+    bin_widths = []
+
+    def call_hist(bins_arg: Any):
+        """
+        TODO refactor this
+        """
+        if stat_kind.bin_by == BinByType.FULL:
+            range_val = (range_scale.low, range_scale.high)
+        else:
+            range_val = (0.0, 0.0)
+
+        weight_data = read_tmpl(weight_scale) or []  # type: ignore
+
+        nonlocal hist, bin_edges
+        hist, bin_edges = histogram(
+            data,
+            bins_arg,
+            weights=weight_data or None,  # type: ignore
+            range=range_val,
+            density=stat_kind.density,
+        )
+
+    if stat_kind.bin_edges is not None:
+        call_hist(stat_kind.bin_edges)
+    elif stat_kind.bin_width is not None:
+        bins = round((range_scale.high - range_scale.low) / stat_kind.bin_width)
+        call_hist(int(bins))
+    else:
+        call_hist(stat_kind.num_bins)
+
+    bin_widths = np.diff(bin_edges)  # type: ignore
+    hist = np.append(hist, 0.0)  # type: ignore
+    return hist, bin_edges, bin_widths  # type: ignore
 
 
 def post_process_scales(filled_scales: FilledScales, plot: GgPlot):

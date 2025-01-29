@@ -1,8 +1,11 @@
+from ast import type_ignore
 from math import factorial
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+
+from python_ggplot.core.objects import GGException
 
 
 def savitzky_golay(
@@ -47,3 +50,89 @@ def poly_fit(x: NDArray[np.float64], y: NDArray[np.float64], degree: int):
     poly_coeff = np.polyfit(x, y, degree)
     result = np.polyval(poly_coeff, x)
     return result
+
+
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
+
+
+def bincount(x: List[int], sorted_: bool = False) -> NDArray[Any]:
+    if not sorted_:
+        ss = sorted(x)
+    else:
+        ss = list(x)
+
+    if not ss:
+        return np.array([], dtype=int)
+
+    ss_low = max(0, ss[0])
+    result = np.zeros(ss[-1] - ss_low + 1, dtype=int)
+
+    for val in ss:
+        if val < 0:
+            continue
+        result[val - ss_low] += 1
+
+    return result
+
+
+def histogram(
+    x: List[float],
+    bins: Union[int, str],
+    range: Optional[Tuple[float, float]] = None,
+    normed: bool = False,
+    weights: Optional[List[float]] = None,
+    density: bool = False,
+) -> Tuple[NDArray[Any], NDArray[Any]]:
+    """
+    TODO this is a bad idea, we should use numpy histogram here
+    for now its fine, need to get the public interface working first
+    this is the easiest way to keep compatibility with nim side
+    """
+
+    if len(x) == 0:
+        raise GGException("Cannot compute histogram of empty array!")
+
+    if weights is not None and len(weights) != len(x):
+        raise GGException(
+            "The number of weights needs to be equal to the number of elements in the input sequence!"
+        )
+
+    x_array = np.asarray(x, dtype=float)
+
+    if range is None:
+        mn, mx = float(np.min(x_array)), float(np.max(x_array))
+    else:
+        mn, mx = range
+
+    if mn > mx:
+        raise ValueError("Max range must be larger than min range!")
+    elif mn == mx:
+        mn -= 0.5
+        mx += 0.5
+
+    if isinstance(bins, str):
+        raise GGException(
+            "Automatic choice of number of bins based on different algorithms not implemented yet."
+        )
+
+    bin_edges = np.linspace(mn, mx, bins + 1, endpoint=True)
+
+    mask = (x_array >= mn) & (x_array <= mx)
+    x_data = x_array[mask]
+
+    norm = bins / (mx - mn)
+    x_scaled = (x_data - mn) * norm
+    indices = np.floor(x_scaled).astype(int)
+
+    indices = np.clip(indices, 0, bins - 1)
+
+    decrement = x_data < bin_edges[indices]
+    indices[decrement] -= 1
+    increment = (x_data >= bin_edges[indices + 1]) & (indices != (bins - 1))
+    indices[increment] += 1
+
+    hist = np.bincount(indices, minlength=bins)
+
+    return hist, bin_edges
