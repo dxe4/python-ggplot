@@ -952,9 +952,9 @@ def collect_scales(plot: GgPlot) -> FilledScales:
 
     def fill_field(field_name: str, arg: List[GGScale]) -> None:
         if len(arg) > 0 and arg[0].ids == set(range(0, 65535)):  # type: ignore
-            result[field_name] = (arg[0], arg[1:])
+            result["metadata"][field_name] = {"main": arg[0], "more": arg[1:]}
         else:
-            result[field_name] = (None, arg)
+            result["metadata"][field_name] = {"main": None, "more": arg}
 
     xs = collect(plot, "x")
     x_filled = call_fill_scale(plot.data, xs, ScaleType.LINEAR_DATA)

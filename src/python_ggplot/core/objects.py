@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Generic, List, Literal, Optional, TypeVar, Union
@@ -232,8 +233,20 @@ class Scale:
     low: float
     high: float
 
+    def merge(self, other: "Scale") -> "Scale":
+        if not (self.is_empty() and math.isclose(self.low, 0)):
+            return Scale(
+                low=min(self.low, other.low),
+                high=max(self.high, other.high),
+            )
+        else:
+            return other
+
+    def is_empty(self) -> bool:
+        return math.isclose(self.low, self.high)
+
     def __eq__(self, o) -> bool:  # type: ignore
-        return self.low == o.low and self.high == o.high  # type: ignore
+        return math.isclose(self.low, o.low) and math.isclose(self.high, o.high)  # type: ignore
 
 
 class GGException(Exception):
