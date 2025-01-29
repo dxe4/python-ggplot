@@ -9,12 +9,15 @@ from typing import Any, Dict, List, Optional, Tuple, no_type_check
 import pandas as pd
 
 from python_ggplot.core.objects import GGException, Scale
+from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom import (
     FilledGeom,
+    FilledGeomData,
     FilledGeomErrorBar,
     Geom,
     GeomErrorBar,
     GeomType,
+    HistogramDrawingStyle,
 )
 from python_ggplot.gg.scales.base import (
     FilledScales,
@@ -25,8 +28,8 @@ from python_ggplot.gg.scales.base import (
     ScaleType,
     TransformedDataScale,
 )
-from python_ggplot.gg.styles import change_style, use_or_default
-from python_ggplot.gg.types import GgPlot, GGStyle, PositionType
+from python_ggplot.gg.styles import apply_style, change_style, use_or_default
+from python_ggplot.gg.types import PREV_VALS_COL, GgPlot, GGStyle, PositionType
 from tests.test_view import AxisKind
 
 
@@ -53,7 +56,8 @@ def get_scales(
 
     x_opt = get_scale(filled_scales.x)
     y_opt = get_scale(filled_scales.y)
-    assert x_opt is not None
+    if x_opt is None:
+        raise GGException("x_opt is None")
 
     other_scales: List[GGScale] = []
 
@@ -210,7 +214,7 @@ def apply_cont_scale_if_any(
 
 
 def add_counts_by_position(
-    col_sum: pd.Series[Any], col: pd.Series[Any], pos: PositionType
+    col_sum: pd.Series[Any], col: pd.Series[Any], pos: Optional[PositionType]
 ):
     # TODO use is_numeric_dtype in other places of the code base
     if pd.api.types.is_numeric_dtype(col):  # type: ignore
@@ -495,7 +499,120 @@ def maybe_filter_unique(df: pd.DataFrame, fg: FilledGeom):
     return df
 
 
-def post_process_scales(filled_scales: FilledGeom, plot: GgPlot):
+def filled_identity_geom(
+    df: pd.DataFrame, geom: Geom, filled_scales: FilledScales
+) -> FilledGeom:
+    """
+    TODO refactor/test/fix this
+    """
+    x, y, discretes, cont = separate_scales_apply_trafos(df, geom, filled_scales)
+    set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
+    if y is None:
+        # TODO double check if this is correct
+        raise GGException("y is None")
+
+    fg_data = FilledGeomData(
+        geom=geom,
+        x_col=x.get_col_name(),
+        y_col=y.get_col_name(),
+        x_scale=determine_data_scale(x, cont, df),
+        y_scale=determine_data_scale(y, cont, df),
+        reversed_x=False,
+        reversed_y=False,
+        yield_data={},  # type: ignore
+        x_discrete_kind=x.gg_data.discrete_kind.to_filled_geom_kind(),
+        y_discrete_kind=y.gg_data.discrete_kind.to_filled_geom_kind(),
+        num_x=0,
+        num_y=0,
+    )
+
+    result = FilledGeom(gg_data=fg_data)
+    # TODO refactor
+    fill_opt_fields(result, filled_scales, df)
+
+    # TODO this has to change, but is fine for now
+    style = GGStyle()
+
+    # Apply style for set values
+    for set_val in set_disc_cols:
+        # TODO
+        # this may be bug in the original code that loops through set_disc_cols twice
+        # (hence the unused varialbe)
+        # highly probably this is the case
+        # for setVal in setDiscCols:
+        #    applyStyle(style, df, discretes, setDiscCols.mapIt((it, Value(kind: VNull))))
+        # we should double check and make a PR to the nim package if thats the case
+        # seems extra computation but probably no visual issues
+        apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
+
+    if len(map_disc_cols) > 0:
+        grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
+        col = pd.Series(dtype=float)  # type: ignore
+
+        # TODO this needs fixing, ignore types for now, keep roughly working logic
+        for keys, sub_df in grouped:  # type: ignore
+            apply_style(style, sub_df, discretes, keys)  # type: ignore
+
+            yield_df = sub_df.copy()
+            set_x_attributes(result, yield_df, x)
+
+            if geom.gg_data.position == PositionType.STACK:
+                yield_df[PREV_VALS_COL] = 0.0 if len(col) == 0 else col.copy()  # type: ignore
+
+            col = add_counts_by_position(
+                yield_df[result.gg_data.y_col],  # type: ignore
+                col,  # type: ignore
+                geom.gg_data.position,
+            )
+
+            if geom.gg_data.position == PositionType.STACK and not (
+                (
+                    geom.geom_type == GeomType.HISTOGRAM
+                    and geom.gg_data.histogram_drawing_style
+                    == HistogramDrawingStyle.BARS
+                )
+                or (geom.geom_type == GeomType.BAR)
+            ):
+                yield_df[result.gg_data.y_col] = col
+
+            maybe_filter_unique(yield_df, result)
+            # tuple_to_object
+            style_, styles_ = apply_cont_scale_if_any(  # type: ignore
+                yield_df, cont, style, geom.geom_type, to_clone=True
+            )
+            result.gg_data.yield_data[keys] = (style_, styles_)  # type: ignore
+
+        if geom.gg_data.position == PositionType.STACK and result.is_discrete_y():
+            result.gg_data.y_scale = result.gg_data.y_scale.merge(
+                Scale(low=result.gg_data.y_scale.low, high=col.max())  # type: ignore
+            )
+
+        if (
+            geom.geom_type == GeomType.HISTOGRAM
+            and geom.gg_data.position == PositionType.STACK
+            and geom.gg_data.histogram_drawing_style == HistogramDrawingStyle.OUTLINE
+        ):
+            result.gg_data.yield_data = dict(reversed(list(result.gg_data.yield_data.items())))  # type: ignore
+    else:
+        yield_df = df.copy()
+        yield_df[PREV_VALS_COL] = 0.0
+        maybe_filter_unique(yield_df, result)
+        set_x_attributes(result, yield_df, x)
+        key = ("", None)
+        result.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+            yield_df, cont, style, geom.geom_type
+        )
+
+    if y.is_discrete():
+        # TODO fix
+        # y.label_seqwill exist since is discrete, but this needs refactor anyway
+        result.gg_data.y_discrete_kind.label_seq = y.label_seq  # type: ignore
+
+    result.gg_data.num_y = result.gg_data.num_x
+    return result
+
+
+def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
     x_scale = None
     y_scale = None
 

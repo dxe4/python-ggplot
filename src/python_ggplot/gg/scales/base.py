@@ -26,7 +26,13 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     GGValue,
     pandas_series_to_column,
 )
-from python_ggplot.gg.geom import FilledGeom, Geom
+from python_ggplot.gg.geom import (
+    FilledGeom,
+    FilledGeomContinuous,
+    FilledGeomDiscrete,
+    FilledGeomDiscreteKind,
+    Geom,
+)
 from python_ggplot.gg.scales.values import SizeScaleValue
 from python_ggplot.gg.types import (
     ContinuousFormat,
@@ -250,6 +256,10 @@ class AbstractGGScale(GGScale):
 
 class GGScaleDiscreteKind(DiscreteKind, ABC):
 
+    @abstractmethod
+    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
+        pass
+
     @property
     @abstractmethod
     def discrete_type(self) -> DiscreteType:
@@ -262,6 +272,9 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
     label_seq: List[GGValue]
     format_discrete_label: Optional[DiscreteFormat] = None
 
+    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
+        return FilledGeomDiscrete(label_seq=self.label_seq)
+
     @property
     def discrete_type(self) -> DiscreteType:
         return DiscreteType.DISCRETE
@@ -271,6 +284,9 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
 class GGScaleContinuous(GGScaleDiscreteKind):
     data_scale: Scale
     format_continuous_label: Optional[ContinuousFormat] = None
+
+    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
+        return FilledGeomContinuous()
 
     @property
     def discrete_type(self) -> DiscreteType:
