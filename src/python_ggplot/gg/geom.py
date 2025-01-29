@@ -424,6 +424,7 @@ class FilledGeomContinuous(FilledGeomDiscreteKind):
         return DiscreteType.CONTINUOUS
 
 
+@dataclass
 class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
     x_min: Optional[float]
     y_min: Optional[float]

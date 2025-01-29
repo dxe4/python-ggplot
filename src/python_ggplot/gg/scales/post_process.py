@@ -9,16 +9,25 @@ from typing import Any, Dict, List, Optional, Tuple, no_type_check
 import pandas as pd
 
 from python_ggplot.core.objects import GGException, Scale
-from python_ggplot.gg.geom import FilledGeom, Geom, GeomType
+from python_ggplot.gg.geom import (
+    FilledGeom,
+    FilledGeomErrorBar,
+    Geom,
+    GeomErrorBar,
+    GeomType,
+)
 from python_ggplot.gg.scales.base import (
     FilledScales,
     GGScale,
     GGScaleContinuous,
     GGScaleDiscrete,
+    LinearDataScale,
     ScaleType,
+    TransformedDataScale,
 )
 from python_ggplot.gg.styles import change_style, use_or_default
 from python_ggplot.gg.types import GgPlot, GGStyle, PositionType
+from tests.test_view import AxisKind
 
 
 def get_scales(
@@ -273,6 +282,7 @@ def get_x_scale(left, right):
     # this wont cause any issues for now
     raise GGException("need to be ported")
 
+
 @no_type_check
 def get_text_scale(left, right):
     # TODO CRITICAL reafactor, this is a mess
@@ -280,6 +290,7 @@ def get_text_scale(left, right):
     # we need to check all macros carefully
     # this wont cause any issues for now
     raise GGException("need to be ported")
+
 
 @no_type_check
 def get_fill_scale(left, right):
@@ -405,6 +416,83 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
 
     elif fg.geom_type == GeomType.HISTOGRAM:
         fg.hd_kind = fg.geom.hd_kind  # type: ignore
+
+
+def encompassing_data_scale(
+    scales: List[GGScale],
+    axis_kind: AxisKind,
+    base_scale: tuple[float, float] = (0.0, 0.0),
+) -> Scale:
+    result = Scale(low=base_scale[0], high=base_scale[1])
+
+    for scale_ in scales:
+        if isinstance(scale_, (LinearDataScale, TransformedDataScale)):
+            if scale_.data is not None and scale_.data.axis_kind == axis_kind:
+                if isinstance(scale_.gg_data.discrete_kind, GGScaleContinuous):
+                    # TODO double check, why does original code not check for continuous?
+                    result = result.merge(scale_.gg_data.discrete_kind.data_scale)
+
+    return result
+
+
+def determine_data_scale(
+    scale: GGScale, additional: List[GGScale], df: pd.DataFrame
+) -> Scale:
+
+    if not str(scale.gg_data.col) in df.columns:
+        # TODO, port this logic on formula node
+        raise GGException("col not in df")
+
+    if isinstance(scale.gg_data.discrete_kind, GGScaleContinuous):
+        # happens for input DFs with 1-2 elements
+        existing_scale = scale.gg_data.discrete_kind.data_scale
+        if existing_scale is not None:
+            return existing_scale
+        else:
+            low, high = (df[str(scale.gg_data.col)].min(), df[str(scale.col)].max())  # type: ignore
+            return Scale(low=low, high=high)  # type: ignore
+    elif isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete):
+        # for discrete case assign default [0, 1] scale
+        return Scale(low=0.0, high=1.0)
+    else:
+        raise GGException("unexpected discrete kind")
+
+
+def maybe_filter_unique(df: pd.DataFrame, fg: FilledGeom):
+    """
+    TODO refactor
+    """
+
+    if isinstance(fg, FilledGeomErrorBar):
+        collect_cols: List[Any] = []
+        has_x = False
+        has_y = False
+
+        def add_it(field: Any, is_x: Any):
+            """
+            TODO reafctor this
+            """
+            nonlocal has_x, has_y
+            if field is not None:
+                collect_cols.append(field)
+                if is_x:
+                    has_x = True
+                else:
+                    has_y = True
+
+        add_it(fg.x_min, True)
+        add_it(fg.x_max, True)
+        add_it(fg.y_min, False)
+        add_it(fg.y_max, False)
+
+        if has_x:
+            collect_cols.append(fg.gg_data.y_col)
+        if has_y:
+            collect_cols.append(fg.gg_data.x_col)
+
+        return df.drop_duplicates(subset=collect_cols)
+
+    return df
 
 
 def post_process_scales(filled_scales: FilledGeom, plot: GgPlot):
