@@ -17,7 +17,7 @@ from python_ggplot.gg.scales.base import (
     GGScaleDiscrete,
     ScaleType,
 )
-from python_ggplot.gg.styles import change_style
+from python_ggplot.gg.styles import change_style, use_or_default
 from python_ggplot.gg.types import GgPlot, GGStyle, PositionType
 
 
@@ -273,6 +273,13 @@ def get_x_scale(left, right):
     # this wont cause any issues for now
     raise GGException("need to be ported")
 
+@no_type_check
+def get_text_scale(left, right):
+    # TODO CRITICAL reafactor, this is a mess
+    # the original code comes from a macro
+    # we need to check all macros carefully
+    # this wont cause any issues for now
+    raise GGException("need to be ported")
 
 @no_type_check
 def get_fill_scale(left, right):
@@ -338,8 +345,8 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
             # also not sure why height = some('height') ?????
             fg.gg_data.height = "height"  # type: ignore
         elif y_min_s is not None or y_max_s is not None:
-            raise ValueError(
-                f"Invalid combination of aesthetics! If no height given both an `y_min` and `y_max` has to be supplied for geom_{fg.geom_kind}!"
+            raise GGException(
+                "Invalid combination of aesthetics! If no height given both an `y_min` and `y_max` has to be supplied for geom_{fg.geom_kind}!"
             )
         else:
             if fg.geom_type == GeomType.RASTER:
@@ -350,7 +357,7 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
                 df["height"] = abs(y_col[1] - y_col[0])
             else:
                 print(
-                    f"INFO: using default height of 1 since no height information supplied. "
+                    "INFO: using default height of 1 since no height information supplied. "
                     "Add `height` or (`y_min`, `y_max`) as aesthetics for different values."
                 )
                 df["height"] = 1.0
@@ -370,7 +377,7 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
             fg.width = "width"  # type: ignore
         elif x_min_s is not None or x_max_s is not None:
             raise GGException(
-                f"Invalid combination of aesthetics! If no width given both an `x_min` and `x_max` has to be supplied for geom_{fg.geom_kind}!"
+                "Invalid combination of aesthetics! If no width given both an `x_min` and `x_max` has to be supplied for geom_{fg.geom_kind}!"
             )
         else:
             if fg.geom_type == GeomType.RASTER:
@@ -379,7 +386,7 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
                 df["width"] = abs(x_col[1] - x_col[0])
             else:
                 print(
-                    f"INFO: using default width of 1 since no width information supplied. "
+                    "INFO: using default width of 1 since no width information supplied. "
                     "Add `width` or (`x_min`, `x_max`) as aesthetics for different values."
                 )
                 df["width"] = 1.0
