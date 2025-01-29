@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 import pandas as pd
 
+from python_ggplot.core.maths import poly_fit, savitzky_golay
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -93,7 +94,29 @@ class StatBin(StatKind):
 class StatSmooth(StatKind):
     span: float
     poly_oder: int
-    method_kind: "SmoothMethodKind"
+    method_type: "SmoothMethodType"
+
+    def polynomial_smooth(self, x: pd.Series[float], y: pd.Series[float]):
+        return poly_fit(
+            x.to_numpy(),  # type: ignore
+            y.to_numpy(),  # type: ignore
+            self.poly_oder,
+        )
+
+    def svg_smooth(self, data: pd.Series[float]):
+        window_size = round(len(data) * self.span)
+        if window_size % 2 == 0:
+            window_size += 1
+        if window_size < 1 or window_size > len(data):
+            raise GGException(
+                f"The given `span` value results in a "
+                f"Savitzky-Golay filter window of {window_size} for input "
+                f"data with length {len(data)}."
+            )
+        # TODO high priority, this can return int or poly1d
+        return savitzky_golay(
+            data.to_numpy(), window_size, self.poly_oder  # type: ignore
+        )
 
     @property
     def stat_type(self) -> StatType:
@@ -185,7 +208,7 @@ class BinPositionType(Enum):
     RIGHT = auto()
 
 
-class SmoothMethodKind(str, Enum):
+class SmoothMethodType(str, Enum):
     SVG = auto()
     LM = auto()
     POLY = auto()

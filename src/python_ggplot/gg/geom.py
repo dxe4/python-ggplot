@@ -88,6 +88,7 @@ class Geom(ABC):
     def stat_type(self) -> StatType:
         return self.gg_data.stat_kind.stat_type
 
+
 @dataclass
 class FilledGeomData:
     geom: Geom

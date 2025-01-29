@@ -7,6 +7,8 @@ Smoothing in particular we may skip for alpha version
 from typing import Any, Dict, List, Optional, Tuple, no_type_check
 
 import pandas as pd
+from cairo import Status
+from numpy.typing import NDArray
 
 from python_ggplot.core.objects import GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VNull
@@ -29,7 +31,15 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
 )
 from python_ggplot.gg.styles import apply_style, change_style, use_or_default
-from python_ggplot.gg.types import PREV_VALS_COL, GgPlot, GGStyle, PositionType, StatType
+from python_ggplot.gg.types import (
+    PREV_VALS_COL,
+    GgPlot,
+    GGStyle,
+    PositionType,
+    SmoothMethodType,
+    StatSmooth,
+    StatType,
+)
 from tests.test_view import AxisKind
 
 
@@ -612,12 +622,39 @@ def filled_identity_geom(
     return result
 
 
+def call_smoother(
+    fg: FilledGeom, df: pd.DataFrame, scale: GGScale, range: Any
+) -> NDArray[Any]:
+
+    geom = fg.gg_data.geom
+    stat_kind = geom.gg_data.stat_kind
+    if not isinstance(stat_kind, StatSmooth):
+        raise GGException("stat type has to be smooth to call smooth function")
+
+    data = df[scale.get_col_name()]  # type: ignore
+
+    if stat_kind.method_type == SmoothMethodType.SVG:
+        # TODO we need to convert the result to np.array float
+        # smoothing is lower priority, so for now we are fine without it
+        return stat_kind.svg_smooth(data)  # type: ignore
+
+    elif stat_kind.method_type == SmoothMethodType.POLY:
+        # For polynomial least squares fit we also need the x values
+        x_data = df[fg.gg_data.x_col]  # type: ignore
+        return stat_kind.polynomial_smooth(x_data, data)  # type: ignore
+
+    elif stat_kind.method_type == SmoothMethodType.LM:
+        raise GGException("Levenberg-Marquardt fitting is not implemented yet.")
+
+    raise GGException("Unknown smoothing method")
+
+
 def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
-    '''
+    """
     TODO refactor this#
     we need something like geom.fill() with mixins
     make it work first
-    '''
+    """
     x_scale = None
     y_scale = None
 
@@ -627,7 +664,14 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
         df = geom_data
         filled_geom = None
 
-        if geom.geom_type in [GeomType.POINT, GeomType.LINE, GeomType.ERROR_BAR, GeomType.TILE, GeomType.TEXT, GeomType.RASTER]:
+        if geom.geom_type in [
+            GeomType.POINT,
+            GeomType.LINE,
+            GeomType.ERROR_BAR,
+            GeomType.TILE,
+            GeomType.TEXT,
+            GeomType.RASTER,
+        ]:
             # can be handled the same
             # need x and y data for sure
             if geom.stat_type == StatType.IDENTITY:

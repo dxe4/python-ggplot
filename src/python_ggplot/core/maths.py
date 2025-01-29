@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 
 
 def savitzky_golay(
-    y: NDArray[Any], window_size: int, order: int, deriv: int = 0, rate: int = 1
+    y: NDArray[float], window_size: int, order: int, deriv: int = 0, rate: int = 1
 ):
     """
     this is a copy from scipy
