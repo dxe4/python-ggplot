@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import Field, dataclass, field
+from dataclasses import dataclass, field
 from enum import auto
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -20,7 +20,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
 )
 from python_ggplot.core.units.objects import Quantity
-from python_ggplot.gg.datamancer_pandas_compat import FormulaNode, GGValue, VNull
+from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 from python_ggplot.gg.geom import Geom
 from python_ggplot.gg.scales.base import (
     GGScale,
@@ -238,7 +238,7 @@ class OutsideRangeKind(str, GGEnum):
 
 @dataclass
 class Ridges:
-    col: FormulaNode
+    col: VectorCol
     overlap: float
     show_ticks: bool
     label_order: Dict[GGValue, int]
@@ -269,16 +269,12 @@ class GGStyle:
 
 @dataclass
 class Theme:
-    # TODO although those are not used to initialise the object,
-    # they are not set as optional?
-    # investigate later, for now we just mark them in their own section
-    x_margin_range: Optional[Scale] = None
-    y_margin_range: Optional[Scale] = None
-    x_ticks_rotate: Optional[float] = None
-    y_ticks_rotate: Optional[float] = None
-    x_ticks_text_align: Optional[TextAlignKind] = None
-    y_ticks_text_align: Optional[TextAlignKind] = None
-    # END of TODO
+    x_margin_range: Scale = Scale(low=0.0, high=0.0)  # TODO double check
+    y_margin_range: Scale = Scale(low=0.0, high=0.0)  # TODO double check
+    x_ticks_rotate: float = 0.0
+    y_ticks_rotate: float = 0.0
+    x_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
+    y_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
 
     base_font_size: Optional[float] = None
     sub_title_font: Optional[Dict[Any, Any]] = None

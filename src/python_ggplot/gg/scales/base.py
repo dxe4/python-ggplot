@@ -1,5 +1,6 @@
 import typing
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import auto
@@ -10,7 +11,6 @@ from typing import (
     Generator,
     List,
     Optional,
-    OrderedDict,
     Set,
     Tuple,
     Type,
@@ -20,11 +20,12 @@ from typing import (
 import numpy as np
 import pandas as pd
 
+from python_ggplot.colormaps.color_maps import VIRIDIS_RAW_COLOR_SCALE
 from python_ggplot.core.objects import AxisKind, GGEnum, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
-    FormulaNode,
     GGValue,
+    VectorCol,
     pandas_series_to_column,
 )
 from python_ggplot.gg.geom import (
@@ -35,6 +36,7 @@ from python_ggplot.gg.geom import (
     Geom,
 )
 from python_ggplot.gg.scales.values import SizeScaleValue
+from python_ggplot.gg.styles import DEFAULT_ALPHA_RANGE_TUPLE
 from python_ggplot.gg.types import (
     ContinuousFormat,
     DataType,
@@ -60,8 +62,8 @@ ScaleTransform = Callable[[float], float]
 
 @dataclass
 class ColorScale:
-    name: str
-    colors: List[int]
+    name: str = ""
+    colors: List[int] = field(default_factory=list)
 
 
 class ScaleType(GGEnum):
@@ -77,21 +79,65 @@ class ScaleType(GGEnum):
 
 @dataclass
 class LinearAndTransformScaleData:
-    axis_kind: AxisKind
-    reversed: bool
-    transform: ScaleTransform
+    axis_kind: AxisKind = AxisKind.X
+    reversed: bool = False
+    transform: ScaleTransform = field(default=lambda x: x)
     secondary_axis: Optional["SecondaryAxis"] = None
     date_scale: Optional["DateScale"] = None
 
 
+class GGScaleDiscreteKind(DiscreteKind, ABC):
+
+    @abstractmethod
+    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
+        pass
+
+    @property
+    @abstractmethod
+    def discrete_type(self) -> DiscreteType:
+        pass
+
+
+@dataclass
+class GGScaleDiscrete(GGScaleDiscreteKind):
+    value_map: OrderedDict[GGValue, "ScaleValue"] = field(default_factory=OrderedDict)
+    label_seq: List[GGValue] = field(default_factory=list)
+    format_discrete_label: Optional[DiscreteFormat] = None
+
+    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
+        return FilledGeomDiscrete(label_seq=self.label_seq)
+
+    @property
+    def discrete_type(self) -> DiscreteType:
+        return DiscreteType.DISCRETE
+
+
+@dataclass
+class GGScaleContinuous(GGScaleDiscreteKind):
+    data_scale: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))
+    format_continuous_label: Optional[ContinuousFormat] = None
+
+    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
+        return FilledGeomContinuous()
+
+    @property
+    def discrete_type(self) -> DiscreteType:
+        return DiscreteType.CONTINUOUS
+
+    def map_data(self) -> List["ScaleValue"]:
+        # TODO does this need to be a param or static func is fune?
+        raise GGException("todo")
+
+
 @dataclass
 class GGScaleData:
-    col: FormulaNode
-    ids: Set[int]
+    col: VectorCol
     value_kind: GGValue
-    has_discreteness: bool
-    data_type: DataType
-    discrete_kind: "GGScaleDiscreteKind"
+    ids: Set[int] = field(default_factory=set)
+    has_discreteness: bool = False
+    # I dont like this default, but copying the origin for now
+    data_type: DataType = DataType.MAPPING
+    discrete_kind: "GGScaleDiscreteKind" = field(default_factory=GGScaleDiscrete)
     num_ticks: Optional[int] = None
     breaks: Optional[List[float]] = None
     name: str = ""
@@ -172,7 +218,7 @@ class DateScale(GGScale):
 
 @dataclass
 class LinearDataScale(GGScale):
-    transform: Optional[FormulaNode] = None  # for SecondaryAxis
+    transform: Optional[VectorCol] = None  # for SecondaryAxis
     data: Optional[LinearAndTransformScaleData] = None
 
     @property
@@ -199,7 +245,7 @@ class TransformedDataScale(GGScale):
 
 @dataclass
 class ColorScaleKind(GGScale):
-    color_scale: "ColorScale"
+    color_scale: "ColorScale" = VIRIDIS_RAW_COLOR_SCALE
 
     @property
     def scale_type(self) -> ScaleType:
@@ -217,11 +263,11 @@ class FillColorScale(GGScale):
 
 @dataclass
 class AlphaScale(GGScale):
-    alpha: float
+    alpha: float = field(default=0.0)
     # TODO: cirtical
     # this got lost in translation, we need to revive it
     # check all usage of alpha scale and pass alpha scale instead of alpha
-    alpha_range: Tuple[float, float] = (0.0, 0.0)
+    alpha_range: Tuple[float, float] = DEFAULT_ALPHA_RANGE_TUPLE
 
     def update_style(self, style: "GGStyle"):
         style.alpha = self.alpha
@@ -242,8 +288,8 @@ class ShapeScale(GGScale):
 @dataclass
 class SizeScale(GGScale):
     # low and high
-    size: SizeScaleValue
-    size_range: Tuple[float, float]
+    size: SizeScaleValue = field(default_factory=SizeScaleValue)
+    size_range: Tuple[float, float] = field(default=(0.0, 0.0))
 
     def update_style(self, style: "GGStyle"):
         # TODO bad naming
@@ -264,49 +310,6 @@ class TextScale(GGScale):
 
 class AbstractGGScale(GGScale):
     pass
-
-
-class GGScaleDiscreteKind(DiscreteKind, ABC):
-
-    @abstractmethod
-    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
-        pass
-
-    @property
-    @abstractmethod
-    def discrete_type(self) -> DiscreteType:
-        pass
-
-
-@dataclass
-class GGScaleDiscrete(GGScaleDiscreteKind):
-    value_map: OrderedDict[GGValue, "ScaleValue"]
-    label_seq: List[GGValue]
-    format_discrete_label: Optional[DiscreteFormat] = None
-
-    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
-        return FilledGeomDiscrete(label_seq=self.label_seq)
-
-    @property
-    def discrete_type(self) -> DiscreteType:
-        return DiscreteType.DISCRETE
-
-
-@dataclass
-class GGScaleContinuous(GGScaleDiscreteKind):
-    data_scale: Scale
-    format_continuous_label: Optional[ContinuousFormat] = None
-
-    def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
-        return FilledGeomContinuous()
-
-    @property
-    def discrete_type(self) -> DiscreteType:
-        return DiscreteType.CONTINUOUS
-
-    def map_data(self) -> List["ScaleValue"]:
-        # TODO does this need to be a param or static func is fune?
-        raise GGException("todo")
 
 
 class ScaleFreeKind(GGEnum):
@@ -467,14 +470,14 @@ def enable_scales_by_id_vega():
 
 
 def scale_type_to_cls(scale_type: ScaleType) -> Type[GGScale]:
-    data = {
+    data: Dict[ScaleType, Type[GGScale]] = {
         ScaleType.LINEAR_DATA: LinearDataScale,
         ScaleType.TRANSFORMED_DATA: TransformedDataScale,
-        ScaleType.COLOR: ColorScale,
+        ScaleType.COLOR: ColorScaleKind,
         ScaleType.FILL_COLOR: FillColorScale,
         ScaleType.ALPHA: AlphaScale,
         ScaleType.SHAPE: ShapeScale,
         ScaleType.SIZE: SizeScale,
         ScaleType.TEXT: TextScale,
     }
-    return data[scale_type]  # type: ignore
+    return data[scale_type]

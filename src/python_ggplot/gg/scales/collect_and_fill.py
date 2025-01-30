@@ -9,10 +9,10 @@ from typing_extensions import Union
 
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.core.objects import AxisKind, ColorHCL, LineType, MarkerKind, Scale
-from python_ggplot.gg.datamancer_pandas_compat import (  # FormulaType,; ScalarFormula,; pandas_series_to_column,
+from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
-    FormulaNode,
     GGValue,
+    VectorCol,
     VNull,
     VString,
     series_is_bool,
@@ -169,7 +169,7 @@ def fill_discrete_color_scale(
 
 def fill_discrete_size_scale(
     value_kind: GGValue,
-    col: FormulaNode,
+    col: VectorCol,
     data_type: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
@@ -225,7 +225,7 @@ def fill_discrete_size_scale(
 
 def fill_discrete_alpha_scale(
     value_kind: GGValue,
-    col: FormulaNode,
+    col: VectorCol,
     data_type: DataType,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
@@ -276,7 +276,7 @@ def fill_discrete_alpha_scale(
 
 def fill_discrete_shape_scale(
     value_kind: GGValue,
-    col: FormulaNode,
+    col: VectorCol,
     label_seq: List[GGValue],
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]] = None,
 ):
@@ -310,7 +310,7 @@ def fill_discrete_shape_scale(
 
 def fill_discrete_linear_trans_scale(
     scale_type: ScaleType,
-    col: FormulaNode,
+    col: VectorCol,
     ax_kind: AxisKind,
     value_kind: GGValue,
     label_seq: List[GGValue],
@@ -348,7 +348,7 @@ def fill_discrete_linear_trans_scale(
 
 
 def fill_continuous_linear_scale(
-    col: FormulaNode, ax_kind: AxisKind, value_kind: GGValue, data_scale: Scale
+    col: VectorCol, ax_kind: AxisKind, value_kind: GGValue, data_scale: Scale
 ):
     discrete_kind = GGScaleContinuous(
         data_scale=data_scale,
@@ -367,7 +367,7 @@ def fill_continuous_linear_scale(
 
 
 def fill_continuous_transformed_scale(
-    col: FormulaNode,
+    col: VectorCol,
     axis_kind: AxisKind,
     value_kind: GGValue,
     trans: ScaleTransform,
@@ -397,7 +397,7 @@ def fill_continuous_transformed_scale(
 
 def fill_continuous_color_scale(
     scale_type: Union[Literal[ScaleType.COLOR], Literal[ScaleType.FILL_COLOR]],
-    col: FormulaNode,
+    col: VectorCol,
     data_type: DataType,
     value_kind: GGValue,
     data_scale: Scale,
@@ -469,7 +469,7 @@ def fill_continuous_color_scale(
 
 
 def fill_continuous_size_scale(
-    col: FormulaNode,
+    col: VectorCol,
     data_type: DataType,
     value_kind: GGValue,
     data_scale: Scale,
@@ -521,7 +521,7 @@ def fill_continuous_size_scale(
 
 
 def fill_continuous_alpha_scale(
-    col: FormulaNode,
+    col: VectorCol,
     data_type: DataType,
     value_kind: GGValue,
     data_scale: Scale,
@@ -573,7 +573,7 @@ def fill_continuous_alpha_scale(
 def fill_scale_impl(
     value_kind: GGValue,
     is_discrete: bool,
-    col: FormulaNode,
+    col: VectorCol,
     scale_type: ScaleType,
     data_type: DataType,
     label_seq: Optional[List[GGValue]] = None,

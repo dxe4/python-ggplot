@@ -21,7 +21,7 @@ from python_ggplot.core.coord.objects import (
     TextCoordData,
 )
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, TextAlignKind
-from python_ggplot.gg.datamancer_pandas_compat import FormulaNode
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol
 from python_ggplot.gg.scales.base import (
     FilledScales,
     GGScale,
@@ -232,7 +232,7 @@ def handle_continuous_ticks(
     breaks: Optional[List[float]] = None,
     trans: Optional[Callable[[float], float]] = None,
     inv_trans: Optional[Callable[[float], float]] = None,
-    sec_axis_trans: Optional[FormulaNode] = None,
+    sec_axis_trans: Optional[VectorCol] = None,
     format_func: Optional[Callable[[float], str]] = None,
     is_secondary: bool = False,
     hide_tick_labels: bool = False,
@@ -242,7 +242,7 @@ def handle_continuous_ticks(
     breaks = breaks or []
 
     bound_scale = _bound_scale(data_scale, theme, ax_kind, is_secondary)
-    sec_axis_trans = sec_axis_trans or FormulaNode()
+    sec_axis_trans = sec_axis_trans or VectorCol(col_name="")
 
     if ax_kind == AxisKind.X:
         # todo refacotr this

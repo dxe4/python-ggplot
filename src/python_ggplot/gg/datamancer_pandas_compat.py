@@ -1,55 +1,13 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from enum import auto
-from typing import Any, Callable, Dict, OrderedDict, TypeVar, Union
+from typing import Any, Callable, Dict, OrderedDict
 
-import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
+from numpy._core.multiarray import _ReturnType
+from typing_extensions import Optional
 
 from python_ggplot.core.objects import GGEnum, GGException
-
-
-@dataclass
-class GGValue:
-    """
-    TODO high priority. find a proxy mechanism for this
-    """
-
-
-@dataclass
-class VString(GGValue):
-    data: str
-
-
-@dataclass
-class VInt(GGValue):
-    data: int
-
-
-@dataclass
-class VFloat(GGValue):
-    data: float
-
-
-@dataclass
-class VBool(GGValue):
-    data: bool
-
-
-@dataclass
-class VObject(GGValue):
-    fields: OrderedDict[str, GGValue]
-
-
-@dataclass
-class VNull(GGValue):
-    pass
-
-
-@dataclass
-class VTODO(GGValue):
-    pass
 
 
 class ColumnType(GGEnum):
@@ -103,201 +61,60 @@ def pandas_series_to_column(series: pd.Series[Any]) -> ColumnType:
 
 
 @dataclass
-class BaseColumn(ABC):
-    # len: int = 0 TODO
-
-    @abstractmethod
-    def col_type(self) -> ColumnType:
-        pass
-
-
-@dataclass
-class FloatColumn(BaseColumn):
-    data: NDArray[np.float64]
-
-    def col_type(self) -> ColumnType:
-        return ColumnType.FLOAT
-
-
-@dataclass
-class IntColumn(BaseColumn):
-    data: NDArray[np.int64]
-
-    def col_type(self) -> ColumnType:
-        return ColumnType.INT
-
-
-@dataclass
-class BoolColumn(BaseColumn):
-    data: NDArray[np.bool_]
-
-    def col_type(self) -> ColumnType:
-        return ColumnType.BOOL
-
-
-@dataclass
-class StringColumn(BaseColumn):
-    data: NDArray[np.str_]
-
-    def col_type(self) -> ColumnType:
-        return ColumnType.STRING
-
-
-@dataclass
-class ObjectColumn(BaseColumn):
-    data: NDArray[Any]
-
-    def col_type(self) -> ColumnType:
-        return ColumnType.OBJECT
-
-
-@dataclass
-class ConstantColumn(BaseColumn):
-    data: Any
-
-    def col_type(self) -> ColumnType:
-        return ColumnType.CONSTANT
-
-
-@dataclass
-class GenericColumn(BaseColumn):
+class GGValue:
     """
-    TODO
+    TODO high priority. find a proxy mechanism for this
     """
 
-    def col_type(self) -> ColumnType:
-        return ColumnType.GENERIC
 
-
-Column = Union[
-    FloatColumn,
-    IntColumn,
-    BoolColumn,
-    StringColumn,
-    ObjectColumn,
-    ConstantColumn,
-    GenericColumn,
-]
-
-
-ColumnLike = TypeVar("ColumnLike")
-
-
-class FormulaType(GGEnum):
-    VARIABLE = auto()
-    ASSIGN = auto()
-    VECTOR = auto()
-    SCALAR = auto()
-    NONE = auto()
+@dataclass
+class VString(GGValue):
+    data: str
 
 
 @dataclass
-class Formula(ABC):
-    name: str
-    kind: FormulaType
-
-    @abstractmethod
-    def formula_type(self) -> FormulaType:
-        pass
-
-    @abstractmethod
-    def evaluate(self, df: pd.DataFrame) -> Any:
-        pass
+class VInt(GGValue):
+    data: int
 
 
 @dataclass
-class VariableFormula(Formula):
-    val: GGValue
-
-    def formula_type(self) -> FormulaType:
-        return FormulaType.VARIABLE
-
-    def evaluate(self, df: pd.DataFrame) -> Any:
-        return None
+class VFloat(GGValue):
+    data: float
 
 
 @dataclass
-class AssignFormula(Formula):
-    lhs: str
-    rhs: GGValue
-
-    def formula_type(self) -> FormulaType:
-        return FormulaType.ASSIGN
-
-    def evaluate(self, df: pd.DataFrame) -> Any:
-        return df[str(self.rhs)]  # type: ignore
+class VBool(GGValue):
+    data: bool
 
 
 @dataclass
-class VectorFormula(Formula):
+class VObject(GGValue):
+    fields: OrderedDict[str, GGValue]
+
+
+@dataclass
+class VNull(GGValue):
+    pass
+
+
+@dataclass
+class VTODO(GGValue):
+    pass
+
+
+@dataclass
+class VectorCol:
     col_name: str
-    res_type: Any
-    fn_v: Callable[[pd.DataFrame], Any]
-
-    def formula_type(self) -> FormulaType:
-        return FormulaType.VECTOR
+    res_type: Optional[Any] = None
 
     def evaluate(self, df: pd.DataFrame) -> Any:
-        return self.fn_v(df)
+        return df[self.col_name]  # type: ignore
 
-
-@dataclass
-class ScalarFormula(Formula):
-    val_name: str
-    val_kind: Any
-    fn_s: Callable[[pd.DataFrame], GGValue]
-
-    def reduce_(self, df: pd.DataFrame) -> GGValue:
-        return self.fn_s(df)
-
-    def formula_type(self) -> FormulaType:
-        return FormulaType.SCALAR
-
-    def evaluate(self, df: pd.DataFrame) -> Any:
-        # call constantColumn(self.fn_v(df))
-        return self.fn_s(df)
-
-
-@dataclass
-class NoneFormula(Formula):
-
-    def formula_type(self) -> FormulaType:
-        return FormulaType.NONE
-
-    def evaluate(self, df: pd.DataFrame) -> Any:
-        # newColumn(colNone, df.len)
-        return None
-
-
-class FormulaNode:
-    kind: Formula
-    name: str = ""
-
-    def __str__(self) -> str:
-        return self.name
-
-    def is_column(self):
-        """
-        # TODO high priority / urgent
-        the nim logic is:
-        if node.isColumn(df):
-            result = df[node.val.toStr]
-        else:
-            result = C.constantColumn(node.val, df.len)
-        we need to figure out
-        a) how datamancer does consts
-        b) how pandas does them internally
-        for now we support column only, need to get it working first
-        """
-        return True
-
-    def evaluate(self, df: pd.DataFrame) -> Any:
-        # https://github.com/SciNim/Datamancer/blob/47ba4d81bf240a7755b73bc48c1cec9b638d18ae/src/datamancer/dataframe.nim#L2529
-        return self.kind.evaluate(df)
-
-    def __call__(self) -> float:
-        # TODO this is used for transformation
-        raise GGException()
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        # TODO handle_continuous_ticks
+        raise GGException(
+            "WARNING you called vector col, did you intend for formula node?"
+        )
 
 
 def series_is_int(series: pd.Series[Any]) -> bool:
