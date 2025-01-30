@@ -8,14 +8,27 @@ from typing_extensions import Dict
 from python_ggplot.common.enum_literals import (
     BIN_BY_VALUES,
     BIN_POSITION_VALUES,
+    ERROR_BAR_KIND_VALUES,
+    FILE_TYPE_KIND_VALUES,
+    HISTOGRAM_DRAWING_STYLE_VALUES,
     LINE_TYPE_VALUES,
     POSITION_VALUES,
+    SMOOTH_METHOD_TYPE_VALUES,
     STAT_TYPE_VALUES,
 )
 from python_ggplot.core.objects import ErrorBarKind, GGException, LineType
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
-from python_ggplot.gg.geom import Geom, GeomData, GeomErrorBar, GeomPoint
+from python_ggplot.gg.geom import (
+    Geom,
+    GeomBar,
+    GeomData,
+    GeomErrorBar,
+    GeomHistogram,
+    GeomLine,
+    GeomPoint,
+    HistogramDrawingStyle,
+)
 from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleData,
@@ -34,7 +47,9 @@ from python_ggplot.gg.types import (
     PossibleColor,
     PossibleFloat,
     PossibleMarker,
+    SmoothMethodType,
     StatKind,
+    StatSmooth,
     StatType,
     Theme,
 )
@@ -246,8 +261,56 @@ def geom_error_bar(
     data: pd.DataFrame = field(default_factory=pd.DataFrame),
     color: PossibleColor = None,
     size: PossibleFloat = None,
-    line_type: LINE_TYPE_VALUES = 'none_type',
-    error_bar_kind: ErrorBarKind = ErrorBarKind.LINEST,
+    line_type: LINE_TYPE_VALUES = "none_type",
+    error_bar_kind: ERROR_BAR_KIND_VALUES = "linest",
+    stat: STAT_TYPE_VALUES = "identity",
+    bins: int = -1,
+    bin_width: float = 0.0,
+    breaks: List[float] = field(default_factory=list),
+    bin_position: BIN_POSITION_VALUES = "none",
+    position: POSITION_VALUES = "identity",
+    bin_by: BIN_BY_VALUES = "full",
+    density: bool = False,
+    alpha: Optional[float] = None,
+) -> "Geom":
+    df_opt = data if len(data) > 0 else None
+    bin_position_ = BinPositionType.eitem(bin_position)
+    stat_ = StatType.eitem(stat)
+    bin_position_ = BinPositionType.eitem(bin_position)
+    position_ = PositionType.eitem(position)
+    bin_by_ = BinByType.eitem(bin_by)
+    error_bar_kind_ = ErrorBarKind.eitem(error_bar_kind)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=size,
+        p_alpha=alpha,
+        p_error_bar_kind=error_bar_kind_,
+    )
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=bin_position_,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomErrorBar(gg_data=gg_data)
+
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
+
+
+def geom_linerange(
+    aes: Aesthetics = field(default_factory=Aesthetics),
+    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "none_type",
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = -1,
     bin_width: float = 0.0,
@@ -280,6 +343,204 @@ def geom_error_bar(
         position=position_,
     )
     result = GeomErrorBar(gg_data=gg_data)
+
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
+
+
+def geom_bar(
+    aes: Aesthetics = field(default_factory=Aesthetics),
+    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    color: PossibleColor = None,
+    alpha: Optional[float] = None,
+    position: POSITION_VALUES = "stack",
+    stat: STAT_TYPE_VALUES = "count",
+) -> Geom:
+
+    df_opt = data if len(data) > 0 else None
+
+    position_ = PositionType.eitem(position)
+    stat_ = StatType.eitem(stat)
+
+    aes = deepcopy(aes)
+
+    style = assign_identity_scales_get_style(
+        aes,
+        p_color=color,
+        p_fill_color=color,
+        p_alpha=alpha,
+        p_line_type=LineType.SOLID,
+        p_line_width=1.0,
+    )
+
+    gid = get_gid()
+
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=BinPositionType.NONE,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomBar(gg_data=gg_data)
+    return result
+
+
+def geom_line(
+    aes: Aesthetics = field(default_factory=Aesthetics),
+    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "none_type",
+    fill_color: PossibleColor = None,
+    stat: STAT_TYPE_VALUES = "identity",
+    bins: int = -1,
+    bin_width: float = 0.0,
+    breaks: List[float] = field(default_factory=list),
+    bin_position: BIN_POSITION_VALUES = "none",
+    position: POSITION_VALUES = "identity",
+    bin_by: BIN_BY_VALUES = "full",
+    density: bool = False,
+    alpha: Optional[float] = None,
+) -> "Geom":
+    df_opt = data if len(data) > 0 else None
+    bin_position_ = BinPositionType.eitem(bin_position)
+    stat_ = StatType.eitem(stat)
+    bin_position_ = BinPositionType.eitem(bin_position)
+    position_ = PositionType.eitem(position)
+    bin_by_ = BinByType.eitem(bin_by)
+    line_type_ = LineType.eitem(line_type)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=size,
+        p_alpha=alpha,
+        p_fill_color=fill_color,
+        p_line_type=line_type_,
+        p_line_width=size,
+    )
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=bin_position_,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomLine(gg_data=gg_data)
+
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
+
+
+def geom_smooth(
+    aes: Aesthetics = field(default_factory=Aesthetics),
+    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "none_type",
+    fill_color: PossibleColor = None,
+    stat: STAT_TYPE_VALUES = "identity",
+    bins: int = -1,
+    bin_width: float = 0.0,
+    breaks: List[float] = field(default_factory=list),
+    bin_position: BIN_POSITION_VALUES = "none",
+    position: POSITION_VALUES = "identity",
+    bin_by: BIN_BY_VALUES = "full",
+    density: bool = False,
+    alpha: Optional[float] = None,
+    span: float = 0.7,
+    smoother: SMOOTH_METHOD_TYPE_VALUES = "svg",
+    poly_ordder: int = 5,
+) -> "Geom":
+    df_opt = data if len(data) > 0 else None
+    bin_position_ = BinPositionType.eitem(bin_position)
+    stat_ = StatType.eitem(stat)
+    bin_position_ = BinPositionType.eitem(bin_position)
+    position_ = PositionType.eitem(position)
+    bin_by_ = BinByType.eitem(bin_by)
+    line_type_ = LineType.eitem(line_type)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=size,
+        p_alpha=alpha,
+        p_line_type=line_type_,
+        p_line_width=size,
+    )
+    stat_kind = StatSmooth(
+        span=span, poly_order=poly_ordder, method_type=SmoothMethodType.eitem(smoother)
+    )
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=bin_position_,
+        stat_kind=stat_kind,
+        position=position_,
+    )
+    result = GeomLine(gg_data=gg_data)
+
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
+
+
+def geom_histogram(
+    aes: Aesthetics = field(default_factory=Aesthetics),
+    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "solid",
+    fill_color: PossibleColor = None,
+    stat: STAT_TYPE_VALUES = "identity",
+    bins: int = -1,
+    bin_width: float = 0.0,
+    breaks: List[float] = field(default_factory=list),
+    bin_position: BIN_POSITION_VALUES = "none",
+    position: POSITION_VALUES = "identity",
+    bin_by: BIN_BY_VALUES = "full",
+    density: bool = False,
+    alpha: Optional[float] = None,
+    line_width: PossibleFloat = 0.2,
+    drawing_style: HISTOGRAM_DRAWING_STYLE_VALUES = "bars",
+) -> "Geom":
+    df_opt = data if len(data) > 0 else None
+    bin_position_ = BinPositionType.eitem(bin_position)
+    stat_ = StatType.eitem(stat)
+    bin_position_ = BinPositionType.eitem(bin_position)
+    position_ = PositionType.eitem(position)
+    bin_by_ = BinByType.eitem(bin_by)
+    line_type_ = LineType.eitem(line_type)
+    drawing_style_ = HistogramDrawingStyle.eitem(drawing_style)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_fill_color=fill_color,
+        p_line_width=size,
+        p_line_type=line_type_,
+        p_alpha=alpha,
+    )
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=bin_position_,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomHistogram(gg_data=gg_data, histogram_drawing_style=drawing_style_)
 
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
     return result

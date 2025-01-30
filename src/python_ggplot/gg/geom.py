@@ -254,7 +254,10 @@ class GeomBar(GeomRectDrawMixin, Geom):
         return GeomType.BAR
 
 
+@dataclass
 class GeomHistogram(GeomHistogramMixin, Geom):
+    histogram_drawing_style: HistogramDrawingStyle
+
     @property
     def geom_type(self) -> GeomType:
         return GeomType.HISTOGRAM

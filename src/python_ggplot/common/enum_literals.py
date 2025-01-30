@@ -38,7 +38,8 @@ FILE_TYPE_KIND_VALUES = Literal[
     "vega",
     "tex",
 ]
-LINE_TYPE_VALUES = Literal["none_type",
+LINE_TYPE_VALUES = Literal[
+    "none_type",
     "solid",
     "dashed",
     "dotted",

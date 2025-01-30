@@ -243,7 +243,7 @@ def assign_identity_scales_get_style(
     fill = fill_or_style(aes, p_fill_color)
     size = size_or_style(aes, p_size)
     alpha = alpha_or_style(aes, p_alpha)
-    # the rest just turns input into Option[T]
+
     marker = to_opt_marker(p_marker)
     line_type = to_opt_line_type(p_line_type)
     line_width = to_opt_float(p_line_width)

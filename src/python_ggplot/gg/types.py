@@ -106,16 +106,17 @@ class StatBin(StatKind):
         return StatType.BIN
 
 
+@dataclass(frozen=True)
 class StatSmooth(StatKind):
     span: float
-    poly_oder: int
+    poly_order: int
     method_type: "SmoothMethodType"
 
     def polynomial_smooth(self, x: pd.Series[float], y: pd.Series[float]):
         return poly_fit(
             x.to_numpy(),  # type: ignore
             y.to_numpy(),  # type: ignore
-            self.poly_oder,
+            self.poly_order,
         )
 
     def svg_smooth(self, data: pd.Series[float]):
@@ -130,7 +131,7 @@ class StatSmooth(StatKind):
             )
         # TODO high priority, this can return int or poly1d
         return savitzky_golay(
-            data.to_numpy(), window_size, self.poly_oder  # type: ignore
+            data.to_numpy(), window_size, self.poly_order  # type: ignore
         )
 
     @property
