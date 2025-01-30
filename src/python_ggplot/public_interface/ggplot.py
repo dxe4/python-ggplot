@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import field
-from typing import Any, Callable, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 import pandas as pd
 from typing_extensions import Dict
@@ -8,13 +8,14 @@ from typing_extensions import Dict
 from python_ggplot.common.enum_literals import (
     BIN_BY_VALUES,
     BIN_POSITION_VALUES,
+    LINE_TYPE_VALUES,
     POSITION_VALUES,
     STAT_TYPE_VALUES,
 )
-from python_ggplot.core.objects import GGException
+from python_ggplot.core.objects import ErrorBarKind, GGException, LineType
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
-from python_ggplot.gg.geom import Geom, GeomData, GeomPoint
+from python_ggplot.gg.geom import Geom, GeomData, GeomErrorBar, GeomPoint
 from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleData,
@@ -74,22 +75,6 @@ _AES_PARAM_TO_SCALE_ARGS: Dict[str, Tuple[ScaleType, Optional[AxisKind]]] = {
     "yridges": (ScaleType.LINEAR_DATA, AxisKind.Y),
     "weight": (ScaleType.LINEAR_DATA, AxisKind.Y),
 }
-
-
-def _or_none_scale(
-    value: Any,
-    scale_kind: ScaleType,
-    axis_kind: Optional[AxisKind] = None,
-    is_discrete: bool = False,
-) -> Optional[GGScale]:
-    if value is None:
-        return None
-    return GGScale(
-        value=value,
-        scale_kind=scale_kind,
-        axis_kind=axis_kind,
-        has_discreteness=is_discrete,
-    )
 
 
 def _init_field(arg_: str, arg_value_: Optional[str]):
@@ -229,17 +214,6 @@ def geom_point(
     density: bool = False,
     alpha: Optional[float] = None,
 ) -> "Geom":
-    """
-    TODO CRITICAL
-    this is an easy fix, but it needs some thinking what is the best design
-    many objects are supposed to have "required attributes"
-    but they get initialised empty
-    for now this is fine, we could make those params optional
-    an example of this is:
-        stat_kind=StatKind.create_from_enum(stat_)
-    this will blow up on StatBin creation because num_bins is required
-    this is fine for now, but need to provide a generic solution
-    """
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -247,7 +221,6 @@ def geom_point(
     position_ = PositionType.eitem(position)
     bin_by_ = BinByType.eitem(bin_by)
 
-    # modify `Aesthetics` for all identity scales (column references) & generate style
     style = assign_identity_scales_get_style(
         aes=aes, p_color=color, p_size=size, p_marker=marker, p_alpha=alpha
     )
@@ -259,10 +232,54 @@ def geom_point(
         user_style=style,
         aes=fill_ids(aes, {gid}),
         bin_position=bin_position_,
-        stat_kind=StatKind.create_from_enum(stat_),  # TODO see func docstring
+        stat_kind=StatKind.create_from_enum(stat_),
         position=position_,
     )
     result = GeomPoint(gg_data=gg_data)
+
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
+
+
+def geom_error_bar(
+    aes: Aesthetics = field(default_factory=Aesthetics),
+    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = 'none_type',
+    error_bar_kind: ErrorBarKind = ErrorBarKind.LINEST,
+    stat: STAT_TYPE_VALUES = "identity",
+    bins: int = -1,
+    bin_width: float = 0.0,
+    breaks: List[float] = field(default_factory=list),
+    bin_position: BIN_POSITION_VALUES = "none",
+    position: POSITION_VALUES = "identity",
+    bin_by: BIN_BY_VALUES = "full",
+    density: bool = False,
+    alpha: Optional[float] = None,
+) -> "Geom":
+    df_opt = data if len(data) > 0 else None
+    bin_position_ = BinPositionType.eitem(bin_position)
+    stat_ = StatType.eitem(stat)
+    bin_position_ = BinPositionType.eitem(bin_position)
+    position_ = PositionType.eitem(position)
+    bin_by_ = BinByType.eitem(bin_by)
+
+    style = assign_identity_scales_get_style(
+        aes=aes, p_color=color, p_size=size, p_alpha=alpha
+    )
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=bin_position_,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomErrorBar(gg_data=gg_data)
 
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
     return result
