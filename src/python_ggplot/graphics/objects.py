@@ -1,17 +1,15 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto
-from typing import (
-    TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
-)
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
 
 from python_ggplot.core.coord.objects import Coord, Coord1D
 from python_ggplot.core.objects import (
-    GGEnum,
     AxisKind,
     Color,
     CompositeKind,
     Font,
+    GGEnum,
     GGException,
     Image,
     MarkerKind,

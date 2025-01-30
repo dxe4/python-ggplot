@@ -1,8 +1,15 @@
 from copy import deepcopy
 from dataclasses import field
-from typing import List, Optional, Set, Literal
+from typing import List, Optional, Set
+
 import pandas as pd
 
+from python_ggplot.common.enum_literals import (
+    BIN_BY_VALUES,
+    BIN_POSITION_VALUES,
+    POSITION_VALUES,
+    STAT_TYPE_VALUES,
+)
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.geom import Geom, GeomData, GeomPoint
 from python_ggplot.gg.types import (
@@ -16,20 +23,17 @@ from python_ggplot.gg.types import (
     PossibleMarker,
     StatKind,
     StatType,
-    Theme
+    Theme,
 )
 from python_ggplot.gg.utils import assign_identity_scales_get_style
 
-STAT_TYPE_VALUES = Literal["identity", "count", "bin", "smooth"]
-BIN_POSITION_VALUES = Literal["none", "center", "left", "right"]
-POSITION_VALUES = Literal["identity", "stack", "dodge", "fill"]
-BIN_BY_VALUES = Literal["full", "subset"]
-
 id_counter = 1
+
 
 def increment_id():
     global id_counter
     id_counter += 1
+
 
 def get_gid():
     global id_counter
@@ -38,23 +42,24 @@ def get_gid():
 
 
 def aes(
-    x: Optional[str]=None,
-    y: Optional[str]=None,
-    color: Optional[str]=None,
-    fill: Optional[str]=None,
-    shape: Optional[str]=None,
-    size: Optional[str]=None,
-    xmin: Optional[str]=None,
-    xmax: Optional[str]=None,
-    ymin: Optional[str]=None,
-    ymax: Optional[str]=None,
-    width: Optional[str]=None,
-    height: Optional[str]=None,
-    text: Optional[str]=None,
-    yridges: Optional[str]=None,
-    weight: Optional[str]=None,
+    x: Optional[str] = None,
+    y: Optional[str] = None,
+    color: Optional[str] = None,
+    fill: Optional[str] = None,
+    shape: Optional[str] = None,
+    size: Optional[str] = None,
+    xmin: Optional[str] = None,
+    xmax: Optional[str] = None,
+    ymin: Optional[str] = None,
+    ymax: Optional[str] = None,
+    width: Optional[str] = None,
+    height: Optional[str] = None,
+    text: Optional[str] = None,
+    yridges: Optional[str] = None,
+    weight: Optional[str] = None,
 ):
     pass
+
 
 def fill_ids(aes: Aesthetics, gids: Set[int]) -> Aesthetics:
     result = deepcopy(aes)
@@ -68,6 +73,7 @@ def fill_ids(aes: Aesthetics, gids: Set[int]) -> Aesthetics:
 
     return result
 
+
 def ggplot(data: pd.DataFrame, aes: Optional[Aesthetics] = None) -> GgPlot:
     shallow_copy: pd.DataFrame = data.copy(deep=False)
     if aes is None:
@@ -78,29 +84,28 @@ def ggplot(data: pd.DataFrame, aes: Optional[Aesthetics] = None) -> GgPlot:
     result = GgPlot(
         data=shallow_copy,
         aes=aes,
-        theme=Theme(
-            discrete_scale_margin=Quantity.centimeters(0.2)
-        ),
+        theme=Theme(discrete_scale_margin=Quantity.centimeters(0.2)),
     )
     return result
 
+
 def geom_point(
-    aes: Aesthetics=field(default_factory=Aesthetics),
+    aes: Aesthetics = field(default_factory=Aesthetics),
     data: pd.DataFrame = field(default_factory=pd.DataFrame),
-    color: PossibleColor=None,
-    size: PossibleFloat=None,
-    marker: PossibleMarker=None,
-    stat: STAT_TYPE_VALUES="identity",
-    bins: int=-1,
-    bin_width: float=0.0,
-    breaks: List[float]=field(default_factory=list),
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    marker: PossibleMarker = None,
+    stat: STAT_TYPE_VALUES = "identity",
+    bins: int = -1,
+    bin_width: float = 0.0,
+    breaks: List[float] = field(default_factory=list),
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
-    density: bool=False,
-    alpha: Optional[float]=None
-) -> 'Geom':
-    '''
+    density: bool = False,
+    alpha: Optional[float] = None,
+) -> "Geom":
+    """
     TODO CRITICAL
     this is an easy fix, but it needs some thinking what is the best design
     many objects are supposed to have "required attributes"
@@ -110,7 +115,7 @@ def geom_point(
         stat_kind=StatKind.create_from_enum(stat_)
     this will blow up on StatBin creation because num_bins is required
     this is fine for now, but need to provide a generic solution
-    '''
+    """
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -120,11 +125,7 @@ def geom_point(
 
     # modify `Aesthetics` for all identity scales (column references) & generate style
     style = assign_identity_scales_get_style(
-        aes=aes,
-        p_color=color,
-        p_size=size,
-        p_marker=marker,
-        p_alpha=alpha
+        aes=aes, p_color=color, p_size=size, p_marker=marker, p_alpha=alpha
     )
 
     gid = get_gid()
@@ -135,17 +136,9 @@ def geom_point(
         aes=fill_ids(aes, {gid}),
         bin_position=bin_position_,
         stat_kind=StatKind.create_from_enum(stat_),  # TODO see func docstring
-        position=position_
+        position=position_,
     )
     result = GeomPoint(gg_data=gg_data)
 
-    Geom.assign_bin_fields(
-        result,
-        stat_,
-        bins,
-        bin_width,
-        breaks,
-        bin_by_,
-        density
-    )
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
     return result

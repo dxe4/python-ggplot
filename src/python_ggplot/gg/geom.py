@@ -6,7 +6,7 @@ from typing import Any, Generator, List, Optional, OrderedDict, Tuple, cast
 import pandas as pd
 
 from python_ggplot.core.coord.objects import Coord
-from python_ggplot.core.objects import GGException, Scale, Style, GGEnum
+from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.scales.base import ColorScale
@@ -68,13 +68,13 @@ class Geom(ABC):
 
     @staticmethod
     def assign_bin_fields(
-        geom: 'Geom',
+        geom: "Geom",
         st_kind: StatType,
         bins: int,
         bin_width: float,
         breaks: List[float],
         bin_by_type: BinByType,
-        density: bool
+        density: bool,
     ):
         stat_kind = geom.gg_data.stat_kind
         if isinstance(stat_kind, StatBin):

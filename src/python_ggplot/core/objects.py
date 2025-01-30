@@ -1,22 +1,14 @@
 import math
 from dataclasses import dataclass, field
 from enum import Enum, auto
-
-from typing import (
-    Generic,
-    List,
-    Literal,
-    Optional,
-    Type,
-    TypeVar,
-    Union
-)
+from typing import Generic, List, Literal, Optional, Type, TypeVar, Union
 
 from python_ggplot.core.chroma import color_from_hsl
 from python_ggplot.core.common import linspace
 from python_ggplot.graphics.cairo_backend import CairoBackend
 
-Z = TypeVar('Z', bound='GGEnum')
+Z = TypeVar("Z", bound="GGEnum")
+
 
 class GGEnum(Enum):
 

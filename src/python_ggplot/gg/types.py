@@ -7,11 +7,11 @@ import pandas as pd
 
 from python_ggplot.core.maths import poly_fit, savitzky_golay
 from python_ggplot.core.objects import (
-    GGEnum,
     AxisKind,
     Color,
     ErrorBarKind,
     Font,
+    GGEnum,
     GGException,
     LineType,
     MarkerKind,
@@ -69,8 +69,8 @@ class StatKind(ABC):
 
     @staticmethod
     def create_from_enum(
-        stat_type: StatType,
-        data: Optional[Dict[Any, Any]]=None) -> 'StatKind':
+        stat_type: StatType, data: Optional[Dict[Any, Any]] = None
+    ) -> "StatKind":
         classes = {
             StatType.BIN: StatBin,
             StatType.IDENTITY: StatIdentity,
@@ -80,7 +80,6 @@ class StatKind(ABC):
         if data is None:
             data = {}
         return classes[stat_type](**data)
-
 
 
 class StatIdentity(StatKind):
@@ -336,14 +335,13 @@ class GgPlot:
     data: pd.DataFrame
     aes: Aesthetics
     theme: Theme
-    backend: str = field(default="cairo") # Will be cairo only for a while..
+    backend: str = field(default="cairo")  # Will be cairo only for a while..
     title: Optional[str] = None
     sub_title: Optional[str] = None
     facet: Optional[Any] = None
     ridges: Optional[Ridges] = None
     geoms: Optional[List[Geom]] = None
     annotations: Optional[List[Any]] = None
-
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
         """

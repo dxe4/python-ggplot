@@ -20,7 +20,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from python_ggplot.core.objects import AxisKind, GGException, Scale, GGEnum
+from python_ggplot.core.objects import AxisKind, GGEnum, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
     FormulaNode,

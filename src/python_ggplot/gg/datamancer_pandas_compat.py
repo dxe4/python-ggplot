@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from python_ggplot.core.objects import GGException, GGEnum
+from python_ggplot.core.objects import GGEnum, GGException
 
 
 @dataclass

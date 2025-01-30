@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
+from enum import auto
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, cast
 
 from python_ggplot.core.objects import (
-    GGEnum,
     AxisKind,
     Font,
+    GGEnum,
     GGException,
     Point,
     Scale,
@@ -188,10 +189,10 @@ class CoordsInput:
 
 
 class OperatorType(GGEnum):
-    DIV = "DIV"
-    ADD = "ADD"
-    SUB = "SUB"
-    MUL = "MUL"
+    DIV = auto()
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
 
 
 @dataclass
