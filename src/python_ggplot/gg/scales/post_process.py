@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from python_ggplot.core.maths import histogram
+from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom import (

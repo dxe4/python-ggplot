@@ -1,4 +1,3 @@
-from ast import type_ignore
 from math import factorial
 from typing import Any
 

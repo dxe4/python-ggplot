@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 import pandas as pd
 
-from python_ggplot.core.maths import poly_fit, savitzky_golay
+from python_ggplot.common.maths import poly_fit, savitzky_golay
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
