@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum, auto
+from dataclasses import Field, dataclass, field
+from enum import auto
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
 from python_ggplot.core.maths import poly_fit, savitzky_golay
 from python_ggplot.core.objects import (
+    GGEnum,
     AxisKind,
     Color,
     ErrorBarKind,
@@ -44,14 +45,14 @@ class AestheticError(Exception):
     pass
 
 
-class PositionType(Enum):
+class PositionType(GGEnum):
     IDENTITY = auto()
     STACK = auto()
     DODGE = auto()
     FILL = auto()
 
 
-class StatType(Enum):
+class StatType(GGEnum):
     IDENTITY = auto()
     COUNT = auto()
     BIN = auto()
@@ -65,6 +66,21 @@ class StatKind(ABC):
     @abstractmethod
     def stat_type(self) -> StatType:
         pass
+
+    @staticmethod
+    def create_from_enum(
+        stat_type: StatType,
+        data: Optional[Dict[Any, Any]]=None) -> 'StatKind':
+        classes = {
+            StatType.BIN: StatBin,
+            StatType.IDENTITY: StatIdentity,
+            StatType.COUNT: StatCount,
+            StatType.SMOOTH: StatSmooth,
+        }
+        if data is None:
+            data = {}
+        return classes[stat_type](**data)
+
 
 
 class StatIdentity(StatKind):
@@ -123,7 +139,7 @@ class StatSmooth(StatKind):
         return StatType.SMOOTH
 
 
-class DiscreteType(Enum):
+class DiscreteType(GGEnum):
     DISCRETE = auto()
     CONTINUOUS = auto()
 
@@ -139,10 +155,6 @@ ContinuousFormat = Callable[[float], str]
 
 @dataclass
 class Aesthetics:
-    scale: GGScale
-    position_kind: PositionType
-    stat_kind: StatKind
-    discrete_kind: DiscreteKind
     x: Optional["GGScale"] = None
     x_min: Optional["GGScale"] = None
     x_max: Optional["GGScale"] = None
@@ -172,7 +184,7 @@ discrete_format = Callable[[Union[int, str]], str]
 continuous_format = Callable[[float], str]
 
 
-class DateTickAlgorithmType(Enum):
+class DateTickAlgorithmType(GGEnum):
     FILTER = auto()
     ADD_DURATION = auto()
     CUSTOM_BREAKS = auto()
@@ -193,7 +205,7 @@ PossibleFont = Union[Missing, Font, Optional[Font]]
 PossibleSecondaryAxis = Union[Missing, SecondaryAxis]
 
 
-class DataType(Enum):
+class DataType(GGEnum):
     MAPPING = auto()
     SETTING = auto()
     # TODO high priority this shouldnt be there, but is because nim
@@ -201,25 +213,25 @@ class DataType(Enum):
     NULL = auto()
 
 
-class BinPositionType(Enum):
+class BinPositionType(GGEnum):
     NONE = auto()
     CENTER = auto()
     LEFT = auto()
     RIGHT = auto()
 
 
-class SmoothMethodType(str, Enum):
+class SmoothMethodType(str, GGEnum):
     SVG = auto()
     LM = auto()
     POLY = auto()
 
 
-class BinByType(str, Enum):
+class BinByType(str, GGEnum):
     FULL = auto()
     SUBSET = auto()
 
 
-class OutsideRangeKind(str, Enum):
+class OutsideRangeKind(str, GGEnum):
     NONE = auto()
     DROP = auto()
     CLIP = auto()
@@ -258,12 +270,16 @@ class GGStyle:
 
 @dataclass
 class Theme:
-    x_margin_range: Scale
-    y_margin_range: Scale
-    x_ticks_rotate: float
-    y_ticks_rotate: float
-    x_ticks_text_align: TextAlignKind
-    y_ticks_text_align: TextAlignKind
+    # TODO although those are not used to initialise the object,
+    # they are not set as optional?
+    # investigate later, for now we just mark them in their own section
+    x_margin_range: Optional[Scale] = None
+    y_margin_range: Optional[Scale] = None
+    x_ticks_rotate: Optional[float] = None
+    y_ticks_rotate: Optional[float] = None
+    x_ticks_text_align: Optional[TextAlignKind] = None
+    y_ticks_text_align: Optional[TextAlignKind] = None
+    # END of TODO
 
     base_font_size: Optional[float] = None
     sub_title_font: Optional[Dict[Any, Any]] = None
@@ -318,15 +334,16 @@ class Facet:
 @dataclass
 class GgPlot:
     data: pd.DataFrame
-    title: str
-    sub_title: str
     aes: Aesthetics
-    facet: Optional[Any]
-    ridges: Optional[Ridges]
-    geoms: List[Geom]
-    annotations: List[Any]
     theme: Theme
-    backend: str
+    backend: str = field(default="cairo") # Will be cairo only for a while..
+    title: Optional[str] = None
+    sub_title: Optional[str] = None
+    facet: Optional[Any] = None
+    ridges: Optional[Ridges] = None
+    geoms: Optional[List[Geom]] = None
+    annotations: Optional[List[Any]] = None
+
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
         """
@@ -433,7 +450,7 @@ class VegaError(Exception):
     pass
 
 
-class VegaBackend(str, Enum):
+class VegaBackend(str, GGEnum):
     WEBVIEW = auto()
     BROWSER = auto()
 

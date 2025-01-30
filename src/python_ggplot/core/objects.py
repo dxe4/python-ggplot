@@ -1,11 +1,54 @@
 import math
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Generic, List, Literal, Optional, TypeVar, Union
+
+from typing import (
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Type,
+    TypeVar,
+    Union
+)
 
 from python_ggplot.core.chroma import color_from_hsl
 from python_ggplot.core.common import linspace
 from python_ggplot.graphics.cairo_backend import CairoBackend
+
+Z = TypeVar('Z', bound='GGEnum')
+
+class GGEnum(Enum):
+
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):  # type: ignore
+        return name.lower()
+
+    @classmethod
+    def is_possible_value(cls, value: str):
+        return value in [item.value for item in cls]
+
+    @classmethod
+    def value_to_name(cls, value: str):
+        # TODO low priority we could cache this if it matters
+        data = {item.value: item.name for item in cls}
+        return data.get(data)
+
+    @classmethod
+    def value_to_item(cls: Type[Z], value: str) -> Z:
+        # TODO low priority we could cache this if it matters
+        data = {item.value: item for item in cls}
+        try:
+            return data[value]
+        except KeyError as e:
+            raise GGException("enum type does not exist") from e
+
+    @classmethod
+    def eitem(cls: Type[Z], value: str) -> Z:
+        # TODO this is a bad name, but very convinient
+        # remove or keep?
+        # named it "eitem" to be able to regex it out
+        return cls.value_to_item(value)
 
 
 class Duration:
@@ -57,7 +100,7 @@ def init_duration(
     return Duration(total_seconds, total_nanoseconds)
 
 
-class MarkerKind(Enum):
+class MarkerKind(GGEnum):
     CIRCLE = auto()
     CROSS = auto()
     TRIANGLE = auto()
@@ -70,7 +113,7 @@ class MarkerKind(Enum):
     EMPTY_RHOMBUS = auto()
 
 
-class FileTypeKind(Enum):
+class FileTypeKind(GGEnum):
     SVG = auto()
     PNG = auto()
     PDF = auto()
@@ -94,7 +137,7 @@ class HueConfig:
     luminance: float = 65.0
 
 
-class LineType(Enum):
+class LineType(GGEnum):
     NONE_TYPE = auto()
     SOLID = auto()
     DASHED = auto()
@@ -104,18 +147,18 @@ class LineType(Enum):
     TWO_DASH = auto()
 
 
-class ErrorBarKind(Enum):
+class ErrorBarKind(GGEnum):
     LINES = auto()
     LINEST = auto()
 
 
-class TextAlignKind(Enum):
+class TextAlignKind(GGEnum):
     LEFT = auto()
     CENTER = auto()
     RIGHT = auto()
 
 
-class CFontSlant(Enum):
+class CFontSlant(GGEnum):
     NORMAL = auto()
     ITALIC = auto()
     OBLIQUE = auto()
@@ -173,7 +216,7 @@ class Gradient:
     rotation: float
 
 
-class AxisKind(Enum):
+class AxisKind(GGEnum):
     X = auto()
     Y = auto()
 
@@ -204,11 +247,11 @@ class Style:
     font: Optional[Font] = None
 
 
-class CompositeKind(Enum):
+class CompositeKind(GGEnum):
     ERROR_BAR = auto()
 
 
-class TickKind(Enum):
+class TickKind(GGEnum):
     ONE_SIDE = auto()
     BOTH_SIDES = auto()
 
@@ -253,7 +296,7 @@ class GGException(Exception):
     pass
 
 
-class UnitType(Enum):
+class UnitType(GGEnum):
     POINT = auto()
     CENTIMETER = auto()
     INCH = auto()

@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
+from enum import auto
+from typing import (
+    TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
+)
 
 from python_ggplot.core.coord.objects import Coord, Coord1D
 from python_ggplot.core.objects import (
+    GGEnum,
     AxisKind,
     Color,
     CompositeKind,
@@ -46,7 +49,7 @@ class GraphicsObjectConfig:
     rotate: Optional[float] = None
 
 
-class GOType(Enum):
+class GOType(GGEnum):
     # start/stop data
     LINE = auto()
     AXIS = auto()
@@ -87,7 +90,7 @@ class GraphicsObject(ABC):
         pass
 
     def embed_into(self, view: "ViewPort") -> "GraphicsObject":
-        from python_ggplot.embed import (
+        from python_ggplot.core.embed import (
             graphics_object_embed_into,
         )  # pylint: disable=all
 

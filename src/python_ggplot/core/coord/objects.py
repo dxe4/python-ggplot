@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, cast
 
 from python_ggplot.core.objects import (
+    GGEnum,
     AxisKind,
     Font,
     GGException,
@@ -187,7 +187,7 @@ class CoordsInput:
     height: float = 1.0
 
 
-class OperatorType(Enum):
+class OperatorType(GGEnum):
     DIV = "DIV"
     ADD = "ADD"
     SUB = "SUB"

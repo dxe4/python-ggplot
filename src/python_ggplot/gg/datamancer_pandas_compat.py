@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import auto
 from typing import Any, Callable, Dict, OrderedDict, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from python_ggplot.core.objects import GGException
+from python_ggplot.core.objects import GGException, GGEnum
 
 
 @dataclass
@@ -52,7 +52,7 @@ class VTODO(GGValue):
     pass
 
 
-class ColumnType(Enum):
+class ColumnType(GGEnum):
     NONE = auto()
     FLOAT = auto()
     INT = auto()
@@ -183,7 +183,7 @@ Column = Union[
 ColumnLike = TypeVar("ColumnLike")
 
 
-class FormulaType(Enum):
+class FormulaType(GGEnum):
     VARIABLE = auto()
     ASSIGN = auto()
     VECTOR = auto()

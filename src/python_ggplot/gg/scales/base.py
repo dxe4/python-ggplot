@@ -2,7 +2,7 @@ import typing
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from enum import Enum, auto
+from enum import auto
 from typing import (
     Any,
     Callable,
@@ -14,12 +14,13 @@ from typing import (
     Set,
     Tuple,
     Type,
+    Union,
 )
 
 import numpy as np
 import pandas as pd
 
-from python_ggplot.core.objects import AxisKind, GGException, Scale
+from python_ggplot.core.objects import AxisKind, GGException, Scale, GGEnum
 from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
     FormulaNode,
@@ -63,7 +64,7 @@ class ColorScale:
     colors: List[int]
 
 
-class ScaleType(Enum):
+class ScaleType(GGEnum):
     LINEAR_DATA = auto()
     TRANSFORMED_DATA = auto()
     COLOR = auto()
@@ -105,6 +106,17 @@ class GGScale(ABC):
     """
 
     gg_data: GGScaleData
+
+    def assign_breaks(self, breaks: Union[int, List[float]]) -> None:
+        """
+        TODO we need to make sure the types work for numpy...
+        """
+        if isinstance(breaks, int):
+            self.gg_data.num_ticks = breaks
+        elif all(isinstance(x, float) for x in breaks):
+            self.gg_data.breaks = breaks
+        else:
+            self.gg_data.breaks = [float(x) for x in breaks]
 
     def get_col_name(self: "GGScale") -> str:
         if self.scale_type == ScaleType.TRANSFORMED_DATA:
@@ -297,7 +309,7 @@ class GGScaleContinuous(GGScaleDiscreteKind):
         raise GGException("todo")
 
 
-class ScaleFreeKind(Enum):
+class ScaleFreeKind(GGEnum):
     FIXED = auto()
     FREE_X = auto()
     FREE_Y = auto()

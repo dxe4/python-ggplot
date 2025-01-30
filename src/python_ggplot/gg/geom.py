@@ -1,22 +1,24 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import auto
 from typing import Any, Generator, List, Optional, OrderedDict, Tuple, cast
 
 import pandas as pd
 
 from python_ggplot.core.coord.objects import Coord
-from python_ggplot.core.objects import GGException, Scale, Style
+from python_ggplot.core.objects import GGException, Scale, Style, GGEnum
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import (
     Aesthetics,
+    BinByType,
     BinPositionType,
     DiscreteKind,
     DiscreteType,
     GGStyle,
     PositionType,
+    StatBin,
     StatKind,
     StatType,
 )
@@ -30,12 +32,12 @@ from python_ggplot.graphics.initialize import (
 from python_ggplot.graphics.views import ViewPort
 
 
-class HistogramDrawingStyle(str, Enum):
+class HistogramDrawingStyle(GGEnum):
     BARS = auto()
     OUTLINE = auto()
 
 
-class GeomType(Enum):
+class GeomType(GGEnum):
     POINT = auto()
     BAR = auto()
     HISTOGRAM = auto()
@@ -64,6 +66,27 @@ class GeomData:
 class Geom(ABC):
     gg_data: GeomData
 
+    @staticmethod
+    def assign_bin_fields(
+        geom: 'Geom',
+        st_kind: StatType,
+        bins: int,
+        bin_width: float,
+        breaks: List[float],
+        bin_by_type: BinByType,
+        density: bool
+    ):
+        stat_kind = geom.gg_data.stat_kind
+        if isinstance(stat_kind, StatBin):
+            if len(breaks) > 0:
+                stat_kind.bin_edges = breaks
+            if bin_width > 0.0:
+                stat_kind.bin_width = bin_width
+            if bins > 0:
+                stat_kind.num_bins = bins
+            stat_kind.bin_by = bin_by_type
+            stat_kind.density = density
+
     @abstractmethod
     def draw(
         self,
@@ -84,7 +107,6 @@ class Geom(ABC):
         pass
 
     @property
-    @abstractmethod
     def stat_type(self) -> StatType:
         return self.gg_data.stat_kind.stat_type
 
