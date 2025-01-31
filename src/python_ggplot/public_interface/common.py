@@ -31,7 +31,6 @@ from python_ggplot.gg.types import (
     DiscreteFormat,
     DiscreteType,
     Facet,
-    PossibleNumber,
     Ridges,
     SecondaryAxis,
 )
@@ -153,7 +152,7 @@ def _scale_axis_discrete_with_label_fn(
     labels_fn: Optional[DiscreteFormat] = None,
     sec_axis: Optional[SecondaryAxis] = None,
     reversed: bool = False,
-):
+) -> GGScale:
     secondary_axis = to_opt_sec_axis(sec_axis, axis_kind)
     linear_data = LinearAndTransformScaleData(
         axis_kind=axis_kind,
@@ -220,7 +219,7 @@ def scale_x_discrete(
     labels_fn: Optional[DiscreteFormat] = None,
     labels: Optional[OrderedDict[GGValue, ScaleValue]] = None,
     sec_axis: Optional[SecondaryAxis] = None,
-):
+) -> GGScale:
     if labels is not None:
         return _scale_axis_discrete_with_labels(AxisKind.X, name, labels, sec_axis)
     else:
@@ -232,7 +231,7 @@ def scale_y_discrete(
     labels_fn: Optional[DiscreteFormat] = None,
     labels: Optional[OrderedDict[GGValue, ScaleValue]] = None,
     sec_axis: Optional[SecondaryAxis] = None,
-):
+) -> GGScale:
     if labels is not None:
         return _scale_axis_discrete_with_labels(AxisKind.Y, name, labels, sec_axis)
     else:
@@ -244,7 +243,7 @@ def _scale_reverse(
     name: str = "",
     sec_axis: Optional[SecondaryAxis] = None,
     discrete_kind: DiscreteType = DiscreteType.CONTINUOUS,
-):
+) -> GGScale
     if discrete_kind == DiscreteType.CONTINUOUS:
         discrete_kind_ = GGScaleContinuous()
     elif discrete_kind == DiscreteType.DISCRETE:
@@ -275,7 +274,7 @@ def scale_x_reverse(
     name: str = "",
     sec_axis: Optional[SecondaryAxis] = None,
     discrete_kind: DISCRETE_TYPE_VALUES = "continuous",
-):
+) -> GGScale
     return _scale_reverse(
         axis_kind=AxisKind.X,
         name=name,
@@ -288,7 +287,7 @@ def scale_y_reverse(
     name: str = "",
     sec_axis: Optional[SecondaryAxis] = None,
     discrete_kind: DISCRETE_TYPE_VALUES = "continuous",
-):
+) -> GGScale:
     return _scale_reverse(
         axis_kind=AxisKind.Y,
         name=name,
