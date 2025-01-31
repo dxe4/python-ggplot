@@ -286,6 +286,7 @@ class Theme:
     title_font: Optional[Font] = None
     sub_title_font: Optional[Font] = None
     tick_label_font: Optional[Font] = None
+    label_font: Optional[Font] = None
     hide_ticks: Optional[bool] = None
     hide_tick_labels: Optional[bool] = None
     hide_labels: Optional[bool] = None
@@ -307,7 +308,7 @@ class Theme:
     canvas_color: Optional[PossibleColor] = None
     plot_background_color: Optional[PossibleColor] = None
     grid_lines: Optional[bool] = None
-    grid_line_color: Optional[Color] = None
+    grid_line_color: Optional[PossibleColor] = None
     grid_line_width: Optional[float] = None
     minor_grid_lines: Optional[bool] = None
     minor_grid_line_width: Optional[float] = None

@@ -1,11 +1,12 @@
 import math
 from collections import OrderedDict
 from dataclasses import field
-from typing import Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
+    OUTSIDE_RANGE_KIND_VALUES,
     SCALE_FREE_KIND_VALUES,
 )
 from python_ggplot.core.coord.objects import Coord
@@ -59,6 +60,7 @@ from python_ggplot.gg.types import (
     DiscreteFormat,
     DiscreteType,
     Facet,
+    OutsideRangeKind,
     PossibleColor,
     Ridges,
     SecondaryAxis,
@@ -952,3 +954,145 @@ def theme_void(color: PossibleColor = WHITE) -> Theme:
         hide_tick_labels=True,
         hide_labels=True,
     )
+
+
+def _grid_lines(
+    enable: bool = True,
+    # TODO medium priority
+    # i dont like this inf here id rather use None, but it may originate from calculations
+    # keep for now, but revisit
+    width: float = float("inf"),
+    color: str = "white",
+    only_axes: bool = False,
+) -> Theme:
+    theme = Theme(grid_lines=enable, grid_line_color=color, only_axes=only_axes)
+
+    if not math.isinf(width):
+        theme.grid_line_width = width
+
+    return theme
+
+
+def _minor_grid_lines(
+    enable: bool = True,
+    # TODO same as _grid_lines refactor inf
+    width: float = float("inf"),
+) -> Theme:
+    theme = Theme(minor_grid_lines=enable)
+
+    if not math.isinf(width):
+        theme.minor_grid_line_width = width
+
+    return theme
+
+
+def _background_color(color: PossibleColor = GREY92) -> Theme:
+    return Theme(plot_background_color=color)
+
+
+def _grid_line_color(color: PossibleColor = WHITE) -> Theme:
+    """
+    deprecated, use grid_lines
+    """
+    return Theme(grid_line_color=color)
+
+
+def theme_latex() -> Theme:
+    return Theme(title_font=Font(size=10.0), label_font=Font(size=10.0))
+
+
+def prefer_columns() -> Theme:
+    return Theme(prefer_rows_over_columns=False)
+
+
+def prefer_rows() -> Theme:
+    return Theme(prefer_rows_over_columns=True)
+
+
+def _parse_text_align_string(
+    align_to: Literal["none", "left", "right", "center"]
+) -> Optional[TextAlignKind]:
+    if align_to == "none":
+        return None
+    return TextAlignKind(align_to)
+
+
+def xlab(
+    label: str = "",
+    margin: Optional[float] = None,
+    rotate: Optional[float] = None,
+    align_to: Literal["none", "left", "right", "center"] = "none",
+    tick_margin: Optional[float] = None,
+    font_obj: Optional[Font] = None,
+    tick_font: Optional[Font] = None,
+) -> Theme:
+    result = Theme()
+    if len(label) > 0:
+        result.x_label = label
+    if margin is not None:
+        result.x_label_margin = margin
+    if tick_margin is not None:
+        result.x_tick_label_margin = tick_margin
+    if rotate is not None:
+        result.x_ticks_rotate = rotate
+    if font_obj is not None:
+        result.label_font = font_obj
+    if tick_font is not None:
+        result.tick_label_font = tick_font
+
+    x_ticks_text_align = _parse_text_align_string(align_to)
+    if x_ticks_text_align is not None:
+        result.x_ticks_text_align = x_ticks_text_align
+
+    return result
+
+
+def ylab(
+    label: str = "",
+    margin: Optional[float] = None,
+    rotate: Optional[float] = None,
+    align_to: Literal["none", "left", "right", "center"] = "none",
+    font_obj: Optional[Font] = None,
+    tick_font: Optional[Font] = None,
+    tick_margin: Optional[float] = None,
+) -> Theme:
+    result = Theme()
+    if len(label) > 0:
+        result.y_label = label
+    if margin is not None:
+        result.y_label_margin = margin
+    if tick_margin is not None:
+        result.y_tick_label_margin = tick_margin
+    if rotate is not None:
+        result.y_ticks_rotate = rotate
+    if font_obj is not None:
+        result.label_font = font_obj
+    if tick_font is not None:
+        result.tick_label_font = tick_font
+    y_ticks_text_align = _parse_text_align_string(align_to)
+    if y_ticks_text_align is not None:
+        result.y_ticks_text_align = y_ticks_text_align
+    return result
+
+
+def xlim(
+    low: Union[int, float],
+    high: Union[int, float],
+    outside_range: OUTSIDE_RANGE_KIND_VALUES,
+) -> Theme:
+    or_opt = OutsideRangeKind(outside_range) if outside_range else None
+    result = Theme(
+        x_range=Scale(low=float(low), high=float(high)),
+        x_outside_range=or_opt,
+    )
+    return result
+
+
+def ylim(
+    low: Union[int, float],
+    high: Union[int, float],
+    outside_range: OUTSIDE_RANGE_KIND_VALUES,
+) -> Theme:
+    or_opt = OutsideRangeKind(outside_range) if outside_range else None
+    result = Theme(y_range=Scale(float(low), float(high)), y_outside_range=or_opt)
+    return result
