@@ -2,16 +2,19 @@ import math
 from typing import Dict, List, Optional, Union
 
 from python_ggplot.common.enum_literals import SCALE_FREE_KIND_VALUES
+from python_ggplot.core.objects import GGException
 from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol
 from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleContinuous,
     GGScaleData,
     LinearAndTransformScaleData,
+    LinearDataScale,
     ScaleFreeKind,
+    ScaleTransformFunc,
     TransformedDataScale,
 )
-from python_ggplot.gg.types import Facet, Ridges
+from python_ggplot.gg.types import Facet, Ridges, SecondaryAxis
 from tests.test_view import AxisKind
 
 
@@ -87,3 +90,37 @@ def scale_x_log2(breaks: Optional[Union[int, List[float]]] = None) -> GGScale:
 def scale_y_log2(breaks: Optional[Union[int, List[float]]] = None) -> GGScale:
     base = 10
     return _scale_axis_log(AxisKind.Y, base, breaks)
+
+
+def sec_axis(
+    col: str = "",
+    trans_fn: Optional[ScaleTransformFunc] = None,
+    inv_trans_fn: Optional[ScaleTransformFunc] = None,
+    name: str = "",
+) -> SecondaryAxis:
+
+    if trans_fn is not None and inv_trans_fn is not None:
+        scale = TransformedDataScale(
+            gg_data=GGScaleData.create_empty_scale(col=col),
+            transform=trans_fn or TransformedDataScale.defualt_trans,
+            inverse_transform=inv_trans_fn
+            or TransformedDataScale.defualt_inverse_trans,
+        )
+        secondary_axis = SecondaryAxis(
+            name=name,
+            scale=scale,
+        )
+        return secondary_axis
+    elif trans_fn is not None or inv_trans_fn is not None:
+        raise GGException(
+            "In case of using a transformed secondary scale, both the "
+            "forward and reverse transformations have to be provided!"
+        )
+    else:
+        # var fn: Option[FormulaNode]
+        # if trans.name.len > 0:
+        #   fn = some(trans)
+        # do we want to support fornula nodes?
+        # so far the answer is either no or not at the moment
+        # this may change in the future
+        raise GGException("formula nodes are not supported, at least for now")

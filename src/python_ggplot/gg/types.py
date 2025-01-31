@@ -176,8 +176,10 @@ class Aesthetics:
 @dataclass
 class SecondaryAxis:
     name: str
-    axis_kind: AxisKind
     scale: GGScale
+    # TODO i dont like this, but thats how its inherited
+    # id rather be explicit here makes it more understandable
+    axis_kind: AxisKind = AxisKind.X
 
 
 discrete_format = Callable[[Union[int, str]], str]

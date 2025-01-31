@@ -23,6 +23,7 @@ import pandas as pd
 from python_ggplot.colormaps.color_maps import VIRIDIS_RAW_COLOR_SCALE
 from python_ggplot.core.objects import AxisKind, GGEnum, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
+    VTODO,
     ColumnType,
     GGValue,
     VectorCol,
@@ -82,9 +83,7 @@ class LinearAndTransformScaleData:
     axis_kind: AxisKind = AxisKind.X
     reversed: bool = False
     # TODO high priority
-    # do we need the transform here? i think not
-    # double check this later, doesnt cuase issue for now
-    # if this is needed, change the lambda to print a warning
+    # change the lambda to print a warning or raise an exception
     transform: ScaleTransformFunc = field(default=lambda x: x)
     secondary_axis: Optional["SecondaryAxis"] = None
     date_scale: Optional["DateScale"] = None
@@ -145,6 +144,13 @@ class GGScaleData:
     num_ticks: Optional[int] = None
     breaks: Optional[List[float]] = None
     name: str = ""
+
+    @staticmethod
+    def create_empty_scale(col: str = "") -> "GGScaleData":
+        # TODO i really dont like this but its how is done
+        # sticking to the convention for now
+        # but moving in a centralised place
+        return GGScaleData(col=VectorCol(col), value_kind=VTODO())
 
 
 @dataclass
@@ -257,6 +263,14 @@ class TransformedDataScale(GGScale):
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.TRANSFORMED_DATA
+
+    @staticmethod
+    def defualt_trans() -> ScaleTransformFunc:
+        return _default_trans
+
+    @staticmethod
+    def defualt_inverse_trans() -> ScaleTransformFunc:
+        return _default_trans
 
 
 @dataclass
