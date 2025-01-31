@@ -319,6 +319,10 @@ class ShapeScale(GGScale):
 class SizeScale(GGScale):
     # low and high
     size: SizeScaleValue = field(default_factory=SizeScaleValue)
+    # TODO
+    # this is low Low,High its not very intuitive
+    # if you dont know what it already does
+    # refactor later
     size_range: Tuple[float, float] = field(default=(0.0, 0.0))
 
     def update_style(self, style: "GGStyle"):

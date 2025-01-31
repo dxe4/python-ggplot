@@ -19,6 +19,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.scales.base import (
+    AlphaScale,
     ColorScale,
     ColorScaleKind,
     FillColorScale,
@@ -30,11 +31,17 @@ from python_ggplot.gg.scales.base import (
     LinearDataScale,
     ScaleFreeKind,
     ScaleTransformFunc,
+    SizeScale,
     TransformedDataScale,
 )
-from python_ggplot.gg.scales.values import FillColorScaleValue, ScaleValue
+from python_ggplot.gg.scales.values import (
+    FillColorScaleValue,
+    ScaleValue,
+    SizeScaleValue,
+)
 from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
 from python_ggplot.gg.types import (
+    DataType,
     DiscreteFormat,
     DiscreteType,
     Facet,
@@ -439,4 +446,134 @@ def scale_fill_identity(col: str = "") -> GGScale:
         gg_data=gg_data,
         color_scale=DEFAULT_COLOR_SCALE,
     )
+    return scale
+
+
+def scale_size_identity(col: str = "") -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(col), value_kind=VTODO(), data_type=DataType.SETTING
+    )
+    scale = SizeScale(
+        gg_data=gg_data,
+    )
+    return scale
+
+
+def scale_alpha_identity(col: str = "") -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(col), value_kind=VTODO(), data_type=DataType.SETTING
+    )
+    scale = AlphaScale(
+        gg_data=gg_data,
+    )
+    return scale
+
+
+def scale_fill_gradient(color_scale: ColorScale | List[int], name: str = "custom"):
+    if isinstance(color_scale, ColorScale):
+        color_scale_ = color_scale
+    else:
+        color_scale_ = ColorScale(name=name, colors=color_scale)
+
+    gg_data = GGScaleData(
+        col=VectorCol(""),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleContinuous(),
+    )
+    scale = ColorScaleKind(
+        gg_data=gg_data,
+        color_scale=color_scale_,
+    )
+    return scale
+
+
+def scale_size_manual(values: OrderedDict[GGValue, float]) -> GGScale:
+    # TODO this kind of logic should go somehwere on the discrete object i guess
+    # or at least get re-used eventually
+    label_seq: List[GGValue] = []
+    min_val = float("inf")
+    max_val = float("-inf")
+    value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict()
+
+    for k, v in values.items():
+        value_map[k] = SizeScaleValue(size=v)
+        label_seq.append(k)
+        min_val = min(v, min_val)
+        max_val = max(v, max_val)
+
+    scale = SizeScale(
+        gg_data=GGScaleData(
+            col=VectorCol(""),
+            value_kind=VTODO(),
+            has_discreteness=True,
+            discrete_kind=GGScaleDiscrete(
+                label_seq=label_seq,
+                value_map=value_map,
+            ),
+        ),
+        size_range=(min_val, max_val),
+    )
+
+    return scale
+
+
+def scale_size_discrete(low: float = 2.0, high: float = 7.0) -> GGScale:
+    # from  const DefaultSizeRange* = (low: 2.0, high: 7.0)
+    # we could set a global one too, keep as is for now
+
+    scale = SizeScale(
+        gg_data=GGScaleData(
+            col=VectorCol(""),
+            value_kind=VTODO(),
+            has_discreteness=True,
+            discrete_kind=GGScaleDiscrete(),
+        ),
+        size_range=(low, high),
+    )
+
+    return scale
+
+
+def scale_size_continuous(low: float = 2.0, high: float = 7.0) -> GGScale:
+    scale = SizeScale(
+        gg_data=GGScaleData(
+            col=VectorCol(""),
+            value_kind=VTODO(),
+            has_discreteness=True,
+            discrete_kind=GGScaleContinuous(),
+        ),
+        size_range=(low, high),
+    )
+
+    return scale
+
+
+def scale_alpha_discrete(low: float = 0.1, high: float = 1.0) -> GGScale:
+    # from const DefaultAlphaRange* = (low: 0.1, high: 1.0)
+    scale = AlphaScale(
+        gg_data=GGScaleData(
+            col=VectorCol(""),
+            value_kind=VTODO(),
+            has_discreteness=True,
+            discrete_kind=GGScaleContinuous(),
+        ),
+        alpha_range=(low, high),
+    )
+
+    return scale
+
+
+def scale_alpha_continuous(low: float = 0.1, high: float = 1.0) -> GGScale:
+    # from const DefaultAlphaRange* = (low: 0.1, high: 1.0)
+    scale = AlphaScale(
+        gg_data=GGScaleData(
+            col=VectorCol(""),
+            value_kind=VTODO(),
+            has_discreteness=True,
+            discrete_kind=GGScaleContinuous(),
+        ),
+        alpha_range=(low, high),
+    )
+
     return scale
