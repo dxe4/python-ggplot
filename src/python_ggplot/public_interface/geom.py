@@ -9,7 +9,6 @@ from python_ggplot.common.enum_literals import (
     BIN_BY_VALUES,
     BIN_POSITION_VALUES,
     ERROR_BAR_KIND_VALUES,
-    FILE_TYPE_KIND_VALUES,
     HISTOGRAM_DRAWING_STYLE_VALUES,
     LINE_TYPE_VALUES,
     POSITION_VALUES,
