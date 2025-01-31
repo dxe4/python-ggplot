@@ -205,7 +205,7 @@ class Font:
 @dataclass
 class Gradient:
     colors: List[Color]
-    rotation: float
+    rotation: float = 0.0
 
 
 class AxisKind(GGEnum):

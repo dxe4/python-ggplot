@@ -178,12 +178,18 @@ def layout(
     view: ViewPort,
     cols: int,
     rows: int,
-    col_widths: List[Quantity],
-    row_heights: List[Quantity],
+    col_widths: Optional[List[Quantity]] = None,
+    row_heights: Optional[List[Quantity]] = None,
     margin: Optional[Quantity] = None,
     ignore_overflow: bool = False,
 ) -> None:
     margin = margin or Quantity.relative(0.0)
+
+    if row_heights is None:
+        row_heights = []
+
+    if col_widths is None:
+        col_widths = []
 
     if len(col_widths) != cols and col_widths:
         raise GGException("there must be one column width for each column")

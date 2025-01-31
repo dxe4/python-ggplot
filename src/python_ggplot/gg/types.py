@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 import pandas as pd
 
 from python_ggplot.common.maths import poly_fit, savitzky_golay
+from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -300,7 +301,7 @@ class Theme:
     x_tick_label_margin: Optional[float] = None
 
     y_tick_label_margin: Optional[float] = None
-    legend_position: Optional[Tuple[float]] = None
+    legend_position: Optional[Coord] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
     canvas_color: Optional[Color] = None

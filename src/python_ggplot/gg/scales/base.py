@@ -21,7 +21,14 @@ import numpy as np
 import pandas as pd
 
 from python_ggplot.colormaps.color_maps import VIRIDIS_RAW_COLOR_SCALE
-from python_ggplot.core.objects import AxisKind, GGEnum, GGException, MarkerKind, Point, Scale
+from python_ggplot.core.objects import (
+    AxisKind,
+    GGEnum,
+    GGException,
+    MarkerKind,
+    Point,
+    Scale,
+)
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     ColumnType,
@@ -53,9 +60,11 @@ from python_ggplot.gg.types import (
     MainAddScales,
     SecondaryAxis,
 )
+from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import init_point_from_point
 from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
+from tests.test_view import Quantity
 
 if typing.TYPE_CHECKING:
     from python_ggplot.gg.scales.values import ScaleValue

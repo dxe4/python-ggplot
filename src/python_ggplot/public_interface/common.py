@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from numpy import _OrderCF
 
+from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
     SCALE_FREE_KIND_VALUES,
@@ -16,6 +17,7 @@ from python_ggplot.core.objects import (
     Color,
     Font,
     GGException,
+    Gradient,
     LineType,
     Point,
     Scale,
@@ -43,6 +45,7 @@ from python_ggplot.gg.scales.base import (
     LinearDataScale,
     ScaleFreeKind,
     ScaleTransformFunc,
+    ScaleType,
     ShapeScale,
     SizeScale,
     TransformedDataScale,
@@ -689,7 +692,7 @@ def _generate_legend_markers(
     return result
 
 
-def gen_discrete_legend(
+def _gen_discrete_legend(
     view: ViewPort, cat: GGScale, access_idx: Optional[List[int]] = None
 ):
     if not isinstance(cat.gg_data.discrete_kind, GGScaleDiscrete):
@@ -795,3 +798,138 @@ def gen_discrete_legend(
         j += 1
 
     view[3] = leg
+
+
+def _gen_continuous_legend(
+    view: ViewPort, scale: GGScale, access_idx: Optional[List[int]] = None
+) -> None:
+    """
+    this could go on _ColorScaleMixin
+    but for now its fine, will clean up all non public functions later
+    """
+    if scale.scale_type == ScaleType.SIZE:
+        layout(view, cols=1, rows=6, col_widths=[], row_heights=[])
+
+    elif isinstance(scale, (ColorScaleKind, FillColorScale)):
+        discrete_kind = scale.gg_data.discrete_kind
+        if not isinstance(discrete_kind, GGScaleContinuous):
+            raise GGException("expected continuous scales")
+
+        layout(
+            view=view,
+            rows=2,
+            cols=2,
+            col_widths=[
+                Quantity.centimeters(0.5),
+                Quantity.relative(0.0),
+            ],
+            row_heights=[
+                Quantity.centimeters(1.0),
+                Quantity.centimeters(4.5),
+            ],
+        )
+
+        leg_view = view.children[3]
+        leg_view.y_scale = discrete_kind.data_scale
+        layout(
+            leg_view,
+            3,
+            1,
+            col_widths=[
+                Quantity.centimeters(1.0),
+                Quantity.centimeters(0.5),
+                Quantity.relative(0.0),
+            ],
+        )
+
+        leg_grad = leg_view.children[0]
+
+        markers = _generate_legend_markers(leg_grad, scale, access_idx)
+        for marker in markers:
+            leg_grad.add_obj(marker)
+
+        cmap = scale.color_scale
+        colors = [int_to_color(color) for color in cmap.colors]
+        gradient = Gradient(colors=colors)
+
+        grad_rect = init_rect(
+            leg_grad,
+            origin=Coord(
+                x=RelativeCoordType(0.0),
+                y=RelativeCoordType(0.0),
+            ),
+            width=Quantity.relative(1.0),
+            height=Quantity.relative(1.0),
+            init_rect_input=InitRectInput(
+                name="legendGradientBackground", gradient=gradient
+            ),
+        )
+
+        leg_grad.add_obj(grad_rect)
+        leg_view[0] = leg_grad
+        view[3] = leg_view
+        view.height = Quantity.centimeters(5.5)
+
+
+def _create_legend(
+    view: ViewPort, cat: GGScale, access_idx: Optional[List[int]] = None
+) -> None:
+    # TODO high priority / easy task
+    # double check this to be sure, original code is len(view)
+    # i remember ginger sets this up, its either len(view.objects) or  len(view.children)
+    start_idx = len(view.children)
+
+    if cat.is_discrete():
+        _gen_discrete_legend(view, cat, access_idx)
+    elif cat.is_continuous():
+        _gen_continuous_legend(view, cat, access_idx)
+    else:
+        raise GGException("unexpected discrete type")
+
+    if start_idx < len(view.children):
+        header = view.children[1]
+        # TODO: add support to change font of legend
+        label = init_text(
+            header,
+            origin=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.5)),
+            init_text_data=InitTextInput(
+                # TODO sanity check this, original code calls evaluate (for FormulaNode)
+                # make sure we are fine with this, certainly not calling eval
+                text=str(cat.gg_data.col),
+                align_kind=TextAlignKind.LEFT,
+                name="legendHeader",
+            ),
+        )
+        label.data.font.bold = True
+        header.add_obj(label)
+        view[1] = header
+
+
+def _finalize_legend(view: ViewPort, legends: List[ViewPort]):
+    row_heights = [Quantity.relative(0.0)]
+
+    for legend in legends:
+        row_heights.append(legend.height)
+
+    row_heights.append(Quantity.relative(0.0))
+
+    layout(
+        view=view,
+        cols=1,
+        rows=len(row_heights),
+        row_heights=row_heights,
+        ignore_overflow=True,
+    )
+
+    for i in range(1, len(row_heights) - 1):
+        legend = legends[i - 1]
+        legend.origin = view.children[i].origin
+        view[i] = legend
+
+
+def _legend_position(x: float = 0.0, y: float = 0.0):
+    return Theme(legend_position=Coord(x=RelativeCoordType(x), y=RelativeCoordType(y)))
+
+
+def _legend_order(idx: List[int]) -> Theme:
+    return Theme(legend_order=idx)
