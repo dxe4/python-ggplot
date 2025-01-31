@@ -2,20 +2,26 @@ import math
 from ast import Try
 from collections import OrderedDict
 from dataclasses import field
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
+
+from numpy import _OrderCF
 
 from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
     SCALE_FREE_KIND_VALUES,
 )
-from python_ggplot.core.objects import GGException
+from python_ggplot.core.objects import Color, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
     VectorCol,
+    VFillColor,
     VLinearData,
 )
 from python_ggplot.gg.scales.base import (
+    ColorScale,
+    ColorScaleKind,
+    FillColorScale,
     GGScale,
     GGScaleContinuous,
     GGScaleData,
@@ -26,7 +32,8 @@ from python_ggplot.gg.scales.base import (
     ScaleTransformFunc,
     TransformedDataScale,
 )
-from python_ggplot.gg.scales.values import ScaleValue
+from python_ggplot.gg.scales.values import FillColorScaleValue, ScaleValue
+from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
 from python_ggplot.gg.types import (
     DiscreteFormat,
     DiscreteType,
@@ -294,3 +301,142 @@ def scale_y_reverse(
         sec_axis=sec_axis,
         discrete_kind=DiscreteType.eitem(discrete_kind),
     )
+
+
+def scale_fill_continuous(
+    name: str = "",
+    scale_low: float = 0.0,
+    scale_high: float = 0.0,
+) -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(name),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleContinuous(
+            data_scale=Scale(low=scale_low, high=scale_high)
+        ),
+    )
+    scale = FillColorScale(
+        gg_data=gg_data,
+        # TODO does this need a deep copy?
+        color_scale=DEFAULT_COLOR_SCALE,
+    )
+    return scale
+
+
+def scale_fill_discrete(
+    name: str = "",
+) -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(name),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleDiscrete(),
+    )
+    scale = FillColorScale(
+        gg_data=gg_data,
+        # TODO does this need a deep copy?
+        color_scale=DEFAULT_COLOR_SCALE,
+    )
+    return scale
+
+
+def scale_color_continuous(
+    name: str = "", scale_low: float = 0.0, scale_high: float = 0.0
+) -> GGScale:
+
+    gg_data = GGScaleData(
+        col=VectorCol("name"),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleContinuous(
+            data_scale=Scale(low=scale_low, high=scale_high)
+        ),
+    )
+    scale = ColorScaleKind(
+        gg_data=gg_data,
+        # TODO does this need a deep copy?
+        color_scale=DEFAULT_COLOR_SCALE,
+    )
+    return scale
+
+
+def _scale_color_or_fill_manual(
+    cls: Type[FillColorScale] | Type[ColorScaleKind],
+    values: OrderedDict[GGValue, Color],
+) -> GGScale:
+    label_seq = [i for i in values]
+    value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict(
+        (VFillColor(data=k), FillColorScaleValue(color=v)) for k, v in values.items()
+    )
+
+    gg_data = GGScaleData(
+        col=VectorCol("name"),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleDiscrete(
+            label_seq=label_seq,
+            value_map=value_map,
+        ),
+    )
+    scale = cls(
+        gg_data=gg_data,
+        # TODO does this need a deep copy?
+        color_scale=DEFAULT_COLOR_SCALE,
+    )
+    return scale
+
+
+def scale_fill_manual(values: OrderedDict[GGValue, Color]) -> GGScale:
+    return _scale_color_or_fill_manual(FillColorScale, values)
+
+
+def scale_color_manual(values: OrderedDict[GGValue, Color]) -> GGScale:
+    return _scale_color_or_fill_manual(ColorScaleKind, values)
+
+
+def scale_color_gradient(color_scale: ColorScale | List[int]) -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(""),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleContinuous(),
+    )
+    if isinstance(color_scale, ColorScale):
+        color_scale_ = color_scale
+    else:
+        color_scale_ = ColorScale(name="custom", colors=color_scale)
+
+    scale = ColorScaleKind(
+        gg_data=gg_data,
+        color_scale=color_scale_,
+    )
+    return scale
+
+
+def scale_color_identity(col: str = "") -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(col),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleContinuous(),
+    )
+    scale = ColorScaleKind(
+        gg_data=gg_data,
+        color_scale=DEFAULT_COLOR_SCALE,
+    )
+    return scale
+
+
+def scale_fill_identity(col: str = "") -> GGScale:
+    gg_data = GGScaleData(
+        col=VectorCol(col),
+        value_kind=VTODO(),
+        has_discreteness=True,
+        discrete_kind=GGScaleContinuous(),
+    )
+    scale = FillColorScale(
+        gg_data=gg_data,
+        color_scale=DEFAULT_COLOR_SCALE,
+    )
+    return scale
