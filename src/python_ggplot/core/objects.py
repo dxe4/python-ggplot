@@ -322,6 +322,8 @@ LengthType = Union[
     Literal[UnitType.INCH],
 ]
 
+# TODO low priority this is defined in 2 places, core.objects core.common
+# do general cleanup later
 GREY92 = Color(r=0.92, g=0.92, b=0.92, a=1.0)
 GREY20 = Color(r=0.20, g=0.20, b=0.20, a=1.0)
 BLACK = Color(r=0.0, g=0.0, b=0.0, a=1.0)

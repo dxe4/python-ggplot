@@ -304,8 +304,8 @@ class Theme:
     legend_position: Optional[Coord] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
-    canvas_color: Optional[Color] = None
-    plot_background_color: Optional[Color] = None
+    canvas_color: Optional[PossibleColor] = None
+    plot_background_color: Optional[PossibleColor] = None
     grid_lines: Optional[bool] = None
     grid_line_color: Optional[Color] = None
     grid_line_width: Optional[float] = None

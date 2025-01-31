@@ -1,25 +1,23 @@
 import math
-from ast import Try
 from collections import OrderedDict
 from dataclasses import field
-from typing import Any, Dict, List, Optional, Type, Union
-
-from numpy import _OrderCF
+from typing import Dict, List, Optional, Type, Union
 
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
     SCALE_FREE_KIND_VALUES,
 )
-from python_ggplot.core.coord.objects import Coord, LengthCoord
+from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
     GREY92,
+    TRANSPARENT,
+    WHITE,
     Color,
     Font,
     GGException,
     Gradient,
     LineType,
-    Point,
     Scale,
     TextAlignKind,
     UnitType,
@@ -51,7 +49,6 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
 )
 from python_ggplot.gg.scales.values import (
-    ColorScaleValue,
     FillColorScaleValue,
     ScaleValue,
     SizeScaleValue,
@@ -62,6 +59,7 @@ from python_ggplot.gg.types import (
     DiscreteFormat,
     DiscreteType,
     Facet,
+    PossibleColor,
     Ridges,
     SecondaryAxis,
     Theme,
@@ -72,20 +70,15 @@ from python_ggplot.graphics.initialize import (
     InitRectInput,
     InitTextInput,
     init_coord_1d_from_view,
-    init_point,
     init_point_from_coord,
-    init_point_from_point,
     init_rect,
     init_text,
     init_ticks,
     tick_labels,
 )
-from python_ggplot.graphics.objects import GOManyPoints, GOPoint, GraphicsObject
+from python_ggplot.graphics.objects import GOPoint, GraphicsObject
 from tests.test_view import (
     AxisKind,
-    CentimeterCoordType,
-    Coord1D,
-    MarkerKind,
     RelativeCoordType,
     Style,
     TickLabelsInput,
@@ -933,3 +926,29 @@ def _legend_position(x: float = 0.0, y: float = 0.0):
 
 def _legend_order(idx: List[int]) -> Theme:
     return Theme(legend_order=idx)
+
+
+def _hide_legend() -> Theme:
+    return Theme(hide_legend=True)
+
+
+def _canvas_color(color: PossibleColor) -> Theme:
+    return Theme(canvas_color=color)
+
+
+def theme_opaque() -> Theme:
+    return Theme(canvas_color=WHITE)
+
+
+def theme_transparent() -> Theme:
+    return Theme(canvas_color=TRANSPARENT)
+
+
+def theme_void(color: PossibleColor = WHITE) -> Theme:
+    return Theme(
+        canvas_color=color,
+        plot_background_color=color,
+        hide_ticks=True,
+        hide_tick_labels=True,
+        hide_labels=True,
+    )
