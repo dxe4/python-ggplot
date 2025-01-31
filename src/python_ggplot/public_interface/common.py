@@ -1,9 +1,13 @@
 import math
+from ast import Try
 from collections import OrderedDict
 from dataclasses import field
 from typing import Dict, List, Optional, Union
 
-from python_ggplot.common.enum_literals import SCALE_FREE_KIND_VALUES
+from python_ggplot.common.enum_literals import (
+    DISCRETE_TYPE_VALUES,
+    SCALE_FREE_KIND_VALUES,
+)
 from python_ggplot.core.objects import GGException
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
@@ -25,6 +29,7 @@ from python_ggplot.gg.scales.base import (
 from python_ggplot.gg.scales.values import ScaleValue
 from python_ggplot.gg.types import (
     DiscreteFormat,
+    DiscreteType,
     Facet,
     PossibleNumber,
     Ridges,
@@ -232,3 +237,61 @@ def scale_y_discrete(
         return _scale_axis_discrete_with_labels(AxisKind.Y, name, labels, sec_axis)
     else:
         return _scale_axis_discrete_with_label_fn(AxisKind.Y, name, labels_fn, sec_axis)
+
+
+def _scale_reverse(
+    axis_kind: AxisKind,
+    name: str = "",
+    sec_axis: Optional[SecondaryAxis] = None,
+    discrete_kind: DiscreteType = DiscreteType.CONTINUOUS,
+):
+    if discrete_kind == DiscreteType.CONTINUOUS:
+        discrete_kind_ = GGScaleContinuous()
+    elif discrete_kind == DiscreteType.DISCRETE:
+        discrete_kind_ = GGScaleDiscrete()
+    else:
+        raise GGException("unexpected discrete type")
+
+    secondary_axis = to_opt_sec_axis(sec_axis, axis_kind)
+    linear_data = LinearAndTransformScaleData(
+        axis_kind=axis_kind,
+        secondary_axis=secondary_axis,
+        reversed=True,
+    )
+    gg_data = GGScaleData(
+        col=VectorCol(name),
+        value_kind=VTODO(),  # seems it doesnt need one?
+        has_discreteness=True,
+        discrete_kind=discrete_kind_,
+    )
+    scale = LinearDataScale(
+        gg_data=gg_data,
+        data=linear_data,
+    )
+    return scale
+
+
+def scale_x_reverse(
+    name: str = "",
+    sec_axis: Optional[SecondaryAxis] = None,
+    discrete_kind: DISCRETE_TYPE_VALUES = "continuous",
+):
+    return _scale_reverse(
+        axis_kind=AxisKind.X,
+        name=name,
+        sec_axis=sec_axis,
+        discrete_kind=DiscreteType.eitem(discrete_kind),
+    )
+
+
+def scale_y_reverse(
+    name: str = "",
+    sec_axis: Optional[SecondaryAxis] = None,
+    discrete_kind: DISCRETE_TYPE_VALUES = "continuous",
+):
+    return _scale_reverse(
+        axis_kind=AxisKind.Y,
+        name=name,
+        sec_axis=sec_axis,
+        discrete_kind=DiscreteType.eitem(discrete_kind),
+    )
