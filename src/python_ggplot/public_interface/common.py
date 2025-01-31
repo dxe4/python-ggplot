@@ -99,12 +99,12 @@ def scale_y_log10(breaks: Optional[Union[int, List[float]]] = None) -> GGScale:
 
 
 def scale_x_log2(breaks: Optional[Union[int, List[float]]] = None) -> GGScale:
-    base = 10
+    base = 2
     return _scale_axis_log(AxisKind.X, base, breaks)
 
 
 def scale_y_log2(breaks: Optional[Union[int, List[float]]] = None) -> GGScale:
-    base = 10
+    base = 2
     return _scale_axis_log(AxisKind.Y, base, breaks)
 
 
