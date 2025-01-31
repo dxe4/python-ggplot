@@ -103,6 +103,16 @@ class VTODO(GGValue):
 
 
 @dataclass
+class VLinearData(GGValue):
+    """
+    TODO this will need some changing down the line
+    most likely the whole GGValue concept
+    """
+
+    data: GGValue
+
+
+@dataclass
 class VectorCol:
     col_name: str
     res_type: Optional[Any] = None

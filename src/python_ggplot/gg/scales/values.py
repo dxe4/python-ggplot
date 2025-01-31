@@ -12,6 +12,13 @@ if TYPE_CHECKING:
 @dataclass
 class ScaleValue(ABC):
 
+    def __eq__(self, value: object, /) -> bool:
+        # TODO Critical
+        # implement or fix logic in
+        #  public_interface.common.scale_x_discrete_with_labels
+        # for format_discrete_label_
+        return super().__eq__(value)
+
     @abstractmethod
     def update_style(self, style: "GGStyle"):
         pass

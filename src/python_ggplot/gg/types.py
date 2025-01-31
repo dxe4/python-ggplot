@@ -205,6 +205,8 @@ PossibleLineType = Union[Missing, LineType, Optional[LineType]]
 PossibleErrorBar = Union[Missing, ErrorBarKind, Optional[ErrorBarKind]]
 PossibleFont = Union[Missing, Font, Optional[Font]]
 PossibleSecondaryAxis = Union[Missing, SecondaryAxis]
+# TODO refactor Union[int, float] to use this
+PossibleNumber = Union[Union[Missing, int, float, str, Optional[float]]]
 
 
 class DataType(GGEnum):

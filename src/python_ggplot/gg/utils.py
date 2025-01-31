@@ -135,9 +135,9 @@ def to_opt_font(x: Any) -> Optional[Font]:
 
 
 def to_opt_sec_axis(
-    x: PossibleSecondaryAxis, axis: AxisKind
+    x: Optional[SecondaryAxis], axis: AxisKind
 ) -> Optional[SecondaryAxis]:
-    if isinstance(x, Missing):
+    if x is None:
         return None
     x.axis_kind = axis
 

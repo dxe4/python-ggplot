@@ -1,20 +1,36 @@
 import math
+from collections import OrderedDict
+from dataclasses import field
 from typing import Dict, List, Optional, Union
 
 from python_ggplot.common.enum_literals import SCALE_FREE_KIND_VALUES
 from python_ggplot.core.objects import GGException
-from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol
+from python_ggplot.gg.datamancer_pandas_compat import (
+    VTODO,
+    GGValue,
+    VectorCol,
+    VLinearData,
+)
 from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleContinuous,
     GGScaleData,
+    GGScaleDiscrete,
     LinearAndTransformScaleData,
     LinearDataScale,
     ScaleFreeKind,
     ScaleTransformFunc,
     TransformedDataScale,
 )
-from python_ggplot.gg.types import Facet, Ridges, SecondaryAxis
+from python_ggplot.gg.scales.values import ScaleValue
+from python_ggplot.gg.types import (
+    DiscreteFormat,
+    Facet,
+    PossibleNumber,
+    Ridges,
+    SecondaryAxis,
+)
+from python_ggplot.gg.utils import to_opt_sec_axis
 from tests.test_view import AxisKind
 
 
@@ -124,3 +140,95 @@ def sec_axis(
         # so far the answer is either no or not at the moment
         # this may change in the future
         raise GGException("formula nodes are not supported, at least for now")
+
+
+def _scale_axis_discrete_with_label_fn(
+    axis_kind: AxisKind,
+    name: str = "",
+    labels_fn: Optional[DiscreteFormat] = None,
+    sec_axis: Optional[SecondaryAxis] = None,
+    reversed: bool = False,
+):
+    secondary_axis = to_opt_sec_axis(sec_axis, axis_kind)
+    linear_data = LinearAndTransformScaleData(
+        axis_kind=axis_kind,
+        secondary_axis=secondary_axis,
+        reversed=reversed,
+    )
+    gg_data = GGScaleData(
+        col=VectorCol(name),
+        value_kind=VTODO(),  # seems it doesnt need one?
+        has_discreteness=True,
+        discrete_kind=GGScaleDiscrete(format_discrete_label=labels_fn),
+    )
+    scale = LinearDataScale(
+        gg_data=gg_data,
+        data=linear_data,
+    )
+    return scale
+
+
+def _scale_axis_discrete_with_labels(
+    axis_kind: AxisKind,
+    name: str = "",
+    labels: OrderedDict[GGValue, ScaleValue] = field(default_factory=dict),  # type: ignore
+    sec_axis: Optional[SecondaryAxis] = None,
+    reversed: bool = False,
+) -> GGScale:
+
+    def format_discrete_label_(value: GGValue):
+        """
+        TODO double check this logic
+        original version passes a dict i instead of a function
+        i assume dict is callable in nim
+        """
+        return str(labels[value])
+
+    value_map_ = {VLinearData(data=k): v for k, v in labels.items()}
+    label_seq_ = [i for i in labels]
+
+    secondary_axis = to_opt_sec_axis(sec_axis, axis_kind)
+    linear_data = LinearAndTransformScaleData(
+        axis_kind=axis_kind,
+        secondary_axis=secondary_axis,
+        reversed=reversed,
+    )
+    gg_data = GGScaleData(
+        col=VectorCol(name),
+        value_kind=VTODO(),  # seems it doesnt need one?
+        has_discreteness=True,
+        discrete_kind=GGScaleDiscrete(
+            value_map=value_map_,  # type: ignore  TODO check this
+            label_seq=label_seq_,
+            format_discrete_label=format_discrete_label_,
+        ),
+    )
+    scale = LinearDataScale(
+        gg_data=gg_data,
+        data=linear_data,
+    )
+    return scale
+
+
+def scale_x_discrete(
+    name: str = "",
+    labels_fn: Optional[DiscreteFormat] = None,
+    labels: Optional[OrderedDict[GGValue, ScaleValue]] = None,
+    sec_axis: Optional[SecondaryAxis] = None,
+):
+    if labels is not None:
+        return _scale_axis_discrete_with_labels(AxisKind.X, name, labels, sec_axis)
+    else:
+        return _scale_axis_discrete_with_label_fn(AxisKind.X, name, labels_fn, sec_axis)
+
+
+def scale_y_discrete(
+    name: str = "",
+    labels_fn: Optional[DiscreteFormat] = None,
+    labels: Optional[OrderedDict[GGValue, ScaleValue]] = None,
+    sec_axis: Optional[SecondaryAxis] = None,
+):
+    if labels is not None:
+        return _scale_axis_discrete_with_labels(AxisKind.Y, name, labels, sec_axis)
+    else:
+        return _scale_axis_discrete_with_label_fn(AxisKind.Y, name, labels_fn, sec_axis)
