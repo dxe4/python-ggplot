@@ -254,6 +254,13 @@ def init_rect(
 def init_rect_from_coord(
     view: ViewPort, init_rect_input: InitRectInput, coords_input: CoordsInput
 ) -> GraphicsObject:
+    """
+    TODO rename this
+    one func takes origin, width, height
+    this one takes
+    left: bottom: width: height:
+    find a better more intuitive name
+    """
     origin = Coord(
         x=Coord1D.create_relative(coords_input.left),
         y=Coord1D.create_relative(coords_input.bottom),

@@ -282,7 +282,8 @@ class Theme:
     y_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
 
     base_font_size: Optional[float] = None
-    sub_title_font: Optional[Dict[Any, Any]] = None
+    title_font: Optional[Font] = None
+    sub_title_font: Optional[Font] = None
     tick_label_font: Optional[Font] = None
     hide_ticks: Optional[bool] = None
     hide_tick_labels: Optional[bool] = None

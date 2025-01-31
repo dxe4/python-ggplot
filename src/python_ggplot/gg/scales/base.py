@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from python_ggplot.colormaps.color_maps import VIRIDIS_RAW_COLOR_SCALE
-from python_ggplot.core.objects import AxisKind, GGEnum, GGException, Scale
+from python_ggplot.core.objects import AxisKind, GGEnum, GGException, MarkerKind, Point, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     ColumnType,
@@ -36,7 +36,12 @@ from python_ggplot.gg.geom import (
     FilledGeomDiscreteKind,
     Geom,
 )
-from python_ggplot.gg.scales.values import SizeScaleValue
+from python_ggplot.gg.scales.values import (
+    ColorScaleValue,
+    FillColorScaleValue,
+    ShapeScaleValue,
+    SizeScaleValue,
+)
 from python_ggplot.gg.styles import DEFAULT_ALPHA_RANGE_TUPLE
 from python_ggplot.gg.types import (
     ContinuousFormat,
@@ -48,6 +53,9 @@ from python_ggplot.gg.types import (
     MainAddScales,
     SecondaryAxis,
 )
+from python_ggplot.graphics.initialize import init_point_from_point
+from python_ggplot.graphics.objects import GraphicsObject
+from python_ggplot.graphics.views import ViewPort
 
 if typing.TYPE_CHECKING:
     from python_ggplot.gg.scales.values import ScaleValue
@@ -273,8 +281,56 @@ class TransformedDataScale(GGScale):
         return _default_trans
 
 
+def discrete_legend_markers_params(
+    scale: GGScale, access_idx: Optional[List[int]] = None
+) -> Tuple[GGScaleDiscrete, List[int]]:
+    discrete_kind = scale.gg_data.discrete_kind
+
+    if not isinstance(discrete_kind, GGScaleDiscrete):
+        raise GGException("expected discrete scale")
+
+    if access_idx is None:
+        idx = list(range(len(discrete_kind.value_map)))
+    else:
+        idx = access_idx
+
+    if len(idx) != len(discrete_kind.value_map):
+        raise GGException(
+            f"Custom ordering of legend keys must assign each key only once! "
+            f"Assigned keys: {access_idx} for num keys: {len(discrete_kind.value_map)}"
+        )
+    return discrete_kind, idx
+
+
+class _ColorScaleMixin(GGScale):
+
+    def discrete_legend_markers(
+        self, plt: ViewPort, access_idx: Optional[List[int]] = None
+    ) -> List[GraphicsObject]:
+        result: List[GraphicsObject] = []
+        (discrete_kind, idx) = discrete_legend_markers_params(self, access_idx)
+        for i in idx:
+            key = discrete_kind.label_seq[i]
+            val = discrete_kind.value_map[key]
+
+            if not isinstance(val, (FillColorScaleValue, ColorScaleValue)):
+                raise GGException("expected value of color")
+            if val.color is None:
+                raise GGException("expected color")
+
+            new_point = init_point_from_point(
+                plt,
+                Point(0.0, 0.0),
+                marker=MarkerKind.CIRCLE,
+                color=val.color,
+                name=str(key),
+            )
+            result.append(new_point)
+        return result
+
+
 @dataclass
-class ColorScaleKind(GGScale):
+class ColorScaleKind(_ColorScaleMixin):
     color_scale: "ColorScale" = VIRIDIS_RAW_COLOR_SCALE
 
     @property
@@ -283,7 +339,7 @@ class ColorScaleKind(GGScale):
 
 
 @dataclass
-class FillColorScale(GGScale):
+class FillColorScale(_ColorScaleMixin):
     color_scale: "ColorScale"
 
     @property
@@ -310,6 +366,26 @@ class AlphaScale(GGScale):
 @dataclass
 class ShapeScale(GGScale):
 
+    def discrete_legend_markers(
+        self, plt: ViewPort, access_idx: Optional[List[int]] = None
+    ) -> List[GraphicsObject]:
+        result: List[GraphicsObject] = []
+        (discrete_kind, idx) = discrete_legend_markers_params(self, access_idx)
+        for i in idx:
+            key = discrete_kind.label_seq[i]
+            val = discrete_kind.value_map[key]
+
+            if not isinstance(val, ShapeScaleValue):
+                raise GGException("expected value of shape")
+            if val.marker is None:
+                raise GGException("expected color")
+
+            new_point = init_point_from_point(
+                plt, Point(0.0, 0.0), marker=val.marker, name=str(key)
+            )
+            result.append(new_point)
+        return result
+
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.SHAPE
@@ -324,6 +400,30 @@ class SizeScale(GGScale):
     # if you dont know what it already does
     # refactor later
     size_range: Tuple[float, float] = field(default=(0.0, 0.0))
+
+    def discrete_legend_markers(
+        self, plt: ViewPort, access_idx: Optional[List[int]] = None
+    ) -> List[GraphicsObject]:
+        result: List[GraphicsObject] = []
+        (discrete_kind, idx) = discrete_legend_markers_params(self, access_idx)
+        for i in idx:
+            key = discrete_kind.label_seq[i]
+            val = discrete_kind.value_map[key]
+
+            if not isinstance(val, SizeScaleValue):
+                raise GGException("expected value of size")
+            if val.size is None:
+                raise GGException("expected color")
+
+            new_point = init_point_from_point(
+                plt,
+                Point(0.0, 0.0),
+                marker=MarkerKind.CIRCLE,
+                size=val.size,
+                name=str(key),
+            )
+            result.append(new_point)
+        return result
 
     def update_style(self, style: "GGStyle"):
         # TODO bad naming

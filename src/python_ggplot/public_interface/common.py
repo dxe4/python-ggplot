@@ -10,7 +10,19 @@ from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
     SCALE_FREE_KIND_VALUES,
 )
-from python_ggplot.core.objects import Color, GGException, Scale
+from python_ggplot.core.coord.objects import Coord, LengthCoord
+from python_ggplot.core.objects import (
+    GREY92,
+    Color,
+    Font,
+    GGException,
+    LineType,
+    Point,
+    Scale,
+    TextAlignKind,
+    UnitType,
+)
+from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -31,10 +43,12 @@ from python_ggplot.gg.scales.base import (
     LinearDataScale,
     ScaleFreeKind,
     ScaleTransformFunc,
+    ShapeScale,
     SizeScale,
     TransformedDataScale,
 )
 from python_ggplot.gg.scales.values import (
+    ColorScaleValue,
     FillColorScaleValue,
     ScaleValue,
     SizeScaleValue,
@@ -47,9 +61,33 @@ from python_ggplot.gg.types import (
     Facet,
     Ridges,
     SecondaryAxis,
+    Theme,
 )
 from python_ggplot.gg.utils import to_opt_sec_axis
-from tests.test_view import AxisKind
+from python_ggplot.graphics.draw import layout
+from python_ggplot.graphics.initialize import (
+    InitRectInput,
+    InitTextInput,
+    init_coord_1d_from_view,
+    init_point,
+    init_point_from_coord,
+    init_point_from_point,
+    init_rect,
+    init_text,
+    init_ticks,
+    tick_labels,
+)
+from python_ggplot.graphics.objects import GOManyPoints, GOPoint, GraphicsObject
+from tests.test_view import (
+    AxisKind,
+    CentimeterCoordType,
+    Coord1D,
+    MarkerKind,
+    RelativeCoordType,
+    Style,
+    TickLabelsInput,
+    ViewPort,
+)
 
 
 def ggridges(
@@ -577,3 +615,183 @@ def scale_alpha_continuous(low: float = 0.1, high: float = 1.0) -> GGScale:
     )
 
     return scale
+
+
+def ggtitle(
+    title: str,
+    sub_title: str = "",
+    title_font: Font = field(default_factory=Font),
+    sub_title_font: Font = field(default_factory=lambda: Font(size=8.0)),
+) -> Theme:
+    theme = Theme(
+        title=title,
+        title_font=title_font,
+        sub_title=sub_title or None,
+        sub_title_font=sub_title_font,
+    )
+    return theme
+
+
+def _generate_legend_markers(
+    plt: ViewPort, scale: GGScale, access_idx: Optional[List[int]] = None
+) -> List[GraphicsObject]:
+    """
+    TODO this is noty a public function it can be pulled out
+    somewhere in gg.scales
+    fine for now
+    """
+    result: List[GraphicsObject] = []
+
+    discrete_kind = scale.gg_data.discrete_kind
+    if isinstance(discrete_kind, GGScaleDiscrete):
+        if isinstance(scale, (SizeScale, ShapeScale, ColorScaleKind, FillColorScale)):
+            # TODO discrete_legend_markers can become more re_usable with a yield
+            # for now its fine, clean up later
+            result.extend(scale.discrete_legend_markers(plt, access_idx))
+        else:
+            raise Exception("`create_legend` unsupported for this scale")
+
+    elif isinstance(discrete_kind, GGScaleContinuous):
+        if isinstance(scale, (ColorScaleKind, FillColorScale)):
+            # TODO CRITICAL
+            # examine this in detail, do we need a deepcopy?
+            # why does the original code do var mplt = plt
+            # we have to investigate, this can cause many bugs
+            mplt = plt
+            mplt.y_scale = discrete_kind.data_scale
+
+            ticks = init_ticks(
+                view=mplt,
+                axis_kind=AxisKind.Y,
+                num_ticks=5,
+                bound_scale=discrete_kind.data_scale,
+                is_secondary=True,
+            )
+
+            tick_labs = tick_labels(
+                mplt,
+                # TODO init_tickks returns type is GraphicsObjcct can change to GOTICK
+                # do general refactor
+                ticks,  # type: ignore
+                tick_labels_input=TickLabelsInput(
+                    is_secondary=True,
+                    margin=init_coord_1d_from_view(
+                        view=plt, at=0.3, axis_kind=AxisKind.X, kind=UnitType.CENTIMETER
+                    ),
+                    format_fn=discrete_kind.format_continuous_label,
+                ),
+            )
+            result.extend(tick_labs)
+            result.extend(ticks)
+        else:
+            raise GGException("Continuous legend unsupported for this scale type")
+
+    return result
+
+
+def gen_discrete_legend(
+    view: ViewPort, cat: GGScale, access_idx: Optional[List[int]] = None
+):
+    if not isinstance(cat.gg_data.discrete_kind, GGScaleDiscrete):
+        raise GGException("expected a discrete scale")
+
+    markers = _generate_legend_markers(view, cat, access_idx)
+    num_elems = len(cat.gg_data.discrete_kind.value_map)
+
+    layout(
+        view=view,
+        cols=2,
+        rows=2,
+        col_widths=[
+            Quantity.centimeters(0.5),  # space to plot
+            Quantity.relative(0.0),  # for legend including header
+        ],
+        row_heights=[
+            Quantity.centimeters(1.0),  # for header
+            Quantity.centimeters(1.05 * float(num_elems)),  # for actual legend
+        ],
+    )
+
+    view.height = Quantity.centimeters(1.0 + 1.05 * float(num_elems))
+    leg = view.children[3]  # Get the legend viewport
+
+    row_heights = [Quantity.centimeters(1.05) for _ in range(num_elems)]
+
+    layout(
+        leg,
+        cols=3,
+        rows=num_elems,
+        col_widths=[
+            Quantity.centimeters(1.0),
+            Quantity.centimeters(0.3),
+            Quantity.relative(0.0),
+        ],
+        row_heights=row_heights,
+    )
+
+    j = 0  # TODO use enumerate
+    for i in range(0, len(leg.children), 3):
+        leg_box = leg.children[i]
+        leg_label = leg.children[i + 2]
+
+        style = Style(
+            line_type=LineType.SOLID,
+            line_width=1.0,
+            # TODO double check alpha 1.0? not explicitly passed in i assumed so
+            color=Color(1.0, 1.0, 1.0, 1.0),
+            fill_color=GREY92,
+        )
+
+        y = RelativeCoordType(0.0) + init_coord_1d_from_view(
+            view=leg_box, at=0.025, axis_kind=AxisKind.Y, kind=UnitType.CENTIMETER
+        )
+        rect = init_rect(
+            leg_box,
+            origin=Coord(x=RelativeCoordType(0.0), y=y),
+            width=Quantity.centimeters(1.0),
+            height=Quantity.centimeters(1.0),
+            init_rect_input=InitRectInput(
+                style=style,
+                name="markerRectangle",
+            ),
+        )
+
+        current_marker = markers[j]
+        if not isinstance(current_marker, GOPoint):
+            # TODO this needs some refactoring on the type that is being returned
+            raise GGException("expected GOPoint or ")
+
+        point = init_point_from_coord(
+            pos=Coord(x=RelativeCoordType(0.5), y=RelativeCoordType(0.5)),
+            marker=current_marker.marker,
+            size=current_marker.size,
+            color=current_marker.color,
+            name="markerPoint",
+        )
+
+        if isinstance(cat, (ColorScaleKind, FillColorScale, ShapeScale, SizeScale)):
+            label_text = markers[j].name
+        else:
+            raise Exception("createLegend unsupported for this scale")
+
+        init_text_input = InitTextInput(
+            text=label_text,
+            # TODO this is not accepted as an arg on our side
+            # text_kind="text",
+            align_kind=TextAlignKind.LEFT,
+            name="markerText",
+        )
+        label = init_text(
+            view=leg_label,
+            origin=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.5)),
+            init_text_data=init_text_input,
+        )
+
+        leg_box.add_obj(rect)
+        leg_box.add_obj(point)
+        leg_label.add_obj(label)
+        leg[i] = leg_box
+        leg[i + 2] = leg_label
+        j += 1
+
+    view[3] = leg
