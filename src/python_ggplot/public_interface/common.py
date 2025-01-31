@@ -243,7 +243,7 @@ def _scale_reverse(
     name: str = "",
     sec_axis: Optional[SecondaryAxis] = None,
     discrete_kind: DiscreteType = DiscreteType.CONTINUOUS,
-) -> GGScale
+) -> GGScale:
     if discrete_kind == DiscreteType.CONTINUOUS:
         discrete_kind_ = GGScaleContinuous()
     elif discrete_kind == DiscreteType.DISCRETE:
@@ -274,7 +274,7 @@ def scale_x_reverse(
     name: str = "",
     sec_axis: Optional[SecondaryAxis] = None,
     discrete_kind: DISCRETE_TYPE_VALUES = "continuous",
-) -> GGScale
+) -> GGScale:
     return _scale_reverse(
         axis_kind=AxisKind.X,
         name=name,
