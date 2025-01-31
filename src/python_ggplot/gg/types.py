@@ -320,11 +320,13 @@ class Theme:
     y_margin: Optional[float] = None
     x_outside_range: Optional[OutsideRangeKind] = None
     y_outside_range: Optional[OutsideRangeKind] = None
-    plot_margin_left: Optional[float] = None
-    plot_margin_right: Optional[float] = None
-    plot_margin_top: Optional[float] = None
-    plot_margin_bottom: Optional[float] = None
-    facet_margin: Optional[float] = None
+
+    plot_margin_left: Optional[Quantity] = None
+    plot_margin_right: Optional[Quantity] = None
+    plot_margin_top: Optional[Quantity] = None
+    plot_margin_bottom: Optional[Quantity] = None
+
+    facet_margin: Optional[Quantity] = None
     prefer_rows_over_columns: Optional[bool] = None
 
 
@@ -340,12 +342,12 @@ class GgPlot:
     aes: Aesthetics
     theme: Theme
     backend: str = field(default="cairo")  # Will be cairo only for a while..
+    geoms: List[Geom] = field(default_factory=list)
+    annotations: List["Annotation"] = field(default_factory=list)
     title: Optional[str] = None
     sub_title: Optional[str] = None
     facet: Optional[Any] = None
     ridges: Optional[Ridges] = None
-    geoms: Optional[List[Geom]] = None
-    annotations: Optional[List[Any]] = None
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
         """

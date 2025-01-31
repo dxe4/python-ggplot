@@ -1,5 +1,6 @@
 import math
 from collections import OrderedDict
+from copy import deepcopy
 from dataclasses import field
 from typing import Any, Dict, List, Literal, Optional, Type, Union
 
@@ -8,6 +9,7 @@ from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
     OUTSIDE_RANGE_KIND_VALUES,
     SCALE_FREE_KIND_VALUES,
+    UNIT_TYPE_VALUES,
 )
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
@@ -23,7 +25,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     UnitType,
 )
-from python_ggplot.core.units.objects import Quantity
+from python_ggplot.core.units.objects import Quantity, unit_type_from_type
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -31,10 +33,12 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VFillColor,
     VLinearData,
 )
+from python_ggplot.gg.geom import Geom
 from python_ggplot.gg.scales.base import (
     AlphaScale,
     ColorScale,
     ColorScaleKind,
+    DateScale,
     FillColorScale,
     GGScale,
     GGScaleContinuous,
@@ -56,10 +60,13 @@ from python_ggplot.gg.scales.values import (
 )
 from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
 from python_ggplot.gg.types import (
+    Aesthetics,
+    Annotation,
     DataType,
     DiscreteFormat,
     DiscreteType,
     Facet,
+    GgPlot,
     OutsideRangeKind,
     PossibleColor,
     Ridges,
@@ -79,6 +86,7 @@ from python_ggplot.graphics.initialize import (
     tick_labels,
 )
 from python_ggplot.graphics.objects import GOPoint, GraphicsObject
+from python_ggplot.public_interface.geom import ggplot
 from tests.test_view import (
     AxisKind,
     RelativeCoordType,
@@ -505,7 +513,9 @@ def scale_alpha_identity(col: str = "") -> GGScale:
     return scale
 
 
-def scale_fill_gradient(color_scale: ColorScale | List[int], name: str = "custom"):
+def scale_fill_gradient(
+    color_scale: Union[ColorScale, List[int]], name: str = "custom"
+):
     if isinstance(color_scale, ColorScale):
         color_scale_ = color_scale
     else:
@@ -1096,3 +1106,238 @@ def ylim(
     or_opt = OutsideRangeKind(outside_range) if outside_range else None
     result = Theme(y_range=Scale(float(low), float(high)), y_outside_range=or_opt)
     return result
+
+
+def _x_margin(
+    margin: Union[int, float], outside_range: OUTSIDE_RANGE_KIND_VALUES = "none"
+) -> Theme:
+    if float(margin) < 0.0:
+        raise GGException(
+            "Margins must be positive! To make the plot range smaller use `xlim`!"
+        )
+
+    if outside_range == "none":
+        or_opt = None
+    else:
+        or_opt = OutsideRangeKind(outside_range)
+
+    return Theme(x_margin=float(margin), x_outside_range=or_opt)
+
+
+def _y_margin(
+    margin: Union[int, float], outside_range: OUTSIDE_RANGE_KIND_VALUES = "none"
+) -> Theme:
+    if float(margin) < 0.0:
+        raise GGException(
+            "Margins must be positive! To make the plot range smaller use `ylim`!"
+        )
+
+    if outside_range == "none":
+        or_opt = None
+    else:
+        or_opt = OutsideRangeKind(outside_range)
+
+    return Theme(y_margin=float(margin), y_outside_range=or_opt)
+
+
+def _margin(
+    left: Optional[float] = None,
+    right: Optional[float] = None,
+    top: Optional[float] = None,
+    bottom: Optional[float] = None,
+    unit: Union[UNIT_TYPE_VALUES, UnitType] = UnitType.CENTIMETER,
+) -> Theme:
+    """
+    TODO low priority
+    there was some logic here eg px->point cm->cetnimeters from str
+    we keep it simple for now, good to have later
+    """
+    if isinstance(unit, str):
+        unit = UnitType(unit)
+
+    return Theme(
+        plot_margin_left=Quantity.from_type_or_none(unit, left),
+        plot_margin_right=Quantity.from_type_or_none(unit, right),
+        plot_margin_top=Quantity.from_type_or_none(unit, top),
+        plot_margin_bottom=Quantity.from_type_or_none(unit, bottom),
+    )
+
+
+def _facet_margin(
+    margin: Union[Quantity, float, int], unit_type: UnitType = UnitType.CENTIMETER
+) -> Theme:
+    if isinstance(margin, (int, float)):
+        margin = Quantity.from_type(unit_type, float(margin))
+
+    return Theme(facet_margin=margin)
+
+
+def _annotate(
+    text: str,
+    left: Optional[float] = None,
+    bottom: Optional[float] = None,
+    x: Optional[float] = None,
+    y: Optional[float] = None,
+    font: Font = Font(size=12.0),
+    rotate: float = 0.0,
+    background_color: str = "white",
+) -> Annotation:
+
+    if background_color == "white":
+        bg_color = WHITE
+    else:
+        # TODO CRITICAL EASY TASK
+        # there is a function for str -> color in chroma
+        # this is pending to be ported and it has its own TODO
+        # that work blocks this code here, but dont want to sidetrack for now
+        raise GGException("needs to be implemented")
+
+    result = Annotation(
+        left=left,
+        bottom=bottom,
+        x=x,
+        y=y,
+        text=text,
+        font=font,
+        rotate=rotate,
+        background_color=bg_color,
+    )
+
+    if (result.x is None and result.left is None) or (
+        result.y is None and result.bottom is None
+    ):
+        raise ValueError(
+            "Both an x/left and y/bottom position has to be given to `annotate`!"
+        )
+
+    return result
+
+
+def _apply_theme(plt_theme: Theme, theme: Theme) -> None:
+    for field in theme.__dataclass_fields__:
+        value = getattr(theme, field)
+        if value is not None:
+            setattr(plt_theme, field, value)
+
+
+def _apply_scale(aes: Aesthetics, scale: GGScale):
+    result = deepcopy(aes)
+
+    def assign_copy_scale(field: str):
+        if hasattr(aes, field) and getattr(aes, field) is not None:
+            new_scale = deepcopy(scale)
+            field_value = getattr(aes, field)
+            new_scale.gg_data.col = field_value.col
+            new_scale.gg_data.ids = field_value.ids
+            setattr(result, field, new_scale)
+
+    SCALE_TYPE_TO_FIELD = {
+        ScaleType.COLOR: "color",
+        ScaleType.FILL_COLOR: "fill",
+        ScaleType.ALPHA: "alpha",
+        ScaleType.SIZE: "size",
+        ScaleType.SHAPE: "shape",
+        ScaleType.TEXT: "text",
+    }
+
+    AXIS_KIND_FIELDS = {
+        AxisKind.X: ["x", "x_min", "x_max"],
+        AxisKind.Y: ["y", "y_min", "y_max"],
+    }
+
+    if isinstance(scale, (LinearDataScale, TransformedDataScale)):
+        if scale.data is not None:
+            for field_ in AXIS_KIND_FIELDS.get(scale.data.axis_kind, []):
+                assign_copy_scale(field_)
+    else:
+        field = SCALE_TYPE_TO_FIELD.get(scale.scale_type)
+        if field is not None:
+            assign_copy_scale(field)
+
+    return result
+
+
+def _any_scale(arg: Any) -> bool:
+    # TODO CRITICAL
+    # there is a known bug here
+    # there is some funny logic outside of this that does main/more that is broke
+    return bool(arg.main is not None or len(arg.more) > 0)
+
+
+# TODO medium priority easy task
+# the follow functions preffixed with _add are supposed to allow gg_sometihng() + gg_something()
+# for now we just make the functions, theres a plan for this later
+
+
+def _add_scale(plot: GgPlot, scale: GGScale) -> GgPlot:
+    # TODO MEDIUM priority EASY task
+    # does this need deep copy?
+    result = deepcopy(plot)
+
+    result.aes = _apply_scale(result.aes, scale)
+    for geom in result.geoms:
+        geom.gg_data.aes = _apply_scale(geom.gg_data.aes, scale)
+    return result
+
+
+def _add_date_scale(p: GgPlot, date_scale: DateScale) -> GgPlot:
+    """
+    TODO refactor....
+    this is a bit of a mess but *should* work
+    """
+
+    def assign_copy_scale(obj: Aesthetics, field: str, ds: Any):
+        field_val = obj.__dict__.get(field)
+        if field_val is not None:
+            scale = deepcopy(field_val)
+            scale.date_scale = ds
+            setattr(obj, field, scale)
+
+    result = deepcopy(p)
+
+    if date_scale.axis_kind == AxisKind.X:
+        assign_copy_scale(result.aes, "x", date_scale)
+    elif date_scale.axis_kind == AxisKind.Y:
+        assign_copy_scale(result.aes, "y", date_scale)
+
+    for geom in result.geoms:
+        if date_scale.axis_kind == AxisKind.X:
+            assign_copy_scale(geom.gg_data.aes, "x", date_scale)
+        elif date_scale.axis_kind == AxisKind.Y:
+            assign_copy_scale(geom.gg_data.aes, "y", date_scale)
+
+    return result
+
+
+def _add_theme(plot: GgPlot, theme: Theme) -> GgPlot:
+    _apply_theme(plot.theme, theme)
+
+    if plot.theme.title is not None:
+        plot.title = plot.theme.title
+    if plot.theme.sub_title is not None:
+        plot.title = plot.theme.sub_title
+
+    return plot
+
+
+def _add_geom(plot: GgPlot, geom: Geom) -> GgPlot:
+    plot.geoms.append(geom)
+    return plot
+
+
+def _add_facet(plot: GgPlot, facet: Facet) -> GgPlot:
+    plot.facet = facet
+    return plot
+
+
+def _add_ridges(plot: GgPlot, ridges: Ridges) -> GgPlot:
+    plot.ridges = ridges
+    return plot
+
+
+def _add_annotations(plot: GgPlot, annotations: Annotation) -> GgPlot:
+    plot.annotations.append(annotations)
+    return plot
+
+
+# end of _add functions

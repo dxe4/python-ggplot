@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import auto
 from typing import Any, Generator, List, Optional, OrderedDict, Tuple, cast
 
@@ -56,7 +56,7 @@ class GeomData:
     data: Optional[pd.DataFrame] = None
     user_style: Optional[GGStyle] = None
     position: Optional[PositionType] = None
-    aes: Optional[Aesthetics] = None
+    aes: Aesthetics = field(default_factory=Aesthetics)
     bin_position: Optional[BinPositionType] = None
     # used for geom_type histogram
     histogram_drawing_style: Optional[HistogramDrawingStyle] = None

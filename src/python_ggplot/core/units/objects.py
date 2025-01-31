@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional, Type
 
 from python_ggplot.core.objects import AxisKind, GGException, Scale, UnitType
 
@@ -27,6 +27,18 @@ class Quantity(ABC):
     val: float
     str_type = None
     is_length_unit: bool = False
+
+    @staticmethod
+    def from_type(unit_type: UnitType, val: float) -> "Quantity":
+        return unit_type_from_type(unit_type)(val)
+
+    @staticmethod
+    def from_type_or_none(
+        unit_type: UnitType, val: Optional[float]
+    ) -> Optional["Quantity"]:
+        if not val:
+            return None
+        return unit_type_from_type(unit_type)(val)
 
     @property
     @abstractmethod
@@ -278,7 +290,7 @@ def add_length_quantities(
     return point.to(left.unit_type)
 
 
-def unit_type_from_type(kind: UnitType):
+def unit_type_from_type(kind: UnitType) -> Type[Quantity]:
     data = {
         UnitType.POINT: PointUnit,
         UnitType.CENTIMETER: CentimeterUnit,
