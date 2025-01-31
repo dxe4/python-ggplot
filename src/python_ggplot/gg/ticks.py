@@ -27,7 +27,7 @@ from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleContinuous,
     LinearDataScale,
-    ScaleTransform,
+    ScaleTransformFunc,
     ScaleType,
     TransformedDataScale,
 )
@@ -58,7 +58,7 @@ def get_y_ticks(scale: FilledScales) -> int:
     return get_ticks(scale.get_y_scale())
 
 
-def smallest_pow(inv_trans: ScaleTransform, x: float):
+def smallest_pow(inv_trans: ScaleTransformFunc, x: float):
     if x < 0:
         raise GGException("expected positive X")
 
@@ -76,7 +76,7 @@ def smallest_pow(inv_trans: ScaleTransform, x: float):
     return result
 
 
-def largest_pow(inv_trans: ScaleTransform, x: float):
+def largest_pow(inv_trans: ScaleTransformFunc, x: float):
     if x < 0:
         raise GGException("expected positive X")
 

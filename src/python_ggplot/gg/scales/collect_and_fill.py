@@ -40,7 +40,7 @@ from python_ggplot.gg.scales.base import (
     GGScaleData,
     LinearAndTransformScaleData,
     LinearDataScale,
-    ScaleTransform,
+    ScaleTransformFunc,
     ScaleType,
     TextScale,
     TransformedDataScale,
@@ -314,8 +314,8 @@ def fill_discrete_linear_trans_scale(
     ax_kind: AxisKind,
     value_kind: GGValue,
     label_seq: List[GGValue],
-    trans: Optional[ScaleTransform] = None,
-    inv_trans: Optional[ScaleTransform] = None,
+    trans: Optional[ScaleTransformFunc] = None,
+    inv_trans: Optional[ScaleTransformFunc] = None,
 ) -> GGScale:
     cls = scale_type_to_cls(scale_type)
     if not isinstance(cls, (TransformedDataScale, LinearDataScale)):
@@ -370,8 +370,8 @@ def fill_continuous_transformed_scale(
     col: VectorCol,
     axis_kind: AxisKind,
     value_kind: GGValue,
-    trans: ScaleTransform,
-    inv_trans: ScaleTransform,
+    trans: ScaleTransformFunc,
+    inv_trans: ScaleTransformFunc,
     data_scale: Scale,
 ):
 
@@ -580,8 +580,8 @@ def fill_scale_impl(
     value_map: Optional[OrderedDict[GGValue, ScaleValue]] = None,
     data_scale: Optional[Scale] = None,
     ax_kind: Optional[AxisKind] = None,
-    trans: Optional[ScaleTransform] = None,
-    inv_trans: Optional[ScaleTransform] = None,
+    trans: Optional[ScaleTransformFunc] = None,
+    inv_trans: Optional[ScaleTransformFunc] = None,
     color_scale: Optional[List[float]] = DEFAULT_COLOR_SCALE,  # type: ignore
     size_range: Optional[Tuple[float, float]] = DEFAULT_SIZE_RANGE_TUPLE,
     alpha_range: Optional[Tuple[float, float]] = DEFAULT_ALPHA_RANGE_TUPLE,

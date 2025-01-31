@@ -57,7 +57,7 @@ if typing.TYPE_CHECKING:
 # macro genGetOptScale
 # macro genGetScale
 
-ScaleTransform = Callable[[float], float]
+ScaleTransformFunc = Callable[[float], float]
 
 
 @dataclass
@@ -81,7 +81,11 @@ class ScaleType(GGEnum):
 class LinearAndTransformScaleData:
     axis_kind: AxisKind = AxisKind.X
     reversed: bool = False
-    transform: ScaleTransform = field(default=lambda x: x)
+    # TODO high priority
+    # do we need the transform here? i think not
+    # double check this later, doesnt cuase issue for now
+    # if this is needed, change the lambda to print a warning
+    transform: ScaleTransformFunc = field(default=lambda x: x)
     secondary_axis: Optional["SecondaryAxis"] = None
     date_scale: Optional["DateScale"] = None
 
@@ -226,21 +230,33 @@ class LinearDataScale(GGScale):
         return ScaleType.LINEAR_DATA
 
 
+def _default_trans(x: float) -> float:
+    """
+    TODO shall we just raise an exception here?
+    if not then change to logger.warn?
+    """
+    print("warning you are using default transform which does nothing")
+    return x
+
+
+def _default_inverse_trans(x: float) -> float:
+    """
+    TODO shall we just raise an exception here?
+    if not then change to logger.warn?
+    """
+    print("warning you are using default transform which does nothing")
+    return x
+
+
 @dataclass
 class TransformedDataScale(GGScale):
     data: Optional[LinearAndTransformScaleData] = None
+    transform: ScaleTransformFunc = _default_trans
+    inverse_transform: ScaleTransformFunc = _default_inverse_trans
 
     @property
     def scale_type(self) -> ScaleType:
         return ScaleType.TRANSFORMED_DATA
-
-    def transform(self):
-        # todo impl
-        raise GGException("not implemented")
-
-    def inverse_transform(self):
-        # todo impl
-        raise GGException("not implemented")
 
 
 @dataclass
