@@ -3,16 +3,9 @@ name = "python-ggplot"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "charalmapos papaloizou", email = "harry@e2e4.email" }
-]
+authors = [{ name = "charalmapos papaloizou", email = "harry@e2e4.email" }]
 requires-python = ">=3.12"
-dependencies = [
-    "autoflake>=2.3.1",
-    "pandas>=2.2.3",
-    "pycairo>=1.27.0",
-    "rich>=13.9.4",
-]
+dependencies = ["pandas>=2.2.3", "pycairo>=1.27.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -20,6 +13,8 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "rich>=13.9.4",
+    "autoflake>=2.3.1",
     "black>=24.10.0",
     "ipdb>=0.13.13",
     "ipython>=8.31.0",

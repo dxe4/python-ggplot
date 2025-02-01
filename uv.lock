@@ -525,14 +525,13 @@ name = "python-ggplot"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "autoflake" },
     { name = "pandas" },
     { name = "pycairo" },
-    { name = "rich" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "autoflake" },
     { name = "black" },
     { name = "ipdb" },
     { name = "ipython" },
@@ -544,19 +543,19 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "python-lsp-server" },
+    { name = "rich" },
     { name = "ruff" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "autoflake", specifier = ">=2.3.1" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pycairo", specifier = ">=1.27.0" },
-    { name = "rich", specifier = ">=13.9.4" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "autoflake", specifier = ">=2.3.1" },
     { name = "black", specifier = ">=24.10.0" },
     { name = "ipdb", specifier = ">=0.13.13" },
     { name = "ipython", specifier = ">=8.31.0" },
@@ -568,6 +567,7 @@ dev = [
     { name = "pyright", specifier = ">=1.1.392.post0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "python-lsp-server", specifier = ">=1.12.0" },
+    { name = "rich", specifier = ">=13.9.4" },
     { name = "ruff", specifier = ">=0.9.3" },
 ]
 

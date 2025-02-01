@@ -70,20 +70,33 @@ def label_name(filled_scales: "FilledScales", p: "GgPlot", ax_kind: AxisKind) ->
 
 
 def _get_x_label(filled_scales: "FilledScales") -> str:
-    x_scale = filled_scales.get_x_scale()
-    if x_scale.gg_data.name:
-        return x_scale.gg_data.name
-
-    # TODO high priority sanity check what str should return
-    return str(x_scale.gg_data.col)
+    """
+    # TODO CRITICAL, medium difficulty
+    macro genGetScale(field: untyped): untyped =
+      let name = ident("get" & $field.strVal.capitalizeAscii & "Scale")
+      result = quote do:
+        proc `name`*(filledScales: FilledScales, geom = Geom(gid: 0)): Scale =
+          result = new Scale
+          if filledScales.`field`.main.isSome:
+            # use main
+            result = filledScales.`field`.main.get
+          else:
+            # find scale matching `gid`
+            for s in filledScales.`field`.more:
+              if geom.gid == 0 or geom.gid in s.ids:
+                return s
+    """
+    filled_scales.get_x_scale()
+    return "x_scale"
 
 
 def _get_y_label(filled_scales: "FilledScales") -> str:
+    """
+    TODO CRITICAL, medium difficulty
+    """
     y_scale = filled_scales.get_y_scale()
-    if y_scale.gg_data.name:
-        return y_scale.gg_data.name
-    elif y_scale.gg_data.col.name:
-        return str(y_scale.gg_data.col)
+    if y_scale:
+        return "y_scale"
     else:
         stat_types: Set[StatBin] = {
             filled_scales.gg_data.geom.gg_data.stat_kind

@@ -464,8 +464,8 @@ class ScaleFreeKind(GGEnum):
 
 @dataclass
 class FilledScales:
-    x_scale: GGScale
-    y_scale: GGScale
+    x_scale: Scale
+    y_scale: Scale
     reversed_x: bool
     reversed_y: bool
     discrete_x: bool
@@ -496,10 +496,10 @@ class FilledScales:
     # for s in filledScales.`field`.more:
     #   if geom.gid == 0 or geom.gid in s.ids:
     #     return s
-    def get_x_scale(self: "FilledScales") -> GGScale:
+    def get_x_scale(self: "FilledScales") -> Scale:
         return self.x_scale
 
-    def get_y_scale(self: "FilledScales") -> GGScale:
+    def get_y_scale(self: "FilledScales") -> Scale:
         return self.y_scale
 
     def has_secondary(self: "FilledScales", ax_kind: AxisKind) -> "SecondaryAxis":

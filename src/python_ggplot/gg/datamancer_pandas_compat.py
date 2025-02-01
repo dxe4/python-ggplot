@@ -1,7 +1,6 @@
-from abc import ABC
 from dataclasses import dataclass
 from enum import auto
-from typing import Any, Callable, Dict, OrderedDict
+from typing import Any, Dict, OrderedDict
 
 import pandas as pd
 from numpy._core.multiarray import _ReturnType
@@ -126,6 +125,9 @@ class VFillColor(GGValue):
 class VectorCol:
     col_name: str
     res_type: Optional[Any] = None
+
+    def __str__(self) -> str:
+        return self.col_name
 
     def evaluate(self, df: pd.DataFrame) -> Any:
         return df[self.col_name]  # type: ignore

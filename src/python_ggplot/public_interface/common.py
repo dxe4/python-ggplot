@@ -2,7 +2,22 @@ import math
 from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import field
-from typing import Any, Dict, List, Literal, Optional, Type, Union, no_type_check
+from itertools import product
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+    no_type_check,
+)
+
+import numpy as np
+import pandas as pd
 
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.common.enum_literals import (
@@ -41,7 +56,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom import Geom
+from python_ggplot.gg.geom import FilledGeom, Geom
 from python_ggplot.gg.scales.base import (
     AlphaScale,
     ColorScale,
@@ -70,8 +85,11 @@ from python_ggplot.gg.scales.values import (
 )
 from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
 from python_ggplot.gg.theme import (
+    build_theme,
+    calculate_margin_range,
     get_grid_line_style,
     get_minor_grid_line_style,
+    get_plot_background,
     has_secondary,
 )
 from python_ggplot.gg.ticks import handle_discrete_ticks, handle_ticks
@@ -90,8 +108,8 @@ from python_ggplot.gg.types import (
     Theme,
     ThemeMarginLayout,
 )
-from python_ggplot.gg.utils import to_opt_sec_axis
-from python_ggplot.graphics.draw import layout
+from python_ggplot.gg.utils import calc_rows_columns, to_opt_sec_axis
+from python_ggplot.graphics.draw import background, layout
 from python_ggplot.graphics.initialize import (
     InitRectInput,
     InitTextInput,
@@ -1745,3 +1763,328 @@ def _generate_ridge(
 
     if not filled_scales.discrete_y and filled_scales.reversed_y:
         view.y_scale = Scale(low=view.y_scale.high, high=view.y_scale.low)
+
+
+# TODO refactor
+def _generate_plot(
+    view: ViewPort,
+    plot: GgPlot,
+    filled_scales: FilledScales,
+    theme: Theme,
+    hide_labels: bool = False,
+    hide_ticks: bool = False,
+):
+    background(view, style=get_plot_background(theme))
+
+    # Change scales to user defined if desired
+    view.x_scale = theme.x_range or filled_scales.x_scale
+
+    if plot.ridges is not None:
+        ridge = plot.ridges
+        _generate_ridge(
+            view, ridge, plot, filled_scales, theme, hide_labels, hide_ticks
+        )
+    else:
+        view.y_scale = (
+            theme.y_range if theme.y_range is not None else filled_scales.y_scale
+        )
+
+        for geom in filled_scales.geoms:
+            p_child = view.add_viewport_from_coords(
+                CoordsInput(), ViewPortInput(name="data")
+            )
+            create_gobj_from_geom(p_child, geom, theme)
+            view.children.append(p_child)
+
+        x_ticks: List[GraphicsObject] = []
+        y_ticks: List[GraphicsObject] = []
+        if not hide_ticks:
+            # TODO double check num_ticks_opt=10
+            x_ticks = handle_ticks(
+                view, filled_scales, plot, AxisKind.X, num_ticks_opt=10, theme=theme
+            )
+            y_ticks = handle_ticks(
+                view, filled_scales, plot, AxisKind.Y, num_ticks_opt=10, theme=theme
+            )
+
+        view.x_scale = theme.x_margin_range
+        view.y_scale = theme.y_margin_range
+
+        if not filled_scales.discrete_x and filled_scales.reversed_x:
+            view.x_scale = Scale(low=view.x_scale.high, high=view.x_scale.low)
+        if not filled_scales.discrete_y and filled_scales.reversed_y:
+            view.y_scale = Scale(low=view.y_scale.high, high=view.y_scale.low)
+
+        view.update_data_scale()
+        if not hide_ticks:
+            view.update_data_scale_for_objects(x_ticks)
+            view.update_data_scale_for_objects(y_ticks)
+
+        grid_lines = _handle_grid_lines(view, x_ticks, y_ticks, theme)
+
+        if not hide_labels:
+            _handle_labels(view, theme)
+
+        for grid_line in grid_lines:
+            view.add_obj(grid_line)
+
+
+# TODO refactor
+def _determine_existing_combinations(fs: FilledScales, facet: Facet) -> Set[GGValue]:
+    facets = fs.facets
+    if len(facets) <= 0:
+        raise GGException("expected facets")
+
+    # here the facets have to be on discrete scales
+    # we can assume that but would be good to structure it better
+    if len(facet.columns) > 1:
+        combinations: List[List[GGValue]] = list(product([f.gg_data.discrete_kind.label_seq for f in facets]))  # type: ignore
+    else:
+        combinations: List[List[GGValue]] = [[label] for label in facets[0].gg_data.discrete_kind.label_seq]  # type: ignore
+
+    comb_labels: Set[Tuple[str, GGValue]] = set()
+    for combination in combinations:
+        comb = [(str(fc.gg_data.col), val) for fc, val in zip(facets, combination)]
+        for i in comb:
+            comb_labels.add(i)
+
+    result: Set[GGValue] = set()
+
+    # TODO critical, this logic is probably a bit off
+    # need to get facets working and write unit tests
+    for fg in fs.geoms:
+        for xk in fg.gg_data.yield_data.keys():
+            for _, cb in comb_labels:
+                if cb == xk:
+                    result.add(cb)
+
+    assert len(result) <= len(combinations)
+    return result
+
+
+def _calc_facet_view_map(comb_labels: Set[GGValue]) -> Dict[GGValue, int]:
+    result: Dict[GGValue, int] = {}
+    for idx, cb in enumerate(comb_labels):
+        result[cb] = idx
+    return result
+
+
+def _find(fg: FilledGeom, label: GGValue) -> pd.DataFrame:
+    result = pd.DataFrame()
+
+    for key, val in fg.gg_data.yield_data.items():
+        if label == key:
+            result = pd.concat([result, val[2]], ignore_index=True)
+
+    if len(result) <= 0:
+        raise GGException("invalid call to find label")
+    return result
+
+
+# todo refactor
+def _calc_scales_for_label(theme: Theme, facet: Facet, fg: FilledGeom, label: GGValue):
+
+    def calc_scale(df: pd.DataFrame, col: str) -> Scale:
+        data = df[col].to_numpy()  # type: ignore
+        return Scale(
+            low=float(np.nanmin(data)),  # type: ignore
+            high=float(np.nanmax(data)),  # type: ignore
+        )
+
+    if facet.scale_free_kind in {
+        ScaleFreeKind.FREE_X,
+        ScaleFreeKind.FREE_Y,
+        ScaleFreeKind.FREE,
+    }:
+        lab_df = _find(fg, label)
+
+        if facet.scale_free_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE}:
+            x_scale = calc_scale(lab_df, fg.gg_data.x_col)
+
+            if x_scale.low != x_scale.high:
+                theme.x_margin_range = calculate_margin_range(
+                    theme, x_scale, AxisKind.X
+                )
+            else:
+                # base on filled geom's scale instead
+                theme.x_margin_range = calculate_margin_range(
+                    theme, fg.gg_data.x_scale, AxisKind.X
+                )
+
+        # TODO i think this logic is wrong
+        if facet.scale_free_kind in {ScaleFreeKind.FREE_Y, ScaleFreeKind.FREE}:
+            y_scale = calc_scale(lab_df, fg.gg_data.y_col)
+            if y_scale.low != y_scale.high:
+                theme.y_margin_range = calculate_margin_range(
+                    theme, y_scale, AxisKind.Y
+                )
+            else:
+                # base on filled geom's scale instead
+                theme.y_margin_range = calculate_margin_range(
+                    theme, fg.gg_data.y_scale, AxisKind.Y
+                )
+
+
+# TODO refactor...
+def _generate_facet_plots(
+    view: ViewPort,
+    plot: GgPlot,
+    filled_scales: FilledScales,
+    hide_labels: bool = False,
+    hide_ticks: bool = False,
+):
+    if plot.facet is None:
+        raise GGException("facet is none..")
+
+    facet = plot.facet
+
+    plot.theme.x_margin = 0.05
+    plot.theme.y_margin = 0.05
+
+    theme = build_theme(filled_scales, plot)
+
+    if theme.x_tick_label_margin is None:
+        theme.x_tick_label_margin = 1.75
+    if theme.y_tick_label_margin is None:
+        theme.y_tick_label_margin = -1.25
+
+    theme.x_ticks_rotate = plot.theme.x_ticks_rotate
+    theme.y_ticks_rotate = plot.theme.y_ticks_rotate
+    theme.x_ticks_text_align = plot.theme.x_ticks_text_align
+    theme.y_ticks_text_align = plot.theme.y_ticks_text_align
+
+    # Calculate existing combinations
+    exist_comb = _determine_existing_combinations(filled_scales, facet)
+    num_exist = len(exist_comb)
+
+    # Calculate rows and columns
+    if theme.prefer_rows_over_columns:
+        cols, rows = calc_rows_columns(0, 0, num_exist)
+    else:
+        rows, cols = calc_rows_columns(0, 0, num_exist)
+
+    view_map = _calc_facet_view_map(exist_comb)
+
+    if facet.sf_kind in {
+        ScaleFreeKind.FREE_X,
+        ScaleFreeKind.FREE_Y,
+        ScaleFreeKind.FREE,
+    }:
+        margin = theme.facet_margin or Quantity.relative(0.015)
+    else:
+        margin = theme.facet_margin or Quantity.relative(0.001)
+
+    layout(view, cols=cols, rows=rows, margin=margin)
+
+    x_ticks = []
+    y_ticks = []
+    last_col = num_exist % cols
+
+    for label, idx in view_map.items():
+        view_label = view.children[idx]
+
+        layout(
+            view_label,
+            rows=2,
+            cols=1,
+            row_heights=[Quantity.relative(0.1), Quantity.relative(0.9)],
+            margin=Quantity.relative(0.01),
+        )
+
+        header_view = view_label.children[0]
+        background(header_view)
+
+        text = str(label)
+        header_text = init_text(
+            header_view,
+            origin=Coord(x=RelativeCoordType(0.5), y=RelativeCoordType(0.5)),
+            init_text_data=InitTextInput(
+                text=text,
+                align_kind=TextAlignKind.CENTER,
+                font=Font(size=8.0),
+                name="facet_header_text",
+            ),
+        )
+        header_view.add_obj(header_text)
+        header_view.name = "facet_header"
+
+        plot_view = view_label.children[1]
+        background(plot_view, style=get_plot_background(theme))
+
+        cur_row = idx // cols
+        cur_col = idx % cols
+
+        hide_x_labels = not (
+            facet.sf_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE}
+            or cur_row == rows - 1
+            or (cur_row == rows - 2 and cur_col >= last_col and last_col > 0)
+        )
+
+        hide_y_labels = not (
+            facet.sf_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE} or cur_col == 0
+        )
+
+        plot_view.name = "facet_plot"
+        view_label.name = f"facet_{text}"
+
+        set_grid_and_ticks = False
+        for geom in filled_scales.geoms:
+            if not set_grid_and_ticks:
+                # Calculate scales for current label
+                _calc_scales_for_label(theme, facet, geom, label)
+
+                plot_view.x_scale = theme.x_margin_range
+                plot_view.y_scale = theme.y_margin_range
+
+                x_tick_num = 5 if (1000.0 < theme.x_margin_range.high < 1e5) else 10
+
+                x_ticks = handle_ticks(
+                    plot_view,
+                    filled_scales,
+                    plot,
+                    AxisKind.X,
+                    theme=theme,
+                    num_ticks_opt=x_tick_num,
+                    hide_tick_labels=hide_x_labels,
+                )
+
+                y_ticks = handle_ticks(
+                    plot_view,
+                    filled_scales,
+                    plot,
+                    AxisKind.Y,
+                    theme=theme,
+                    hide_tick_labels=hide_y_labels,
+                )
+
+                grid_lines = _handle_grid_lines(plot_view, x_ticks, y_ticks, theme)
+                for grid_line in grid_lines:
+                    plot_view.add_obj(grid_line)
+                set_grid_and_ticks = True
+
+            # Create child viewport for data
+            p_child = plot_view.add_viewport_from_coords(
+                CoordsInput(), ViewPortInput(name="data")
+            )
+            create_gobj_from_geom(p_child, geom, theme, label_val=label)
+            plot_view.children.append(p_child)
+
+        view_label.x_scale = plot_view.x_scale
+        view_label.y_scale = plot_view.y_scale
+
+        if not view.x_scale or not view.y_scale:
+            # TODO check this
+            raise GGException("expected x and y scale")
+
+        if not filled_scales.discrete_x and filled_scales.reversed_x:
+            view_label.x_scale = Scale(high=view.x_scale.low, low=view.x_scale.high)
+        if not filled_scales.discrete_y and filled_scales.reversed_y:
+            view_label.y_scale = Scale(high=view.y_scale.low, low=view.y_scale.high)
+
+    if not hide_labels:
+        if theme.x_label_margin is None:
+            theme.x_label_margin = 1.0
+        if theme.y_label_margin is None:
+            theme.y_label_margin = 1.5
+
+        _handle_labels(view, theme)
