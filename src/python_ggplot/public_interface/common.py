@@ -2188,7 +2188,7 @@ def _draw_annotations(view: ViewPort, plot: GgPlot) -> None:
         max_line = list(
             sorted(
                 annot.text.split("\n"),
-                key=lambda x: _str_width(x, font).val,  # type: ignore
+                key=lambda x: _get_str_width(x, font).val,
             )
         )[-1]
         max_width = _get_str_width(max_line, font)
