@@ -11,9 +11,19 @@ from python_ggplot.core.coord.objects import (
     RelativeCoordType,
     path_coord_view_port,
 )
-from python_ggplot.core.objects import AxisKind, GGException, Scale, Style, UnitType
+from python_ggplot.core.objects import (
+    BLACK,
+    AxisKind,
+    Color,
+    GGException,
+    Scale,
+    Style,
+    UnitType,
+)
 from python_ggplot.core.units.objects import Quantity, RelativeUnit
+from python_ggplot.graphics.initialize import init_axis
 from python_ggplot.graphics.objects import GraphicsObject
+from tests.test_view import InitAxisInput
 
 
 @dataclass
@@ -216,12 +226,14 @@ class ViewPort:
         raise GGException("unexpected")
 
     def embed_as_relative(self: "ViewPort", idx: int, into: "ViewPort") -> "ViewPort":
-        from python_ggplot.embed import view_embed_as_relative  # pylint: disable=all
+        from python_ggplot.core.embed import (
+            view_embed_as_relative,
+        )  # pylint: disable=all
 
         return view_embed_as_relative(self, idx, into)
 
     def embed_into(self: "ViewPort", into: "ViewPort") -> "ViewPort":
-        from python_ggplot.embed import view_embed_into  # pylint: disable=all
+        from python_ggplot.core.embed import view_embed_into  # pylint: disable=all
 
         return view_embed_into(self, into)
 
@@ -291,6 +303,12 @@ class ViewPort:
         other = self.height.to_relative(length=self.h_view)
         result = self.h_view.multiply(other, length=self.h_view)
         return result
+
+    def x_axis(self, width: float = 1.0, color: Color = BLACK) -> GraphicsObject:
+        return init_axis(AxisKind.X, InitAxisInput(width=width, color=color))
+
+    def y_axis(self, width: float = 1.0, color: Color = BLACK) -> GraphicsObject:
+        return init_axis(AxisKind.Y, InitAxisInput(width=width, color=color))
 
     # def __rich_repr__(self):
     #     yield "width", self.width

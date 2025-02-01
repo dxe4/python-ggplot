@@ -654,7 +654,7 @@ def handle_ticks(
     if not isinstance(scale, (LinearDataScale, TransformedDataScale)):
         raise GGException("enexpected scale")
 
-    has_scale = len(scale.gg_data.col.name) > 0 if scale else False
+    has_scale = len(scale.gg_data.col.col_name) > 0 if scale else False
     result = []
     sscale_discrete_kind = scale.gg_data.discrete_kind.discrete_type
 

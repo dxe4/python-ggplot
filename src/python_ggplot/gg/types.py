@@ -441,7 +441,7 @@ class JsonDummyDraw:
     backend: str  # we only support cairo for now
 
 
-MainAddScales = Tuple[Optional[Scale], List[Scale]]
+MainAddScales = Tuple[Optional[GGScale], List[GGScale]]
 
 
 @dataclass

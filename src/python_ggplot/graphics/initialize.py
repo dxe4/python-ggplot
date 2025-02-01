@@ -1223,7 +1223,7 @@ def init_grid_lines(
     x_ticks: Optional[List[GOTick]] = None,
     y_ticks: Optional[List[GOTick]] = None,
     major: bool = True,
-    style: Style = None,
+    style: Optional[Style] = None,
     name: str = "grid_lines",
 ) -> GOGrid:
     default_style = Style(

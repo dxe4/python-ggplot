@@ -2,7 +2,7 @@ import math
 from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import field
-from typing import Any, Dict, List, Literal, Optional, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Type, Union, no_type_check
 
 from python_ggplot.colormaps.color_maps import int_to_color
 from python_ggplot.common.enum_literals import (
@@ -11,7 +11,14 @@ from python_ggplot.common.enum_literals import (
     SCALE_FREE_KIND_VALUES,
     UNIT_TYPE_VALUES,
 )
-from python_ggplot.core.coord.objects import Coord
+from python_ggplot.core.coord.objects import (
+    Coord,
+    CoordsInput,
+    LengthCoord,
+    StrHeightCoordType,
+    StrWidthCoordType,
+    TextCoordData,
+)
 from python_ggplot.core.objects import (
     GREY92,
     TRANSPARENT,
@@ -25,7 +32,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     UnitType,
 )
-from python_ggplot.core.units.objects import Quantity, unit_type_from_type
+from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -33,6 +40,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VFillColor,
     VLinearData,
 )
+from python_ggplot.gg.drawing import create_gobj_from_geom
 from python_ggplot.gg.geom import Geom
 from python_ggplot.gg.scales.base import (
     AlphaScale,
@@ -40,10 +48,12 @@ from python_ggplot.gg.scales.base import (
     ColorScaleKind,
     DateScale,
     FillColorScale,
+    FilledScales,
     GGScale,
     GGScaleContinuous,
     GGScaleData,
     GGScaleDiscrete,
+    GGScaleDiscreteKind,
     LinearAndTransformScaleData,
     LinearDataScale,
     ScaleFreeKind,
@@ -59,6 +69,12 @@ from python_ggplot.gg.scales.values import (
     SizeScaleValue,
 )
 from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
+from python_ggplot.gg.theme import (
+    get_grid_line_style,
+    get_minor_grid_line_style,
+    has_secondary,
+)
+from python_ggplot.gg.ticks import handle_discrete_ticks, handle_ticks
 from python_ggplot.gg.types import (
     Aesthetics,
     Annotation,
@@ -72,6 +88,7 @@ from python_ggplot.gg.types import (
     Ridges,
     SecondaryAxis,
     Theme,
+    ThemeMarginLayout,
 )
 from python_ggplot.gg.utils import to_opt_sec_axis
 from python_ggplot.graphics.draw import layout
@@ -79,16 +96,27 @@ from python_ggplot.graphics.initialize import (
     InitRectInput,
     InitTextInput,
     init_coord_1d_from_view,
+    init_grid_lines,
     init_point_from_coord,
     init_rect,
     init_text,
     init_ticks,
     tick_labels,
+    xlabel,
+    ylabel,
 )
-from python_ggplot.graphics.objects import GOPoint, GraphicsObject
+from python_ggplot.graphics.objects import (
+    GOLabel,
+    GOPoint,
+    GOText,
+    GOTickLabel,
+    GraphicsObject,
+)
+from python_ggplot.graphics.views import ViewPortInput
 from python_ggplot.public_interface.geom import ggplot
 from tests.test_view import (
     AxisKind,
+    CentimeterCoordType,
     RelativeCoordType,
     Style,
     TickLabelsInput,
@@ -1341,3 +1369,379 @@ def _add_annotations(plot: GgPlot, annotations: Annotation) -> GgPlot:
 
 
 # end of _add functions
+
+
+def _requires_legend(filled_scales: FilledScales, theme: Theme):
+    """
+    TODO CRITICAL
+    there's a known bug here
+    need to figure out exactly the usage of arg.main vs arg.more
+    fine for now
+    template anyScale(arg: untyped): untyped =
+      if arg.main.isSome or arg.more.len > 0:
+        true
+      else:
+        false
+    """
+    if theme.hide_legend is None and (
+        filled_scales.color
+        or filled_scales.fill
+        or filled_scales.size
+        or filled_scales.shape
+    ):
+        return True
+
+    return False
+
+
+def _init_theme_margin_layout(
+    theme: Theme, tight_layout: bool, requires_legend: bool
+) -> ThemeMarginLayout:
+    if theme.plot_margin_left is not None:
+        left = theme.plot_margin_left
+    elif tight_layout:
+        left = Quantity.centimeters(0.2)
+    else:
+        left = Quantity.centimeters(2.5)
+
+    if theme.plot_margin_right is not None:
+        right = theme.plot_margin_right
+    elif requires_legend:
+        right = Quantity.centimeters(5.0)
+    else:
+        right = Quantity.centimeters(1.0)
+
+    if theme.plot_margin_top is not None:
+        top = theme.plot_margin_top
+    elif requires_legend:
+        top = Quantity.centimeters(1.25)
+    else:
+        top = Quantity.centimeters(1.0)
+
+    if theme.plot_margin_bottom is not None:
+        bottom = theme.plot_margin_bottom
+    else:
+        bottom = Quantity.centimeters(2.0)
+
+    return ThemeMarginLayout(
+        left=left, right=right, top=top, bottom=bottom, requires_legend=requires_legend
+    )
+
+
+def _plot_layout(view: ViewPort, theme_layout: ThemeMarginLayout):
+
+    layout(
+        view=view,
+        cols=3,
+        rows=3,
+        col_widths=[theme_layout.left, Quantity.relative(0.0), theme_layout.right],
+        row_heights=[theme_layout.top, Quantity.relative(0.0), theme_layout.bottom],
+    )
+
+    view.children[0].name = "topLeft"
+    view.children[1].name = "title"
+    view.children[2].name = "topRight"
+    view.children[3].name = "yLabel"
+    view.children[4].name = "plot"
+    view.children[5].name = "legend" if theme_layout.requires_legend else "noLegend"
+    view.children[6].name = "bottomLeft"
+    view.children[7].name = "xLabel"
+    view.children[8].name = "bottomRight"
+
+
+def _create_layout(view: ViewPort, filled_scales: FilledScales, theme: Theme) -> None:
+    hide_ticks = theme.hide_ticks or False
+    hide_labels = theme.hide_labels or False
+    tight_layout = hide_labels and hide_ticks
+    layout = _init_theme_margin_layout(
+        theme, tight_layout, _requires_legend(filled_scales, theme)
+    )
+    _plot_layout(view, layout)
+
+
+def _handle_grid_lines(
+    view: ViewPort,
+    xticks: List[GraphicsObject],
+    yticks: List[GraphicsObject],
+    theme: Theme,
+) -> List[GraphicsObject]:
+    grid_line_style = get_grid_line_style(theme)
+    result: List[GraphicsObject] = []
+
+    if theme.grid_lines is None or theme.grid_lines:  # None or True
+        result = [
+            init_grid_lines(
+                # TODO medium priority easy task
+                # we get graphics object but func expects GOTick (subclass)
+                # the GO related code needs to be cleaned up to take and give the concrete classes
+                x_ticks=xticks,  # type: ignore
+                y_ticks=yticks,  # type: ignore
+                style=grid_line_style,
+            )
+        ]
+    elif theme.only_axes:
+        # only draw axes with grid line style
+        result = [
+            view.x_axis(grid_line_style.line_width, grid_line_style.color),
+            view.y_axis(grid_line_style.line_width, grid_line_style.color),
+        ]
+
+    if theme.minor_grid_lines:
+        minor_grid_line_style = get_minor_grid_line_style(grid_line_style, theme)
+        result.append(
+            init_grid_lines(
+                # FIX / refactor same as above, fine for now
+                x_ticks=xticks,  # type: ignore
+                y_ticks=yticks,  # type: ignore
+                major=False,
+                style=minor_grid_line_style,
+            )
+        )
+
+    return result
+
+
+@no_type_check  # This factor needs complete re-write, just ignore types for now
+def _handle_labels(view: ViewPort, theme: Theme):
+    """
+    TODO needs a good amount of refactor
+    """
+    x_lab_obj = None
+    y_lab_obj = None
+    x_margin = None
+    y_margin = None
+
+    x_lab_txt = theme.x_label
+    y_lab_txt = theme.y_label
+
+    # ignore the types, since this will be refactored fairly soon
+    @no_type_check
+    def get_margin(theme_field: Any, name_val: str, ax_kind: AxisKind):
+        if not theme_field is not None:
+            labs = [obj for obj in view.objects if obj.name == name_val]
+
+            # TODO medium priority easy task
+            # refactor this, making it functional first
+            classes = {i.__class__ for i in labs}
+            if classes.issubset({GOLabel, GOText, GOTickLabel}):
+                raise GGException("expected text GO obj")
+
+            lab_names = [lab.data.text for lab in labs]  # type: ignore WORKS for now but needs fixing
+            lab_lengths = [len(lab_name) for lab_name in lab_names]  # type: ignore
+            lab_max_length = max(lab_lengths)
+
+            # TODO medium priority, medium complexity
+            # what if theres 2 of the same length?
+            max_item = [i for i in lab_names if len(i) == lab_max_length][0]  # type: ignore
+
+            font = theme.label_font or Font(size=8.0)
+
+            if ax_kind == AxisKind.X:
+                return StrHeightCoordType(
+                    pos=1.0,
+                    data=TextCoordData(text=max_item, font=font),  # type: ignore
+                ) + CentimeterCoordType(pos=0.3, data=LengthCoord())
+            elif ax_kind == AxisKind.Y:
+                return StrWidthCoordType(
+                    pos=1.0,
+                    data=TextCoordData(text=max_item, font=font),  # type: ignore
+                ) + CentimeterCoordType(pos=0.3, data=LengthCoord())
+            else:
+                raise GGException("Unexpected axis")
+        else:
+            return CentimeterCoordType(pos=theme_field, data=LengthCoord())
+
+    # ignore the types, since this will be refactored fairly soon
+    @no_type_check
+    def create_label(
+        lab_proc, lab_txt, theme_field, margin_val, is_second=False, rot=None
+    ):
+        fnt = theme.label_font or Font()
+
+        if theme_field:
+            return lab_proc(
+                view,
+                lab_txt,
+                margin=theme_field,
+                is_custom_margin=True,
+                is_secondary=is_second,
+                font=fnt,
+            )
+        else:
+            return lab_proc(
+                view, lab_txt, margin=margin_val, is_secondary=is_second, font=fnt
+            )
+
+    x_margin = get_margin(theme.x_label_margin, "xtickLabel", AxisKind.X)
+    y_margin = get_margin(theme.y_label_margin, "ytickLabel", AxisKind.Y)
+
+    y_lab_obj = create_label(ylabel, y_lab_txt, theme.y_label_margin, y_margin)
+    x_lab_obj = create_label(xlabel, x_lab_txt, theme.x_label_margin, x_margin)
+    view.add_obj(x_lab_obj)
+    view.add_obj(y_lab_obj)
+
+    # Handle secondary axes if present
+    if has_secondary(theme, AxisKind.X):
+        sec_axis_label = theme.x_label_secondary
+        x_margin = get_margin(theme.x_label_margin, "xtickLabelSecondary", "x")
+        lab_sec = create_label(
+            xlabel, sec_axis_label, theme.y_label_margin, x_margin, True
+        )
+        view.add_obj(lab_sec)
+
+    if has_secondary(theme, AxisKind.Y):
+        sec_axis_label = theme.y_label_secondary.unwrap()
+        y_margin = get_margin(theme.y_label_margin, "ytickLabelSecondary", "y")
+        lab_sec = create_label(
+            ylabel, sec_axis_label, theme.y_label_margin, y_margin, True
+        )
+        view.add_obj(lab_sec)
+
+
+def _calc_ridge_view_map(ridge: Ridges, label_seq: List[GGValue]) -> Dict[GGValue, int]:
+    num_labels = len(label_seq)
+    result: Dict[GGValue, int] = {}
+
+    if len(ridge.label_order) == 0:
+        for i, label in enumerate(label_seq):
+            result[label] = i + 1
+    else:
+        label_seq.clear()
+
+        pair_idx = sorted(
+            [(label, idx) for label, idx in ridge.label_order.items()],
+            key=lambda x: x[1],
+        )
+
+        for label, idx in pair_idx:
+            if idx >= num_labels:
+                raise GGException(
+                    f"Given `label_order` indices must not exceed the "
+                    f"number of labels! Max index: {idx}, number of labels: {num_labels}"
+                )
+            result[label] = idx + 1
+            label_seq.append(label)
+
+    return result
+
+
+def _create_ridge_layout(view: ViewPort, theme: Theme, num_labels: int):
+    discr_margin_opt = theme.discrete_scale_margin
+    discr_margin = Quantity.relative(0.0)
+
+    if discr_margin_opt is not None:
+        discr_margin = discr_margin_opt
+
+    ind_heights = [Quantity.relative(0.0) for _ in range(num_labels)]
+
+    layout(
+        view,
+        cols=1,
+        rows=num_labels + 2,
+        row_heights=[discr_margin] + ind_heights + [discr_margin],
+        ignore_overflow=True,
+    )
+
+
+# TODO Refactor this
+def _generate_ridge(
+    view: ViewPort,
+    ridge: Ridges,
+    p: GgPlot,
+    filled_scales: FilledScales,
+    theme: Theme,
+    hide_labels: bool = False,
+    hide_ticks: bool = False,
+):
+    # TODO CRITICAL, Medium complexity
+    # this calls getYRidgesScale which does not exist
+    # if i remember correctly this comes from the macro that does the main/more logic
+    # MainAddScales = Tuple[Optional[GGScale], List[GGScale]]
+    # main is scale and more is list scale
+    # this is very high priority in fixing
+    y_ridge_scale = filled_scales.y_ridges[0]
+    if y_ridge_scale is None:
+        # remove this once the main/more logic is done
+        raise GGException("currently only supporting main scale")
+
+    if not isinstance(y_ridge_scale.gg_data.discrete_kind, GGScaleDiscrete):
+        raise GGException("expected discrete scale")
+
+    y_label_seq = y_ridge_scale.gg_data.discrete_kind.label_seq
+    num_labels = len(y_label_seq)
+
+    y_scale = theme.y_range or filled_scales.y_scale
+    y_scale = Scale(low=y_scale.low, high=y_scale.high / ridge.overlap)  # type: ignore
+    view.y_scale = y_scale
+
+    view_map = _calc_ridge_view_map(ridge, y_label_seq)
+    _create_ridge_layout(view, theme, num_labels)
+
+    for label, idx in view_map.items():
+        view_label = view.children[idx]
+
+        for fg in filled_scales.geoms:
+            p_child = view_label.add_viewport_from_coords(
+                CoordsInput(), ViewPortInput(name="data")
+            )
+
+            # Create theme which ignores points outside the scale
+            m_theme = deepcopy(theme)
+            m_theme.x_outside_range = OutsideRangeKind.NONE
+            m_theme.y_outside_range = OutsideRangeKind.NONE
+
+            create_gobj_from_geom(
+                p_child, fg, m_theme, label_val={"col": str(ridge.col), "val": label}
+            )
+
+            # Add data viewport to the view
+            view_label.children.append(p_child)
+
+        if ridge.show_ticks:
+            # TODO: fix the hack using 1e-5. Needed for side effect of adding to viewport
+            handle_ticks(
+                view_label,
+                filled_scales,
+                p,
+                AxisKind.Y,
+                theme=theme,
+                num_ticks_opt=5,
+                bound_scale_opt=Scale(low=y_scale.low + 1e-5, high=y_scale.high - 1e-5),
+            )
+
+    if not hide_ticks:
+        x_ticks = handle_ticks(view, filled_scales, p, AxisKind.X, theme=theme)
+
+        format_func = (
+            y_ridge_scale.gg_data.discrete_kind.format_discrete_label
+            if y_ridge_scale.gg_data.discrete_kind.format_discrete_label is not None
+            else str
+        )
+
+        # Create ticks manually with discrete_tick_labels to set labels
+        y_ticks = handle_discrete_ticks(
+            view,
+            p,
+            AxisKind.Y,
+            y_label_seq,
+            theme=theme,
+            center_ticks=False,
+            format_func=format_func,
+        )
+
+        grid_lines = _handle_grid_lines(view, x_ticks, y_ticks, theme)
+        for grid_line in grid_lines:
+            view.add_obj(grid_line)
+
+    if not hide_labels:
+        _handle_labels(view, theme)
+
+    view.x_scale = theme.x_margin_range
+
+    # Handle axis reversals
+    if not filled_scales.discrete_x and filled_scales.reversed_x:
+
+        view.x_scale = Scale(low=view.x_scale.high, high=view.x_scale.low)
+
+    if not filled_scales.discrete_y and filled_scales.reversed_y:
+        view.y_scale = Scale(low=view.y_scale.high, high=view.y_scale.low)
