@@ -350,7 +350,7 @@ def init_multi_line_text(
     text_kind: GOType,
     align_kind: TextAlignKind,
     init_multi_line_input: InitMultiLineInput,
-) -> None:
+) -> List[GraphicsObject]:
     if text_kind not in (GOType.TEXT, GOType.LABEL, GOType.TICK_LABEL):
         raise GGException("unexpected graphic object kind")
 
@@ -358,6 +358,7 @@ def init_multi_line_text(
     lines = text.split("\n")
     lines_len = len(lines)
 
+    result: List[GraphicsObject] = []
     for idx, line in enumerate(lines):
         pos = lines_len - idx - 0.5
         new_y = origin.y - Coord1D.create_str_height(pos, font).to_relative(
@@ -375,7 +376,10 @@ def init_multi_line_text(
 
         func = init_text_lookup[text_kind]
         res = func(view, new_origin, init_text_data)
+        result.append(res)
         view.objects.append(res)
+
+    return result
 
 
 def init_line(

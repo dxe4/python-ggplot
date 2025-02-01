@@ -164,6 +164,9 @@ class Color:
     b: float
     a: float  # TODO add default alpha = 1.0
 
+    def __eq__(self, o: "Color") -> bool:
+        return self.r == o.r and self.g == o.g and self.b == o.b and self.a == o.a
+
 
 # TODO refactor / rename this so that default col is RGBA
 ColorRGBA = Color

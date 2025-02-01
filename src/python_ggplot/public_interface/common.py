@@ -29,6 +29,7 @@ from python_ggplot.common.enum_literals import (
 from python_ggplot.core.coord.objects import (
     Coord,
     CoordsInput,
+    DataCoord,
     LengthCoord,
     StrHeightCoordType,
     StrWidthCoordType,
@@ -47,7 +48,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     UnitType,
 )
-from python_ggplot.core.units.objects import Quantity
+from python_ggplot.core.units.objects import DataUnit, PointUnit, Quantity, RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -111,10 +112,12 @@ from python_ggplot.gg.types import (
 from python_ggplot.gg.utils import calc_rows_columns, to_opt_sec_axis
 from python_ggplot.graphics.draw import background, layout
 from python_ggplot.graphics.initialize import (
+    InitMultiLineInput,
     InitRectInput,
     InitTextInput,
     init_coord_1d_from_view,
     init_grid_lines,
+    init_multi_line_text,
     init_point_from_coord,
     init_rect,
     init_text,
@@ -128,6 +131,7 @@ from python_ggplot.graphics.objects import (
     GOPoint,
     GOText,
     GOTickLabel,
+    GOType,
     GraphicsObject,
 )
 from python_ggplot.graphics.views import ViewPortInput
@@ -135,6 +139,7 @@ from python_ggplot.public_interface.geom import ggplot
 from tests.test_view import (
     AxisKind,
     CentimeterCoordType,
+    DataCoordType,
     RelativeCoordType,
     Style,
     TickLabelsInput,
@@ -2088,3 +2093,145 @@ def _generate_facet_plots(
             theme.y_label_margin = 1.5
 
         _handle_labels(view, theme)
+
+
+def _get_left_bottom(view: ViewPort, annotation: Annotation) -> Tuple[float, float]:
+    result_left = 0.0
+    result_bottom = 0.0
+
+    if annotation.left is not None:
+        result_left = annotation.left
+    else:
+        if annotation.x is None or view.x_scale is None:
+            raise GGException("expected annotation.x and view.x_scale")
+
+        result_left = (
+            DataCoordType(
+                pos=annotation.x,
+                data=DataCoord(axis_kind=AxisKind.X, scale=view.x_scale),
+            )
+            .to_relative()
+            .pos
+        )
+
+    if annotation.bottom is not None:
+        result_bottom = annotation.bottom
+    else:
+        if annotation.y is None or view.y_scale is None:
+            raise GGException("expected annotation.x and view.x_scale")
+        result_left = (
+            DataCoordType(
+                pos=annotation.y,
+                data=DataCoord(axis_kind=AxisKind.X, scale=view.y_scale),
+            )
+            .to_relative()
+            .pos
+        )
+
+    return (result_left, result_bottom)
+
+
+def _get_str_width(text: str, font: Font) -> PointUnit:
+    return PointUnit(
+        StrWidthCoordType(
+            pos=1.0,
+            data=TextCoordData(text=text, font=font),
+        )
+        .to_points()
+        .pos
+    )
+
+
+def _str_width(val: float, font: Font) -> StrWidthCoordType:
+    return StrWidthCoordType(
+        pos=val,
+        data=TextCoordData(text="W", font=font),
+    )
+
+
+def _str_height(text: str, font: Font) -> Quantity:
+    num_lines = len(text.split("\n"))
+    return DataUnit(
+        val=StrHeightCoordType(num_lines * 1.5, data=TextCoordData(text="", font=font))
+        .to_points()
+        .pos
+    )
+
+
+def _draw_annotations(view: ViewPort, plot: GgPlot) -> None:
+    ANNOT_RECT_MARGIN = 0.5
+
+    for annot in plot.annotations:
+        rect_style = Style(
+            fill_color=annot.background_color, color=annot.background_color
+        )
+        left, bottom = _get_left_bottom(view, annot)
+
+        margin_h = StrHeightCoordType(
+            pos=ANNOT_RECT_MARGIN,
+            data=TextCoordData(text="W", font=annot.font),
+        ).to_relative(length=view.point_height())
+
+        margin_w = StrHeightCoordType(
+            pos=ANNOT_RECT_MARGIN,
+            data=TextCoordData(text="W", font=annot.font),
+        ).to_relative(length=view.point_width())
+
+        total_height = Quantity.relative(
+            _str_height(annot.text, annot.font)
+            .to_relative(length=view.point_height())
+            .val
+            + margin_h.pos * 2.0,
+        )
+
+        font = annot.font
+        max_line = list(
+            sorted(
+                annot.text.split("\n"),
+                key=lambda x: _str_width(x, font).val,  # type: ignore
+            )
+        )[-1]
+        max_width = _get_str_width(max_line, font)
+
+        rect_width = Quantity.relative(
+            max_width.to_relative(length=view.point_width()).val + margin_w.pos * 2.0,
+        )
+
+        rect_x = left - margin_w.pos
+        rect_y = (
+            bottom
+            - total_height.to_relative(length=view.point_height()).val
+            + margin_h.pos
+        )
+
+        annot_rect = None
+        if annot.background_color != TRANSPARENT:
+            annot_rect = init_rect(
+                view,
+                origin=Coord(
+                    x=RelativeCoordType(pos=rect_x), y=RelativeCoordType(pos=rect_y)
+                ),
+                width=rect_width,
+                height=total_height,
+                init_rect_input=InitRectInput(
+                    style=rect_style, rotate=annot.rotate, name="annotationBackground"
+                ),
+            )
+
+        annot_text = init_multi_line_text(
+            view,
+            origin=Coord(x=RelativeCoordType(left), y=RelativeCoordType(bottom)),
+            text=annot.text,
+            text_kind=GOType.TEXT,
+            align_kind=TextAlignKind.LEFT,
+            init_multi_line_input=InitMultiLineInput(
+                rotate=annot.rotate,
+                font=annot.font,
+            ),
+        )
+
+        if annot_rect is not None:
+            view.add_obj(annot_rect)
+
+        for text in annot_text:
+            view.add_obj(text)
