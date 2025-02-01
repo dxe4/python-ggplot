@@ -27,28 +27,40 @@ from python_ggplot.common.enum_literals import (
     UNIT_TYPE_VALUES,
 )
 from python_ggplot.core.coord.objects import (
+    CentimeterCoordType,
     Coord,
     CoordsInput,
     DataCoord,
+    DataCoordType,
     LengthCoord,
+    RelativeCoordType,
     StrHeightCoordType,
     StrWidthCoordType,
     TextCoordData,
 )
+from python_ggplot.core.embed import view_embed_at
 from python_ggplot.core.objects import (
     GREY92,
     TRANSPARENT,
     WHITE,
+    AxisKind,
     Color,
     Font,
     GGException,
     Gradient,
     LineType,
     Scale,
+    Style,
     TextAlignKind,
     UnitType,
 )
-from python_ggplot.core.units.objects import DataUnit, PointUnit, Quantity, RelativeUnit
+from python_ggplot.core.units.objects import (
+    DataUnit,
+    PointUnit,
+    Quantity,
+    RelativeUnit,
+    add_length_quantities,
+)
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -79,6 +91,7 @@ from python_ggplot.gg.scales.base import (
     SizeScale,
     TransformedDataScale,
 )
+from python_ggplot.gg.scales.collect_and_fill import collect_scales
 from python_ggplot.gg.scales.values import (
     FillColorScaleValue,
     ScaleValue,
@@ -88,6 +101,7 @@ from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
 from python_ggplot.gg.theme import (
     build_theme,
     calculate_margin_range,
+    get_canvas_background,
     get_grid_line_style,
     get_minor_grid_line_style,
     get_plot_background,
@@ -103,6 +117,7 @@ from python_ggplot.gg.types import (
     Facet,
     GgPlot,
     OutsideRangeKind,
+    PlotView,
     PossibleColor,
     Ridges,
     SecondaryAxis,
@@ -110,11 +125,12 @@ from python_ggplot.gg.types import (
     ThemeMarginLayout,
 )
 from python_ggplot.gg.utils import calc_rows_columns, to_opt_sec_axis
-from python_ggplot.graphics.draw import background, layout
+from python_ggplot.graphics.draw import background, draw_to_file, layout
 from python_ggplot.graphics.initialize import (
     InitMultiLineInput,
     InitRectInput,
     InitTextInput,
+    TickLabelsInput,
     init_coord_1d_from_view,
     init_grid_lines,
     init_multi_line_text,
@@ -134,17 +150,8 @@ from python_ggplot.graphics.objects import (
     GOType,
     GraphicsObject,
 )
-from python_ggplot.graphics.views import ViewPortInput
+from python_ggplot.graphics.views import ViewPort, ViewPortInput
 from python_ggplot.public_interface.geom import ggplot
-from tests.test_view import (
-    AxisKind,
-    CentimeterCoordType,
-    DataCoordType,
-    RelativeCoordType,
-    Style,
-    TickLabelsInput,
-    ViewPort,
-)
 
 
 def ggridges(
@@ -2218,6 +2225,8 @@ def _draw_annotations(view: ViewPort, plot: GgPlot) -> None:
                 ),
             )
 
+        # TODO CRITICAL, easy task
+        # double check this logic, make sure its correct
         annot_text = init_multi_line_text(
             view,
             origin=Coord(x=RelativeCoordType(left), y=RelativeCoordType(bottom)),
@@ -2235,3 +2244,234 @@ def _draw_annotations(view: ViewPort, plot: GgPlot) -> None:
 
         for text in annot_text:
             view.add_obj(text)
+
+
+def _draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
+
+    title = str(title)  # ensure title is string
+    font = theme.title_font or Font(size=16.0)
+
+    if "\n" not in title:
+        str_width = _get_str_width(title, font)
+        # TODO CRITICAL, easy task
+        # we have to double check if the scales are comparable
+        # what if one is cm and the other is inch?
+        # we could normalise them or we could raise exception if not
+        # or make this logic generic with __gt__
+        if str_width.val > width.val:
+            # rebuild and wrap
+            line = ""
+            m_title = ""
+            for word in title.split(" "):
+                line_width = _get_str_width(line + word, font)
+                # TODO critical easy task
+                # same as the previous comparison
+                if line_width.val < width.val:
+                    line += word + " "
+                else:
+                    m_title += line + "\n"
+                    line = word + " "
+            m_title += line
+            title = m_title
+    else:
+        # user is manually wrapping and responsible
+        pass
+
+    title_obj = init_multi_line_text(
+        view=view,
+        # TODO check if this is correct
+        origin=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.0)),
+        text=title,
+        text_kind=GOType.TEXT,
+        align_kind=TextAlignKind.LEFT,
+        init_multi_line_input=InitMultiLineInput(font=font),
+    )
+    for item in title_obj:
+        view.add_obj(item)
+
+
+def _ggcreate(p: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
+    if len(p.geoms) == 0:
+        raise ValueError("Please use at least one `geom`!")
+
+    filled_scales: FilledScales
+    if p.ridges is not None:
+        filled_scales = collect_scales(p.update_aes_ridges())
+    else:
+        filled_scales = collect_scales(p)
+
+    theme = build_theme(filled_scales, p)
+    hide_ticks = theme.hide_ticks if theme.hide_ticks is not None else False
+    hide_labels = theme.hide_labels if theme.hide_labels is not None else False
+
+    img = ViewPort.from_coords(
+        CoordsInput(),
+        ViewPortInput(
+            name="root",
+            w_img=Quantity.points(width),
+            h_img=Quantity.points(height),
+        ),
+    )
+
+    background(img, style=get_canvas_background(theme))
+
+    _create_layout(img, filled_scales, theme)
+
+    plt_base = img.children[4]
+
+    if p.facet is not None:
+        _generate_facet_plots(
+            plt_base, p, filled_scales, hide_labels=hide_labels, hide_ticks=hide_ticks
+        )
+    else:
+        _generate_plot(
+            plt_base,
+            p,
+            filled_scales,
+            theme,
+            hide_labels=hide_labels,
+            hide_ticks=hide_ticks,
+        )
+
+    x_scale = plt_base.x_scale
+    y_scale = plt_base.y_scale
+    img.x_scale = x_scale
+    img.y_scale = y_scale
+
+    img.y_scale = plt_base.y_scale
+
+    drawn_legends: Set[Tuple[DiscreteType, ScaleType]] = set()
+    scale_names: Set[str] = set()
+    legends: List[ViewPort] = []
+
+    for scale in filled_scales.enumerate_scales_by_id():
+        if (
+            theme.hide_legend is None
+            and scale.scale_type
+            not in {ScaleType.LINEAR_DATA, ScaleType.TRANSFORMED_DATA}
+            and (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
+            not in drawn_legends
+        ):
+
+            # create deep copy of the original legend pane
+            lg = deepcopy(img.children[5])
+            _create_legend(lg, scale, theme.legend_order)
+
+            # TODO critical
+            # this is the formula node we chose to not support for now
+            # the origin calls evaluate
+            # we may have to double check this one
+            scale_col = str(scale.gg_data.col)
+
+            if scale_col not in scale_names:
+                legends.append(lg)
+                drawn_legends.add(
+                    (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
+                )
+            scale_names.add(scale_col)
+
+    if len(legends) > 0:
+        _finalize_legend(img.children[5], legends)
+        if p.theme.legend_position:
+            pos = p.theme.legend_position
+            img.children[5].origin.x = pos.x
+            img.children[5].origin.y = pos.y
+
+    _draw_annotations(img.children[4], p)
+
+    if p.title and len(p.title) > 0:
+        _draw_title(
+            img.children[1],
+            p.title,
+            theme,
+            img.children[1].point_width().add(img.children[2].point_width()),
+        )
+
+    return PlotView(filled_scales=filled_scales, view=img)
+
+
+def to_tex_options():
+    # after alpha version
+    raise GGException("unsupported")
+
+
+def _ggmulti(
+    plts: List[GgPlot],
+    fname: str,
+    width: int = 640,
+    height: int = 480,
+    widths: List[int] = field(default_factory=list),
+    heights: List[int] = field(default_factory=list),
+    use_tex: bool = False,
+    only_tikz: bool = False,
+    standalone: bool = False,
+    tex_template: str = "",
+    caption: str = "",
+    label: str = "",
+    placement: str = "htbp",
+):
+    """
+    backend is fixated to cairo for now
+    TODO only_tikz, use_tex not used (need to remove them for now)
+    """
+
+    width = widths[0] if len(widths) == 1 else width
+    height = heights[0] if len(heights) == 1 else height
+
+    def raise_if_not_matching(arg: Any, arg_name: Any):
+        if len(arg) > 1 and len(arg) != len(plts):
+            raise ValueError(
+                f"Incorrect number of {arg_name} in call to ggmulti. "
+                f"Has {len(arg)}, but needs: {len(plts)}"
+            )
+
+    raise_if_not_matching(widths, "widths")
+    raise_if_not_matching(heights, "heights")
+
+    if len(widths) > 0 or len(heights) > 0:
+        # Use explicit widths/heights
+        w_val = sum(widths) if widths else width
+        h_val = sum(heights) if heights else height
+        img = ViewPort.from_coords(
+            CoordsInput(),
+            # TODO double check this logic, it goes as float in initViewport
+            # our logic is a bit different
+            ViewPortInput(w_img=PointUnit(w_val), h_img=PointUnit(h_val)),
+        )
+
+        widths_q: List[PointUnit] = (
+            [PointUnit(float(w)) for w in widths] if widths else []
+        )
+        heights_q: List[PointUnit] = (
+            [PointUnit(float(h)) for h in heights] if heights else []
+        )
+
+        layout(
+            img,
+            cols=max(len(widths), 1),
+            rows=max(len(heights), 1),
+            # pyright being wrong here, but we should fix anyway
+            col_widths=widths_q,  # type: ignore
+            row_heights=heights_q,  # type: ignore
+        )
+    else:
+        cols, rows = calc_rows_columns(0, 0, len(plts))
+        img = ViewPort.from_coords(
+            CoordsInput(),
+            # TODO double check this logic, it goes as float in initViewport
+            # our logic is a bit different
+            ViewPortInput(
+                w_img=PointUnit(width * cols),
+                h_img=PointUnit(height * rows),
+            ),
+        )
+        layout(img, cols=cols, rows=rows)
+
+    for i, plt in enumerate(plts):
+        w_val = widths[i] if i < len(widths) else width
+        h_val = heights[i] if i < len(heights) else height
+
+        pp = _ggcreate(plt, width=w_val, height=h_val)
+        view_embed_at(img, i, pp.view)
+
+    draw_to_file(img, fname)

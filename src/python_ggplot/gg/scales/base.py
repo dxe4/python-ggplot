@@ -532,7 +532,7 @@ class FilledScales:
             raise GGException("secondary_axis does not exist")
         return gg_scale.scale_kind.data.secondary_axis  # type: ignore
 
-    def enumerate_scales_by_id(self: "FilledScales") -> Generator[Any]:
+    def enumerate_scales_by_id(self: "FilledScales") -> Generator[GGScale]:
         fields = [
             "x",
             "y",
