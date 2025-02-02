@@ -2,7 +2,7 @@ from math import ceil, sqrt
 from types import NoneType
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
-from python_ggplot.core.chroma import int_to_color
+from python_ggplot.core.chroma import int_to_color, to_opt_color
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -40,26 +40,6 @@ def calc_rows_columns(rows: int, columns: int, n_plots: int) -> Tuple[int, int]:
         return (rows, 1)
     else:
         return (rows, columns)
-
-
-def to_opt_color(x: PossibleColor) -> Color:
-    """
-    TODO fix types here fine for now
-    """
-    color_handlers: Dict[Any, Optional[Color]] = {
-        Missing: lambda _: None,  # type: ignore
-        Color: lambda c: c,  # type: ignore
-        int: lambda c: int_to_color(c),  # type: ignore
-        # Color.from_html(c) if is_valid_html_color(c) else None, # type: ignore
-        # from html not ported yet
-        str: lambda c: c,  # type: ignore
-    }
-
-    handler = color_handlers.get(x.__class__)  # type: ignore
-    if handler is None:
-        raise ValueError(f"Invalid color type: {type(x)}")
-
-    return handler(x)  # type: ignore
 
 
 def _handle_none(_: Any) -> None:

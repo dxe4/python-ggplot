@@ -1,8 +1,9 @@
 # ported code from num chroma
 # todo port the unit tests too
-from typing import List, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
+from typing_extensions import Callable
 
-from python_ggplot.core.objects import ColorRGBA, GGException
+from python_ggplot.core.objects import Color, ColorRGBA, GGException
 
 
 class RGBADict(TypedDict):
@@ -135,3 +136,22 @@ def value_to_color(c: int | str) -> ColorRGBA:
     if isinstance(c, str):
         return parse_html_color(c)
     raise ValueError("expected str or int")
+
+def to_opt_color(x: Union[Color, int, str, None]) -> Optional[Color]:
+    """
+    TODO fix types here fine for now
+    """
+    color_handlers: Dict[Any, Callable[..., Color]] = {
+        # Missing: lambda _: None,  # type: ignore
+        Color: lambda c: c,  # type: ignore
+        int: lambda c: int_to_color(c),  # type: ignore
+        # Color.from_html(c) if is_valid_html_color(c) else None, # type: ignore
+        # from html not ported yet
+        str: lambda c: c,  # type: ignore
+    }
+
+    handler = color_handlers.get(x.__class__)  # type: ignore
+    if handler is None:
+        raise ValueError(f"Invalid color type: {type(x)}")
+
+    return handler(x)  # type: ignore
