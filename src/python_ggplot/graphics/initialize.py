@@ -1135,7 +1135,6 @@ def init_ticks(
         result = init_ticks(
             view,
             axis_kind,
-            num_ticks=10,
             tick_locs=auto_tick_locations,
             tick_kind=tick_kind,
             major=major,
@@ -1159,7 +1158,7 @@ def init_ticks(
 def xticks(
     view: ViewPort,
     tick_locs: List[Coord],
-    num_ticks: Optional[int] = 10,
+    num_ticks: int = 10,
     tick_kind: Optional[TickKind] = None,
     style: Optional[Style] = None,
     update_scale: bool = True,
@@ -1170,7 +1169,7 @@ def xticks(
         view,
         AxisKind.X,
         tick_locs,
-        num_ticks=num_ticks or 10,
+        num_ticks=num_ticks,
         tick_kind=tick_kind,
         major=True,
         style=style,
@@ -1183,7 +1182,7 @@ def xticks(
 def yticks(
     view: ViewPort,
     tick_locs: List[Coord],
-    num_ticks: Optional[int] = None,
+    num_ticks: int = 10,
     tick_kind: Optional[TickKind] = None,
     style: Optional[Style] = None,
     update_scale: bool = True,
@@ -1194,7 +1193,7 @@ def yticks(
         view,
         AxisKind.Y,
         tick_locs,
-        num_ticks=num_ticks or 10,
+        num_ticks=num_ticks,
         tick_kind=tick_kind,
         major=True,
         style=style,
