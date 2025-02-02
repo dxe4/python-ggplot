@@ -215,8 +215,11 @@ def test_grid_lines():
     )
     x_ticks = xticks(img, [])
     y_ticks = yticks(img, [])
+
     grid_lines = init_grid_lines(x_ticks=x_ticks, y_ticks=y_ticks)
     grid_lines_major = init_grid_lines(x_ticks=x_ticks, y_ticks=y_ticks, major=False)
+
+    background(img)
     img.objects.append(grid_lines)
     img.objects.append(grid_lines_major)
     draw_to_file(img, "grid_lines.png")

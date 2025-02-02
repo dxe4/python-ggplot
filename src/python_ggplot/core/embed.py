@@ -213,13 +213,12 @@ def go_embed_grid(data: GOEmbedData) -> GraphicsObject:
         x=data.view.origin.x + RelativeCoordType(data.view.get_width().val),
         y=data.view.origin.y + RelativeCoordType(data.view.get_height().val),
     )
-
     obj.x_pos = [
-        data.view.origin.x + i + RelativeCoordType(data.view.get_width().val)
+        data.view.origin.x + i * RelativeCoordType(data.view.get_width().val)
         for i in obj.x_pos
     ]
     obj.y_pos = [
-        data.view.origin.y + i + RelativeCoordType(data.view.get_height().val)
+        data.view.origin.y + i * RelativeCoordType(data.view.get_height().val)
         for i in obj.y_pos
     ]
 

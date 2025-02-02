@@ -262,7 +262,7 @@ def background(view: ViewPort, style: Optional[Style] = None):
     style = style or default_style
 
     new_obj = GORect(
-        name="",
+        name="background",
         config=GraphicsObjectConfig(style=style),
         origin=Coord.relative(0.0, 0.0),
         width=Quantity.relative(1.0),
@@ -299,14 +299,14 @@ def draw_rect(img: Image, gobj: GORect):
         rotate_in_view = (gobj.config.rotate_in_view[0], gobj.config.rotate_in_view[1])
 
     img.backend.draw_rectangle(  # type: ignore -> pycairo headache
-        img,
-        left,
-        bottom,
-        gobj.width.val,
-        gobj.height.val,
-        gobj.config.style,
-        rotate,
-        rotate_in_view,
+        img=img,
+        left=left,
+        bottom=bottom,
+        width=gobj.width.val,
+        height=gobj.height.val,
+        style=gobj.config.style,
+        rotate=rotate,
+        rotate_in_view=rotate_in_view,
     )
 
 

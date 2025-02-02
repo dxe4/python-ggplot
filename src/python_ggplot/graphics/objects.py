@@ -347,7 +347,8 @@ class GOTick(GraphicsObject):
         return self.pos
 
     def scale_for_axis(self, axis: AxisKind) -> Scale:
-        # TODO fix the type here, its not critical and it will work fine
+        # TODO low priority, easy fix
+        # fix the type here, its not critical and it will work fine
         if axis == AxisKind.X:
             return self.pos.x.get_scale()  # type: ignore
         if axis == AxisKind.Y:

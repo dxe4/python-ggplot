@@ -227,17 +227,15 @@ class Point(Generic[T]):
 
 @dataclass
 class Style:
-    # TODO think about default for line width and color.
-    # 0.0 or 1.0? transparent or black?
-    line_width: float = 0.0
+    line_width: float = 1.0
     color: Color = field(default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0))
     size: float = 0.0
     line_type: LineType = LineType.NONE_TYPE
     fill_color: Optional[Color] = field(
-        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=1.0)
+        default_factory=lambda: Color(r=0.0, g=0.0, b=0.0, a=0.0)
     )
-    marker: Optional[MarkerKind] = None
-    error_bar_kind: Optional[ErrorBarKind] = None
+    marker: Optional[MarkerKind] = MarkerKind.CIRCLE
+    error_bar_kind: Optional[ErrorBarKind] = ErrorBarKind.LINES
     gradient: Optional[Gradient] = None
     font: Optional[Font] = None
 

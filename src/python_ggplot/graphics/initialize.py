@@ -59,6 +59,7 @@ from python_ggplot.graphics.objects import (
     format_tick_value,
 )
 from python_ggplot.graphics.views import ViewPort, x_axis_y_pos, y_axis_x_pos
+from tests.test_view import RelativeCoordType
 
 
 @dataclass
@@ -1217,8 +1218,10 @@ def calc_minor_ticks(ticks: List[GOTick], axis_kind: AxisKind) -> List[Coord1D]:
     for i, tick in enumerate(ticks[:-1]):
         if axis_kind == AxisKind.X:
             result.append((tick.pos.x + ticks[i + 1].pos.x) / cdiv2)
-        else:  # AxisKind.Y
+        elif axis_kind == AxisKind.Y:
             result.append((tick.pos.y + ticks[i + 1].pos.y) / cdiv2)
+        else:
+            raise GGException("unexpected axis")
 
     return result
 
@@ -1234,13 +1237,8 @@ def init_grid_lines(
         size=1.0 if major else 0.3,
         color=WHITE,
         line_type=LineType.SOLID,
+        line_width=1.0,
     )
-    # Double check this, the original version seems to have some attributes setup
-    # they are probably defaults but we have to double check to be sure
-    # line_width=1.0,
-    # fill_color=TRANSPARENT,
-    # marker=MarkerKind.CIRCLE,
-    # error_bar_kind=ErrorBarKind.LINES,
 
     style = style or default_style
     x_ticks_: List[GOTick] = x_ticks or []
@@ -1250,9 +1248,8 @@ def init_grid_lines(
     new_y_ticks: List[Coord1D] = []
 
     if major:
-        # TODO this type check can be fixed but lower priority
-        new_x_ticks = [obj.get_pos().x for obj in x_ticks_]  # type: ignore
-        new_y_ticks = [obj.get_pos().y for obj in y_ticks_]  # type: ignore
+        new_x_ticks = [obj.pos.x for obj in x_ticks_]
+        new_y_ticks = [obj.pos.y for obj in y_ticks_]
     else:
         new_x_ticks = calc_minor_ticks(x_ticks_, AxisKind.X)
         new_y_ticks = calc_minor_ticks(y_ticks_, AxisKind.Y)
@@ -1262,4 +1259,6 @@ def init_grid_lines(
         config=GraphicsObjectConfig(style=style),
         x_pos=new_x_ticks,
         y_pos=new_y_ticks,
+        origin=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.0)),
+        origin_diagonal=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.0)),
     )
