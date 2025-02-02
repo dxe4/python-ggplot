@@ -1,6 +1,7 @@
-'''
+"""
 TODO this whole file needs cleaning up
-'''
+"""
+
 import math
 from collections import OrderedDict
 from copy import deepcopy

@@ -1,8 +1,7 @@
 import os
 from collections import OrderedDict
-from copy import deepcopy
 from dataclasses import field
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
@@ -19,12 +18,10 @@ from python_ggplot.core.objects import (
     Scale,
 )
 from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol
-from python_ggplot.gg.geom import Geom
 from python_ggplot.gg.scales.base import (
     AlphaScale,
     ColorScale,
     ColorScaleKind,
-    DateScale,
     FillColorScale,
     GGScale,
     GGScaleContinuous,
@@ -38,8 +35,6 @@ from python_ggplot.gg.scales.base import (
 from python_ggplot.gg.scales.values import ScaleValue, SizeScaleValue
 from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
 from python_ggplot.gg.types import (
-    Aesthetics,
-    Annotation,
     DataType,
     DiscreteFormat,
     DiscreteType,
@@ -55,8 +50,6 @@ from python_ggplot.gg.types import (
 from python_ggplot.graphics.draw import draw_to_file
 from python_ggplot.graphics.views import ViewPort
 from python_ggplot.public_interface.utils import (
-    apply_scale,
-    apply_theme,
     ggcreate,
     parse_text_align_string,
     scale_axis_discrete_with_label_fn,
@@ -563,85 +556,6 @@ def ylim(
     or_opt = OutsideRangeKind(outside_range) if outside_range else None
     result = Theme(y_range=Scale(float(low), float(high)), y_outside_range=or_opt)
     return result
-
-
-# TODO medium priority easy task
-# the follow functions preffixed with _add are supposed to allow gg_sometihng() + gg_something()
-# for now we just make the functions, theres a plan for this later
-
-
-def _add_scale(plot: GgPlot, scale: GGScale) -> GgPlot:
-    # TODO MEDIUM priority EASY task
-    # does this need deep copy?
-    result = deepcopy(plot)
-
-    result.aes = apply_scale(result.aes, scale)
-    for geom in result.geoms:
-        geom.gg_data.aes = apply_scale(geom.gg_data.aes, scale)
-    return result
-
-
-def _add_date_scale(p: GgPlot, date_scale: DateScale) -> GgPlot:
-    """
-    TODO refactor....
-    this is a bit of a mess but *should* work
-    """
-
-    def assign_copy_scale(obj: Aesthetics, field: str, ds: Any):
-        field_val = obj.__dict__.get(field)
-        if field_val is not None:
-            scale = deepcopy(field_val)
-            scale.date_scale = ds
-            setattr(obj, field, scale)
-
-    result = deepcopy(p)
-
-    if date_scale.axis_kind == AxisKind.X:
-        assign_copy_scale(result.aes, "x", date_scale)
-    elif date_scale.axis_kind == AxisKind.Y:
-        assign_copy_scale(result.aes, "y", date_scale)
-
-    for geom in result.geoms:
-        if date_scale.axis_kind == AxisKind.X:
-            assign_copy_scale(geom.gg_data.aes, "x", date_scale)
-        elif date_scale.axis_kind == AxisKind.Y:
-            assign_copy_scale(geom.gg_data.aes, "y", date_scale)
-
-    return result
-
-
-def _add_theme(plot: GgPlot, theme: Theme) -> GgPlot:
-    apply_theme(plot.theme, theme)
-
-    if plot.theme.title is not None:
-        plot.title = plot.theme.title
-    if plot.theme.sub_title is not None:
-        plot.title = plot.theme.sub_title
-
-    return plot
-
-
-def _add_geom(plot: GgPlot, geom: Geom) -> GgPlot:
-    plot.geoms.append(geom)
-    return plot
-
-
-def _add_facet(plot: GgPlot, facet: Facet) -> GgPlot:
-    plot.facet = facet
-    return plot
-
-
-def _add_ridges(plot: GgPlot, ridges: Ridges) -> GgPlot:
-    plot.ridges = ridges
-    return plot
-
-
-def _add_annotations(plot: GgPlot, annotations: Annotation) -> GgPlot:
-    plot.annotations.append(annotations)
-    return plot
-
-
-# end of _add functions
 
 
 def ggdraw(view: ViewPort, fname: str):

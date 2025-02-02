@@ -351,30 +351,39 @@ class GgPlot:
     facet: Optional[Any] = None
     ridges: Optional[Ridges] = None
 
-    def update_aes_ridges(self: "GgPlot") -> "GgPlot":
+    def __add__(self, other: Any):
         """
-        TODO high priority this seems wrong on nim side
-        how come we have:
-            a) dcKind: dcDiscrete
-            b) no valueMap, labelSeq, formatDiscreteLabel
-        this should not be possible
-        we will pass {} and [] for now,
-        dont want to set them as optioanl it has a cascading effect on doing null checks
-
-        Scale(
-            scKind: scLinearData,
-            col: ridge.col,
-            axKind: akY,
-            hasDiscreteness: true, # force scale to be discrete!
-            dcKind: dcDiscrete,
-            ids: {0'u16 .. high(uint16)}
+        TODO, there is a better plan for this, for now its fine
+        """
+        from python_ggplot.gg.scales.base import DateScale, GGScale
+        from python_ggplot.gg.types import Annotation, Facet, Ridges, Theme
+        from python_ggplot.public_interface.add import (
+            add_annotations,
+            add_date_scale,
+            add_facet,
+            add_geom,
+            add_ridges,
+            add_scale,
+            add_theme,
         )
-        case dcKind*: DiscreteKind
-        of dcDiscrete:
-          valueMap*: OrderedTable[Value, ScaleValue]
-          labelSeq*: seq[Value]
-          formatDiscreteLabel*: DiscreteFormat
-        """
+
+        if isinstance(self, GGScale):
+            return add_scale(self, other)
+        elif isinstance(self, DateScale):
+            return add_date_scale(self, other)
+        elif isinstance(self, Theme):
+            return add_theme(self, other)
+        elif isinstance(self, Geom):
+            return add_geom(self, other)
+        elif isinstance(self, Facet):
+            return add_facet(self, other)
+        elif isinstance(self, Ridges):
+            return add_ridges(self, other)
+        elif isinstance(self, Annotation):
+            return add_annotations(self, other)
+        raise GGException(f"cant add plot to {other.__class__}")
+
+    def update_aes_ridges(self: "GgPlot") -> "GgPlot":
         if self.ridges is None:
             raise GGException("expected ridges")
 
