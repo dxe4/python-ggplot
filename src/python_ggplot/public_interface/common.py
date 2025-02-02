@@ -2476,14 +2476,16 @@ def _ggmulti(
 
     draw_to_file(img, fname)
 
+
 def ggdraw(view: ViewPort, fname: str):
     draw_to_file(view, fname)
+
 
 def ggdraw_plot(plt: PlotView, fname: str):
     draw_to_file(plt.view, fname)
 
 
-def ggsave(p: GgPlot, fname: str, width: float=640.0, height: float=480.0):
+def ggsave(p: GgPlot, fname: str, width: float = 640.0, height: float = 480.0):
     plt = _ggcreate(p, width=width, height=height)
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     ggdraw(plt.view, fname)

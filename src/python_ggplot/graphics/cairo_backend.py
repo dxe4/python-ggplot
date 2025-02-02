@@ -20,8 +20,7 @@ from cairo import (
 )
 
 if TYPE_CHECKING:
-    from python_ggplot.core.objects import CFontSlant
-    from python_ggplot.core.objects import FileTypeKind, Font
+    from python_ggplot.core.objects import CFontSlant, FileTypeKind, Font
 
 
 def to_cairo_font_slaint(c_font_slant: "CFontSlant"):
@@ -35,7 +34,7 @@ def to_cairo_font_slaint(c_font_slant: "CFontSlant"):
     return data[c_font_slant]
 
 
-def to_cairo_font_weight(font: 'Font'):
+def to_cairo_font_weight(font: "Font"):
     data = {True: FontWeight.NORMAL, False: FontWeight.BOLD}
     return data[font.bold]
 
@@ -205,7 +204,7 @@ class CairoBackend:
         return context.text_extents(text)
 
     @classmethod
-    def get_text_extend(cls, text: str, font: 'Font') -> TextExtents:
+    def get_text_extend(cls, text: str, font: "Font") -> TextExtents:
         width = len(text) * font.size * 2.0
         height = font.size * 2.0
         surface = ImageSurface(FORMAT_ARGB32, int(width), int(height))
@@ -343,7 +342,7 @@ class CairoBackend:
         return bytearray(input_data)
 
 
-def init_image(filename: str, width: int, height: int, ftype: 'FileTypeKind'):
+def init_image(filename: str, width: int, height: int, ftype: "FileTypeKind"):
     # todo fix this later
     from python_ggplot.core.objects import FileTypeKind, GGException, Image
 

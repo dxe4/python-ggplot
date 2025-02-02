@@ -90,12 +90,12 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
-    def find(self, go_type: GOType, recursive: bool=True):
-        '''
+    def find(self, go_type: GOType, recursive: bool = True):
+        """
         TODO write docs and make this more flexible
         currently goes through all the object of current view and sub views
         returns the ones that match the type given
-        '''
+        """
         result: List[GraphicsObject] = []
         for object in self.objects:
             if object.go_type == go_type:
@@ -106,7 +106,6 @@ class ViewPort:
                 result.extend(sub_view.find(go_type))
 
         return result
-
 
     def get_center(self) -> Tuple[float, float]:
         center_x: float = self.left().pos + (
@@ -321,11 +320,13 @@ class ViewPort:
         return result
 
     def x_axis(self, width: float = 1.0, color: Color = BLACK) -> GraphicsObject:
-        from python_ggplot.graphics.initialize import init_axis, InitAxisInput
+        from python_ggplot.graphics.initialize import InitAxisInput, init_axis
+
         return init_axis(AxisKind.X, InitAxisInput(width=width, color=color))
 
     def y_axis(self, width: float = 1.0, color: Color = BLACK) -> GraphicsObject:
-        from python_ggplot.graphics.initialize import init_axis, InitAxisInput
+        from python_ggplot.graphics.initialize import InitAxisInput, init_axis
+
         return init_axis(AxisKind.Y, InitAxisInput(width=width, color=color))
 
     # def __rich_repr__(self):

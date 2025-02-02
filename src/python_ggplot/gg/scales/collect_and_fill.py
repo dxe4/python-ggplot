@@ -941,8 +941,13 @@ def collect(plot: GgPlot, field: Any):
 
     # Check all geoms
     for geom in plot.geoms:
-        if hasattr(geom.gg_data.aes, field) and getattr(geom.gg_data.aes, field) is not None:
-            element = _FillScaleData(df=geom.gg_data.data, scale=getattr(geom.gg_data.aes, field))
+        if (
+            hasattr(geom.gg_data.aes, field)
+            and getattr(geom.gg_data.aes, field) is not None
+        ):
+            element = _FillScaleData(
+                df=geom.gg_data.data, scale=getattr(geom.gg_data.aes, field)
+            )
             scale_data.append(element)
 
     return scale_data

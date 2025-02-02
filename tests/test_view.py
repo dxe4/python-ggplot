@@ -3,6 +3,7 @@ import builtins
 import math
 
 from rich.console import Console
+
 from python_ggplot.core.common import linspace
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
@@ -23,7 +24,6 @@ from python_ggplot.core.objects import (
     Style,
 )
 from python_ggplot.core.units.objects import Quantity
-from python_ggplot.graphics.cairo_backend import cairo_test
 from python_ggplot.graphics.draw import background, draw_to_file
 from python_ggplot.graphics.initialize import (
     InitAxisInput,
@@ -44,6 +44,7 @@ from python_ggplot.graphics.initialize import (
     yticks,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
+from tests import data_path
 
 TAU = 6.28318530717958647692528676655900577
 DEBUG = True
@@ -62,7 +63,6 @@ if DEBUG:
 
 
 def test_view():
-    cairo_test()
 
     img = ViewPort.from_coords(CoordsInput(), ViewPortInput())
     view1 = img.add_viewport_from_coords(
@@ -192,7 +192,7 @@ def test_view():
     view1.children.append(view2)
     img.children.append(view1)
 
-    draw_to_file(img, "simple_test.png")
+    draw_to_file(img, data_path / "simple_test.png")
 
 
 def test_grid_lines():
@@ -222,7 +222,7 @@ def test_grid_lines():
     background(img)
     img.objects.append(grid_lines)
     img.objects.append(grid_lines_major)
-    draw_to_file(img, "grid_lines.png")
+    draw_to_file(img, data_path / "grid_lines.png")
 
 
 def test_colds():
@@ -255,7 +255,7 @@ def test_colds():
 
     img.children.append(axis_vp)
 
-    draw_to_file(img, "test_gg_cols.png")
+    draw_to_file(img, data_path / "test_gg_cols.png")
 
 
 def test_coord_add():

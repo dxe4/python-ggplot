@@ -563,7 +563,7 @@ def geom_freqpoly(
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
     density: bool = False,
-    line_type: LINE_TYPE_VALUES = "solid"
+    line_type: LINE_TYPE_VALUES = "solid",
 ) -> "Geom":
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
