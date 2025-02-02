@@ -1,9 +1,8 @@
 from copy import deepcopy
 from dataclasses import field
-from typing import Any, Callable, List, Optional, Set, Tuple
+from typing import Any, Callable, List, Optional, Set, Tuple, Dict
 
 import pandas as pd
-from typing_extensions import Dict
 
 from python_ggplot.common.enum_literals import (
     BIN_BY_VALUES,

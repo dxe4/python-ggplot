@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from enum import auto
-from typing import Any, Dict, OrderedDict
+from typing import Any, Dict, OrderedDict, Optional
 
 import pandas as pd
-from numpy._core.multiarray import _ReturnType
-from typing_extensions import Optional
 
 from python_ggplot.core.objects import GGEnum, GGException
 

@@ -1,14 +1,18 @@
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional, Tuple, cast
+from typing import (
+    Any, Dict, List, Literal, Optional, Tuple, Union, cast
+)
+
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from typing_extensions import Union
 
 from python_ggplot.colormaps.color_maps import int_to_color
-from python_ggplot.core.objects import AxisKind, ColorHCL, LineType, MarkerKind, Scale
+from python_ggplot.core.objects import (
+    AxisKind, ColorHCL, LineType, MarkerKind, Scale
+)
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,

@@ -124,6 +124,8 @@ from python_ggplot.graphics.initialize import (
     init_text,
     init_ticks,
     tick_labels,
+    xlabel,
+    ylabel,
 )
 from python_ggplot.graphics.objects import (
     GOLabel,
