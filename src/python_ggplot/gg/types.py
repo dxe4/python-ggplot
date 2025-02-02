@@ -193,21 +193,17 @@ class DateTickAlgorithmType(GGEnum):
     CUSTOM_BREAKS = auto()
 
 
-class Missing:
-    pass
-
-
 # Define the types
-PossibleColor = Union[Missing, Color, int, str, Optional[Color]]
-PossibleFloat = Union[Missing, int, float, str, Optional[float]]
-PossibleBool = Union[Missing, bool]
-PossibleMarker = Union[Missing, MarkerKind, Optional[MarkerKind]]
-PossibleLineType = Union[Missing, LineType, Optional[LineType]]
-PossibleErrorBar = Union[Missing, ErrorBarKind, Optional[ErrorBarKind]]
-PossibleFont = Union[Missing, Font, Optional[Font]]
-PossibleSecondaryAxis = Union[Missing, SecondaryAxis]
+PossibleColor = Union[None, Color, int, str, Optional[Color]]
+PossibleFloat = Union[None, int, float, str, Optional[float]]
+PossibleBool = Union[None, bool]
+PossibleMarker = Union[None, MarkerKind, Optional[MarkerKind]]
+PossibleLineType = Union[None, LineType, Optional[LineType]]
+PossibleErrorBar = Union[None, ErrorBarKind, Optional[ErrorBarKind]]
+PossibleFont = Union[None, Font, Optional[Font]]
+PossibleSecondaryAxis = Union[None, SecondaryAxis]
 # TODO refactor Union[int, float] to use this
-PossibleNumber = Union[Union[Missing, int, float, str, Optional[float]]]
+PossibleNumber = Union[Union[None, int, float, str, Optional[float]]]
 
 
 class DataType(GGEnum):
