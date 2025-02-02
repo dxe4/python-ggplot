@@ -1,5 +1,5 @@
 from math import factorial
-from typing import Any
+from typing import Any, no_type_check
 
 import numpy as np
 from numpy.typing import NDArray
@@ -7,6 +7,7 @@ from numpy.typing import NDArray
 from python_ggplot.core.objects import GGException
 
 
+@no_type_check
 def savitzky_golay(
     y: NDArray[float], window_size: int, order: int, deriv: int = 0, rate: int = 1
 ):

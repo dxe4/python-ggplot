@@ -46,6 +46,7 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
     scale_type_to_cls,
 )
+from python_ggplot.gg.scales.post_process import post_process_scales
 from python_ggplot.gg.scales.values import (
     AlphaScaleValue,
     ColorScaleValue,
@@ -940,8 +941,8 @@ def collect(plot: GgPlot, field: Any):
 
     # Check all geoms
     for geom in plot.geoms:
-        if hasattr(geom.aes, field) and getattr(geom.aes, field) is not None:
-            element = _FillScaleData(df=geom.data, scale=getattr(geom.aes, field))
+        if hasattr(geom.gg_data.aes, field) and getattr(geom.gg_data.aes, field) is not None:
+            element = _FillScaleData(df=geom.gg_data.data, scale=getattr(geom.gg_data.aes, field))
             scale_data.append(element)
 
     return scale_data
@@ -1045,5 +1046,5 @@ def collect_scales(plot: GgPlot) -> FilledScales:
     if plot.facet is not None:
         add_facets(filled_scales_result, plot)
 
-    post_process_scales(result, plot)  # TODO port post process
+    post_process_scales(filled_scales_result, plot)
     return filled_scales_result

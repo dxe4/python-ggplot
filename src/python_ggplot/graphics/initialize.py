@@ -1135,7 +1135,7 @@ def init_ticks(
         result = init_ticks(
             view,
             axis_kind,
-            num_ticks=None,
+            num_ticks=0,
             tick_locs=auto_tick_locations,
             tick_kind=tick_kind,
             major=major,

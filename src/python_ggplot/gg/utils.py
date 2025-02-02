@@ -22,7 +22,6 @@ from python_ggplot.gg.types import (
     PossibleFont,
     PossibleLineType,
     PossibleMarker,
-    PossibleSecondaryAxis,
     SecondaryAxis,
 )
 
@@ -55,7 +54,7 @@ def to_opt_color(x: PossibleColor) -> Color:
     """
     TODO fix types here fine for now
     """
-    color_handlers = {
+    color_handlers: Dict[Any, Optional[Color]] = {
         Missing: lambda _: None,  # type: ignore
         Color: lambda c: c,  # type: ignore
         int: lambda c: int_to_color(c),  # type: ignore

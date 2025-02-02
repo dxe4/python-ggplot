@@ -554,7 +554,7 @@ class FilledScales:
         # we may want to implement it for all
         result: Set[Any] = set()
         for scale in self.enumerate_scales_by_id():
-            if geom.gg_data.gid in scale.ids and scale not in result:
+            if geom.gg_data.gid in scale.gg_data.ids and scale not in result:
                 result.add(scale)
                 yield scale
 

@@ -152,7 +152,6 @@ from python_ggplot.graphics.objects import (
     GraphicsObject,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
-from python_ggplot.public_interface.geom import ggplot
 
 
 def ggridges(

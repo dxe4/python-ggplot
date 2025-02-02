@@ -305,6 +305,8 @@ class Theme:
     legend_position: Optional[Coord] = None
     legend_order: Optional[List[int]] = None
     hide_legend: Optional[bool] = None
+    # TODO for PossibleColor attributes, we need to do a transformation
+    # porting color_from_html from chroma package blocks this
     canvas_color: Optional[PossibleColor] = None
     plot_background_color: Optional[PossibleColor] = None
     grid_lines: Optional[bool] = None

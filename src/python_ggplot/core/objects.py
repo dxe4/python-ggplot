@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Generic, List, Literal, Optional, Type, TypeVar, Union
+from typing import Any, Generic, List, Literal, Optional, Type, TypeVar, Union
 
 from python_ggplot.core.chroma import color_from_hsl
 from python_ggplot.core.common import linspace
@@ -164,7 +164,7 @@ class Color:
     b: float
     a: float  # TODO add default alpha = 1.0
 
-    def __eq__(self, o: "Color") -> bool:
+    def __eq__(self, o: Any) -> bool:
         return self.r == o.r and self.g == o.g and self.b == o.b and self.a == o.a
 
 
