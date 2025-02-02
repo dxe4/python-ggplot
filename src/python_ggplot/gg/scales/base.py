@@ -60,11 +60,9 @@ from python_ggplot.gg.types import (
     MainAddScales,
     SecondaryAxis,
 )
-from python_ggplot.graphics.draw import layout
 from python_ggplot.graphics.initialize import init_point_from_point
 from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
-from tests.test_view import Quantity
 
 if typing.TYPE_CHECKING:
     from python_ggplot.gg.scales.values import ScaleValue

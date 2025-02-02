@@ -21,9 +21,7 @@ from python_ggplot.core.objects import (
     UnitType,
 )
 from python_ggplot.core.units.objects import Quantity, RelativeUnit
-from python_ggplot.graphics.initialize import init_axis
 from python_ggplot.graphics.objects import GraphicsObject
-from tests.test_view import InitAxisInput
 
 
 @dataclass
@@ -305,9 +303,11 @@ class ViewPort:
         return result
 
     def x_axis(self, width: float = 1.0, color: Color = BLACK) -> GraphicsObject:
+        from python_ggplot.graphics.initialize import init_axis, InitAxisInput
         return init_axis(AxisKind.X, InitAxisInput(width=width, color=color))
 
     def y_axis(self, width: float = 1.0, color: Color = BLACK) -> GraphicsObject:
+        from python_ggplot.graphics.initialize import init_axis, InitAxisInput
         return init_axis(AxisKind.Y, InitAxisInput(width=width, color=color))
 
     # def __rich_repr__(self):

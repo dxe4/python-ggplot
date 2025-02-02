@@ -15,7 +15,7 @@ from python_ggplot.common.enum_literals import (
     SMOOTH_METHOD_TYPE_VALUES,
     STAT_TYPE_VALUES,
 )
-from python_ggplot.core.objects import ErrorBarKind, GGException, LineType
+from python_ggplot.core.objects import AxisKind, ErrorBarKind, GGException, LineType
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom import (
@@ -57,7 +57,6 @@ from python_ggplot.gg.types import (
     Theme,
 )
 from python_ggplot.gg.utils import assign_identity_scales_get_style
-from tests.test_view import AxisKind
 
 id_counter = 1
 

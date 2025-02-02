@@ -3,12 +3,10 @@ import builtins
 import math
 
 from rich.console import Console
-
-from python_ggplot.core.common import get_logger, linspace
+from python_ggplot.core.common import linspace
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
     Coord,
-    Coord1D,
     CoordsInput,
     DataCoord,
     DataCoordType,
@@ -33,7 +31,6 @@ from python_ggplot.graphics.initialize import (
     InitRectInput,
     TickLabelsInput,
     init_axis,
-    init_coord,
     init_error_bar_from_point,
     init_grid_lines,
     init_point_from_point,

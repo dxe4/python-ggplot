@@ -208,11 +208,11 @@ def convert_quantity_data(data: QuantityConversionData, to_type: UnitType):
 
 
 def convert_quantity(
-    quantity: Quantity,
+    quantity: 'Quantity',
     to_type: UnitType,
-    length: Optional[Quantity] = None,
+    length: Optional['Quantity'] = None,
     scale: Optional[Scale] = None,
-) -> Quantity:
+) -> 'Quantity':
     data = QuantityConversionData(quantity=quantity, length=length, scale=scale)
     return convert_quantity_data(data, to_type)
 

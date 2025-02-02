@@ -11,7 +11,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
-from python_ggplot.core.objects import GGException, Scale
+from python_ggplot.core.objects import AxisKind, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom import (
     FilledGeom,
@@ -44,7 +44,6 @@ from python_ggplot.gg.types import (
     StatSmooth,
     StatType,
 )
-from tests.test_view import AxisKind
 
 
 def get_scales(
