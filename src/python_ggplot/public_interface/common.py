@@ -55,13 +55,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     UnitType,
 )
-from python_ggplot.core.units.objects import (
-    DataUnit,
-    PointUnit,
-    Quantity,
-    RelativeUnit,
-    add_length_quantities,
-)
+from python_ggplot.core.units.objects import DataUnit, PointUnit, Quantity
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -82,7 +76,6 @@ from python_ggplot.gg.scales.base import (
     GGScaleContinuous,
     GGScaleData,
     GGScaleDiscrete,
-    GGScaleDiscreteKind,
     LinearAndTransformScaleData,
     LinearDataScale,
     ScaleFreeKind,

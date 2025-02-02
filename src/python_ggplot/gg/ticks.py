@@ -35,10 +35,12 @@ from python_ggplot.gg.types import DateTickAlgorithmType, DiscreteType, GgPlot, 
 from python_ggplot.graphics.initialize import (
     calc_tick_locations,
     init_ticks,
+    tick_labels,
     tick_labels_from_coord,
 )
 from python_ggplot.graphics.objects import GraphicsObject, format_tick_value
 from python_ggplot.graphics.views import ViewPort
+from tests.test_view import TickLabelsInput
 
 
 def get_ticks(scale: Union[GGScale, Scale]) -> int:
@@ -655,7 +657,7 @@ def handle_ticks(
         raise GGException("enexpected scale")
 
     has_scale = len(scale.gg_data.col.col_name) > 0 if scale else False
-    result = []
+    result: List[GraphicsObject] = []
     sscale_discrete_kind = scale.gg_data.discrete_kind.discrete_type
 
     if has_scale:
@@ -770,9 +772,12 @@ def handle_ticks(
         ticks = init_ticks(view, ax_kind, num_ticks=num_ticks, bound_scale=bound_scale)
         ticks = init_ticks(view, ax_kind, num_ticks=num_ticks, bound_scale=bound_scale)
 
-        # TODO urgen thi needs fixing
         tick_labs = tick_labels(
-            view, ticks, font=theme.tick_label_font, margin=margin_opt
+            view,
+            ticks,
+            TickLabelsInput(  # type: ignore use generics?
+                font=theme.tick_label_font, margin=margin_opt
+            ),
         )
 
         if not hide_tick_labels:

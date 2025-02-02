@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from python_ggplot.core.coord.objects import (
     Coord,
@@ -45,7 +45,7 @@ class ViewPortInput:
     def __post_init__(self):
         self.update_views()
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any):
         super().__setattr__(name, value)
         if name in ("h_parent_view", "w_parent_view"):
             # prefer to have this here guaranteed,
@@ -218,10 +218,10 @@ class ViewPort:
     def get_height(self):
         return self.height.to_relative(length=self.h_img)
 
-    def __getitem__(self, k):
+    def __getitem__(self, k: int) -> "ViewPort":
         return self.children[k]
 
-    def __setitem__(self, k, v):
+    def __setitem__(self, k: int, v: "ViewPort"):
         self.children[k] = v
 
     def len(self) -> int:
@@ -230,7 +230,7 @@ class ViewPort:
     def high(self) -> int:
         return self.len() - 1
 
-    def get_child(self, idx) -> "ViewPort":
+    def get_child(self, idx: int) -> "ViewPort":
         return self.children[idx]
 
     def to_relative_dimension(self, axis_kind: AxisKind):

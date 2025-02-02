@@ -32,6 +32,7 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
 )
 from python_ggplot.gg.styles import apply_style, change_style, use_or_default
+from python_ggplot.gg.ticks import get_x_ticks, get_y_ticks
 from python_ggplot.gg.types import (
     PREV_VALS_COL,
     SMOOTH_VALS_COL,
@@ -44,6 +45,7 @@ from python_ggplot.gg.types import (
     StatSmooth,
     StatType,
 )
+from python_ggplot.graphics.initialize import calc_tick_locations
 
 
 def get_scales(
@@ -1040,7 +1042,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if len(map_disc_cols) > 0:
-        grouped = df.groupby(map_disc_cols, sort=False)
+        grouped = df.groupby(map_disc_cols, sort=False)  # type: ignore
         col = pd.Series(dtype=float)  # For stacking
 
         if len(cont) > 0:
@@ -1081,8 +1083,9 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
                 Scale(low=0.0, high=float(col.max()))  # type: ignore
             )
     else:
-        if cont > 0:
+        if len(cont) > 0:
             raise GGException("cont > 0")
+
         weight_scale = get_weight_scale(filled_scales, geom)
         yield_df = count_(df, x_col, weight_scale)
         yield_df["prev_vals"] = 0.0
@@ -1113,8 +1116,8 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
     we need something like geom.fill() with mixins
     make it work first
     """
-    x_scale = None
-    y_scale = None
+    x_scale: Optional[Scale] = None
+    y_scale: Optional[Scale] = None
 
     for geom in plot.geoms:
         geom_data = geom.gg_data.data
@@ -1146,10 +1149,10 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
                 # essentially take same data as for point
                 filled_geom = filled_identity_geom(df, geom, filled_scales)
                 # still a histogram like geom, make sure bottom is still at 0!
-                filled_geom.y_scale = {
-                    "low": min(0.0, filled_geom.y_scale["low"]),
-                    "high": filled_geom.y_scale["high"],
-                }
+                filled_geom.gg_data.y_scale = Scale(
+                    low=min(0.0, filled_geom.gg_data.y_scale.low),
+                    high=filled_geom.gg_data.y_scale.high,
+                )
             elif geom.stat_type == StatType.BIN:
                 # calculate histogram
                 filled_geom = filled_bin_geom(df, geom, filled_scales)
@@ -1168,10 +1171,10 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
                 # essentially take same data as for point
                 filled_geom = filled_identity_geom(df, geom, filled_scales)
                 # still a geom_bar, make sure bottom is still at 0!
-                filled_geom.y_scale = {
-                    "low": min(0.0, filled_geom.y_scale["low"]),
-                    "high": filled_geom.y_scale["high"],
-                }
+                filled_geom.gg_data.y_scale = Scale(
+                    low=min(0.0, filled_geom.gg_data.y_scale.low),
+                    high=filled_geom.gg_data.y_scale.high,
+                )
             elif geom.stat_type == StatType.COUNT:
                 # count values in classes
                 filled_geom = filled_count_geom(df, geom, filled_scales)
@@ -1186,16 +1189,28 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
                     "`density` plot using `geom_density` instead?"
                 )
 
-        if x_scale is not None:
-            x_scale = x_scale.merge(filled_geom.x_scale)
-            y_scale = y_scale.merge(filled_geom.y_scale)
+        if filled_geom is None:
+            raise GGException("filled geom should not be none")
+
+        if (
+            x_scale is not None
+            and not x_scale.is_empty()
+            and y_scale is not None
+            and not y_scale.is_empty()
+        ):
+            x_scale = x_scale.merge(filled_geom.gg_data.x_scale)
+            y_scale = y_scale.merge(filled_geom.gg_data.y_scale)
         else:
-            x_scale = filled_geom.x_scale
-            y_scale = filled_geom.y_scale
+            x_scale = filled_geom.gg_data.x_scale
+            y_scale = filled_geom.gg_data.y_scale
 
         filled_scales.geoms.append(filled_geom)
-    final_x_scale, _, _ = calc_tick_locations(x_scale, filled_scales.get_x_ticks())
-    final_y_scale, _, _ = calc_tick_locations(y_scale, filled_scales.get_y_ticks())
+
+    if x_scale is None or y_scale is None:
+        raise GGException("x and y scale have not exist by this point")
+
+    final_x_scale, _, _ = calc_tick_locations(x_scale, get_x_ticks(filled_scales))
+    final_y_scale, _, _ = calc_tick_locations(y_scale, get_y_ticks(filled_scales))
 
     filled_scales.x_scale = final_x_scale
     filled_scales.y_scale = final_y_scale

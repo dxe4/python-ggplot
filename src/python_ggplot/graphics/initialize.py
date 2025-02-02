@@ -1135,7 +1135,7 @@ def init_ticks(
         result = init_ticks(
             view,
             axis_kind,
-            num_ticks=0,
+            num_ticks=10,
             tick_locs=auto_tick_locations,
             tick_kind=tick_kind,
             major=major,
@@ -1170,7 +1170,7 @@ def xticks(
         view,
         AxisKind.X,
         tick_locs,
-        num_ticks=num_ticks,
+        num_ticks=num_ticks or 10,
         tick_kind=tick_kind,
         major=True,
         style=style,
