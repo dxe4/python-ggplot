@@ -23,7 +23,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from python_ggplot.colormaps.color_maps import int_to_color
+from python_ggplot.core.chroma import int_to_color
 from python_ggplot.common.enum_literals import (
     OUTSIDE_RANGE_KIND_VALUES,
     UNIT_TYPE_VALUES,

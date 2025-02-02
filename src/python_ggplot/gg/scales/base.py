@@ -560,7 +560,7 @@ class FilledScales:
 
 
 def scale_from_data(
-    column: pd.Series[Any], scale: GGScale, ignore_inf: bool = True
+    column: pd.Series, scale: GGScale, ignore_inf: bool = True
 ) -> Scale:
     if column.len == 0:
         return Scale(low=0.0, high=0.0)

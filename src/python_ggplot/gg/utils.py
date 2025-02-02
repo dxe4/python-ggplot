@@ -2,7 +2,7 @@ from math import ceil, sqrt
 from types import NoneType
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
-from python_ggplot.colormaps.color_maps import int_to_color
+from python_ggplot.core.chroma import int_to_color
 from python_ggplot.core.objects import (
     AxisKind,
     Color,

@@ -2,6 +2,8 @@
 # todo port the unit tests too
 from typing import List, Tuple, TypedDict, Union
 
+from python_ggplot.core.objects import ColorRGBA, GGException
+
 
 class RGBADict(TypedDict):
     r: float
@@ -104,3 +106,32 @@ def color_from_hsl(h: float, s: float, l: float) -> RGBADict:
     r, g, b = fixup_color(r, g, b)
 
     return {"r": r, "g": g, "b": b, "a": a}
+
+def to_rgba(c: int) -> tuple[int, int, int, int]:
+    # todo decide what stays in color maps and what goes in chroma
+    return (
+        (c >> 16) & 0xFF,  # red
+        (c >> 8) & 0xFF,  # green
+        c & 0xFF,  # blue
+        (c >> 24) & 0xFF,  # alpha
+    )
+
+
+def int_to_color(c: int) -> ColorRGBA:
+    r, g, b, a = to_rgba(c)
+    return ColorRGBA(r=r, g=g, b=b, a=a)
+
+
+def parse_html_color(c: str):
+    # port from chroma
+    raise GGException("implement this")
+
+
+def value_to_color(c: int | str) -> ColorRGBA:
+    # TODO this is mean to use Value class
+    # port bit by bit
+    if isinstance(c, int):
+        return int_to_color(c)
+    if isinstance(c, str):
+        return parse_html_color(c)
+    raise ValueError("expected str or int")

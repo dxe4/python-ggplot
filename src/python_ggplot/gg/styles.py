@@ -213,7 +213,6 @@ def apply_style(
     TODO Key can be str or FormulaNode. FormulaNode is from datamancer, we need to use pandas isntead
     T = Union[str, FormulaNode]
     keys: List[str, GGValue]
-
     """
 
     for col, val in keys:

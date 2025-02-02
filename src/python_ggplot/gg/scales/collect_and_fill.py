@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from python_ggplot.colormaps.color_maps import int_to_color
+from python_ggplot.core.chroma import int_to_color
 from python_ggplot.core.objects import (
     AxisKind, ColorHCL, LineType, MarkerKind, Scale
 )
@@ -79,7 +79,7 @@ def draw_sample_idx(s_high: int, num: int = 100, seed: int = 42) -> NDArray[Any]
 
 
 def is_discrete_data(
-    col: pd.Series[Any],
+    col: pd.Series,
     scale: GGScale,
     draw_samples: bool = True,
     discrete_threshold: float = 0.125,
@@ -124,7 +124,9 @@ def is_discrete_data(
 
 
 def _is_discrete(
-    data: pd.Series[Any], scale: GGScale, dc_kind: Optional[DiscreteType] = None
+    data: pd.Series,
+    scale: GGScale,
+    dc_kind: Optional[DiscreteType] = None
 ) -> bool:
     if dc_kind is None:
         return is_discrete_data(data, scale, draw_samples=True)
@@ -132,7 +134,7 @@ def _is_discrete(
 
 
 def discrete_and_type(
-    data: pd.Series[Any], scale: GGScale, dc_kind: Optional[DiscreteType] = None
+    data: pd.Series, scale: GGScale, dc_kind: Optional[DiscreteType] = None
 ) -> Tuple[bool, str]:
     return (_is_discrete(data, scale, dc_kind), series_value_type(data))
 
@@ -749,7 +751,7 @@ def fill_scale(
     TODO refactor ASAP
     this is a mess
     """
-    data: pd.Series[Any] = pd.Series(dtype=object)
+    data: pd.Series = pd.Series(dtype=object)
     trans_opt = None
     inv_trans_opt = None
     ax_kind_opt = None

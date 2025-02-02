@@ -4,6 +4,10 @@ import math
 
 from rich.console import Console
 
+import pandas as pd
+from python_ggplot.public_interface.common import ggdraw_plot
+from python_ggplot.public_interface.geom import aes, geom_bar, ggplot
+from python_ggplot.public_interface.utils import ggcreate
 from python_ggplot.core.common import linspace
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
@@ -298,3 +302,10 @@ def test_coord_add():
     result = [(rel1 + rel2 + i) for i in data]
     result = [round(i.pos * 100) for i in result]
     assert result == [90, 104, 119, 133, 147, 161, 176, 190]
+
+
+def test_geom_bar():
+    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    plot = (ggplot(mpg, aes("class")) + geom_bar())
+    res = ggcreate(plot)
+    ggdraw_plot(res, "geom_bar.png")

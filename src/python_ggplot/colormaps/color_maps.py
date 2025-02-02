@@ -56,36 +56,6 @@ def to_color_scale(name: str, color_map: List[List[float]]):
     return result
 
 
-def to_rgba(c: int) -> tuple[int, int, int, int]:
-    # todo decide what stays in color maps and what goes in chroma
-    return (
-        (c >> 16) & 0xFF,  # red
-        (c >> 8) & 0xFF,  # green
-        c & 0xFF,  # blue
-        (c >> 24) & 0xFF,  # alpha
-    )
-
-
-def int_to_color(c: int) -> ColorRGBA:
-    r, g, b, a = to_rgba(c)
-    return ColorRGBA(r=r, g=g, b=b, a=a)
-
-
-def parse_html_color(c: str):
-    # port from chroma
-    raise NotImplemented()
-
-
-def value_to_color(c: int | str) -> ColorRGBA:
-    # TODO this is mean to use Value class
-    # port bit by bit
-    if isinstance(c, int):
-        return int_to_color(c)
-    if isinstance(c, str):
-        return parse_html_color(c)
-    raise ValueError("expected str or int")
-
-
 color_maps_data = ColorMapsData()
 # TODO Do we really want to load a json file at import time?
 # This can be changed if we decide to
