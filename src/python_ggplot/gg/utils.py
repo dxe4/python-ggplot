@@ -25,14 +25,6 @@ from python_ggplot.gg.types import (
     SecondaryAxis,
 )
 
-T = TypeVar("T")
-
-
-def unwrap(opt: T, raise_if_nil: bool = True) -> T:
-    if opt is None and raise_if_nil:
-        raise Exception(f"Option {opt} must exist")
-    return opt
-
 
 def calc_rows_columns(rows: int, columns: int, n_plots: int) -> Tuple[int, int]:
     if rows <= 0 and columns <= 0:

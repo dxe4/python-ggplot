@@ -1027,7 +1027,7 @@ def handle_labels(view: ViewPort, theme: Theme):
         view.add_obj(lab_sec)
 
     if has_secondary(theme, AxisKind.Y):
-        sec_axis_label = theme.y_label_secondary.unwrap()
+        sec_axis_label = theme.y_label_secondary
         y_margin = get_margin(theme.y_label_margin, "ytickLabelSecondary", "y")
         lab_sec = create_label(
             ylabel, sec_axis_label, theme.y_label_margin, y_margin, True
