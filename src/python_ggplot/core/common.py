@@ -1,6 +1,6 @@
 import logging
 import math
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import numpy as np
 from rich.traceback import install
@@ -11,6 +11,12 @@ if TYPE_CHECKING:
 
 LOG_LEVEL = logging.DEBUG
 VERBOSE_OBJECT_REPR = False
+
+REPR_CONFIG: Dict[str, bool] = {
+    "GO_RECURSIVE": True,
+    "GO_STYLE": True,
+}
+
 # Constants
 DPI = 72.27
 

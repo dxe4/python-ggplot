@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from enum import auto
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
 
+from python_ggplot.core.common import REPR_CONFIG
 from python_ggplot.core.coord.objects import Coord, Coord1D
 from python_ggplot.core.objects import (
     AxisKind,
@@ -45,6 +46,14 @@ class GraphicsObjectConfig:
     style: Optional[Style] = None
     rotate_in_view: Optional[tuple[float, Point[float]]] = None
     rotate: Optional[float] = None
+
+    def __rich_repr__(self):
+        if REPR_CONFIG["GO_RECURSIVE"]:
+            yield "children", self.children
+        if REPR_CONFIG["GO_STYLE"]:
+            yield "style", self.style
+        yield "rotate", self.rotate
+        yield "rotate_in_view", self.rotate_in_view
 
 
 class GOType(GGEnum):
