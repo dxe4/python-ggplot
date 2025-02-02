@@ -7,3 +7,5 @@
     - :red_circle: features from R ggplot eg geom_hex
     - :red_circle: features skipped for alpha version eg TEX VEGA and FormulaNode
 - :red_circle: Allow creating interactive plots :rocket:
+
+![gg](data/simple_test.png)
