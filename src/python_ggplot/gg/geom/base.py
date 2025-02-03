@@ -1,7 +1,16 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto
-from typing import Any, Generator, List, Optional, OrderedDict, Tuple, cast
+from typing import (
+    Any,
+    Generator,
+    List,
+    Optional,
+    OrderedDict,
+    Tuple,
+    cast,
+    TYPE_CHECKING
+)
 
 import pandas as pd
 
@@ -9,7 +18,6 @@ from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
-from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import (
     Aesthetics,
     BinByType,
@@ -30,7 +38,8 @@ from python_ggplot.graphics.initialize import (
     init_text,
 )
 from python_ggplot.graphics.views import ViewPort
-
+if TYPE_CHECKING:
+    from python_ggplot.gg.scales.base import ColorScale
 
 class HistogramDrawingStyle(GGEnum):
     BARS = auto()
@@ -182,7 +191,7 @@ class FilledGeom:
 
     def enumerate_data(
         self: "FilledGeom",
-    ) -> Generator[Tuple[GGValue, GGStyle, List[GGStyle], pd.DataFrame]]:
+    ) -> Generator[Tuple[GGValue, GGStyle, List[GGStyle], pd.DataFrame], None, None]:
         for label, tup in self.gg_data.yield_data.items():
             yield label, tup[0], tup[1], tup[2]
 
@@ -468,7 +477,7 @@ class TitleRasterData:
     fill_data_scale: Scale
     width: Optional[str]
     height: Optional[str]
-    color_scale: ColorScale
+    color_scale: 'ColorScale'
 
 
 class FilledGeomTitle(GeomTileMixin, FilledGeom):

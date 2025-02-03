@@ -5,8 +5,9 @@ import math
 from rich.console import Console
 
 import pandas as pd
+from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import ggdraw_plot
-from python_ggplot.public_interface.geom import aes, geom_bar, ggplot
+from python_ggplot.public_interface.geom import geom_bar, ggplot
 from python_ggplot.public_interface.utils import ggcreate
 from python_ggplot.core.common import linspace
 from python_ggplot.core.coord.objects import (

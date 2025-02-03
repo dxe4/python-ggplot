@@ -29,6 +29,7 @@ from python_ggplot.common.enum_literals import (
     UNIT_TYPE_VALUES,
 )
 from python_ggplot.core.coord.objects import (
+    CentimeterCoordType,
     Coord,
     CoordsInput,
     DataCoord,
@@ -64,8 +65,9 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom import FilledGeom
+from python_ggplot.gg.geom.base import FilledGeom
 from python_ggplot.gg.scales.base import (
+    ColorScale,
     ColorScaleKind,
     FillColorScale,
     FilledScales,
@@ -82,8 +84,7 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
 )
 from python_ggplot.gg.scales.collect_and_fill import collect_scales
-from python_ggplot.gg.scales.values import FillColorScaleValue, ScaleValue
-from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
+from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.theme import (
     build_theme,
     calculate_margin_range,
@@ -136,7 +137,6 @@ from python_ggplot.graphics.objects import (
     GraphicsObject,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
-from tests.test_view import CentimeterCoordType
 
 BASE_TO_LOG = {
     10: math.log10,
@@ -198,11 +198,13 @@ def scale_axis_discrete_with_label_fn(
 def scale_axis_discrete_with_labels(
     axis_kind: AxisKind,
     name: str = "",
-    labels: OrderedDict[GGValue, ScaleValue] = field(default_factory=OrderedDict),
+    labels: Optional[OrderedDict[GGValue, ScaleValue]] = None,
     sec_axis: Optional[SecondaryAxis] = None,
     reversed: bool = False,
 ) -> GGScale:
 
+    if labels is None:
+        labels = OrderedDict()
     def format_discrete_label_(value: GGValue):
         """
         TODO double check this logic
@@ -290,7 +292,7 @@ def scale_color_or_fill_manual(
     scale = cls(
         gg_data=gg_data,
         # TODO does this need a deep copy?
-        color_scale=DEFAULT_COLOR_SCALE,
+        color_scale=ColorScale.viridis(),
     )
     return scale
 
@@ -1807,8 +1809,8 @@ def ggmulti(
     fname: str,
     width: int = 640,
     height: int = 480,
-    widths: List[int] = field(default_factory=list),
-    heights: List[int] = field(default_factory=list),
+    widths: Optional[List[int]] = None,
+    heights: Optional[List[int]] = None,
     use_tex: bool = False,
     only_tikz: bool = False,
     standalone: bool = False,
@@ -1821,7 +1823,10 @@ def ggmulti(
     backend is fixated to cairo for now
     TODO only_tikz, use_tex not used (need to remove them for now)
     """
-
+    if widths is None:
+        widths = []
+    if heights is None:
+        heights = []
     width = widths[0] if len(widths) == 1 else width
     height = heights[0] if len(heights) == 1 else height
 

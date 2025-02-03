@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto
+from types import NoneType
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -22,21 +23,14 @@ from python_ggplot.core.objects import (
 )
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
-from python_ggplot.gg.geom import Geom
-from python_ggplot.gg.scales.base import (
-    GGScale,
-    GGScaleData,
-    GGScaleDiscrete,
-    LinearAndTransformScaleData,
-    LinearDataScale,
-)
 
 COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales import FilledScales, ScaleFreeKind
+    from python_ggplot.gg.scales import FilledScales, ScaleFreeKind, GGScale
+    from python_ggplot.gg.geom.base import Geom
 
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
     from python_ggplot.graphics.views import ViewPort
@@ -113,14 +107,14 @@ class StatSmooth(StatKind):
     poly_order: int
     method_type: "SmoothMethodType"
 
-    def polynomial_smooth(self, x: pd.Series[float], y: pd.Series[float]):
+    def polynomial_smooth(self, x: pd.Series, y: pd.Series):
         return poly_fit(
             x.to_numpy(),  # type: ignore
             y.to_numpy(),  # type: ignore
             self.poly_order,
         )
 
-    def svg_smooth(self, data: pd.Series[float]):
+    def svg_smooth(self, data: pd.Series):
         window_size = round(len(data) * self.span)
         if window_size % 2 == 0:
             window_size += 1
@@ -177,7 +171,7 @@ class Aesthetics:
 @dataclass
 class SecondaryAxis:
     name: str
-    scale: GGScale
+    scale: 'GGScale'
     # TODO i dont like this, but thats how its inherited
     # id rather be explicit here makes it more understandable
     axis_kind: AxisKind = AxisKind.X
@@ -194,16 +188,16 @@ class DateTickAlgorithmType(GGEnum):
 
 
 # Define the types
-PossibleColor = Union[None, Color, int, str, Optional[Color]]
-PossibleFloat = Union[None, int, float, str, Optional[float]]
-PossibleBool = Union[None, bool]
-PossibleMarker = Union[None, MarkerKind, Optional[MarkerKind]]
-PossibleLineType = Union[None, LineType, Optional[LineType]]
-PossibleErrorBar = Union[None, ErrorBarKind, Optional[ErrorBarKind]]
-PossibleFont = Union[None, Font, Optional[Font]]
-PossibleSecondaryAxis = Union[None, SecondaryAxis]
+PossibleColor = Union[NoneType, Color, int, str, Optional[Color]]
+PossibleFloat = Union[NoneType, int, float, str, Optional[float]]
+PossibleBool = Union[NoneType, bool]
+PossibleMarker = Union[NoneType, MarkerKind, Optional[MarkerKind]]
+PossibleLineType = Union[NoneType, LineType, Optional[LineType]]
+PossibleErrorBar = Union[NoneType, ErrorBarKind, Optional[ErrorBarKind]]
+PossibleFont = Union[NoneType, Font, Optional[Font]]
+PossibleSecondaryAxis = Union[NoneType, SecondaryAxis]
 # TODO refactor Union[int, float] to use this
-PossibleNumber = Union[Union[None, int, float, str, Optional[float]]]
+PossibleNumber = Union[Union[NoneType, int, float, str, Optional[float]]]
 
 
 class DataType(GGEnum):
@@ -271,8 +265,8 @@ class GGStyle:
 
 @dataclass
 class Theme:
-    x_margin_range: Scale = Scale(low=0.0, high=0.0)  # TODO double check
-    y_margin_range: Scale = Scale(low=0.0, high=0.0)  # TODO double check
+    x_margin_range: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))  # TODO double check
+    y_margin_range: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))  # TODO double check
     x_ticks_rotate: float = 0.0
     y_ticks_rotate: float = 0.0
     x_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
@@ -340,7 +334,7 @@ class GgPlot:
     aes: Aesthetics
     theme: Theme
     backend: str = field(default="cairo")  # Will be cairo only for a while..
-    geoms: List[Geom] = field(default_factory=list)
+    geoms: List['Geom'] = field(default_factory=list)
     annotations: List["Annotation"] = field(default_factory=list)
     title: Optional[str] = None
     sub_title: Optional[str] = None
@@ -353,6 +347,7 @@ class GgPlot:
         """
         from python_ggplot.gg.scales.base import DateScale, GGScale
         from python_ggplot.gg.types import Annotation, Facet, Ridges, Theme
+        from python_ggplot.gg.geom.base import Geom
         from python_ggplot.public_interface.add import (
             add_annotations,
             add_date_scale,
@@ -363,23 +358,24 @@ class GgPlot:
             add_theme,
         )
 
-        if isinstance(self, GGScale):
+        if isinstance(other, GGScale):
             return add_scale(self, other)
-        elif isinstance(self, DateScale):
+        elif isinstance(other, DateScale):
             return add_date_scale(self, other)
-        elif isinstance(self, Theme):
+        elif isinstance(other, Theme):
             return add_theme(self, other)
-        elif isinstance(self, Geom):
+        elif isinstance(other, Geom):
             return add_geom(self, other)
-        elif isinstance(self, Facet):
+        elif isinstance(other, Facet):
             return add_facet(self, other)
-        elif isinstance(self, Ridges):
+        elif isinstance(other, Ridges):
             return add_ridges(self, other)
-        elif isinstance(self, Annotation):
+        elif isinstance(other, Annotation):
             return add_annotations(self, other)
         raise GGException(f"cant add plot to {other.__class__}")
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
+        from python_ggplot.gg.scales.base import GGScaleData, GGScaleDiscrete, LinearDataScale, LinearAndTransformScaleData
         if self.ridges is None:
             raise GGException("expected ridges")
 
@@ -448,7 +444,7 @@ class JsonDummyDraw:
     backend: str  # we only support cairo for now
 
 
-MainAddScales = Tuple[Optional[GGScale], List[GGScale]]
+MainAddScales = Tuple[Optional['GGScale'], List['GGScale']]
 
 
 @dataclass

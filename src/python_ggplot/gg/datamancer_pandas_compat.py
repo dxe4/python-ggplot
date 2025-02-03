@@ -170,7 +170,7 @@ def series_is_obj(series: pd.Series) -> bool:
     return str(series.dtype) == "object"
 
 
-def series_value_type(series: pd.Series) -> bool:
+def series_value_type(series: pd.Series) -> str:
     dtype = str(series.dtype)
     if dtype in [
         "int8",

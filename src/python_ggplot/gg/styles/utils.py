@@ -1,87 +1,14 @@
-from typing import Any, Dict, List, Tuple, cast
-
+from typing import Any, List, Tuple, cast
+from typing_extensions import Dict
+from python_ggplot.core.objects import GGException, Style
+from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
+from python_ggplot.gg.geom.base import FilledGeom, GeomType
+from python_ggplot.gg.scales.base import ColorScale, GGScale, GGScaleDiscrete, ScaleType, ScaleValue
+from python_ggplot.gg.styles.config import BAR_DEFAULT_STYLE, HISTO_DEFAULT_STYLE, LINE_DEFAULT_STYLE, POINT_DEFAULT_STYLE, SMOOTH_DEFAULT_STYLE, TEXT_DEFAULT_STYLE, TILE_DEFAULT_STYLE
+from python_ggplot.gg.types import GGStyle, StatType
 import pandas as pd
 
-from python_ggplot.colormaps.color_maps import VIRIDIS_RAW_COLOR_SCALE
-from python_ggplot.core.chroma import parse_hex
-from python_ggplot.core.objects import (
-    BLACK,
-    GREY20,
-    TRANSPARENT,
-    Color,
-    Font,
-    GGException,
-    LineType,
-    MarkerKind,
-    Style,
-)
-from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
 
-# TODO this will probably cause circular imports
-# keep for now, we think of the project structure a bit more
-# i have a few ideas for the structure but will be easier to connect the dots first
-from python_ggplot.gg.geom import DiscreteType, FilledGeom, GeomType, GGStyle, StatType
-from python_ggplot.gg.scales.base import (
-    ColorScale,
-    GGScale,
-    GGScaleDiscrete,
-    ScaleType,
-    ScaleValue,
-)
-
-# Define color constants
-STAT_SMOOTH_COLOR: Color = Color(
-    **parse_hex("#3366FF")
-)  # color used by ggplot2 for smoothed lines
-
-
-# Define default styles
-POINT_DEFAULT_STYLE: Style = Style(
-    size=3.0, marker=MarkerKind.CIRCLE, color=BLACK, fill_color=BLACK
-)
-
-LINE_DEFAULT_STYLE: Style = Style(
-    line_width=1.0,
-    line_type=LineType.SOLID,
-    size=5.0,
-    color=GREY20,
-    fill_color=TRANSPARENT,
-)
-
-SMOOTH_DEFAULT_STYLE: Style = Style(
-    line_width=2.0,
-    line_type=LineType.SOLID,
-    size=5.0,
-    color=STAT_SMOOTH_COLOR,
-    fill_color=TRANSPARENT,
-)
-
-BAR_DEFAULT_STYLE: Style = Style(
-    line_width=1.0, line_type=LineType.SOLID, color=GREY20, fill_color=GREY20
-)
-
-HISTO_DEFAULT_STYLE: Style = Style(
-    line_width=0.2, line_type=LineType.SOLID, color=GREY20, fill_color=GREY20
-)
-
-TILE_DEFAULT_STYLE: Style = Style(
-    line_width=0.05, line_type=LineType.SOLID, color=GREY20, fill_color=GREY20
-)
-
-TEXT_DEFAULT_STYLE: Style = Style(
-    # TODO, there is a macro for font in ggplot, we may have to pick the defualt values from there
-    font=Font(size=12.0),
-    size=12.0,
-    color=BLACK,
-)
-
-# Define ranges
-DEFAULT_SIZE_RANGE: Dict[str, float] = {"low": 2.0, "high": 7.0}
-DEFAULT_SIZE_RANGE_TUPLE: Tuple[float, float] = tuple(DEFAULT_SIZE_RANGE.values())  # type: ignore
-DEFAULT_ALPHA_RANGE: Dict[str, float] = {"low": 0.1, "high": 1.0}
-DEFAULT_ALPHA_RANGE_TUPLE: Tuple[float, float] = tuple(DEFAULT_ALPHA_RANGE.values())  # type: ignore
-
-DEFAULT_COLOR_SCALE = VIRIDIS_RAW_COLOR_SCALE
 _style_lookup: Dict[GeomType, Style] = {
     GeomType.POINT: POINT_DEFAULT_STYLE,
     GeomType.BAR: BAR_DEFAULT_STYLE,
@@ -110,7 +37,7 @@ def default_style(geom_type: GeomType, stat_type: StatType) -> Style:
 
 def use_or_default(c: ColorScale) -> ColorScale:
     if len(c.colors) == 0:
-        return DEFAULT_COLOR_SCALE
+        return ColorScale.viridis()
     else:
         return c
 
@@ -200,7 +127,6 @@ def change_style(style: GGStyle, scale_value: ScaleValue) -> GGStyle:
             f"Setting style of {scale_value.scale_type} not supported at the moment!"
         )
 
-
 def apply_style(
     style: GGStyle,
     df: pd.DataFrame,
@@ -224,7 +150,7 @@ def apply_style(
             }:
                 continue
 
-            if scale.gg_data.discrete_kind.discrete_type == DiscreteType.DISCRETE:
+            if scale.is_discrete():
                 is_col = col in df.columns
                 discrete_scale = cast(GGScaleDiscrete, scale.gg_data.discrete_kind)
 

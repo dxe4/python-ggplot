@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import (
     Any, Dict, List, Literal, Optional, Tuple, Union, cast
 )
@@ -51,16 +51,15 @@ from python_ggplot.gg.scales.base import (
     scale_type_to_cls,
 )
 from python_ggplot.gg.scales.post_process import post_process_scales
-from python_ggplot.gg.scales.values import (
+from python_ggplot.gg.scales.base import (
     AlphaScaleValue,
     ColorScaleValue,
     FillColorScaleValue,
     ShapeScaleValue,
     SizeScaleValue,
 )
-from python_ggplot.gg.styles import (
+from python_ggplot.gg.styles.config import (
     DEFAULT_ALPHA_RANGE_TUPLE,
-    DEFAULT_COLOR_SCALE,
     DEFAULT_SIZE_RANGE_TUPLE,
 )
 from python_ggplot.gg.types import DataType, DiscreteType, GgPlot
@@ -589,14 +588,16 @@ def fill_scale_impl(
     ax_kind: Optional[AxisKind] = None,
     trans: Optional[ScaleTransformFunc] = None,
     inv_trans: Optional[ScaleTransformFunc] = None,
-    color_scale: Optional[List[float]] = DEFAULT_COLOR_SCALE,  # type: ignore
-    size_range: Optional[Tuple[float, float]] = DEFAULT_SIZE_RANGE_TUPLE,
-    alpha_range: Optional[Tuple[float, float]] = DEFAULT_ALPHA_RANGE_TUPLE,
+    color_scale: Optional[ColorScale] = None,
+    size_range: Tuple[float, float] = DEFAULT_SIZE_RANGE_TUPLE,
+    alpha_range:Tuple[float, float] = DEFAULT_ALPHA_RANGE_TUPLE,
 ) -> GGScale:
     """
     TODO refactor ASAP
     this is a mess
     """
+    if color_scale is None:
+        color_scale = ColorScale.viridis()
 
     if is_discrete:
         labels = label_seq if label_seq is not None else []
@@ -685,35 +686,31 @@ def fill_scale_impl(
             # double check if ColorScale.colors is incorrectly setup as List[int]
             # or if we need to do some conversion on the color
             # this is almost guaratneed to be a bug
-            color_scale_ = ColorScale(
-                name="", colors=[int(i) for i in color_scale or []]
-            )
+
             return fill_continuous_color_scale(
-                ScaleType.COLOR, col, data_type, value_kind, data_scale, color_scale_
+                ScaleType.COLOR,
+                col,
+                data_type,
+                value_kind,
+                data_scale,
+                color_scale
             )
         elif scale_type == ScaleType.FILL_COLOR:
             # TODO HIGH priority
             # same as ScaleType.COLOR this is almost certain to be a bug
-            color_scale_ = ColorScale(
-                name="", colors=[int(i) for i in color_scale or []]
-            )
             return fill_continuous_color_scale(
                 ScaleType.FILL_COLOR,
                 col,
                 data_type,
                 value_kind,
                 data_scale,
-                color_scale_,
+                color_scale,
             )
         elif scale_type == ScaleType.SIZE:
-            if size_range is None:
-                raise GGException("expected size range")
             return fill_continuous_size_scale(
                 col, data_type, value_kind, data_scale, size_range
             )
         elif scale_type == ScaleType.ALPHA:
-            if alpha_range is None:
-                raise GGException("expected size range")
             return fill_continuous_alpha_scale(
                 col, data_type, value_kind, data_scale, alpha_range
             )
@@ -757,7 +754,7 @@ def fill_scale(
     ax_kind_opt = None
 
     for scale in scales:
-        data = pd.concat([data, df[str(scale.col)]])  # type: ignore
+        data = pd.concat([data, df[str(scale.gg_data.col)]])  # type: ignore
 
     data_scale_opt = None
     label_seq_opt = None

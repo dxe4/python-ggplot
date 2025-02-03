@@ -7,8 +7,8 @@ from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core.objects import AxisKind, GGException, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, UnitType
 from python_ggplot.gg.datamancer_pandas_compat import VNull
-from python_ggplot.gg.geom import FilledGeomDiscrete  # Geom,
-from python_ggplot.gg.geom import (
+from python_ggplot.gg.geom.base import (
+    FilledGeomDiscrete,
     FilledGeom,
     FilledGeomErrorBar,
     FilledGeomHistogram,
@@ -17,7 +17,7 @@ from python_ggplot.gg.geom import (
     GeomType,
     HistogramDrawingStyle,
 )
-from python_ggplot.gg.styles import merge_user_style
+from python_ggplot.gg.styles.utils import merge_user_style
 from python_ggplot.gg.types import (
     PREV_VALS_COL,
     BinPositionType,

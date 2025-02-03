@@ -13,7 +13,7 @@ from numpy.typing import NDArray
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import AxisKind, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VNull
-from python_ggplot.gg.geom import (
+from python_ggplot.gg.geom.base import (
     FilledGeom,
     FilledGeomContinuous,
     FilledGeomData,
@@ -31,7 +31,7 @@ from python_ggplot.gg.scales.base import (
     ScaleType,
     TransformedDataScale,
 )
-from python_ggplot.gg.styles import apply_style, change_style, use_or_default
+from python_ggplot.gg.styles.utils import apply_style, change_style, use_or_default
 from python_ggplot.gg.ticks import get_x_ticks, get_y_ticks
 from python_ggplot.gg.types import (
     PREV_VALS_COL,
@@ -229,7 +229,7 @@ def apply_cont_scale_if_any(
 
 
 def add_counts_by_position(
-    col_sum: pd.Series[Any], col: pd.Series[Any], pos: Optional[PositionType]
+    col_sum: pd.Series, col: pd.Series, pos: Optional[PositionType]
 ):
     # TODO use is_numeric_dtype in other places of the code base
     if pd.api.types.is_numeric_dtype(col):  # type: ignore
@@ -249,7 +249,7 @@ def add_counts_by_position(
 
 
 def add_zero_keys(
-    df: pd.DataFrame, keys: pd.Series[Any], x_col: Any, count_col: str
+    df: pd.DataFrame, keys: pd.Series, x_col: Any, count_col: str
 ) -> pd.DataFrame:
     exist_keys = df[x_col].unique()  # type: ignore
     df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore

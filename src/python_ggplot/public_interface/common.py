@@ -32,8 +32,7 @@ from python_ggplot.gg.scales.base import (
     SizeScale,
     TransformedDataScale,
 )
-from python_ggplot.gg.scales.values import ScaleValue, SizeScaleValue
-from python_ggplot.gg.styles import DEFAULT_COLOR_SCALE
+from python_ggplot.gg.scales import ScaleValue, SizeScaleValue
 from python_ggplot.gg.types import (
     DataType,
     DiscreteFormat,
@@ -203,7 +202,7 @@ def scale_fill_continuous(
     scale = FillColorScale(
         gg_data=gg_data,
         # TODO does this need a deep copy?
-        color_scale=DEFAULT_COLOR_SCALE,
+        color_scale=ColorScale.viridis(),
     )
     return scale
 
@@ -220,7 +219,7 @@ def scale_fill_discrete(
     scale = FillColorScale(
         gg_data=gg_data,
         # TODO does this need a deep copy?
-        color_scale=DEFAULT_COLOR_SCALE,
+        color_scale=ColorScale.viridis(),
     )
     return scale
 
@@ -240,7 +239,7 @@ def scale_color_continuous(
     scale = ColorScaleKind(
         gg_data=gg_data,
         # TODO does this need a deep copy?
-        color_scale=DEFAULT_COLOR_SCALE,
+        color_scale=ColorScale.viridis(),
     )
     return scale
 
@@ -281,7 +280,7 @@ def scale_color_identity(col: str = "") -> GGScale:
     )
     scale = ColorScaleKind(
         gg_data=gg_data,
-        color_scale=DEFAULT_COLOR_SCALE,
+        color_scale=ColorScale.viridis(),
     )
     return scale
 
@@ -295,7 +294,7 @@ def scale_fill_identity(col: str = "") -> GGScale:
     )
     scale = FillColorScale(
         gg_data=gg_data,
-        color_scale=DEFAULT_COLOR_SCALE,
+        color_scale=ColorScale.viridis(),
     )
     return scale
 

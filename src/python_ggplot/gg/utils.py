@@ -2,7 +2,7 @@ from math import ceil, sqrt
 from types import NoneType
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
-from python_ggplot.core.chroma import int_to_color, to_opt_color
+from python_ggplot.core.chroma import to_opt_color
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -15,7 +15,6 @@ from python_ggplot.core.objects import (
 from python_ggplot.gg.types import (
     Aesthetics,
     GGStyle,
-    Missing,
     PossibleColor,
     PossibleErrorBar,
     PossibleFloat,
@@ -63,20 +62,19 @@ def _handle_optional(x: Optional[Any]) -> Any:
 
 
 FLOAT_HANDLERS: Dict[type, Callable[[Any], Any]] = {
-    Missing: _handle_none,
     int: _handle_float,
     float: _handle_float,
     NoneType: _handle_optional,
 }
 
 BOOL_HANDLERS: Dict[type, Callable[[Any], Any]] = {
-    Missing: _handle_none,
+    NoneType: _handle_none,
     bool: _handle_bool,
 }
 
 GG_TYPE_HANDLERS: Dict[type, Callable[[Any], Any]] = {
-    Missing: _handle_none,
     MarkerKind: _handle_gg_type,
+    LineType: _handle_gg_type,
     NoneType: _handle_optional,
 }
 

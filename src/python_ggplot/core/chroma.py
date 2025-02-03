@@ -1,5 +1,6 @@
 # ported code from num chroma
 # todo port the unit tests too
+from types import NoneType
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 from typing_extensions import Callable
 
@@ -36,6 +37,9 @@ def parse_hex(hex_str: str) -> RGBADict:
     Returns:
         tuple of (r, g, b, a) values normalized between 0 and 1
     """
+    if hex_str[0] == "#":
+        hex_str = hex_str[1:]
+
     assert len(hex_str) == 6
     r = float(c2n(hex_str, 0) * 16 + c2n(hex_str, 1)) / 255
     g = float(c2n(hex_str, 2) * 16 + c2n(hex_str, 3)) / 255
@@ -142,7 +146,7 @@ def to_opt_color(x: Union[Color, int, str, None]) -> Optional[Color]:
     TODO fix types here fine for now
     """
     color_handlers: Dict[Any, Callable[..., Color]] = {
-        # Missing: lambda _: None,  # type: ignore
+        NoneType: lambda _: None,  # type: ignore
         Color: lambda c: c,  # type: ignore
         int: lambda c: int_to_color(c),  # type: ignore
         # Color.from_html(c) if is_valid_html_color(c) else None, # type: ignore

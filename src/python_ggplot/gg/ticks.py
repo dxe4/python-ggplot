@@ -33,6 +33,7 @@ from python_ggplot.gg.scales.base import (
 )
 from python_ggplot.gg.types import DateTickAlgorithmType, DiscreteType, GgPlot, Theme
 from python_ggplot.graphics.initialize import (
+    TickLabelsInput,
     calc_tick_locations,
     init_ticks,
     tick_labels,
@@ -40,7 +41,6 @@ from python_ggplot.graphics.initialize import (
 )
 from python_ggplot.graphics.objects import GraphicsObject, format_tick_value
 from python_ggplot.graphics.views import ViewPort
-from tests.test_view import TickLabelsInput
 
 
 def get_ticks(scale: Union[GGScale, Scale]) -> int:

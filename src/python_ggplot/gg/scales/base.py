@@ -20,11 +20,18 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from python_ggplot.colormaps.color_maps import VIRIDIS_RAW_COLOR_SCALE
+from python_ggplot.colormaps.color_maps import (
+    INFERNO_RAW,
+    MAGMARAW,
+    PLASMA_RAW,
+    VIRIDIS_RAW
+)
 from python_ggplot.core.objects import (
     AxisKind,
+    Color,
     GGEnum,
     GGException,
+    LineType,
     MarkerKind,
     Point,
     Scale,
@@ -36,20 +43,15 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VectorCol,
     pandas_series_to_column,
 )
-from python_ggplot.gg.geom import (
+from python_ggplot.gg.geom.base import (
     FilledGeom,
     FilledGeomContinuous,
     FilledGeomDiscrete,
     FilledGeomDiscreteKind,
     Geom,
 )
-from python_ggplot.gg.scales.values import (
-    ColorScaleValue,
-    FillColorScaleValue,
-    ShapeScaleValue,
-    SizeScaleValue,
-)
-from python_ggplot.gg.styles import DEFAULT_ALPHA_RANGE_TUPLE
+
+from python_ggplot.gg.styles.config import DEFAULT_ALPHA_RANGE_TUPLE
 from python_ggplot.gg.types import (
     ContinuousFormat,
     DataType,
@@ -65,7 +67,6 @@ from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
 
 if typing.TYPE_CHECKING:
-    from python_ggplot.gg.scales.values import ScaleValue
     from python_ggplot.gg.types import GGStyle
 
 
@@ -77,10 +78,150 @@ ScaleTransformFunc = Callable[[float], float]
 
 
 @dataclass
+class ScaleValue(ABC):
+
+    def __eq__(self, value: object, /) -> bool:
+        # TODO Critical
+        # implement or fix logic in
+        #  public_interface.common.scale_x_discrete_with_labels
+        # for format_discrete_label_
+        return super().__eq__(value)
+
+    @abstractmethod
+    def update_style(self, style: "GGStyle"):
+        pass
+
+    @property
+    @abstractmethod
+    def scale_type(self) -> 'ScaleType':
+        pass
+
+
+@dataclass
+class TextScaleValue(ScaleValue):
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.TEXT
+
+
+@dataclass
+class SizeScaleValue(ScaleValue):
+    size: Optional[float] = None
+
+    def update_style(self, style: "GGStyle"):
+        pass
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.SIZE
+
+
+@dataclass
+class ShapeScaleValue(ScaleValue):
+    marker: Optional[MarkerKind] = None
+    line_type: Optional[LineType] = None
+
+    def update_style(self, style: "GGStyle"):
+        style.marker = self.marker
+        style.line_type = self.line_type
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.SHAPE
+
+
+@dataclass
+class AlphaScaleValue(ScaleValue):
+    alpha: Optional[float] = None
+
+    def update_style(self, style: "GGStyle"):
+        pass
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.ALPHA
+
+
+@dataclass
+class FillColorScaleValue(ScaleValue):
+    color: Optional[Color] = None
+
+    def update_style(self, style: "GGStyle"):
+        style.fill_color = self.color
+        style.color = self.color
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.FILL_COLOR
+
+
+@dataclass
+class ColorScaleValue(ScaleValue):
+    color: Optional[Color] = None
+
+    def update_style(self, style: "GGStyle"):
+        style.color = self.color
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.COLOR
+
+
+@dataclass
+class TransformedDataScaleValue(ScaleValue):
+    val: Optional[Any] = None
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.TRANSFORMED_DATA
+
+
+@dataclass
+class LinearDataScaleValue(ScaleValue):
+    val: Optional[Any] = None
+
+    @property
+    def scale_type(self) -> 'ScaleType':
+        return ScaleType.LINEAR_DATA
+
+@dataclass
 class ColorScale:
     name: str = ""
     colors: List[int] = field(default_factory=list)
 
+    @classmethod
+    def from_color_map(cls, name: str, color_map: List[List[float]]) -> 'ColorScale':
+        def _to_val(x: float):
+            # TODO, add tests for this and make sure
+            # it only happens at the right times
+            # i dont like silencing errors by shifting the value to valid bounds
+            # if it silnences things that are actual errors
+            # and not out of bounds because expected, this can be very hard to debug
+            return max(0, min(int(round(x * 255.0)), 255))
+
+        colors: List[int] = []
+        for r, g, b in color_map:
+            new_col = (255 << 24) | (_to_val(r) << 16) | (_to_val(g) << 8) | (_to_val(b))
+            colors.append(new_col)
+        result = ColorScale(name=name, colors=colors)
+        return result
+
+    @classmethod
+    def viridis(cls) -> 'ColorScale':
+        return cls.from_color_map("viridis", VIRIDIS_RAW)
+
+    @classmethod
+    def magmaraw(cls)  -> 'ColorScale':
+        return cls.from_color_map("magma", MAGMARAW)
+
+    @classmethod
+    def inferno(cls)  -> 'ColorScale':
+        return cls.from_color_map("inferno", INFERNO_RAW)
+
+    @classmethod
+    def plasma(cls)  -> 'ColorScale':
+        return cls.from_color_map("plasma", PLASMA_RAW)
 
 class ScaleType(GGEnum):
     LINEAR_DATA = auto()
@@ -338,7 +479,7 @@ class _ColorScaleMixin(GGScale):
 
 @dataclass
 class ColorScaleKind(_ColorScaleMixin):
-    color_scale: "ColorScale" = VIRIDIS_RAW_COLOR_SCALE
+    color_scale: "ColorScale" = field(default_factory=ColorScale.viridis)
 
     @property
     def scale_type(self) -> ScaleType:
@@ -530,7 +671,7 @@ class FilledScales:
             raise GGException("secondary_axis does not exist")
         return gg_scale.scale_kind.data.secondary_axis  # type: ignore
 
-    def enumerate_scales_by_id(self: "FilledScales") -> Generator[GGScale]:
+    def enumerate_scales_by_id(self: "FilledScales") -> Generator[GGScale, None, None]:
         fields = [
             "x",
             "y",
@@ -549,7 +690,7 @@ class FilledScales:
                 for _, sub_field in asdict(field_).items():
                     yield sub_field
 
-    def enumerate_scales(self: "FilledScales", geom: Geom) -> Generator[Any]:
+    def enumerate_scales(self: "FilledScales", geom: Geom) -> Generator[Any, None, None]:
         # TODO this will have to make a bunch of objects hashable
         # we may want to implement it for all
         result: Set[Any] = set()

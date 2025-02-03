@@ -11,6 +11,7 @@ from python_ggplot.core.coord.objects import (
     CoordsInput,
     DataCoord,
     DataCoordType,
+    RelativeCoordType,
     coord_quantity_add,
     coord_quantity_sub,
     coord_type_from_unit_type,
@@ -59,7 +60,6 @@ from python_ggplot.graphics.objects import (
     format_tick_value,
 )
 from python_ggplot.graphics.views import ViewPort, x_axis_y_pos, y_axis_x_pos
-from tests.test_view import RelativeCoordType
 
 
 @dataclass

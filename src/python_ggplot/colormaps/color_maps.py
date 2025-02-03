@@ -1,9 +1,5 @@
 import json
 import os
-from typing import List
-
-from python_ggplot.core.objects import ColorRGBA
-from python_ggplot.gg.scales.base import ColorScale
 
 
 class ColorMapsData:
@@ -37,25 +33,6 @@ class ColorMapsData:
     def plasma_raw(self):
         return self.data["plasma_raw"]
 
-
-def _to_val(x: float):
-    # TODO, add tests for this and make sure
-    # it only happens at the right times
-    # i dont like silencing errors by shifting the value to valid bounds
-    # if it silnences things that are actual errors
-    # and not out of bounds because expected, this can be very hard to debug
-    return max(0, min(int(round(x * 255.0)), 255))
-
-
-def to_color_scale(name: str, color_map: List[List[float]]):
-    colors: List[int] = []
-    for r, g, b in color_map:
-        new_col = (255 << 24) | (_to_val(r) << 16) | (_to_val(g) << 8) | (_to_val(b))
-        colors.append(new_col)
-    result = ColorScale(name=name, colors=colors)
-    return result
-
-
 color_maps_data = ColorMapsData()
 # TODO Do we really want to load a json file at import time?
 # This can be changed if we decide to
@@ -65,9 +42,3 @@ VIRIDIS_RAW = color_maps_data.viridis_raw
 MAGMARAW = color_maps_data.magmaraw
 INFERNO_RAW = color_maps_data.inferno_raw
 PLASMA_RAW = color_maps_data.plasma_raw
-
-
-VIRIDIS_RAW_COLOR_SCALE = to_color_scale("viridis", VIRIDIS_RAW)
-MAGMARAW_COLOR_SCALE = to_color_scale("magma", MAGMARAW)
-INFERNO_RAW_COLOR_SCALE = to_color_scale("inferno", INFERNO_RAW)
-PLASMA_RAW_COLOR_SCALE = to_color_scale("plasma", PLASMA_RAW)
