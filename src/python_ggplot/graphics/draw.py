@@ -116,12 +116,13 @@ def fill_empty_sizes_evenly(
     quantities: list[Quantity],
     length: Quantity,
     num: int,
-    scale: Scale,
+    scale: Optional[Scale] = None,
     ignore_overflow: bool = False,
 ) -> list[Quantity]:
-    # TODO URGENT: don't like this, what if it's 0.0000000001?
     zero_elems = sum(
-        1 for q in quantities if q.to_relative(scale=scale, length=length).val == 0.0
+        1
+        for q in quantities
+        if math.isclose(q.to_relative(scale=scale, length=length).val, 0.0)
     )
 
     if zero_elems == 0:
@@ -132,12 +133,14 @@ def fill_empty_sizes_evenly(
 
     # TODO URGENT: don't like 0.0 comparison, turn to int or use precision
     if not ignore_overflow and remain_width < 0.0:
-        raise GGException("given layout sizes exceed the viewport size.")
+        raise GGException(
+            "given layout sizes exceed the viewport size."
+            f"width sum: {width_sum} zero elms: {zero_elems}"
+        )
 
     result: List[Quantity] = []
     for i in range(num):
-        # same here, convert to int
-        if quantities[i].to_relative(length=length, scale=scale).val == 0.0:
+        if math.isclose(quantities[i].to_relative(length=length, scale=scale).val, 0.0):
             result.append(Quantity.relative(remain_width))
         else:
             result.append(quantities[i])
@@ -151,10 +154,12 @@ def _get_widths_for_layout(
     if not col_widths:
         return [Quantity.relative(1.0 / cols)] * cols
     else:
-        if view.x_scale is None:
-            raise GGException("expected x scale")
         return fill_empty_sizes_evenly(
-            col_widths, view.point_width(), cols, view.x_scale, ignore_overflow
+            col_widths,
+            view.point_width(),
+            cols,
+            scale=view.x_scale,
+            ignore_overflow=ignore_overflow,
         )
 
 
@@ -167,11 +172,12 @@ def _get_heights_for_layout(
     if not row_heights:
         return [Quantity.relative(1.0 / rows)] * rows
     else:
-        if view.y_scale is None:
-            raise GGException("expected x scale")
-
         return fill_empty_sizes_evenly(
-            row_heights, view.point_height(), rows, view.y_scale, ignore_overflow
+            row_heights,
+            view.point_height(),
+            rows,
+            scale=view.y_scale,
+            ignore_overflow=ignore_overflow,
         )
 
 
@@ -206,7 +212,6 @@ def layout(
 
     current_row = Coord1D.create_relative(0.0)
     for i in range(rows):
-        j = 0
         current_col = Coord1D.create_relative(0.0)
         for j in range(cols):
             margin_x = margin.to_relative(scale=view.x_scale, length=view.point_width())
@@ -220,27 +225,26 @@ def layout(
             width: Quantity = widths[j].subtract(
                 Quantity.relative(factor_w).multiply(
                     margin_x,
-                    Quantity.points(view.point_width().val / cols),
-                    view.x_scale,
-                    False,
+                    length=Quantity.points(view.point_width().val / cols),
+                    scale=view.x_scale,
+                    as_coordinate=False,
                 ),
-                view.point_width(),
-                view.x_scale,
-                False,
+                length=view.point_width(),
+                scale=view.x_scale,
+                as_coordinate=False,
             )
 
-            height: Quantity = heights[j].subtract(
+            height: Quantity = heights[i].subtract(
                 Quantity.relative(factor_h).multiply(
                     margin_y,
-                    Quantity.points(view.point_height().val / cols),
-                    view.x_scale,
-                    False,
+                    length=Quantity.points(view.point_height().val / rows),
+                    scale=view.y_scale,
+                    as_coordinate=False,
                 ),
-                view.point_height(),
-                view.y_scale,
-                False,
+                length=view.point_height(),
+                scale=view.y_scale,
+                as_coordinate=False,
             )
-
             view_input: ViewPortInput = ViewPortInput(
                 x_scale=view.x_scale, y_scale=view.y_scale, style=view.style, name=""
             )
@@ -251,10 +255,14 @@ def layout(
             view.children.append(child)
 
             coord_cls = coord_type_from_type(widths[j].unit_type)
-            current_col = coord_cls.from_view(view, AxisKind.X, widths[j].val)
+            current_col = current_col + coord_cls.from_view(
+                view, AxisKind.X, widths[j].val
+            )
 
-        coord_cls = coord_type_from_type(widths[j].unit_type)
-        current_row = coord_cls.from_view(view, AxisKind.Y, heights[i].val)
+        coord_cls = coord_type_from_type(heights[i].unit_type)
+        current_row = current_row + coord_cls.from_view(
+            view, AxisKind.Y, heights[i].val
+        )
 
 
 def background(view: ViewPort, style: Optional[Style] = None):

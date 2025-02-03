@@ -83,10 +83,10 @@ def add_coord_one_length(
     left_coord: "Coord1D",
     other_coord: "Coord1D",
     operator: Operator,
-    scale: Scale,
+    scale: Optional[Scale],
     result_to_clone: "Coord1D",
 ) -> "Coord1D":
-    length = left_coord.get_length()
+    length = result_to_clone.get_length()
     if length is None:
         raise GGException("Length must not be None")
 
@@ -134,13 +134,9 @@ def coord_operator(
             return res
     elif lhs.unit_type.is_length():
         scale = rhs.get_scale()
-        if not scale:
-            raise GGException("expected a scale")
         return add_coord_one_length(lhs, rhs, operator, scale, lhs)
     elif rhs.unit_type.is_length():
         scale = lhs.get_scale()
-        if not scale:
-            raise GGException("expected a scale")
         return add_coord_one_length(lhs, rhs, operator, scale, rhs)
     else:
         left = lhs.to(UnitType.RELATIVE)
@@ -397,7 +393,7 @@ class RelativeCoordType(Coord1D):
 
     @staticmethod
     def from_view(view: "ViewPort", axis_kind: "AxisKind", at: float) -> "Coord1D":
-        raise GGException("not implemented")
+        return RelativeCoordType(at)
 
     @property
     def unit_type(self) -> UnitType:

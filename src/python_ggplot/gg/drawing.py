@@ -136,11 +136,11 @@ def read_text(df: pd.DataFrame, idx: int, fg: FilledGeom) -> str:
 def get_cols_and_rows(fg: FilledGeom) -> Tuple[int, int]:
     cols, rows = 1, 1
 
-    if fg.gg_data.x_discrete_kind.discrete_type == DiscreteType.DISCRETE:
+    if fg.is_discrete_x():
         f_geom_ = cast(FilledGeomDiscrete, fg.gg_data.x_discrete_kind)
         cols = len(f_geom_.label_seq)
 
-    if fg.gg_data.y_discrete_kind.discrete_type == DiscreteType.DISCRETE:
+    if fg.is_discrete_y():
         f_geom_ = cast(FilledGeomDiscrete, fg.gg_data.x_discrete_kind)
         rows = len(f_geom_.label_seq)
 
@@ -157,15 +157,17 @@ def prepare_views(view: ViewPort, fg: FilledGeom, theme: Theme):
     heights: List[Quantity] = []
 
     if cols > 1:
-        ind_widths: List[Quantity] = [Quantity.relative(i) for i in range(cols)]
+        ind_widths: List[Quantity] = [Quantity.relative(0.0) for _ in range(cols)]
         cols += 2
         widths = [discrete_margin] + ind_widths + [discrete_margin]
 
     if rows > 1:
-        ind_heights: List[Quantity] = [Quantity.relative(i) for i in range(rows)]
+        ind_heights: List[Quantity] = [Quantity.relative(0.0) for _ in range(rows)]
         rows += 2
         heights = [discrete_margin] + ind_heights + [discrete_margin]
 
+    # TODO this is redundant remove it
+    # but first double check the logic in case something got lost in translation
     widths_q = [i for i in widths]
     heights_q = [i for i in heights]
 
@@ -557,7 +559,6 @@ def move_bin_positions(
     coord_flipped = False
     x, y = point
     bin_width_x, bin_width_y = bin_widths
-
     if fg.gg_data.geom.geom_type == GeomType.TILE:
         x = move_bin_position(x, fg.gg_data.geom.gg_data.bin_position, bin_width_x)
         y = move_bin_position(y, fg.gg_data.geom.gg_data.bin_position, bin_width_y)
@@ -573,8 +574,9 @@ def move_bin_positions(
 def get_view(
     view_map: Dict[Any, Any], point: Tuple[float, float], fg: FilledGeom
 ) -> int:
-    px = point[0] if fg.is_discrete_x() else None
-    py = point[1] if fg.is_discrete_y() else None
+    # TODO Vnull has to be deleted one day, or maybe not?
+    px = point[0] if fg.is_discrete_x() else VNull()
+    py = point[1] if fg.is_discrete_y() else VNull()
     return view_map[(px, py)]
 
 
@@ -716,8 +718,8 @@ def draw_sub_df(
 
     line_points: List[Coord] = []
     if geom_type not in {GeomType.RASTER}:
-        x_tensor = df[fg.x_col]  # type: ignore
-        y_tensor = df[fg.y_col]  # type: ignore
+        x_tensor = df[fg.gg_data.x_col]  # type: ignore
+        y_tensor = df[fg.gg_data.y_col]  # type: ignore
 
         last_element: int = len(df) - 2
         if fg.gg_data.geom.gg_data.bin_position == BinPositionType.NONE:

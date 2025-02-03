@@ -24,7 +24,13 @@ from python_ggplot.core.objects import (
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 
-COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
+# TODO CRITICAL, medium difficulty
+# once the codebase reaches a certain point
+# we have to wire back the old logic
+# or make sure we always operate on copies
+# for now this is fine
+COUNT_COL = "count"
+# COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
 PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 

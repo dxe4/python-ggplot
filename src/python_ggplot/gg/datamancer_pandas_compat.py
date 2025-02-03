@@ -57,7 +57,6 @@ def pandas_series_to_column(series: pd.Series) -> ColumnType:
     return result
 
 
-@dataclass
 class GGValue:
     """
     TODO high priority. find a proxy mechanism for this
@@ -89,12 +88,12 @@ class VObject(GGValue):
     fields: OrderedDict[str, GGValue]
 
 
-@dataclass
+@dataclass(frozen=True)
 class VNull(GGValue):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class VTODO(GGValue):
     pass
 

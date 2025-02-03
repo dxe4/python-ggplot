@@ -193,7 +193,7 @@ def split_discrete_set_map(
 def set_x_attributes(fg: FilledGeom, df: pd.DataFrame, scale: GGScale) -> None:
 
     if isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete):
-        fg.gg_data.num_x = max(fg.gg_data.num_x, df[scale.gg_data.col].nunique())
+        fg.gg_data.num_x = max(fg.gg_data.num_x, df[str(scale.gg_data.col)].nunique())
         fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
         # and assign the label sequence
         # TODO this assumes fg.gg_data.x_discrete_kind = Discrete
@@ -273,37 +273,49 @@ def add_zero_keys(
 def _get_y_max_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.y_max, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.y_max, geom=geom, optional=optional
+    )
 
 
 def _get_y_min_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.y_min, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.y_min, geom=geom, optional=optional
+    )
 
 
 def _get_x_max_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.x_max, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.x_max, geom=geom, optional=optional
+    )
 
 
 def _get_x_min_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.x_min, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.x_min, geom=geom, optional=optional
+    )
 
 
 def _get_height_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.height, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.height, geom=geom, optional=optional
+    )
 
 
 def _get_width_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.width, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.width, geom=geom, optional=optional
+    )
 
 
 def get_y_scale(
@@ -321,19 +333,25 @@ def get_x_scale(
 def get_text_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.text, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.text, geom=geom, optional=optional
+    )
 
 
 def get_fill_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.fill, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.fill, geom=geom, optional=optional
+    )
 
 
 def get_weight_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.weight, geom=geom, optional=optional)
+    return filled_scales.get_scale(
+        attr=filled_scales.weight, geom=geom, optional=optional
+    )
 
 
 def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
@@ -1025,7 +1043,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     fg_data = FilledGeomData(
         geom=geom,
         x_col=x_col,
-        y_col="col",
+        y_col=COUNT_COL,
         x_scale=determine_data_scale(x, cont, df),
         y_scale=encompassing_data_scale(cont, AxisKind.Y),
         # not explicitly passed at initialisisation, we set some defaults

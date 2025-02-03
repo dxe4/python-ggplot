@@ -125,8 +125,8 @@ def build_theme(filled_scales: FilledScales, plot: GgPlot) -> "Theme":
     if theme.y_label_secondary is None and has_secondary(theme, AxisKind.Y):
         theme.y_label_secondary = filled_scales.get_secondary_axis(AxisKind.Y).name
 
-    x_scale = theme.x_range or theme.x_range
-    y_scale = theme.y_range or theme.y_range
+    x_scale = theme.x_range or filled_scales.x_scale
+    y_scale = theme.y_range or filled_scales.y_scale
     if x_scale is None or y_scale is None:
         raise GGException("require x scale and y scale")
 
