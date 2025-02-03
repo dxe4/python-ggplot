@@ -42,6 +42,7 @@ from python_ggplot.gg.scales.base import (
     GGScaleData,
     LinearAndTransformScaleData,
     LinearDataScale,
+    MainAddScales,
     ScaleTransformFunc,
     ScaleType,
     ShapeScaleValue,
@@ -315,8 +316,8 @@ def fill_discrete_linear_trans_scale(
     inv_trans: Optional[ScaleTransformFunc] = None,
 ) -> GGScale:
     cls = scale_type_to_cls(scale_type)
-    if not isinstance(cls, (TransformedDataScale, LinearDataScale)):
-        raise GGException("expected transform or linear")
+    if not cls in (TransformedDataScale, LinearDataScale):
+        raise GGException(f"expected transform or linear received {cls.__name__}")
 
     gg_data = GGScaleData(
         col=col,
@@ -832,13 +833,12 @@ def fill_scale(
         if isinstance(filled, (LinearDataScale, TransformedDataScale)) and isinstance(
             scale, (LinearDataScale, TransformedDataScale)
         ):
-            if filled.data is None or scale.data is None:
-                raise GGException("expected data")
-
-            filled.data.secondary_axis = scale.data.secondary_axis
-            filled.data.date_scale = scale.data.date_scale
-            filled.gg_data.num_ticks = scale.gg_data.num_ticks
-            filled.gg_data.breaks = scale.gg_data.breaks
+            if not (filled.data is None or scale.data is None):
+                # TODO double check this is correct
+                filled.data.secondary_axis = scale.data.secondary_axis
+                filled.data.date_scale = scale.data.date_scale
+                filled.gg_data.num_ticks = scale.gg_data.num_ticks
+                filled.gg_data.breaks = scale.gg_data.breaks
 
             if isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete) and is_discrete:
                 scale.gg_data.discrete_kind.format_discrete_label = (
@@ -891,7 +891,8 @@ def call_fill_scale(
                 scales[i].df, [scales[i].scale], scale_type  # type: ignore
             )
 
-        assert len(additional) <= 1
+        if len(additional) > 1:
+            raise GGException("expected at most 1 additional")
         result.extend(additional)
 
     return result
@@ -921,23 +922,22 @@ def add_facets(filled_scales: FilledScales, plot: GgPlot):
         filled_scales.facets.extend(result)
 
 
-def collect(plot: GgPlot, field: Any):
+def collect(plot: GgPlot, field_name: str) -> List[_FillScaleData]:
     scale_data: List[_FillScaleData] = []
 
-    if hasattr(plot.aes, field) and getattr(plot.aes, field) is not None:
-        element = _FillScaleData(df=None, scale=getattr(plot.aes, field))
+    attr_value = getattr(plot.aes, field_name, None)
+    if attr_value is not None:
+        element = _FillScaleData(df=None, scale=attr_value)
         scale_data.append(element)
 
     # Check all geoms
     for geom in plot.geoms:
-        if (
-            hasattr(geom.gg_data.aes, field)
-            and getattr(geom.gg_data.aes, field) is not None
-        ):
-            element = _FillScaleData(
-                df=geom.gg_data.data, scale=getattr(geom.gg_data.aes, field)
-            )
-            scale_data.append(element)
+        geom_aes = getattr(geom.gg_data.aes, field_name, None)
+        if geom_aes is None:
+            continue
+
+        element = _FillScaleData(df=geom.gg_data.data, scale=geom_aes)
+        scale_data.append(element)
 
     return scale_data
 
@@ -946,10 +946,10 @@ def collect_scales(plot: GgPlot) -> FilledScales:
     result: Dict[Any, Any] = {}
 
     def fill_field(field_name: str, arg: List[GGScale]) -> None:
-        if len(arg) > 0 and arg[0].ids == set(range(0, 65535)):  # type: ignore
-            result["metadata"][field_name] = {"main": arg[0], "more": arg[1:]}
+        if len(arg) > 0 and arg[0].gg_data.ids == set(range(0, 65535)):  # type: ignore
+            result[field_name] = MainAddScales(main=arg[0], more=arg[1:])
         else:
-            result["metadata"][field_name] = {"main": None, "more": arg}
+            result[field_name] = MainAddScales(main=None, more=arg)
 
     xs = collect(plot, "x")
     x_filled = call_fill_scale(plot.data, xs, ScaleType.LINEAR_DATA)

@@ -1702,7 +1702,7 @@ def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
 
 def ggcreate(p: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
     if len(p.geoms) == 0:
-        raise ValueError("Please use at least one `geom`!")
+        raise GGException("Please use at least one `geom`!")
 
     filled_scales: FilledScales
     if p.ridges is not None:

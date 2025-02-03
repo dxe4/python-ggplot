@@ -454,9 +454,6 @@ class JsonDummyDraw:
     backend: str  # we only support cairo for now
 
 
-MainAddScales = Tuple[Optional["GGScale"], List["GGScale"]]
-
-
 @dataclass
 class PlotView:
     filled_scales: "FilledScales"

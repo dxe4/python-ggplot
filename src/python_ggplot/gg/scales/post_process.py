@@ -12,11 +12,13 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import AxisKind, GGException, Scale
-from python_ggplot.gg.datamancer_pandas_compat import VNull
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import (
     FilledGeom,
     FilledGeomContinuous,
     FilledGeomData,
+    FilledGeomDiscrete,
+    FilledGeomDiscreteKind,
     FilledGeomErrorBar,
     Geom,
     GeomType,
@@ -55,13 +57,13 @@ def get_scales(
 
     @no_type_check
     def get_scale(field: Dict[Any, Any]) -> Optional[GGScale]:
-        more_scale = [s for s in field["more"] if gid in s.ids]
+        more_scale = [s for s in field.more or [] if gid in s.gg_data.ids]
         if len(more_scale) > 1:
             raise GGException("found more than 1 scale matching gid")
         if len(more_scale) == 1:
             return more_scale[0]
-        elif field["main"] is not None:
-            return field["main"]
+        elif field.main is not None:
+            return field.main
         else:
             return None
 
@@ -128,15 +130,19 @@ def apply_transformations(df: pd.DataFrame, scales: List[GGScale]):
 
             transformations[col_str] = lambda x, s=scale, c=col: s.trans(df[c])  # type: ignore
         else:
-            col = scale.col  # type: ignore
+            # TODO this can only be VectorCol for now i think
+            # but this is FomrulaNode logic, which we may add in the near future
+            col = scale.gg_data.col
             if isinstance(col, str):
-                transformations[col] = lambda x, c=col: df[c]  # type: ignore
+                transformations[col] = lambda x, c: x[c]  # type: ignore
+            elif isinstance(col, VectorCol):  # type: ignore
+                transformations[col.col_name] = lambda x, c: x[c]  # type: ignore
             else:
                 # Assume col is some kind of formula/expression that can be evaluated
-                transformations[scale.get_col_name()] = lambda x, c=col: c.evaluate()  # type: ignore
+                transformations[scale.get_col_name()] = lambda x, c: c.evaluate()  # type: ignore
 
     for col_name, transform_fn in transformations.items():
-        df[col_name] = transform_fn(df)
+        df[col_name] = transform_fn(df, col_name)
 
 
 def separate_scales_apply_trafos(
@@ -1015,6 +1021,18 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
 
     x_col = x.get_col_name()
 
+    # value_map: OrderedDict[GGValue, "ScaleValue"] = field(default_factory=OrderedDict)
+    # label_seq: List[GGValue] = field(default_factory=list)
+    # format_discrete_label: Optional[DiscreteFormat] = None
+
+    if x.is_discrete():
+        # TODO critical, easy task
+        # double check if we need to pass empty label_seq
+        # or if we need x.gg_data.discrete_kind.label_seq
+        x_discrete_kind = FilledGeomDiscrete(label_seq=[])
+    else:
+        x_discrete_kind = FilledGeomContinuous()
+
     fg_data = FilledGeomData(
         geom=geom,
         x_col=x_col,
@@ -1023,8 +1041,8 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         y_scale=encompassing_data_scale(cont, AxisKind.Y),
         # not explicitly passed at initialisisation, we set some defaults
         # TODO investiage if needed
-        x_discrete_kind=geom.gg_data.x_discrete_kind,
-        y_discrete_kind=geom.gg_data.y_discrete_kind,  # TODO double check this, i think its wrong
+        x_discrete_kind=x_discrete_kind,
+        y_discrete_kind=FilledGeomContinuous(),
         reversed_x=False,
         reversed_y=False,
         yield_data={},  # type: ignore

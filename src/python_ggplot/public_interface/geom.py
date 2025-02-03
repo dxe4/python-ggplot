@@ -71,21 +71,23 @@ def fill_ids(aes: Aesthetics, gids: Set[int]) -> Aesthetics:
         value = getattr(result, field)
         if value is not None:
             value = deepcopy(value)
-            value.ids = gids
+            value.gg_data.ids = gids
             setattr(result, field, value)
 
     return result
 
 
 def ggplot(data: pd.DataFrame, aes: Optional[Aesthetics] = None) -> GgPlot:
-    shallow_copy: pd.DataFrame = data.copy(deep=False)
+    # TODO CRITICAL, easy task
+    # do we need to copy ?
+    # shallow_copy: pd.DataFrame = data.copy(deep=False)
     if aes is None:
         aes = Aesthetics()
 
     aes = fill_ids(aes, set(range(0, 65536)))
 
     result = GgPlot(
-        data=shallow_copy,
+        data=data,
         aes=aes,
         theme=Theme(discrete_scale_margin=Quantity.centimeters(0.2)),
     )

@@ -3,7 +3,8 @@
 # the entire file is red from pyright
 # TODO research this later
 from math import pi
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Union
 
 from cairo import (
     FONT_SLANT_ITALIC,
@@ -342,7 +343,9 @@ class CairoBackend:
         return bytearray(input_data)
 
 
-def init_image(filename: str, width: int, height: int, ftype: "FileTypeKind"):
+def init_image(
+    filename: Union[str, Path], width: int, height: int, ftype: "FileTypeKind"
+):
     # todo fix this later
     from python_ggplot.core.objects import FileTypeKind, GGException, Image
 

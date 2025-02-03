@@ -1,5 +1,6 @@
 import math
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, coord_type_from_type
@@ -634,7 +635,7 @@ def draw_viewport(img: Image, view: ViewPort):
         draw_viewport(img, embeded_view)
 
 
-def draw_to_file(view: "ViewPort", filename: str):
+def draw_to_file(view: "ViewPort", filename: Union[str, Path]):
     # TODO PNG is hardcoded which is fine for now
     width = round(view.w_img.val)
     height = round(view.h_img.val)
