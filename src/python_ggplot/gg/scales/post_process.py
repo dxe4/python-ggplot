@@ -263,92 +263,79 @@ def add_zero_keys(
     return pd.concat([df, df_zero], ignore_index=True)
 
 
-@no_type_check
-def _get_min_max_scale(left, right, operator):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("needs to be ported")
+# TODO the following functions are repetitive
+# we can make something more re-usable
+# we keep them for now for backwards compat
+# the original ones created by macro
 
 
-@no_type_check
-def _get_height_scale(left, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("needs to be ported")
+def _get_y_max_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.y_max, geom=geom, optional=False)
 
 
-@no_type_check
-def _get_width_scale(left, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("needs to be ported")
+def _get_y_min_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.y_min, geom=geom, optional=False)
 
 
-@no_type_check
-def get_y_scale(left, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("need to be ported")
+def _get_x_max_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.x_max, geom=geom, optional=False)
 
 
-@no_type_check
-def get_x_scale(left, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("need to be ported")
+def _get_x_min_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.x_min, geom=geom, optional=False)
 
 
-@no_type_check
-def get_text_scale(left, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("need to be ported")
+def _get_height_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.height, geom=geom, optional=False)
 
 
-@no_type_check
-def get_fill_scale(left, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("need to be ported")
+def _get_width_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.width, geom=geom, optional=False)
 
 
-@no_type_check
-def get_weight_scale(self, right):
-    # TODO CRITICAL reafactor, this is a mess
-    # the original code comes from a macro
-    # we need to check all macros carefully
-    # this wont cause any issues for now
-    raise GGException("need to be ported")
+def get_y_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.y, geom=geom, optional=False)
+
+
+def get_x_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.x, geom=geom, optional=False)
+
+
+def get_text_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.text, geom=geom, optional=False)
+
+
+def get_fill_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.fill, geom=geom, optional=False)
+
+
+def get_weight_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.weight, geom=geom, optional=False)
 
 
 def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
-    """
-    TODO CRITICAL
-    THIS whole function needs an entire re-write
-    we need to provide the functionality very draft
-    for now for this to stop being a blocker
-
-    this is the case for most of this file,
-    but some things are a lot easier to port
-
-    write unit tests for the original package for this funcs:
-        _get_min_max_scale, _get_width_scale and _get_min_max_scale
-    """
-
     def assign_if_any(fg: FilledGeom, scale: Optional[GGScale], attr: Any):
         # TODO this is inherited as tempalte assuming for performanece to avoid func calls
         # we can refactor later
@@ -356,20 +343,18 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
             setattr(fg, attr, scale.get_col_name())
 
     if fg.geom_type == GeomType.ERROR_BAR:
-        # TODO CRITICAL This logic is semi-wrong
-        # adding type ignore for now, need to port the macro and write a unit test
-        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, min), "x_min")  # type: ignore
-        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, max), "x_max")  # type: ignore
-        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, min), "y_min")  # type: ignore
-        assign_if_any(fg, _get_min_max_scale(fs, fg.gg_data.geom, min), "y_min")  # type: ignore
+        assign_if_any(fg, _get_x_min_scale(fs, fg.gg_data.geom), "x_min")
+        assign_if_any(fg, _get_x_max_scale(fs, fg.gg_data.geom), "x_max")
+        assign_if_any(fg, _get_y_min_scale(fs, fg.gg_data.geom), "y_min")
+        assign_if_any(fg, _get_y_max_scale(fs, fg.gg_data.geom), "y_max")
 
     elif fg.geom_type in {GeomType.TILE, GeomType.RASTER}:
         h_s = _get_height_scale(fs, fg.gg_data.geom)
         w_s = _get_width_scale(fs, fg.gg_data.geom)
-        x_min_s = _get_min_max_scale(fs, fg.gg_data.geom, min)
-        x_max_s = _get_min_max_scale(fs, fg.gg_data.geom, max)
-        y_min_s = _get_min_max_scale(fs, fg.gg_data.geom, min)
-        y_max_s = _get_min_max_scale(fs, fg.gg_data.geom, max)
+        x_min_s = _get_x_min_scale(fs, fg.gg_data.geom)
+        x_max_s = _get_x_max_scale(fs, fg.gg_data.geom)
+        y_min_s = _get_y_min_scale(fs, fg.gg_data.geom)
+        y_max_s = _get_y_max_scale(fs, fg.gg_data.geom)
 
         if h_s is not None:
             # TODO the type: ignore can go away
