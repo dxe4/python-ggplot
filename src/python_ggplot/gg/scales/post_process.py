@@ -36,6 +36,7 @@ from python_ggplot.gg.scales.base import (
 from python_ggplot.gg.styles.utils import apply_style, change_style, use_or_default
 from python_ggplot.gg.ticks import get_x_ticks, get_y_ticks
 from python_ggplot.gg.types import (
+    COUNT_COL,
     PREV_VALS_COL,
     SMOOTH_VALS_COL,
     BinByType,
@@ -272,67 +273,67 @@ def add_zero_keys(
 def _get_y_max_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.y_max, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.y_max, geom=geom, optional=optional)
 
 
 def _get_y_min_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.y_min, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.y_min, geom=geom, optional=optional)
 
 
 def _get_x_max_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.x_max, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.x_max, geom=geom, optional=optional)
 
 
 def _get_x_min_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.x_min, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.x_min, geom=geom, optional=optional)
 
 
 def _get_height_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.height, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.height, geom=geom, optional=optional)
 
 
 def _get_width_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.width, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.width, geom=geom, optional=optional)
 
 
 def get_y_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.y, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.y, geom=geom, optional=optional)
 
 
 def get_x_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.x, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.x, geom=geom, optional=optional)
 
 
 def get_text_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.text, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.text, geom=geom, optional=optional)
 
 
 def get_fill_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.fill, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.fill, geom=geom, optional=optional)
 
 
 def get_weight_scale(
     filled_scales: FilledScales, geom: Geom, optional: bool = False
 ) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.weight, geom=geom, optional=False)
+    return filled_scales.get_scale(attr=filled_scales.weight, geom=geom, optional=optional)
 
 
 def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
@@ -979,16 +980,19 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
 
 
 def count_(
-    df: pd.DataFrame, x_col: str, name: str, weights: Optional[Scale] = None
+    df: pd.DataFrame, x_col: str, name: str, weights: Optional[GGScale] = None
 ) -> pd.DataFrame:
+    # TODO critical, medium complexity
+    # we rename to counts_GGPLOTNIM_INTERNAL
+    # need to make a choice here
     if weights is None:
         result = df[x_col].value_counts().reset_index()
-        result = result[[x_col, name]]
+        result = result[[x_col, "count"]].rename({"count": name})
     else:
-        result = df.groupby(x_col)[weights].sum().reset_index()  # type: ignore
-        result = result[[x_col, name]]  # type: ignore
+        result = df.groupby(x_col)[weights.get_col_name()].sum().reset_index()  # type: ignore
+        result = result[[x_col, "count"]].rename({"count": name})
 
-    return result  # type: ignore
+    return result
 
 
 def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> FilledGeom:
@@ -1089,14 +1093,14 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         if len(cont) > 0:
             raise GGException("cont > 0")
 
-        weight_scale = get_weight_scale(filled_scales, geom)
-        yield_df = count_(df, x_col, weight_scale)
+        weight_scale = get_weight_scale(filled_scales, geom, optional=True)
+        yield_df = count_(df, x_col, COUNT_COL, weight_scale)
         yield_df["prev_vals"] = 0.0
 
         key = ("", None)
         maybe_filter_unique(yield_df, result)
-        result.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
-            yield_df, cont, style, geom.kind
+        result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+            yield_df, cont, style, geom.geom_type
         )
         set_x_attributes(result, yield_df, x)
         result.gg_data.y_scale = result.gg_data.y_scale.merge(
