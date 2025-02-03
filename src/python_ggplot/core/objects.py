@@ -179,6 +179,7 @@ class ColorHCL:
 
     def to_rgb(self) -> Color:
         from python_ggplot.core.chroma import color_from_hsl
+
         return Color(**color_from_hsl(self.h, self.c, self.l))
 
     @staticmethod

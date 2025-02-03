@@ -1,6 +1,5 @@
 from typing import Dict, Tuple
 
-
 from python_ggplot.core.chroma import parse_hex
 from python_ggplot.core.objects import (
     BLACK,
@@ -12,8 +11,6 @@ from python_ggplot.core.objects import (
     MarkerKind,
     Style,
 )
-
-
 
 # Define color constants
 STAT_SMOOTH_COLOR: Color = Color(

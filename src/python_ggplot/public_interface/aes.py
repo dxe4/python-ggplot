@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Tuple
 
 from python_ggplot.core.objects import AxisKind, GGException
-from python_ggplot.gg.datamancer_pandas_compat import VNull, VectorCol
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.scales.base import (
     GGScale,
     GGScaleData,
@@ -9,11 +9,9 @@ from python_ggplot.gg.scales.base import (
     LinearDataScale,
     ScaleType,
     TransformedDataScale,
-    scale_type_to_cls
+    scale_type_to_cls,
 )
-
 from python_ggplot.gg.types import Aesthetics
-
 
 _AES_PARAM_TO_SCALE_ARGS: Dict[str, Tuple[ScaleType, Optional[AxisKind]]] = {
     "x": (ScaleType.LINEAR_DATA, AxisKind.X),

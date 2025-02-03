@@ -8,8 +8,8 @@ from python_ggplot.core.objects import AxisKind, GGException, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, UnitType
 from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom.base import (
-    FilledGeomDiscrete,
     FilledGeom,
+    FilledGeomDiscrete,
     FilledGeomErrorBar,
     FilledGeomHistogram,
     FilledGeomRaster,

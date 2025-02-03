@@ -2,6 +2,7 @@
 # todo port the unit tests too
 from types import NoneType
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
+
 from typing_extensions import Callable
 
 from python_ggplot.core.objects import Color, ColorRGBA, GGException
@@ -112,6 +113,7 @@ def color_from_hsl(h: float, s: float, l: float) -> RGBADict:
 
     return {"r": r, "g": g, "b": b, "a": a}
 
+
 def to_rgba(c: int) -> tuple[int, int, int, int]:
     # todo decide what stays in color maps and what goes in chroma
     return (
@@ -140,6 +142,7 @@ def value_to_color(c: int | str) -> ColorRGBA:
     if isinstance(c, str):
         return parse_html_color(c)
     raise ValueError("expected str or int")
+
 
 def to_opt_color(x: Union[Color, int, str, None]) -> Optional[Color]:
     """

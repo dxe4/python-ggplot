@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto
 from typing import (
+    TYPE_CHECKING,
     Any,
     Generator,
     List,
@@ -9,7 +10,6 @@ from typing import (
     OrderedDict,
     Tuple,
     cast,
-    TYPE_CHECKING
 )
 
 import pandas as pd
@@ -38,8 +38,10 @@ from python_ggplot.graphics.initialize import (
     init_text,
 )
 from python_ggplot.graphics.views import ViewPort
+
 if TYPE_CHECKING:
     from python_ggplot.gg.scales.base import ColorScale
+
 
 class HistogramDrawingStyle(GGEnum):
     BARS = auto()
@@ -477,7 +479,7 @@ class TitleRasterData:
     fill_data_scale: Scale
     width: Optional[str]
     height: Optional[str]
-    color_scale: 'ColorScale'
+    color_scale: "ColorScale"
 
 
 class FilledGeomTitle(GeomTileMixin, FilledGeom):

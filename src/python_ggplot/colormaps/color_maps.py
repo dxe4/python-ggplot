@@ -33,6 +33,7 @@ class ColorMapsData:
     def plasma_raw(self):
         return self.data["plasma_raw"]
 
+
 color_maps_data = ColorMapsData()
 # TODO Do we really want to load a json file at import time?
 # This can be changed if we decide to

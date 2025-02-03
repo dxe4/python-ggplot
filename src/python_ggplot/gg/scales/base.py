@@ -24,7 +24,7 @@ from python_ggplot.colormaps.color_maps import (
     INFERNO_RAW,
     MAGMARAW,
     PLASMA_RAW,
-    VIRIDIS_RAW
+    VIRIDIS_RAW,
 )
 from python_ggplot.core.objects import (
     AxisKind,
@@ -50,7 +50,6 @@ from python_ggplot.gg.geom.base import (
     FilledGeomDiscreteKind,
     Geom,
 )
-
 from python_ggplot.gg.styles.config import DEFAULT_ALPHA_RANGE_TUPLE
 from python_ggplot.gg.types import (
     ContinuousFormat,
@@ -93,7 +92,7 @@ class ScaleValue(ABC):
 
     @property
     @abstractmethod
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         pass
 
 
@@ -101,7 +100,7 @@ class ScaleValue(ABC):
 class TextScaleValue(ScaleValue):
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.TEXT
 
 
@@ -113,7 +112,7 @@ class SizeScaleValue(ScaleValue):
         pass
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.SIZE
 
 
@@ -127,7 +126,7 @@ class ShapeScaleValue(ScaleValue):
         style.line_type = self.line_type
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.SHAPE
 
 
@@ -139,7 +138,7 @@ class AlphaScaleValue(ScaleValue):
         pass
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.ALPHA
 
 
@@ -152,7 +151,7 @@ class FillColorScaleValue(ScaleValue):
         style.color = self.color
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.FILL_COLOR
 
 
@@ -164,7 +163,7 @@ class ColorScaleValue(ScaleValue):
         style.color = self.color
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.COLOR
 
 
@@ -173,7 +172,7 @@ class TransformedDataScaleValue(ScaleValue):
     val: Optional[Any] = None
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.TRANSFORMED_DATA
 
 
@@ -182,8 +181,9 @@ class LinearDataScaleValue(ScaleValue):
     val: Optional[Any] = None
 
     @property
-    def scale_type(self) -> 'ScaleType':
+    def scale_type(self) -> "ScaleType":
         return ScaleType.LINEAR_DATA
+
 
 @dataclass
 class ColorScale:
@@ -191,7 +191,7 @@ class ColorScale:
     colors: List[int] = field(default_factory=list)
 
     @classmethod
-    def from_color_map(cls, name: str, color_map: List[List[float]]) -> 'ColorScale':
+    def from_color_map(cls, name: str, color_map: List[List[float]]) -> "ColorScale":
         def _to_val(x: float):
             # TODO, add tests for this and make sure
             # it only happens at the right times
@@ -202,26 +202,29 @@ class ColorScale:
 
         colors: List[int] = []
         for r, g, b in color_map:
-            new_col = (255 << 24) | (_to_val(r) << 16) | (_to_val(g) << 8) | (_to_val(b))
+            new_col = (
+                (255 << 24) | (_to_val(r) << 16) | (_to_val(g) << 8) | (_to_val(b))
+            )
             colors.append(new_col)
         result = ColorScale(name=name, colors=colors)
         return result
 
     @classmethod
-    def viridis(cls) -> 'ColorScale':
+    def viridis(cls) -> "ColorScale":
         return cls.from_color_map("viridis", VIRIDIS_RAW)
 
     @classmethod
-    def magmaraw(cls)  -> 'ColorScale':
+    def magmaraw(cls) -> "ColorScale":
         return cls.from_color_map("magma", MAGMARAW)
 
     @classmethod
-    def inferno(cls)  -> 'ColorScale':
+    def inferno(cls) -> "ColorScale":
         return cls.from_color_map("inferno", INFERNO_RAW)
 
     @classmethod
-    def plasma(cls)  -> 'ColorScale':
+    def plasma(cls) -> "ColorScale":
         return cls.from_color_map("plasma", PLASMA_RAW)
+
 
 class ScaleType(GGEnum):
     LINEAR_DATA = auto()
@@ -690,7 +693,9 @@ class FilledScales:
                 for _, sub_field in asdict(field_).items():
                     yield sub_field
 
-    def enumerate_scales(self: "FilledScales", geom: Geom) -> Generator[Any, None, None]:
+    def enumerate_scales(
+        self: "FilledScales", geom: Geom
+    ) -> Generator[Any, None, None]:
         # TODO this will have to make a bunch of objects hashable
         # we may want to implement it for all
         result: Set[Any] = set()

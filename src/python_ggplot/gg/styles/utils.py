@@ -1,13 +1,28 @@
 from typing import Any, List, Tuple, cast
+
+import pandas as pd
 from typing_extensions import Dict
+
 from python_ggplot.core.objects import GGException, Style
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
 from python_ggplot.gg.geom.base import FilledGeom, GeomType
-from python_ggplot.gg.scales.base import ColorScale, GGScale, GGScaleDiscrete, ScaleType, ScaleValue
-from python_ggplot.gg.styles.config import BAR_DEFAULT_STYLE, HISTO_DEFAULT_STYLE, LINE_DEFAULT_STYLE, POINT_DEFAULT_STYLE, SMOOTH_DEFAULT_STYLE, TEXT_DEFAULT_STYLE, TILE_DEFAULT_STYLE
+from python_ggplot.gg.scales.base import (
+    ColorScale,
+    GGScale,
+    GGScaleDiscrete,
+    ScaleType,
+    ScaleValue,
+)
+from python_ggplot.gg.styles.config import (
+    BAR_DEFAULT_STYLE,
+    HISTO_DEFAULT_STYLE,
+    LINE_DEFAULT_STYLE,
+    POINT_DEFAULT_STYLE,
+    SMOOTH_DEFAULT_STYLE,
+    TEXT_DEFAULT_STYLE,
+    TILE_DEFAULT_STYLE,
+)
 from python_ggplot.gg.types import GGStyle, StatType
-import pandas as pd
-
 
 _style_lookup: Dict[GeomType, Style] = {
     GeomType.POINT: POINT_DEFAULT_STYLE,
@@ -126,6 +141,7 @@ def change_style(style: GGStyle, scale_value: ScaleValue) -> GGStyle:
         raise GGException(
             f"Setting style of {scale_value.scale_type} not supported at the moment!"
         )
+
 
 def apply_style(
     style: GGStyle,

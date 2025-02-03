@@ -2,13 +2,9 @@
 import builtins
 import math
 
+import pandas as pd
 from rich.console import Console
 
-import pandas as pd
-from python_ggplot.public_interface.aes import aes
-from python_ggplot.public_interface.common import ggdraw_plot
-from python_ggplot.public_interface.geom import geom_bar, ggplot
-from python_ggplot.public_interface.utils import ggcreate
 from python_ggplot.core.common import linspace
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
@@ -49,6 +45,10 @@ from python_ggplot.graphics.initialize import (
     yticks,
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
+from python_ggplot.public_interface.aes import aes
+from python_ggplot.public_interface.common import ggdraw_plot
+from python_ggplot.public_interface.geom import geom_bar, ggplot
+from python_ggplot.public_interface.utils import ggcreate
 from tests import data_path
 
 TAU = 6.28318530717958647692528676655900577
@@ -307,6 +307,6 @@ def test_coord_add():
 
 def test_geom_bar():
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
-    plot = (ggplot(mpg, aes("class")) + geom_bar())
+    plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
     ggdraw_plot(res, "geom_bar.png")

@@ -1,18 +1,13 @@
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import (
-    Any, Dict, List, Literal, Optional, Tuple, Union, cast
-)
-
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
 from python_ggplot.core.chroma import int_to_color
-from python_ggplot.core.objects import (
-    AxisKind, ColorHCL, LineType, MarkerKind, Scale
-)
+from python_ggplot.core.objects import AxisKind, ColorHCL, LineType, MarkerKind, Scale
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -36,9 +31,12 @@ from python_ggplot.gg.scales import (
 )
 from python_ggplot.gg.scales.base import (
     AbstractGGScale,
+    AlphaScaleValue,
     ColorScale,
     ColorScaleKind,
+    ColorScaleValue,
     FillColorScale,
+    FillColorScaleValue,
     FilledScales,
     GGScaleContinuous,
     GGScaleData,
@@ -46,18 +44,13 @@ from python_ggplot.gg.scales.base import (
     LinearDataScale,
     ScaleTransformFunc,
     ScaleType,
+    ShapeScaleValue,
+    SizeScaleValue,
     TextScale,
     TransformedDataScale,
     scale_type_to_cls,
 )
 from python_ggplot.gg.scales.post_process import post_process_scales
-from python_ggplot.gg.scales.base import (
-    AlphaScaleValue,
-    ColorScaleValue,
-    FillColorScaleValue,
-    ShapeScaleValue,
-    SizeScaleValue,
-)
 from python_ggplot.gg.styles.config import (
     DEFAULT_ALPHA_RANGE_TUPLE,
     DEFAULT_SIZE_RANGE_TUPLE,
@@ -123,9 +116,7 @@ def is_discrete_data(
 
 
 def _is_discrete(
-    data: pd.Series,
-    scale: GGScale,
-    dc_kind: Optional[DiscreteType] = None
+    data: pd.Series, scale: GGScale, dc_kind: Optional[DiscreteType] = None
 ) -> bool:
     if dc_kind is None:
         return is_discrete_data(data, scale, draw_samples=True)
@@ -590,7 +581,7 @@ def fill_scale_impl(
     inv_trans: Optional[ScaleTransformFunc] = None,
     color_scale: Optional[ColorScale] = None,
     size_range: Tuple[float, float] = DEFAULT_SIZE_RANGE_TUPLE,
-    alpha_range:Tuple[float, float] = DEFAULT_ALPHA_RANGE_TUPLE,
+    alpha_range: Tuple[float, float] = DEFAULT_ALPHA_RANGE_TUPLE,
 ) -> GGScale:
     """
     TODO refactor ASAP
@@ -688,12 +679,7 @@ def fill_scale_impl(
             # this is almost guaratneed to be a bug
 
             return fill_continuous_color_scale(
-                ScaleType.COLOR,
-                col,
-                data_type,
-                value_kind,
-                data_scale,
-                color_scale
+                ScaleType.COLOR, col, data_type, value_kind, data_scale, color_scale
             )
         elif scale_type == ScaleType.FILL_COLOR:
             # TODO HIGH priority

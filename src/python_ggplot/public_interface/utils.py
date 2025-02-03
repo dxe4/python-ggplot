@@ -23,11 +23,11 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from python_ggplot.core.chroma import int_to_color
 from python_ggplot.common.enum_literals import (
     OUTSIDE_RANGE_KIND_VALUES,
     UNIT_TYPE_VALUES,
 )
+from python_ggplot.core.chroma import int_to_color
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
     Coord,
@@ -66,6 +66,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
 from python_ggplot.gg.geom.base import FilledGeom
+from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.scales.base import (
     ColorScale,
     ColorScaleKind,
@@ -84,7 +85,6 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
 )
 from python_ggplot.gg.scales.collect_and_fill import collect_scales
-from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.theme import (
     build_theme,
     calculate_margin_range,
@@ -205,6 +205,7 @@ def scale_axis_discrete_with_labels(
 
     if labels is None:
         labels = OrderedDict()
+
     def format_discrete_label_(value: GGValue):
         """
         TODO double check this logic

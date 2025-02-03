@@ -18,6 +18,7 @@ from python_ggplot.core.objects import (
     Scale,
 )
 from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol
+from python_ggplot.gg.scales import ScaleValue, SizeScaleValue
 from python_ggplot.gg.scales.base import (
     AlphaScale,
     ColorScale,
@@ -32,7 +33,6 @@ from python_ggplot.gg.scales.base import (
     SizeScale,
     TransformedDataScale,
 )
-from python_ggplot.gg.scales import ScaleValue, SizeScaleValue
 from python_ggplot.gg.types import (
     DataType,
     DiscreteFormat,

@@ -29,8 +29,8 @@ PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales import FilledScales, ScaleFreeKind, GGScale
     from python_ggplot.gg.geom.base import Geom
+    from python_ggplot.gg.scales import FilledScales, GGScale, ScaleFreeKind
 
     # TODO view port we should be able to import, this shouldnt be here, but adding temporarily
     from python_ggplot.graphics.views import ViewPort
@@ -171,7 +171,7 @@ class Aesthetics:
 @dataclass
 class SecondaryAxis:
     name: str
-    scale: 'GGScale'
+    scale: "GGScale"
     # TODO i dont like this, but thats how its inherited
     # id rather be explicit here makes it more understandable
     axis_kind: AxisKind = AxisKind.X
@@ -265,8 +265,12 @@ class GGStyle:
 
 @dataclass
 class Theme:
-    x_margin_range: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))  # TODO double check
-    y_margin_range: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))  # TODO double check
+    x_margin_range: Scale = field(
+        default_factory=lambda: Scale(low=0.0, high=0.0)
+    )  # TODO double check
+    y_margin_range: Scale = field(
+        default_factory=lambda: Scale(low=0.0, high=0.0)
+    )  # TODO double check
     x_ticks_rotate: float = 0.0
     y_ticks_rotate: float = 0.0
     x_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
@@ -334,7 +338,7 @@ class GgPlot:
     aes: Aesthetics
     theme: Theme
     backend: str = field(default="cairo")  # Will be cairo only for a while..
-    geoms: List['Geom'] = field(default_factory=list)
+    geoms: List["Geom"] = field(default_factory=list)
     annotations: List["Annotation"] = field(default_factory=list)
     title: Optional[str] = None
     sub_title: Optional[str] = None
@@ -345,9 +349,9 @@ class GgPlot:
         """
         TODO, there is a better plan for this, for now its fine
         """
+        from python_ggplot.gg.geom.base import Geom
         from python_ggplot.gg.scales.base import DateScale, GGScale
         from python_ggplot.gg.types import Annotation, Facet, Ridges, Theme
-        from python_ggplot.gg.geom.base import Geom
         from python_ggplot.public_interface.add import (
             add_annotations,
             add_date_scale,
@@ -375,7 +379,13 @@ class GgPlot:
         raise GGException(f"cant add plot to {other.__class__}")
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
-        from python_ggplot.gg.scales.base import GGScaleData, GGScaleDiscrete, LinearDataScale, LinearAndTransformScaleData
+        from python_ggplot.gg.scales.base import (
+            GGScaleData,
+            GGScaleDiscrete,
+            LinearAndTransformScaleData,
+            LinearDataScale,
+        )
+
         if self.ridges is None:
             raise GGException("expected ridges")
 
@@ -444,7 +454,7 @@ class JsonDummyDraw:
     backend: str  # we only support cairo for now
 
 
-MainAddScales = Tuple[Optional['GGScale'], List['GGScale']]
+MainAddScales = Tuple[Optional["GGScale"], List["GGScale"]]
 
 
 @dataclass

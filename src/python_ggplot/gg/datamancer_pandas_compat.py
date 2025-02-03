@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import auto
-from typing import Any, Dict, OrderedDict, Optional
+from typing import Any, Dict, Optional, OrderedDict
 
 import pandas as pd
 
