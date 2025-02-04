@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union, cast, no_type_check
 
 import numpy as np
@@ -23,6 +24,7 @@ from python_ggplot.gg.types import (
     BinPositionType,
     DiscreteType,
     GGStyle,
+    OutsideRangeKind,
     PositionType,
     Theme,
 )
@@ -39,14 +41,80 @@ from python_ggplot.graphics.objects import GOComposite
 from python_ggplot.graphics.views import ViewPort
 
 
-def get_xy(x_t: Any, y_t: Any, i: Any):
-    x = 0.0 if pd.isna(x_t[i]) else x_t[i]
-    y = 0.0 if pd.isna(y_t[i]) else y_t[i]
+class GetXYContinueException(GGException):
+    '''
+    TODO this is a bit of a hack
+    the original code uses a macro
+    and it injects a continue statement in the main loop
+    we can re-wire this logic later
+    but for now this is the easiest way of doing that
+    '''
 
-    # there was a check using %~ which i think it ensure that
-    # we dont have float32 and float64, so the rest of the logic may not be needed
+@dataclass
+class GetXY:
+    x_series: pd.Series  # type: ignore
+    y_series: pd.Series # type: ignore
+    x_outside_range: OutsideRangeKind
+    y_outside_range: OutsideRangeKind
+    filled_geom: FilledGeom
+    idx: int
+    theme: Theme
+    view: ViewPort
+    # TODO CRITICAL implement
+    x_maybe_string: bool = True
 
-    return (x, y)
+    def _change_if_needed(self, outside_range: OutsideRangeKind, value: Any, potential_value: Any):
+        if outside_range == OutsideRangeKind.DROP:
+            raise GetXYContinueException("skip the loppp")
+        elif outside_range == OutsideRangeKind.NONE:
+            return value
+        else:
+            return potential_value
+
+    def calculate(self) -> Tuple[float, float]:
+        '''
+        TODO this assumes view.x_scale and view.y_scale
+        need to decide how to handle that,
+        defualt to -inf and +inf, raise exception, or do nothing?
+        '''
+        x = 0.0 if pd.isna(self.x_series[self.idx]) else self.x_series[self.idx] # type: ignore
+        y = 0.0 if pd.isna(self.y_series[self.idx]) else self.y_series[self.idx] # type: ignore
+
+        # TODO CRITICAL, easy task
+        # write is_continuous and use that
+        # although this is binary discrete/continuous
+        # the reality is nothing prevents it from having a third dimension
+        # and this can make hard to reproduce bugs
+        # an example can be a hybrid case
+        # discrete in a range continuous in another
+        if not self.filled_geom.is_discrete_x():
+            if x < self.view.x_scale.high:
+                x = self._change_if_needed(
+                    self.x_outside_range,
+                    x,
+                    self.theme.x_margin_range.low
+                )
+            if x > self.view.x_scale.low:
+                x = self._change_if_needed(
+                    self.x_outside_range,
+                    x,
+                    self.theme.x_margin_range.high
+                )
+
+        if not self.filled_geom.is_discrete_y():
+            if y < self.view.y_scale.high:
+                y = self._change_if_needed(
+                    self.y_outside_range,
+                    y,
+                    self.theme.y_margin_range.low
+                )
+            if y > self.view.y_scale.low:
+                y = self._change_if_needed(
+                    self.y_outside_range,
+                    y,
+                    self.theme.y_margin_range.high
+                )
+        return (x, y)  # type: ignore
 
 
 @no_type_check
@@ -697,8 +765,8 @@ def draw_sub_df(
     TODO restructure this down the line
     """
     # this was used in get_x_y, we may need that soon
-    # x_outside_range = theme.x_outside_range or OutsideRangeKind.CLIP
-    # y_outside_range = theme.y_outside_range or OutsideRangeKind.CLIP
+    x_outside_range = theme.x_outside_range or OutsideRangeKind.CLIP
+    y_outside_range = theme.y_outside_range or OutsideRangeKind.CLIP
     bin_widths: Tuple[float, float] = tuple()
     geom_type = fg.geom_type
 
@@ -729,14 +797,21 @@ def draw_sub_df(
             if len(styles) > 1:
                 style = merge_user_style(styles[i], fg)
 
-            # TODO high priority: double check this logic
-            # the origin get_xy has a lot of logic, that seemed redundant
-            # this has a high chance of introducing a bug
-            point = get_xy(
-                x_tensor,
-                y_tensor,
-                i,
+
+            get_xy_obj = GetXY(
+                x_series=x_tensor,
+                y_series=y_tensor,
+                x_outside_range=x_outside_range,
+                y_outside_range=y_outside_range,
+                filled_geom=fg,
+                idx=i,
+                theme=theme,
+                view=view,
             )
+            try:
+                point = get_xy_obj.calculate()
+            except GetXYContinueException:
+                continue
 
             if view_map:
                 view_idx = get_view(view_map, point, fg)
