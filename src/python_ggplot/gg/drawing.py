@@ -71,13 +71,18 @@ class GetXY:
         else:
             return potential_value
 
-    def calculate(self) -> Tuple[float, float]:
+    def calculate(self) -> Tuple[float, float, Any]:
         '''
         TODO this assumes view.x_scale and view.y_scale
         need to decide how to handle that,
         defualt to -inf and +inf, raise exception, or do nothing?
         '''
-        x = 0.0 if pd.isna(self.x_series[self.idx]) else self.x_series[self.idx] # type: ignore
+        x_is_str = isinstance(self.x_series[self.idx], str)
+        if x_is_str:
+            # TODO is this correct?
+            x = 0.0
+        else:
+            x = 0.0 if pd.isna(self.x_series[self.idx]) else self.x_series[self.idx] # type: ignore
         y = 0.0 if pd.isna(self.y_series[self.idx]) else self.y_series[self.idx] # type: ignore
 
         # TODO CRITICAL, easy task
@@ -114,7 +119,10 @@ class GetXY:
                     y,
                     self.theme.y_margin_range.high
                 )
-        return (x, y)  # type: ignore
+        if x_is_str:
+            return (x, y, self.x_series[self.idx])  # type: ignore
+        else:
+            return (x, y, x)  # type: ignore
 
 
 @no_type_check
@@ -355,7 +363,7 @@ def get_draw_pos(
     view: ViewPort,
     view_idx: int,
     fg: FilledGeom,
-    p: Tuple[float, float],
+    point: Tuple[float, float],
     bin_widths: Tuple[float, float],
     df: pd.DataFrame,
     idx: int,
@@ -370,7 +378,7 @@ def get_draw_pos(
     histogram_drawing_style = getattr(fg, "histogram_drawing_style", None)
 
     if position == PositionType.IDENTITY:
-        mp = list(p)
+        mp = list(point)
         if geom_type == GeomType.BAR or (
             geom_type == GeomType.HISTOGRAM
             and histogram_drawing_style == HistogramDrawingStyle.BARS
@@ -406,7 +414,7 @@ def get_draw_pos(
             )
             or fg.gg_data.geom.geom_type == GeomType.BAR
         ):
-            cur_stack = p[1]
+            cur_stack = point[1]
         else:
             cur_stack = df[PREV_VALS_COL].iloc[idx]  # type: ignore
 
@@ -414,7 +422,7 @@ def get_draw_pos(
             result_x = get_draw_pos_impl(
                 view,
                 fg,
-                p[0],
+                point[0],
                 bin_widths[0],
                 fg.gg_data.x_discrete_kind.discrete_type,
                 AxisKind.X,
@@ -440,7 +448,7 @@ def get_draw_pos(
             result_y = get_draw_pos_impl(
                 view,
                 fg,
-                p[1],
+                point[1],
                 bin_widths[1],
                 fg.gg_data.y_discrete_kind.discrete_type,
                 AxisKind.Y,
@@ -640,7 +648,7 @@ def move_bin_positions(
 
 
 def get_view(
-    view_map: Dict[Any, Any], point: Tuple[float, float], fg: FilledGeom
+    view_map: Dict[Any, Any], point: Tuple[Any, Any], fg: FilledGeom
 ) -> int:
     # TODO Vnull has to be deleted one day, or maybe not?
     px = point[0] if fg.is_discrete_x() else VNull()
@@ -809,12 +817,13 @@ def draw_sub_df(
                 view=view,
             )
             try:
-                point = get_xy_obj.calculate()
+                x_, y_, x_name = get_xy_obj.calculate()
+                point = (x_, y_)
             except GetXYContinueException:
                 continue
 
             if view_map:
-                view_idx = get_view(view_map, point, fg)
+                view_idx = get_view(view_map, (x_name, y_), fg)
                 loc_view = view.children[view_idx]
 
             if need_bin_width:

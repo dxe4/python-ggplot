@@ -31,7 +31,8 @@ from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 # for now this is fine
 COUNT_COL = "count"
 # COUNT_COL = "counts_GGPLOTNIM_INTERNAL"
-PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
+PREV_VALS_COL = "prev_vals"
+# PREV_VALS_COL = "prevVals_GGPLOTNIM_INTERNAL"
 SMOOTH_VALS_COL = "smoothVals_GGPLOTNIM_INTERNAL"
 
 if TYPE_CHECKING:

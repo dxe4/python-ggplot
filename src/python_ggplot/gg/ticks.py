@@ -26,6 +26,7 @@ from python_ggplot.gg.scales.base import (
     FilledScales,
     GGScale,
     GGScaleContinuous,
+    GGScaleDiscrete,
     LinearDataScale,
     ScaleTransformFunc,
     ScaleType,
@@ -627,7 +628,7 @@ def handle_date_scale_ticks(
 def handle_ticks(
     view: ViewPort,
     filled_scales: FilledScales,
-    p: GgPlot,
+    plot: GgPlot,
     ax_kind: AxisKind,
     theme: Theme,
     hide_tick_labels: bool = False,
@@ -641,12 +642,12 @@ def handle_ticks(
     num_ticks: int = 10
 
     if ax_kind == AxisKind.X:
-        scale = filled_scales.get_x_scale()
+        scale = filled_scales.get_scale(filled_scales.x)
         num_ticks = num_ticks_opt if num_ticks_opt is not None else get_ticks(scale)
         if theme.x_tick_label_margin is not None:
             margin_opt = get_tick_label_margin(view, theme, ax_kind)
     elif ax_kind == AxisKind.Y:
-        scale = filled_scales.get_y_scale()
+        scale = filled_scales.get_scale(filled_scales.x)
         num_ticks = num_ticks_opt if num_ticks_opt is not None else get_ticks(scale)
         if theme.y_tick_label_margin is not None:
             margin_opt = get_tick_label_margin(view, theme, ax_kind)
@@ -654,31 +655,23 @@ def handle_ticks(
         raise GGException("expect x/y axis")
 
     if not isinstance(scale, (LinearDataScale, TransformedDataScale)):
-        raise GGException("enexpected scale")
+        raise GGException(
+            f"Expected LinearData or TransformedData received {scale.__class__.__name__}"
+        )
 
     has_scale = len(scale.gg_data.col.col_name) > 0 if scale else False
     result: List[GraphicsObject] = []
-    sscale_discrete_kind = scale.gg_data.discrete_kind.discrete_type
+
+    scale_discrete_kind = scale.gg_data.discrete_kind
 
     if has_scale:
-        if sscale_discrete_kind == DiscreteType.DISCRETE:
-            format_fn = scale.format_discrete_label or (lambda x: str(x))  # type: ignore
+        if isinstance(scale_discrete_kind, GGScaleDiscrete):
+            format_fn = scale_discrete_kind.format_discrete_label or (lambda x: str(x))  # type: ignore
 
-            if scale.data is not None and scale.data.date_scale is None:
-                result = handle_discrete_ticks(
-                    view,
-                    p,
-                    ax_kind,
-                    scale.discrete_kind.scale.label_seq,  # type: ignore  TODO fix
-                    theme=theme,
-                    hide_tick_labels=hide_tick_labels,
-                    margin=margin_opt,
-                    format=format_fn,  # type: ignore
-                )
-            else:
+            if scale.data is not None and scale.data.date_scale is not None:
                 result = handle_date_scale_ticks(
                     view,
-                    p,
+                    plot,
                     ax_kind,
                     scale,
                     theme,
@@ -686,26 +679,38 @@ def handle_ticks(
                     margin_opt,
                 )
 
+            else:
+                result = handle_discrete_ticks(
+                    view,
+                    plot,
+                    ax_kind,
+                    scale.gg_data.discrete_kind.label_seq,  # type: ignore  TODO fix
+                    theme=theme,
+                    hide_tick_labels=hide_tick_labels,
+                    margin=margin_opt,
+                    format_func=format_fn,  # type: ignore
+                )
+
             if filled_scales.has_secondary(ax_kind):
                 additional_ticks = handle_discrete_ticks(
                     view,
-                    p,
+                    plot,
                     ax_kind,
-                    scale.discrete_kind.scale.label_seq,  # type: ignore
+                    scale_discrete_kind.label_seq,  # type: ignore
                     theme=theme,
                     is_secondary=True,
                     hide_tick_labels=hide_tick_labels,
                     margin=margin_opt,
-                    format=format_fn,  # type: ignore
+                    format_func=format_fn,  # type: ignore
                 )
                 result.extend(additional_ticks)  # type: ignore
 
-        elif sscale_discrete_kind == DiscreteType.CONTINUOUS:
+        elif isinstance(scale_discrete_kind, GGScaleContinuous):
             data_scale = get_correct_data_scale(view, ax_kind)
             if scale.data is not None and scale.data.date_scale is not None:
                 result = handle_continuous_ticks(
                     view,
-                    p,
+                    plot,
                     ax_kind,
                     data_scale,
                     scale.scale_type,
@@ -720,7 +725,7 @@ def handle_ticks(
                 )
             else:
                 result = handle_date_scale_ticks(
-                    view, p, ax_kind, scale, theme, hide_tick_labels, margin_opt
+                    view, plot, ax_kind, scale, theme, hide_tick_labels, margin_opt
                 )
 
             if filled_scales.has_secondary(ax_kind):
@@ -748,7 +753,7 @@ def handle_ticks(
 
                 handle_continuous_ticks(
                     view,
-                    p,
+                    plot,
                     ax_kind,
                     data_scale,
                     sec_axis.scale.scale_type,

@@ -988,7 +988,6 @@ def init_tick(
         secondary=is_secondary,
     )
 
-
 def tick_labels_from_coord(
     view: "ViewPort",
     tick_pos: list["Coord1D"],
@@ -999,14 +998,15 @@ def tick_labels_from_coord(
     rotate: Optional[float] = None,
     margin: Optional[Coord1D] = None,
     align_override: Optional[TextAlignKind] = None,
-) -> List[Tuple[GOTick, GOText]]:
+) -> Tuple[List[GOTick], List[GOText]]:
 
     if len(tick_pos) != len(tick_labels_list):
         raise GGException("Must have as many tick positions as labels")
 
     font = font or Font(size=8.0)
 
-    result: List[Tuple[GOTick, GOText]] = []
+    ticks_result: List[GOTick] = []
+    labels_result: List[GOText] = []
     for idx, pos in enumerate(tick_pos):
         at = axis_coord(pos, axis_kind, is_secondary)
         tick = init_tick(
@@ -1021,24 +1021,20 @@ def tick_labels_from_coord(
         )
 
         data = InitTextInput(font=font, rotate=rotate)
-
-        result.append(
-            (
-                tick,
-                init_tick_label_with_override(
-                    view=view,
-                    tick=tick,
-                    label_text=tick_labels_list[idx],
-                    axis_kind=axis_kind,
-                    data=data,
-                    align_override=align_override,
-                    is_secondary=is_secondary,
-                    margin=margin,
-                ),
-            )
+        ticks_result.append(tick)
+        label = init_tick_label_with_override(
+            view=view,
+            tick=tick,
+            label_text=tick_labels_list[idx],
+            axis_kind=axis_kind,
+            data=data,
+            align_override=align_override,
+            is_secondary=is_secondary,
+            margin=margin,
         )
+        labels_result.append(label)
 
-    return result
+    return ticks_result, labels_result
 
 
 def calc_tick_locations(scale: Scale, num_ticks: int) -> Tuple[Scale, float, int]:
