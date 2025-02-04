@@ -694,35 +694,48 @@ class FilledScales:
     def get_y_scale(self: "FilledScales") -> Scale:
         return self.y_scale
 
-    def has_secondary(self: "FilledScales", ax_kind: AxisKind) -> "SecondaryAxis":
+    def has_secondary(self: "FilledScales", ax_kind: AxisKind) -> bool:
         # this assumes gg_themes.has_secondary was called first to ensure it exists
         # so will raise an exception if no axis
 
-        scale_getters = {
-            AxisKind.X: self.x_scale,
-            AxisKind.Y: self.y_scale,
-        }
-        gg_scale: GGScale = scale_getters[ax_kind]
-        # TODO medium priority, same as `get_secondary_axis`
-        if gg_scale.scale_kind.data.secondary_axis is None:  # type: ignore
-            raise GGException("secondary_axis does not exist")
-        return gg_scale.scale_kind.data.secondary_axis  # type: ignore
+        if AxisKind.X:
+            scale = self.get_scale(self.x, optional=False)
+        elif AxisKind.Y:
+            scale = self.get_scale(self.y, optional=False)
+        else:
+            raise GGException("unexpected scale")
+        if scale is None:
+            print("warning scale is None")
+            # TODO do we return false or raise exception?
+            return False
+
+        if not isinstance(scale, (LinearDataScale, TransformedDataScale)):
+            return False
+
+        return scale.data is not None and scale.data.secondary_axis is not None
+
 
     def get_secondary_axis(self: "FilledScales", ax_kind: AxisKind) -> "SecondaryAxis":
-        # this assumes gg_themes.has_secondary was called first to ensure it exists
-        # so will raise an exception if no axis
-        scale_getters = {
-            AxisKind.X: self.x_scale,
-            AxisKind.Y: self.y_scale,
-        }
+        '''
+        TODO reuse this logic with has_secondary, fine for now
+        '''
+        if AxisKind.X:
+            scale = self.get_scale(self.x, optional=False)
+        elif AxisKind.Y:
+            scale = self.get_scale(self.y, optional=False)
+        else:
+            raise GGException("unexpected scale")
 
-        gg_scale: GGScale = scale_getters[ax_kind]
-        # TODO medium priority if we had FilledScales[LinearData]
-        # there would be no type error
-        # for now, assume correct type is passed in and fix later
-        if gg_scale.scale_kind.data.secondary_axis is None:  # type: ignore
-            raise GGException("secondary_axis does not exist")
-        return gg_scale.scale_kind.data.secondary_axis  # type: ignore
+        if scale is None or not isinstance(scale, (LinearDataScale, TransformedDataScale)):
+            raise GGException(f"Secondary axis doesnt exist for scale {scale.__class__.__name__}")
+
+        if scale.data is None:
+            raise GGException(f"Scale {scale.__class__.__name__} data is none")
+
+        if scale.data.secondary_axis is None:
+            raise GGException(f"Scale {scale.__class__.__name__} secondary_axis is none")
+
+        return scale.data.secondary_axis
 
     def enumerate_scales_by_id(self: "FilledScales") -> Generator[GGScale, None, None]:
         fields = [
