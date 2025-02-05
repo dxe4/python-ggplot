@@ -1,7 +1,7 @@
 from typing import Set
 
 from python_ggplot.core.chroma import to_opt_color
-from python_ggplot.core.common import GREY20, TRANSPARENT, WHITE
+from python_ggplot.core.objects import GREY20_DICT, TRANSPARENT_DICT, WHITE_DICT
 from python_ggplot.core.objects import (
     AxisKind,
     Color,
@@ -15,21 +15,21 @@ from python_ggplot.gg.types import GgPlot, StatBin, Theme
 
 
 def get_plot_background(theme: Theme) -> Style:
-    result = Style(color=Color(**TRANSPARENT))
-    result.fill_color = to_opt_color(theme.plot_background_color) or Color(**GREY20)
+    result = Style(color=Color(**TRANSPARENT_DICT))
+    result.fill_color = to_opt_color(theme.plot_background_color) or Color(**GREY20_DICT)
     return result
 
 
 def get_canvas_background(theme: Theme) -> Style:
-    result = Style(color=Color(**TRANSPARENT))
-    result.fill_color = to_opt_color(theme.canvas_color) or Color(**WHITE)
+    result = Style(color=Color(**TRANSPARENT_DICT))
+    result.fill_color = to_opt_color(theme.canvas_color) or Color(**WHITE_DICT)
     return result
 
 
 def get_grid_line_style(theme: Theme) -> Style:
     result = Style(
         line_width=theme.grid_line_width or 1.0,
-        color=to_opt_color(theme.grid_line_color) or Color(**WHITE),
+        color=to_opt_color(theme.grid_line_color) or Color(**WHITE_DICT),
         line_type=LineType.SOLID,
     )
     return result

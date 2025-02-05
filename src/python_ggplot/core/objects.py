@@ -161,14 +161,31 @@ class Color:
     r: float
     g: float
     b: float
-    a: float  # TODO add default alpha = 1.0
+    a: float = 1.0
 
     def __eq__(self, o: Any) -> bool:
         return self.r == o.r and self.g == o.g and self.b == o.b and self.a == o.a
 
+    def to_rgba(self) -> 'ColorRGBA':
+        return ColorRGBA(
+            r=int(self.r * 255),
+            b=int(self.b),
+            g=int(self.g),
+            a=int(self.a),
+        )
 
-# TODO refactor / rename this so that default col is RGBA
-ColorRGBA = Color
+@dataclass
+class ColorRGBA:
+    r: int
+    g: int
+    b: int
+    a: int = 255
+
+    def float_alpha(self) -> float:
+        return (self.a / 255)
+
+    def __eq__(self, o: Any) -> bool:
+        return self.r == o.r and self.g == o.g and self.b == o.b and self.a == o.a
 
 
 @dataclass
@@ -326,12 +343,17 @@ LengthType = Union[
 
 # TODO low priority this is defined in 2 places, core.objects core.common
 # do general cleanup later
+
+GREY92_DICT = {"r": 0.92, "g": 0.92, "b": 0.92, "a": 1.0}
+GREY20_DICT = {"r": 0.20, "g": 0.20, "b": 0.20, "a": 1.0}
+BLACK_DICT = {"r": 0.0, "g": 0.0, "b": 0.0, "a": 1.0}
+WHITE_DICT = {"r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0}
+TRANSPARENT_DICT = {"r": 0.0, "g": 0.0, "b": 0.0, "a": 0.0}
 GREY92 = Color(r=0.92, g=0.92, b=0.92, a=1.0)
 GREY20 = Color(r=0.20, g=0.20, b=0.20, a=1.0)
 BLACK = Color(r=0.0, g=0.0, b=0.0, a=1.0)
 WHITE = Color(r=1.0, g=1.0, b=1.0, a=1.0)
 TRANSPARENT = Color(r=0.0, g=0.0, b=0.0, a=0.0)
-
 
 @dataclass
 class TexOptions:

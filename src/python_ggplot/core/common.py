@@ -42,12 +42,6 @@ else:
     install(show_locals=False)
 
 
-GREY92 = {"r": 0.92, "g": 0.92, "b": 0.92, "a": 1.0}
-GREY20 = {"r": 0.20, "g": 0.20, "b": 0.20, "a": 1.0}
-BLACK = {"r": 0.0, "g": 0.0, "b": 0.0, "a": 1.0}
-WHITE = {"r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0}
-TRANSPARENT = {"r": 0.0, "g": 0.0, "b": 0.0, "a": 0.0}
-
 
 def cm_to_inch(x: float) -> float:
     return x / 2.54
