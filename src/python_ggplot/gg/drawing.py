@@ -42,18 +42,19 @@ from python_ggplot.graphics.views import ViewPort
 
 
 class GetXYContinueException(GGException):
-    '''
+    """
     TODO this is a bit of a hack
     the original code uses a macro
     and it injects a continue statement in the main loop
     we can re-wire this logic later
     but for now this is the easiest way of doing that
-    '''
+    """
+
 
 @dataclass
 class GetXY:
     x_series: pd.Series  # type: ignore
-    y_series: pd.Series # type: ignore
+    y_series: pd.Series  # type: ignore
     x_outside_range: OutsideRangeKind
     y_outside_range: OutsideRangeKind
     filled_geom: FilledGeom
@@ -63,7 +64,9 @@ class GetXY:
     # TODO CRITICAL implement
     x_maybe_string: bool = True
 
-    def _change_if_needed(self, outside_range: OutsideRangeKind, value: Any, potential_value: Any):
+    def _change_if_needed(
+        self, outside_range: OutsideRangeKind, value: Any, potential_value: Any
+    ):
         if outside_range == OutsideRangeKind.DROP:
             raise GetXYContinueException("skip the loppp")
         elif outside_range == OutsideRangeKind.NONE:
@@ -72,18 +75,18 @@ class GetXY:
             return potential_value
 
     def calculate(self) -> Tuple[float, float, Any]:
-        '''
+        """
         TODO this assumes view.x_scale and view.y_scale
         need to decide how to handle that,
         defualt to -inf and +inf, raise exception, or do nothing?
-        '''
+        """
         x_is_str = isinstance(self.x_series[self.idx], str)
         if x_is_str:
             # TODO is this correct?
             x = 0.0
         else:
-            x = 0.0 if pd.isna(self.x_series[self.idx]) else self.x_series[self.idx] # type: ignore
-        y = 0.0 if pd.isna(self.y_series[self.idx]) else self.y_series[self.idx] # type: ignore
+            x = 0.0 if pd.isna(self.x_series[self.idx]) else self.x_series[self.idx]  # type: ignore
+        y = 0.0 if pd.isna(self.y_series[self.idx]) else self.y_series[self.idx]  # type: ignore
 
         # TODO CRITICAL, easy task
         # write is_continuous and use that
@@ -95,29 +98,21 @@ class GetXY:
         if not self.filled_geom.is_discrete_x():
             if x < self.view.x_scale.high:
                 x = self._change_if_needed(
-                    self.x_outside_range,
-                    x,
-                    self.theme.x_margin_range.low
+                    self.x_outside_range, x, self.theme.x_margin_range.low
                 )
             if x > self.view.x_scale.low:
                 x = self._change_if_needed(
-                    self.x_outside_range,
-                    x,
-                    self.theme.x_margin_range.high
+                    self.x_outside_range, x, self.theme.x_margin_range.high
                 )
 
         if not self.filled_geom.is_discrete_y():
             if y < self.view.y_scale.high:
                 y = self._change_if_needed(
-                    self.y_outside_range,
-                    y,
-                    self.theme.y_margin_range.low
+                    self.y_outside_range, y, self.theme.y_margin_range.low
                 )
             if y > self.view.y_scale.low:
                 y = self._change_if_needed(
-                    self.y_outside_range,
-                    y,
-                    self.theme.y_margin_range.high
+                    self.y_outside_range, y, self.theme.y_margin_range.high
                 )
         if x_is_str:
             return (x, y, self.x_series[self.idx])  # type: ignore
@@ -647,9 +642,7 @@ def move_bin_positions(
         return x, y
 
 
-def get_view(
-    view_map: Dict[Any, Any], point: Tuple[Any, Any], fg: FilledGeom
-) -> int:
+def get_view(view_map: Dict[Any, Any], point: Tuple[Any, Any], fg: FilledGeom) -> int:
     # TODO Vnull has to be deleted one day, or maybe not?
     px = point[0] if fg.is_discrete_x() else VNull()
     py = point[1] if fg.is_discrete_y() else VNull()
@@ -804,7 +797,6 @@ def draw_sub_df(
         for i in range(last_element + 1):
             if len(styles) > 1:
                 style = merge_user_style(styles[i], fg)
-
 
             get_xy_obj = GetXY(
                 x_series=x_tensor,

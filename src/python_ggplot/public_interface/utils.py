@@ -5,7 +5,6 @@ TODO this whole file needs cleaning up
 import math
 from collections import OrderedDict
 from copy import deepcopy
-from dataclasses import field
 from itertools import product
 from typing import (
     Any,
@@ -963,8 +962,12 @@ def handle_labels(view: ViewPort, theme: Theme):
             # TODO medium priority easy task
             # refactor this, making it functional first
             classes = {i.__class__ for i in labs}
-            if classes.issubset({GOLabel, GOText, GOTickLabel}):
-                raise GGException("expected text GO obj")
+
+            if len(labs) == 0:
+                raise GGException("GO object not found")
+
+            if not classes.issubset({GOLabel, GOText, GOTickLabel}):
+                raise GGException(f"expected text GO obj recived {classes}")
 
             lab_names = [lab.data.text for lab in labs]  # type: ignore WORKS for now but needs fixing
             lab_lengths = [len(lab_name) for lab_name in lab_names]  # type: ignore
@@ -1012,8 +1015,8 @@ def handle_labels(view: ViewPort, theme: Theme):
                 view, lab_txt, margin=margin_val, is_secondary=is_second, font=fnt
             )
 
-    x_margin = get_margin(theme.x_label_margin, "xtickLabel", AxisKind.X)
-    y_margin = get_margin(theme.y_label_margin, "ytickLabel", AxisKind.Y)
+    x_margin = get_margin(theme.x_label_margin, "x_tick_label", AxisKind.X)
+    y_margin = get_margin(theme.y_label_margin, "y_tick_label", AxisKind.Y)
 
     y_lab_obj = create_label(ylabel, y_lab_txt, theme.y_label_margin, y_margin)
     x_lab_obj = create_label(xlabel, x_lab_txt, theme.x_label_margin, x_margin)
@@ -1023,7 +1026,7 @@ def handle_labels(view: ViewPort, theme: Theme):
     # Handle secondary axes if present
     if has_secondary(theme, AxisKind.X):
         sec_axis_label = theme.x_label_secondary
-        x_margin = get_margin(theme.x_label_margin, "xtickLabelSecondary", "x")
+        x_margin = get_margin(theme.x_label_margin, "x_tick_label_secondary", "x")
         lab_sec = create_label(
             xlabel, sec_axis_label, theme.y_label_margin, x_margin, True
         )
@@ -1031,7 +1034,7 @@ def handle_labels(view: ViewPort, theme: Theme):
 
     if has_secondary(theme, AxisKind.Y):
         sec_axis_label = theme.y_label_secondary
-        y_margin = get_margin(theme.y_label_margin, "ytickLabelSecondary", "y")
+        y_margin = get_margin(theme.y_label_margin, "y_tick_label_secondary", "y")
         lab_sec = create_label(
             ylabel, sec_axis_label, theme.y_label_margin, y_margin, True
         )

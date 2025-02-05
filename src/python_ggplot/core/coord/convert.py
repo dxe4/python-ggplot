@@ -123,10 +123,7 @@ def data_to_relative(data: CoordConversionData) -> Coord1D:
 
 
 def text_to_point(data: CoordConversionData) -> Coord1D:
-    if data.length is None:
-        raise GGException("length must be provided")
-
-    if not isinstance(data.coord, (StrHeightCoordType, StrHeightCoordType)):
+    if not isinstance(data.coord, (StrHeightCoordType, StrWidthCoordType)):
         raise GGException("unexpected")
 
     dimension = data.coord.point_dimension()
@@ -258,11 +255,11 @@ lookup_table = {
     (UnitType.DATA, UnitType.POINT): data_to_point,
     # HIEGHT
     (UnitType.STR_HEIGHT, UnitType.RELATIVE): text_to_relative,
-    (UnitType.STR_HEIGHT, UnitType.DATA): text_to_point,
+    (UnitType.STR_HEIGHT, UnitType.POINT): text_to_point,
     (UnitType.STR_HEIGHT, UnitType.STR_HEIGHT): coord_to_self,
     # WIDTH
     (UnitType.STR_WIDTH, UnitType.RELATIVE): text_to_relative,
-    (UnitType.STR_WIDTH, UnitType.DATA): text_to_point,
+    (UnitType.STR_WIDTH, UnitType.POINT): text_to_point,
     (UnitType.STR_WIDTH, UnitType.STR_WIDTH): coord_to_self,
     # RELATIVE
     (UnitType.RELATIVE, UnitType.RELATIVE): coord_to_self,

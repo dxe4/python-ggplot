@@ -1,6 +1,7 @@
 import os
 from collections import OrderedDict
 from dataclasses import field
+from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union
 
 from python_ggplot.common.enum_literals import (
@@ -557,11 +558,11 @@ def ylim(
     return result
 
 
-def ggdraw(view: ViewPort, fname: str):
+def ggdraw(view: ViewPort, fname: Union[str, Path]):
     draw_to_file(view, fname)
 
 
-def ggdraw_plot(plt: PlotView, fname: str):
+def ggdraw_plot(plt: PlotView, fname: Union[str, Path]):
     draw_to_file(plt.view, fname)
 
 

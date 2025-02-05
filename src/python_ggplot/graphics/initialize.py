@@ -331,7 +331,7 @@ def init_tick_label(
         align=init_text_data.align_kind,
     )
     return GOTickLabel(
-        name=init_text_data.name or "text",
+        name=init_text_data.name or "tick_label",
         config=GraphicsObjectConfig(rotate=init_text_data.rotate),
         data=data,
     )
@@ -831,12 +831,18 @@ def init_tick_label_with_override(
     loc = tick.pos
     align_to = set_text_align_kind(axis_kind, is_secondary, align_override)
 
+    name = data.name
+    if not name:
+        name = f"{tick.axis.value}_tick_label"
+        if is_secondary:
+            name = f"{name}_secondary"
+
     data = InitTextInput(
         text=label_text,
         align_kind=align_to,
         font=font_,
         rotate=data.rotate,
-        name=data.name,
+        name=name,
     )
 
     if tick.axis == AxisKind.X:
@@ -948,7 +954,6 @@ def tick_labels(
             align_kind=TextAlignKind.RIGHT,
             font=tick_labels_input.font,
             rotate=rotate,
-            name="tickLabel",
         )
         new_tick_label = init_tick_label_with_override(
             view=view,
@@ -987,6 +992,7 @@ def init_tick(
         kind=tick_kind,
         secondary=is_secondary,
     )
+
 
 def tick_labels_from_coord(
     view: "ViewPort",

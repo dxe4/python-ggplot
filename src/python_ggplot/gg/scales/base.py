@@ -714,11 +714,10 @@ class FilledScales:
 
         return scale.data is not None and scale.data.secondary_axis is not None
 
-
     def get_secondary_axis(self: "FilledScales", ax_kind: AxisKind) -> "SecondaryAxis":
-        '''
+        """
         TODO reuse this logic with has_secondary, fine for now
-        '''
+        """
         if AxisKind.X:
             scale = self.get_scale(self.x, optional=False)
         elif AxisKind.Y:
@@ -726,19 +725,25 @@ class FilledScales:
         else:
             raise GGException("unexpected scale")
 
-        if scale is None or not isinstance(scale, (LinearDataScale, TransformedDataScale)):
-            raise GGException(f"Secondary axis doesnt exist for scale {scale.__class__.__name__}")
+        if scale is None or not isinstance(
+            scale, (LinearDataScale, TransformedDataScale)
+        ):
+            raise GGException(
+                f"Secondary axis doesnt exist for scale {scale.__class__.__name__}"
+            )
 
         if scale.data is None:
             raise GGException(f"Scale {scale.__class__.__name__} data is none")
 
         if scale.data.secondary_axis is None:
-            raise GGException(f"Scale {scale.__class__.__name__} secondary_axis is none")
+            raise GGException(
+                f"Scale {scale.__class__.__name__} secondary_axis is none"
+            )
 
         return scale.data.secondary_axis
 
     def enumerate_scales_by_id(self: "FilledScales") -> Generator[GGScale, None, None]:
-        fields = [
+        fs_fields = [
             "x",
             "y",
             "color",
@@ -747,14 +752,12 @@ class FilledScales:
             "shape",
             "yRidges",
         ]
-        for field in fields:
-            field_ = getattr(self, field, None)  # type: ignore
-            if field_:
-                yield field_
-                # TODO sanity check that i understand the logic of .more in nim
-                # cant seem to find docs for it, it maybe a template in the codebase
-                for _, sub_field in asdict(field_).items():
-                    yield sub_field
+        for fs_field in fs_fields:
+            field_: Optional[MainAddScales] = getattr(self, fs_field, None)
+            if field_ and field_.main:
+                yield field_.main
+                for more_ in field_.more or []:
+                    yield more_
 
     def enumerate_scales(
         self: "FilledScales", geom: Geom

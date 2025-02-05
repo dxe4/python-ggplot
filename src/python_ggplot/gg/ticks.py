@@ -32,7 +32,7 @@ from python_ggplot.gg.scales.base import (
     ScaleType,
     TransformedDataScale,
 )
-from python_ggplot.gg.types import DateTickAlgorithmType, DiscreteType, GgPlot, Theme
+from python_ggplot.gg.types import DateTickAlgorithmType, GgPlot, Theme
 from python_ggplot.graphics.initialize import (
     TickLabelsInput,
     calc_tick_locations,

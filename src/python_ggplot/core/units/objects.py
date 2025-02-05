@@ -142,13 +142,12 @@ class Quantity(ABC):
                 operator(self.to_points(length=length).val, other.to_points().val)
             ).to(other.unit_type, length=length, scale=scale)
         elif self.unit_type == UnitType.DATA:
-            if not scale or not as_coordinate:
-                raise GGException("TODO re evaluate nim version of this")
-            left = (
-                DataUnit(self.val - scale.low)
-                .to_relative(length=length, scale=scale)
-                .val
-            )
+            left = deepcopy(self)
+            if as_coordinate:
+                if not scale:
+                    raise GGException("Scale is needed to convert unity type DATA")
+                left = DataUnit(self.val - scale.low)
+            left = left.to_relative(length=length, scale=scale).val
             right = other.to_relative(length=length, scale=scale).val
             return RelativeUnit(operator(left, right))
         else:
