@@ -1,8 +1,10 @@
 from typing import Set
 
 from python_ggplot.core.chroma import to_opt_color
-from python_ggplot.core.objects import GREY20_DICT, TRANSPARENT_DICT, WHITE_DICT
 from python_ggplot.core.objects import (
+    GREY20_DICT,
+    TRANSPARENT_DICT,
+    WHITE_DICT,
     AxisKind,
     Color,
     GGException,
@@ -16,7 +18,9 @@ from python_ggplot.gg.types import GgPlot, StatBin, Theme
 
 def get_plot_background(theme: Theme) -> Style:
     result = Style(color=Color(**TRANSPARENT_DICT))
-    result.fill_color = to_opt_color(theme.plot_background_color) or Color(**GREY20_DICT)
+    result.fill_color = to_opt_color(theme.plot_background_color) or Color(
+        **GREY20_DICT
+    )
     return result
 
 

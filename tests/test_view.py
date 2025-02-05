@@ -46,8 +46,8 @@ from python_ggplot.graphics.initialize import (
 )
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 from python_ggplot.public_interface.aes import aes
-from python_ggplot.public_interface.common import ggdraw_plot
-from python_ggplot.public_interface.geom import geom_bar, ggplot
+from python_ggplot.public_interface.common import ggdraw_plot, ggtitle
+from python_ggplot.public_interface.geom import geom_bar, geom_point, ggplot
 from python_ggplot.public_interface.utils import ggcreate
 from tests import data_path
 
@@ -68,7 +68,10 @@ if DEBUG:
 
 
 def test_view():
-
+    """
+    TOOD The X axis label disappeared, it used to work
+    fix
+    """
     img = ViewPort.from_coords(CoordsInput(), ViewPortInput())
     view1 = img.add_viewport_from_coords(
         CoordsInput(left=0.1, bottom=0.1, width=0.8, height=0.8),
@@ -306,7 +309,23 @@ def test_coord_add():
 
 
 def test_geom_bar():
+    """
+    this needs some more fixing.
+    Y col is using X values
+    """
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_bar.png")
+
+
+def test_geom_point():
+    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    plot = (
+        ggplot(mpg, aes(x="displ", y="cty", color="class"))
+        + geom_point()
+        + ggtitle("gg plotting")
+    )
+
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_point.png")

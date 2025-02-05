@@ -42,7 +42,6 @@ else:
     install(show_locals=False)
 
 
-
 def cm_to_inch(x: float) -> float:
     return x / 2.54
 
@@ -62,12 +61,19 @@ def inch_to_cm(x: float) -> float:
 def linspace(
     start: float, stop: float, num: int, endpoint: Optional[bool] = True
 ) -> List[float]:
+    """
+    TODO use numpy linspace?
+    """
     endpoint = endpoint if endpoint is not None else True
     result: List[float] = []
     step = start
     fnum = float(num)
 
-    diff = (stop - start) / (fnum - 1 if endpoint else fnum)
+    if endpoint:
+        diff = (stop - start) / (fnum - 1)
+    else:
+        diff = (stop - start) / fnum
+
     if diff < 0.0:
         return result
 

@@ -25,8 +25,6 @@ def unity_type_to_quantity_cls(kind: UnitType):
 @dataclass
 class Quantity(ABC):
     val: float
-    str_type = None
-    is_length_unit: bool = False
 
     @staticmethod
     def from_type(unit_type: UnitType, val: float) -> "Quantity":

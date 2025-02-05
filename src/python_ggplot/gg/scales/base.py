@@ -1,7 +1,7 @@
 import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import dataclass, field, fields
 from datetime import datetime, timedelta
 from enum import auto
 from typing import (
@@ -184,6 +184,18 @@ class LinearDataScaleValue(ScaleValue):
 class ColorScale:
     name: str = ""
     colors: List[int] = field(default_factory=list)
+
+    def __rich_repr__(self):
+        """
+        TODO make this generic?
+        copy from GGScaleData
+        """
+        exclude_field = "colors"
+        for field in fields(self):
+            if field.name != exclude_field:
+                yield field.name, getattr(self, field.name)
+        # this by default would print the whole set, one item at a time
+        yield f"colors -> min: {min(self.colors)} max: {max(self.colors)}"
 
     @classmethod
     def from_color_map(cls, name: str, color_map: List[List[float]]) -> "ColorScale":

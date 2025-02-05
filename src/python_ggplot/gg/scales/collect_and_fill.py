@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import numpy as np
@@ -72,7 +72,7 @@ def draw_sample_idx(s_high: int, num: int = 100, seed: int = 42) -> NDArray[Any]
 
 
 def is_discrete_data(
-    col: pd.Series,
+    col: pd.Series,  # type: ignore
     scale: GGScale,
     draw_samples: bool = True,
     discrete_threshold: float = 0.125,
@@ -86,9 +86,11 @@ def is_discrete_data(
 
     if series_is_int(col):
         indices = (
-            draw_sample_idx(col.high) if draw_samples else list(range(col.high + 1))
+            draw_sample_idx(col.max())  # type: ignore
+            if draw_samples
+            else list(range(col.max() + 1))  # type: ignore
         )
-        elements = {col[i] for i in indices}
+        elements = {col[i] for i in indices}  # type: ignore
 
         if len(elements) > round(len(indices) * discrete_threshold):
             return False
@@ -117,7 +119,9 @@ def is_discrete_data(
 
 
 def _is_discrete(
-    data: pd.Series, scale: GGScale, dc_kind: Optional[DiscreteType] = None
+    data: pd.Series,  # type: ignore
+    scale: GGScale,
+    dc_kind: Optional[DiscreteType] = None,
 ) -> bool:
     if dc_kind is None:
         return is_discrete_data(data, scale, draw_samples=True)
@@ -125,7 +129,9 @@ def _is_discrete(
 
 
 def discrete_and_type(
-    data: pd.Series, scale: GGScale, dc_kind: Optional[DiscreteType] = None
+    data: pd.Series,  # type: ignore
+    scale: GGScale,
+    dc_kind: Optional[DiscreteType] = None,
 ) -> Tuple[bool, str]:
     return (_is_discrete(data, scale, dc_kind), series_value_type(data))
 
@@ -662,14 +668,15 @@ def fill_scale_impl(
         assert data_scale is not None, "Continuous scales require a data scale!"
 
         if scale_type == ScaleType.LINEAR_DATA:
-            assert ax_kind is not None, "Linear data scales need an axis!"
+            if ax_kind is None:
+                raise GGException("Linear data scales need an axis!")
             return fill_continuous_linear_scale(col, ax_kind, value_kind, data_scale)
         elif scale_type == ScaleType.TRANSFORMED_DATA:
-            assert trans is not None, "Transform data needs a ScaleTransform procedure!"
-            assert (
-                inv_trans is not None
-            ), "Transform data needs an inverse ScaleTransform procedure!"
-            assert ax_kind is not None, "Linear data scales need an axis!"
+            if trans is None or inv_trans is None:
+                raise GGException("expected trans and inv_trans")
+            if ax_kind is None:
+                raise GGException("expected axis kind")
+
             return fill_continuous_transformed_scale(
                 col, ax_kind, value_kind, trans, inv_trans, data_scale
             )
@@ -735,7 +742,7 @@ def fill_scale(
     TODO refactor ASAP
     this is a mess
     """
-    data: pd.Series = pd.Series(dtype=object)
+    data: pd.Series = pd.Series(dtype=object)  # type: ignore
     trans_opt = None
     inv_trans_opt = None
     ax_kind_opt = None

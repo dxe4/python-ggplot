@@ -30,6 +30,7 @@ from python_ggplot.gg.scales.base import (
     GGScaleContinuous,
     GGScaleDiscrete,
     LinearDataScale,
+    MainAddScales,
     ScaleType,
     TransformedDataScale,
 )
@@ -56,8 +57,10 @@ def get_scales(
 ) -> Tuple[GGScale, Optional[GGScale], List[GGScale]]:
     gid = geom.gg_data.gid
 
-    @no_type_check
-    def get_scale(field: Dict[Any, Any]) -> Optional[GGScale]:
+    def get_scale(field: Optional[MainAddScales]) -> Optional[GGScale]:
+        if field is None:
+            # TODO is this exception correct?
+            raise GGException("attempted to get on empty scale")
         more_scale = [s for s in field.more or [] if gid in s.gg_data.ids]
         if len(more_scale) > 1:
             raise GGException("found more than 1 scale matching gid")
@@ -67,10 +70,6 @@ def get_scales(
             return field.main
         else:
             return None
-
-    def add_if_any(result_list: List[GGScale], scale: Optional[GGScale]):
-        if scale is not None:
-            result_list.append(scale)
 
     x_opt = get_scale(filled_scales.x)
     y_opt = get_scale(filled_scales.y)
@@ -108,8 +107,11 @@ def get_scales(
         filled_scales.y_ridges,
         filled_scales.width,
     ]
+
     for attr_ in attrs_:
-        add_if_any(other_scales, get_scale(attr_))
+        new_scale = get_scale(attr_)
+        if new_scale is not None:
+            other_scales.append(new_scale)
 
     other_scales.extend(filled_scales.facets)
 
@@ -236,7 +238,9 @@ def apply_cont_scale_if_any(
 
 
 def add_counts_by_position(
-    col_sum: pd.Series, col: pd.Series, pos: Optional[PositionType]
+    col_sum: pd.Series,  # type: ignore
+    col: pd.Series,  # type: ignore
+    pos: Optional[PositionType],
 ):
     # TODO use is_numeric_dtype in other places of the code base
     if pd.api.types.is_numeric_dtype(col):  # type: ignore
@@ -1025,7 +1029,6 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         raise ValueError("For continuous data columns use `geom_histogram` instead!")
 
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
-
     x_col = x.get_col_name()
 
     # value_map: OrderedDict[GGValue, "ScaleValue"] = field(default_factory=OrderedDict)
@@ -1063,6 +1066,8 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     all_classes = df[x_col].unique()  # type: ignore
     style = GGStyle()
 
+    # TODO bug in original code? set_val is not used
+    # it does another loop inside
     for set_val in set_disc_cols:
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 

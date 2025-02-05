@@ -95,21 +95,29 @@ def ggplot(data: pd.DataFrame, aes: Optional[Aesthetics] = None) -> GgPlot:
 
 
 def geom_point(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     marker: PossibleMarker = None,
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = -1,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
     density: bool = False,
     alpha: Optional[float] = None,
 ) -> "Geom":
+
+    if breaks is None:
+        breaks = []
+    if aes is None:
+        aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)

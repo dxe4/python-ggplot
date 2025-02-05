@@ -1703,17 +1703,17 @@ def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
         view.add_obj(item)
 
 
-def ggcreate(p: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
-    if len(p.geoms) == 0:
+def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
+    if len(plot.geoms) == 0:
         raise GGException("Please use at least one `geom`!")
 
     filled_scales: FilledScales
-    if p.ridges is not None:
-        filled_scales = collect_scales(p.update_aes_ridges())
+    if plot.ridges is not None:
+        filled_scales = collect_scales(plot.update_aes_ridges())
     else:
-        filled_scales = collect_scales(p)
+        filled_scales = collect_scales(plot)
 
-    theme = build_theme(filled_scales, p)
+    theme = build_theme(filled_scales, plot)
     hide_ticks = theme.hide_ticks if theme.hide_ticks is not None else False
     hide_labels = theme.hide_labels if theme.hide_labels is not None else False
 
@@ -1732,14 +1732,18 @@ def ggcreate(p: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView
 
     plt_base = img.children[4]
 
-    if p.facet is not None:
+    if plot.facet is not None:
         generate_facet_plots(
-            plt_base, p, filled_scales, hide_labels=hide_labels, hide_ticks=hide_ticks
+            plt_base,
+            plot,
+            filled_scales,
+            hide_labels=hide_labels,
+            hide_ticks=hide_ticks,
         )
     else:
         generate_plot(
             plt_base,
-            p,
+            plot,
             filled_scales,
             theme,
             hide_labels=hide_labels,
@@ -1785,17 +1789,17 @@ def ggcreate(p: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView
 
     if len(legends) > 0:
         finalize_legend(img.children[5], legends)
-        if p.theme.legend_position:
-            pos = p.theme.legend_position
+        if plot.theme.legend_position:
+            pos = plot.theme.legend_position
             img.children[5].origin.x = pos.x
             img.children[5].origin.y = pos.y
 
-    draw_annotations(img.children[4], p)
+    draw_annotations(img.children[4], plot)
 
-    if p.title and len(p.title) > 0:
+    if plot.title and len(plot.title) > 0:
         draw_title(
             img.children[1],
-            p.title,
+            plot.title,
             theme,
             img.children[1].point_width().add(img.children[2].point_width()),
         )
