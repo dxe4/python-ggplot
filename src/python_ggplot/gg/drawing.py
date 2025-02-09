@@ -85,9 +85,8 @@ class GetXY:
             # TODO is this correct?
             x = 0.0
         else:
-            x = 0.0 if pd.isna(self.x_series[self.idx]) else self.x_series[self.idx]  # type: ignore
-        y = 0.0 if pd.isna(self.y_series[self.idx]) else self.y_series[self.idx]  # type: ignore
-
+            x = 0.0 if pd.isna(self.x_series[self.idx]) else float(self.x_series[self.idx])  # type: ignore
+        y = 0.0 if pd.isna(self.y_series[self.idx]) else float(self.y_series[self.idx])  # type: ignore
         # TODO CRITICAL, easy task
         # write is_continuous and use that
         # although this is binary discrete/continuous
@@ -96,21 +95,21 @@ class GetXY:
         # an example can be a hybrid case
         # discrete in a range continuous in another
         if not self.filled_geom.is_discrete_x():
-            if x < self.view.x_scale.high:
+            if x > self.view.x_scale.high:
                 x = self._change_if_needed(
                     self.x_outside_range, x, self.theme.x_margin_range.low
                 )
-            if x > self.view.x_scale.low:
+            if x < self.view.x_scale.low:
                 x = self._change_if_needed(
                     self.x_outside_range, x, self.theme.x_margin_range.high
                 )
 
         if not self.filled_geom.is_discrete_y():
-            if y < self.view.y_scale.high:
+            if y > self.view.y_scale.high:
                 y = self._change_if_needed(
                     self.y_outside_range, y, self.theme.y_margin_range.low
                 )
-            if y > self.view.y_scale.low:
+            if y < self.view.y_scale.low:
                 y = self._change_if_needed(
                     self.y_outside_range, y, self.theme.y_margin_range.high
                 )
@@ -591,7 +590,9 @@ def gg_draw(
     )
 
 
-def calc_bin_widths(df: pd.DataFrame, idx: int, fg: FilledGeom) -> Tuple[float, float]:
+def calc_bin_widths(
+    df: pd.DataFrame, idx: int, fg: FilledGeom  # type: ignore
+) -> Tuple[float, float]:
     x_width: float = 0.0
     y_width: float = 0.0
     coord_flipped = False
@@ -652,7 +653,7 @@ def get_view(view_map: Dict[Any, Any], point: Tuple[Any, Any], fg: FilledGeom) -
 def extend_line_to_axis(
     line_points: List[Coord],
     ax_kind: AxisKind,
-    df: pd.DataFrame,
+    df: pd.DataFrame,  # type: ignore
     filled_geom: FilledGeom,
 ) -> List[Coord]:
     """
@@ -758,7 +759,7 @@ def draw_sub_df(
     view: ViewPort,
     fg: FilledGeom,
     view_map: Dict[Tuple[Any, Any], int],
-    df: pd.DataFrame,
+    df: pd.DataFrame,  # type: ignore
     styles: List[GGStyle],
     theme: Theme,
 ) -> None:
@@ -799,8 +800,8 @@ def draw_sub_df(
                 style = merge_user_style(styles[i], fg)
 
             get_xy_obj = GetXY(
-                x_series=x_tensor,
-                y_series=y_tensor,
+                x_series=x_tensor,  # type: ignore
+                y_series=y_tensor,  # type: ignore
                 x_outside_range=x_outside_range,
                 y_outside_range=y_outside_range,
                 filled_geom=fg,

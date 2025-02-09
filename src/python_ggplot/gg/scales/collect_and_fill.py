@@ -736,7 +736,7 @@ class _FillScaleData:
 
 
 def fill_scale(
-    df: pd.DataFrame, scales: List[GGScale], scale_type: ScaleType
+    df: pd.DataFrame, scales: List[GGScale], scale_type: ScaleType  # type: ignore
 ) -> List[GGScale]:
     """
     TODO refactor ASAP
@@ -762,7 +762,6 @@ def fill_scale(
     for scale in scales:
         data_kind = scale.gg_data.data_type
         dc_kind_opt = scale.gg_data.discrete_kind.discrete_type
-
         if isinstance(scale, LinearDataScale):
             if scale.data is None:
                 raise GGException("expected data")
@@ -773,7 +772,7 @@ def fill_scale(
             ax_kind_opt = scale.data.axis_kind
             trans_opt = scale.transform
             inv_trans_opt = scale.inverse_transform
-        elif isinstance(scale, (ColorScale, FillColorScale)):
+        elif isinstance(scale, (ColorScaleKind, FillColorScale)):
             color_scale = scale.color_scale
         elif isinstance(scale, SizeScale):
             size_range = scale.size_range
@@ -865,7 +864,9 @@ def fill_scale(
 
 
 def call_fill_scale(
-    p_data: pd.DataFrame, scales: List[_FillScaleData], scale_type: ScaleType
+    p_data: pd.DataFrame,  # type: ignore
+    scales: List[_FillScaleData],
+    scale_type: ScaleType,
 ) -> List[GGScale]:
     separate_idxs = [i for i in range(len(scales)) if scales[i].df is not None]
     scales_to_use: List[GGScale] = []

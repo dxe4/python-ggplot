@@ -341,7 +341,7 @@ class Facet:
 
 @dataclass
 class GgPlot:
-    data: pd.DataFrame
+    data: pd.DataFrame  # type: ignore
     aes: Aesthetics
     theme: Theme
     backend: str = field(default="cairo")  # Will be cairo only for a while..

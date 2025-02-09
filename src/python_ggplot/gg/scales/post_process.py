@@ -4,7 +4,7 @@ it will need lot of fixing once everything is in place
 Smoothing in particular we may skip for alpha version
 """
 
-from typing import Any, Dict, List, Optional, Tuple, no_type_check
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,6 @@ from python_ggplot.gg.geom.base import (
     FilledGeomContinuous,
     FilledGeomData,
     FilledGeomDiscrete,
-    FilledGeomDiscreteKind,
     FilledGeomErrorBar,
     Geom,
     GeomType,
@@ -114,7 +113,6 @@ def get_scales(
             other_scales.append(new_scale)
 
     other_scales.extend(filled_scales.facets)
-
     return x_opt, y_opt, other_scales
 
 
@@ -154,11 +152,10 @@ def separate_scales_apply_trafos(
     """
     TODO test this
     """
-
     x, y, scales = get_scales(geom, filled_scales, y_is_none=y_is_none)
 
     discretes = [s for s in scales if s.is_discrete()]
-    cont = [s for s in scales if not s.is_discrete()]
+    cont = [s for s in scales if s.is_continuous()]
 
     discr_cols = list(
         set(s.get_col_name() for s in discretes if s.get_col_name() in df.columns)
@@ -637,14 +634,14 @@ def filled_identity_geom(
         yield_df = maybe_filter_unique(yield_df, result)
         set_x_attributes(result, yield_df, x)
         key = ("", None)
-        result.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+        result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
         )
 
     if y.is_discrete():
         # TODO fix
         # y.label_seqwill exist since is discrete, but this needs refactor anyway
-        result.gg_data.y_discrete_kind.label_seq = y.label_seq  # type: ignore
+        result.gg_data.y_discrete_kind.label_seq = y.gg_data.discrete_kind.label_seq  # type: ignore
 
     result.gg_data.num_y = result.gg_data.num_x
     return result
@@ -789,7 +786,7 @@ def filled_smooth_geom(
         yield_df = maybe_filter_unique(yield_df, result)
         set_x_attributes(result, yield_df, x)
         key = ("", VNull())
-        result.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+        result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
         )
 
@@ -981,7 +978,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
         if len(cont) != 0:
             raise GGException("seems the data is discrete")
 
-        result.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+        result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
         )
         result.gg_data.num_x = len(yield_df)
@@ -1031,10 +1028,6 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
     x_col = x.get_col_name()
 
-    # value_map: OrderedDict[GGValue, "ScaleValue"] = field(default_factory=OrderedDict)
-    # label_seq: List[GGValue] = field(default_factory=list)
-    # format_discrete_label: Optional[DiscreteFormat] = None
-
     if x.is_discrete():
         # TODO critical, easy task
         # double check if we need to pass empty label_seq
@@ -1082,7 +1075,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
             apply_style(style, sub_df, discretes, keys)  # type: ignore
 
             weight_scale = get_weight_scale(filled_scales, geom)
-            yield_df = count_(sub_df, x_col, weight_scale)
+            yield_df = count_(sub_df, x_col, "", weight_scale)
 
             add_zero_keys(yield_df, all_classes, x_col, "count")  # type: ignore
             yield_df = yield_df.sort_values(x_col)  # type: ignore
@@ -1090,7 +1083,9 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
             if geom.gg_data.position == PositionType.STACK:
                 yield_df["prev_vals"] = 0.0 if len(col) == 0 else col.copy()
 
-            col = add_counts_by_position(col, yield_df["count"], geom.position)
+            col = add_counts_by_position(
+                col, yield_df["count"], geom.position  # type: ignore
+            )
 
             if geom.gg_data.position == PositionType.STACK and not (
                 (
@@ -1118,6 +1113,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
 
         weight_scale = get_weight_scale(filled_scales, geom, optional=True)
         yield_df = count_(df, x_col, COUNT_COL, weight_scale)
+        # TODO double check prev_vals
         yield_df["prev_vals"] = 0.0
 
         key = ("", None)
