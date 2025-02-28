@@ -873,27 +873,37 @@ def plot_layout(view: ViewPort, theme_layout: ThemeMarginLayout):
         view=view,
         cols=3,
         rows=3,
-        col_widths=[theme_layout.left, Quantity.relative(0.0), theme_layout.right],
-        row_heights=[theme_layout.top, Quantity.relative(0.0), theme_layout.bottom],
+        col_widths=[
+            theme_layout.left,
+            Quantity.relative(0.0),
+            theme_layout.right
+        ],
+        row_heights=[
+            theme_layout.top,
+            Quantity.relative(0.0),
+            theme_layout.bottom
+        ],
     )
 
-    view.children[0].name = "topLeft"
+    view.children[0].name = "top_left"
     view.children[1].name = "title"
-    view.children[2].name = "topRight"
-    view.children[3].name = "yLabel"
+    view.children[2].name = "top_right"
+    view.children[3].name = "y_label"
     view.children[4].name = "plot"
-    view.children[5].name = "legend" if theme_layout.requires_legend else "noLegend"
-    view.children[6].name = "bottomLeft"
-    view.children[7].name = "xLabel"
-    view.children[8].name = "bottomRight"
+    view.children[5].name = "legend" if theme_layout.requires_legend else "no_legend"
+    view.children[6].name = "bottom_left"
+    view.children[7].name = "x_label"
+    view.children[8].name = "bottom_right"
 
 
-def create_layout(view: ViewPort, filled_scales: FilledScales, theme: Theme) -> None:
+def create_layout(view: ViewPort, filled_scales: FilledScales, theme: Theme):
     hide_ticks = theme.hide_ticks or False
     hide_labels = theme.hide_labels or False
     tight_layout = hide_labels and hide_ticks
     layout = init_theme_margin_layout(
-        theme, tight_layout, requires_legend(filled_scales, theme)
+        theme,
+        tight_layout,
+        requires_legend(filled_scales, theme)
     )
     plot_layout(view, layout)
 
@@ -1206,11 +1216,17 @@ def generate_plot(
 
     if plot.ridges is not None:
         ridge = plot.ridges
-        generate_ridge(view, ridge, plot, filled_scales, theme, hide_labels, hide_ticks)
-    else:
-        view.y_scale = (
-            theme.y_range if theme.y_range is not None else filled_scales.y_scale
+        generate_ridge(
+            view,
+            ridge,
+            plot,
+            filled_scales,
+            theme,
+            hide_labels,
+            hide_ticks
         )
+    else:
+        view.y_scale = theme.y_range = theme.y_range or filled_scales.y_scale
 
         for geom in filled_scales.geoms:
             p_child = view.add_viewport_from_coords(
@@ -1659,8 +1675,12 @@ def draw_annotations(view: ViewPort, plot: GgPlot) -> None:
             view.add_obj(text)
 
 
-def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
-
+def draw_title(
+    view: ViewPort,
+    title: str,
+    theme: Theme,
+    width: Quantity
+):
     title = str(title)  # ensure title is string
     font = theme.title_font or Font(size=16.0)
 
@@ -1703,7 +1723,11 @@ def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
         view.add_obj(item)
 
 
-def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
+def ggcreate(
+    plot: GgPlot,
+    width: float = 640.0,
+    height: float = 480.0
+) -> PlotView:
     if len(plot.geoms) == 0:
         raise GGException("Please use at least one `geom`!")
 
@@ -1714,8 +1738,8 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
         filled_scales = collect_scales(plot)
 
     theme = build_theme(filled_scales, plot)
-    hide_ticks = theme.hide_ticks if theme.hide_ticks is not None else False
-    hide_labels = theme.hide_labels if theme.hide_labels is not None else False
+    hide_ticks = theme.hide_ticks or False
+    hide_labels = theme.hide_labels or False
 
     img = ViewPort.from_coords(
         CoordsInput(),
@@ -1725,11 +1749,12 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             h_img=Quantity.points(height),
         ),
     )
-
     background(img, style=get_canvas_background(theme))
-
     create_layout(img, filled_scales, theme)
 
+    # TODO this isnt very readable
+    # maybe img.find_by_name("plot")
+    # children generated in plot_layout func
     plt_base = img.children[4]
 
     if plot.facet is not None:
@@ -1774,16 +1799,17 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             lg = deepcopy(img.children[5])
             create_legend(lg, scale, theme.legend_order)
 
-            # TODO critical
-            # this is the formula node we chose to not support for now
-            # the origin calls evaluate
-            # we may have to double check this one
+            # TODO low priority, high difficulty
+            # support FormulaNode
             scale_col = str(scale.gg_data.col)
 
             if scale_col not in scale_names:
                 legends.append(lg)
                 drawn_legends.add(
-                    (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
+                    (
+                        scale.gg_data.discrete_kind.discrete_type,
+                        scale.scale_type
+                    )
                 )
             scale_names.add(scale_col)
 

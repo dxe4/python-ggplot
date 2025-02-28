@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union, cast, no_type_check
 
@@ -68,11 +69,13 @@ class GetXY:
         self, outside_range: OutsideRangeKind, value: Any, potential_value: Any
     ):
         if outside_range == OutsideRangeKind.DROP:
-            raise GetXYContinueException("skip the loppp")
+            raise GetXYContinueException("skip the loop")
+        elif outside_range == OutsideRangeKind.CLIP:
+            return potential_value
         elif outside_range == OutsideRangeKind.NONE:
             return value
         else:
-            return potential_value
+            raise GGException("unexpected outside kind range")
 
     def calculate(self) -> Tuple[float, float, Any]:
         """
@@ -283,7 +286,8 @@ def get_discrete_histogram(width: float, ax_kind: AxisKind) -> Coord1D:
 
         return init_coord_1d(left, AxisKind.X, UnitType.RELATIVE)
     else:
-        # TODO high priority double check this.
+        # TODO CRITICAL easy task
+        # double check this.
         # templace c1 in ginger has default AxisKind.X which is used in this case
         top = 1.0
         return init_coord_1d(top, AxisKind.X, UnitType.RELATIVE)
@@ -372,7 +376,7 @@ def get_draw_pos(
     histogram_drawing_style = getattr(fg, "histogram_drawing_style", None)
 
     if position == PositionType.IDENTITY:
-        mp = list(point)
+        mp = deepcopy(list(point))
         if geom_type == GeomType.BAR or (
             geom_type == GeomType.HISTOGRAM
             and histogram_drawing_style == HistogramDrawingStyle.BARS
@@ -410,7 +414,7 @@ def get_draw_pos(
         ):
             cur_stack = point[1]
         else:
-            cur_stack = df[PREV_VALS_COL].iloc[idx]  # type: ignore
+            cur_stack = float(df[PREV_VALS_COL].iloc[idx])  # type: ignore
 
         if not coords_flipped:
             result_x = get_draw_pos_impl(
@@ -762,7 +766,7 @@ def draw_sub_df(
     df: pd.DataFrame,  # type: ignore
     styles: List[GGStyle],
     theme: Theme,
-) -> None:
+):
     """
     TODO restructure this down the line
     """
@@ -787,15 +791,15 @@ def draw_sub_df(
     }
 
     line_points: List[Coord] = []
-    if geom_type not in {GeomType.RASTER}:
+    if geom_type != GeomType.RASTER:
         x_tensor = df[fg.gg_data.x_col]  # type: ignore
         y_tensor = df[fg.gg_data.y_col]  # type: ignore
 
-        last_element: int = len(df) - 2
+        last_element: int = len(df)
         if fg.gg_data.geom.gg_data.bin_position == BinPositionType.NONE:
             last_element = len(df) - 1
 
-        for i in range(last_element + 1):
+        for i in range(last_element):
             if len(styles) > 1:
                 style = merge_user_style(styles[i], fg)
 
@@ -824,7 +828,6 @@ def draw_sub_df(
                 move_bin_positions(point, bin_widths, fg)
 
             pos = get_draw_pos(loc_view, view_idx, fg, point, bin_widths, df, i)
-
             if fg.gg_data.geom.gg_data.position in {
                 PositionType.IDENTITY,
                 PositionType.STACK,
@@ -849,7 +852,7 @@ def draw_sub_df(
                     gg_draw(loc_view, fg, pos, point[1], bin_widths, df, i, style)
 
             if view_map:
-                view[view_idx] = loc_view
+                view.children[view_idx] = loc_view
 
     if not view_map:
         view = loc_view
@@ -890,7 +893,10 @@ def draw_sub_df(
 
 
 def create_gobj_from_geom(
-    view: ViewPort, fg: FilledGeom, theme: Theme, label_val: Optional[Any] = None
+    view: ViewPort,
+    fg: FilledGeom,
+    theme: Theme,
+    label_val: Optional[Any] = None
 ):
     prepare_views(view, fg, theme)
     view_map = calc_view_map(fg)

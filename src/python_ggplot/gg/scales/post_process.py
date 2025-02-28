@@ -146,8 +146,11 @@ def apply_transformations(df: pd.DataFrame, scales: List[GGScale]):
         df[col_name] = transform_fn(df, col_name)
 
 
-def separate_scales_apply_trafos(
-    df: pd.DataFrame, geom: Geom, filled_scales: FilledScales, y_is_none: bool = False
+def separate_scales_apply_transofrmations(
+    df: pd.DataFrame,  # type: ignore
+    geom: Geom,
+    filled_scales: FilledScales,
+    y_is_none: bool = False
 ) -> Tuple[GGScale, Optional[GGScale], List[GGScale], List[GGScale]]:
     """
     TODO test this
@@ -173,7 +176,8 @@ def separate_scales_apply_trafos(
 
 
 def split_discrete_set_map(
-    df: pd.DataFrame, scales: List[GGScale]
+    df: pd.DataFrame,  # type: ignore
+    scales: List[GGScale]
 ) -> Tuple[List[str], List[str]]:
     set_disc_cols: List[str] = []
     map_disc_cols: List[str] = []
@@ -192,7 +196,10 @@ def split_discrete_set_map(
 def set_x_attributes(fg: FilledGeom, df: pd.DataFrame, scale: GGScale) -> None:
 
     if isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete):
-        fg.gg_data.num_x = max(fg.gg_data.num_x, df[str(scale.gg_data.col)].nunique())
+        fg.gg_data.num_x = max(
+            fg.gg_data.num_x,
+            df[str(scale.gg_data.col)].nunique()
+        )
         fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
         # and assign the label sequence
         # TODO this assumes fg.gg_data.x_discrete_kind = Discrete
@@ -540,7 +547,7 @@ def filled_identity_geom(
     """
     TODO refactor/test/fix this
     """
-    x, y, discretes, cont = separate_scales_apply_trafos(df, geom, filled_scales)
+    x, y, discretes, cont = separate_scales_apply_transofrmations(df, geom, filled_scales)
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
     if y is None:
         # TODO double check if this is correct
@@ -683,7 +690,7 @@ def filled_smooth_geom(
     need a draft version of this to get all the unit tests running
     """
 
-    x, y, discretes, cont = separate_scales_apply_trafos(df, geom, filled_scales)
+    x, y, discretes, cont = separate_scales_apply_transofrmations(df, geom, filled_scales)
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
 
     if x.is_discrete():
@@ -868,7 +875,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
 
     width_col = "binWidths"
 
-    x, _, discretes, cont = separate_scales_apply_trafos(
+    x, _, discretes, cont = separate_scales_apply_transofrmations(
         df, geom, filled_scales, y_is_none=True
     )
 
@@ -999,7 +1006,10 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
 
 
 def count_(
-    df: pd.DataFrame, x_col: str, name: str, weights: Optional[GGScale] = None
+    df: pd.DataFrame,  # type: ignore
+    x_col: str,
+    name: str,
+    weights: Optional[GGScale] = None
 ) -> pd.DataFrame:
     # TODO critical, medium complexity
     # we rename to counts_GGPLOTNIM_INTERNAL
@@ -1018,7 +1028,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     """
     todo refactor the whole function and re use the code
     """
-    x, _, discretes, cont = separate_scales_apply_trafos(
+    x, _, discretes, cont = separate_scales_apply_transofrmations(
         df, geom, filled_scales, y_is_none=True
     )
 
@@ -1114,16 +1124,16 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         weight_scale = get_weight_scale(filled_scales, geom, optional=True)
         yield_df = count_(df, x_col, COUNT_COL, weight_scale)
         # TODO double check prev_vals
-        yield_df["prev_vals"] = 0.0
+        yield_df[PREV_VALS_COL] = 0.0
 
-        key = ("", None)
-        maybe_filter_unique(yield_df, result)
+        key = ("", VNull())
+        yield_df = maybe_filter_unique(yield_df, result)
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
         )
         set_x_attributes(result, yield_df, x)
         result.gg_data.y_scale = result.gg_data.y_scale.merge(
-            Scale(low=0.0, high=float(yield_df["count"].max()))  # type: ignore
+            Scale(low=0.0, high=float(yield_df[COUNT_COL].max()))  # type: ignore
         )
 
     result.gg_data.num_y = round(result.gg_data.y_scale.high)

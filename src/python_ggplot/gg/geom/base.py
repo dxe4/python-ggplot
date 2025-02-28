@@ -15,8 +15,8 @@ from typing import (
 import pandas as pd
 
 from python_ggplot.core.coord.objects import Coord
-from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
-from python_ggplot.core.units.objects import DataUnit
+from python_ggplot.core.objects import Color, GGEnum, GGException, Scale, Style
+from python_ggplot.core.units.objects import CentimeterUnit, DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.types import (
     Aesthetics,
@@ -233,19 +233,25 @@ class GeomRectDrawMixin:
         from python_ggplot.gg.drawing import read_or_calc_bin_width
 
         bin_width = read_or_calc_bin_width(
-            df, idx, fg.gg_data.x_col, dc_kind=fg.gg_data.x_discrete_kind.discrete_type
+            df,
+            idx,
+            fg.gg_data.x_col,
+            dc_kind=fg.gg_data.x_discrete_kind.discrete_type
         )
         if bin_width != bin_widths[0]:
             raise GGException("Invalid bin width generated")
+
+        if y is None:
+            y = 0.0
+
         new_rect = init_rect(
             view,
             pos,
             DataUnit(bin_width),
-            DataUnit(-float(y) if y is not None else 0.0),
-            InitRectInput(style=style),
+            DataUnit(-y),
+            InitRectInput(style=style, name="geom_bar_rect"),
         )
         view.add_obj(new_rect)
-
 
 class GeomHistogramMixin(GeomRectDrawMixin):
     @property
