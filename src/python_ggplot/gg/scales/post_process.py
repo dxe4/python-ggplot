@@ -183,9 +183,9 @@ def split_discrete_set_map(
     map_disc_cols: List[str] = []
 
     for scale in scales:
-        # TODO this needs 2 fixes, is_column fix and
-        # there was an additional check is_consntat
-        if scale.gg_data.col.is_column():
+        # TODO URGENT easy fix
+        # Original implementation checks if its constant
+        if str(scale.gg_data.col) in df.columns:
             map_disc_cols.append(str(scale.gg_data.col))
         else:
             set_disc_cols.append(str(scale.gg_data.col))
