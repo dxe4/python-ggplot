@@ -248,7 +248,7 @@ class GeomRectDrawMixin:
             view,
             pos,
             DataUnit(bin_width),
-            DataUnit(-y),
+            DataUnit(y),
             InitRectInput(style=style, name="geom_bar_rect"),
         )
         view.add_obj(new_rect)
@@ -409,7 +409,7 @@ class GeomTileMixin:
             view,
             pos,
             DataUnit(bin_widths[0]),
-            DataUnit(-bin_widths[1]),
+            DataUnit(bin_widths[1]),
             InitRectInput(style=style),
         )
         view.add_obj(new_rect)
