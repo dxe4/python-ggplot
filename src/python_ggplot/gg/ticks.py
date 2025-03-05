@@ -647,24 +647,35 @@ def handle_ticks(
         if theme.x_tick_label_margin is not None:
             margin_opt = get_tick_label_margin(view, theme, ax_kind)
     elif ax_kind == AxisKind.Y:
-        scale = filled_scales.get_scale(filled_scales.x)
-        num_ticks = num_ticks_opt if num_ticks_opt is not None else get_ticks(scale)
+        if num_ticks_opt is not None:
+            num_ticks = num_ticks_opt
+        else:
+            scale = filled_scales.get_scale(filled_scales.y)
+            num_ticks = get_ticks(scale)
+
         if theme.y_tick_label_margin is not None:
             margin_opt = get_tick_label_margin(view, theme, ax_kind)
     else:
-        raise GGException("expect x/y axis")
+        raise GGException("expected x/y axis")
 
-    if not isinstance(scale, (LinearDataScale, TransformedDataScale)):
-        raise GGException(
-            f"Expected LinearData or TransformedData received {scale.__class__.__name__}"
-        )
+    # TODO double check this logic
+    # does this go inside the has_Scale block or is it redundant?
+    # if not isinstance(scale, (LinearDataScale, TransformedDataScale)):
+    #     raise GGException(
+    #         f"Expected LinearData or TransformedData received {scale.__class__.__name__}"
+    #     )
 
-    has_scale = len(scale.gg_data.col.col_name) > 0 if scale else False
+    if scale is None:
+        has_scale = False
+    elif len(scale.gg_data.col.col_name) > 0:
+        has_scale = True
+    else:
+        has_scale = False
+
     result: List[GraphicsObject] = []
 
-    scale_discrete_kind = scale.gg_data.discrete_kind
-
     if has_scale:
+        scale_discrete_kind = scale.gg_data.discrete_kind
         if isinstance(scale_discrete_kind, GGScaleDiscrete):
             format_fn = scale_discrete_kind.format_discrete_label or (lambda x: str(x))  # type: ignore
 
