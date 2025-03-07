@@ -1229,8 +1229,10 @@ def generate_plot(
         view.y_scale = theme.y_range = theme.y_range or filled_scales.y_scale
 
         for geom in filled_scales.geoms:
+            coords_input = CoordsInput()
+            viewport_input = ViewPortInput(name="data")
             p_child = view.add_viewport_from_coords(
-                CoordsInput(), ViewPortInput(name="data")
+                coords_input, viewport_input
             )
             create_gobj_from_geom(p_child, geom, theme)
             view.children.append(p_child)

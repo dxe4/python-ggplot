@@ -248,7 +248,10 @@ def layout(
                 as_coordinate=False,
             )
             view_input: ViewPortInput = ViewPortInput(
-                x_scale=view.x_scale, y_scale=view.y_scale, style=view.style, name=""
+                x_scale=view.x_scale,
+                y_scale=view.y_scale,
+                style=view.style,
+                name=f"{view.name} - layour row: {i} col {j}"
             )
 
             child: ViewPort = view.add_viewport(

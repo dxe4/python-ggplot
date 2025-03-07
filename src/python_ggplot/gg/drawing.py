@@ -433,6 +433,7 @@ def get_draw_pos(
                 fg.gg_data.y_discrete_kind.discrete_type,
                 AxisKind.Y,
             )
+
             return Coord(x=result_x, y=result_y)
         else:
             result_x = get_draw_pos_impl(

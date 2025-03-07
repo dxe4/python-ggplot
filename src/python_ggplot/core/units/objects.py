@@ -127,18 +127,16 @@ class Quantity(ABC):
         if self.unit_type == other.unit_type:
             cls = unit_type_from_type(self.unit_type)
             return cls(operator(self.val, other.val))
-
-        elif self.unit_type.is_length() and (
-            other.unit_type.is_length() or other.unit_type == UnitType.RELATIVE
-        ):
+        elif self.unit_type.is_length() and other.unit_type == UnitType.RELATIVE:
+            cls = unit_type_from_type(self.unit_type)
+            return cls(operator(self.val, other.val))
+        elif self.unit_type.is_length() and (other.unit_type.is_length()):
             return PointUnit(
                 operator(self.to_points().val, other.to_points(length=length).val)
             ).to(self.unit_type, length=length, scale=scale)
-
         elif self.unit_type == UnitType.RELATIVE and other.unit_type.is_length():
-            return PointUnit(
-                operator(self.to_points(length=length).val, other.to_points().val)
-            ).to(other.unit_type, length=length, scale=scale)
+            cls = unit_type_from_type(other.unit_type)
+            return cls(operator(self.val, other.val))
         elif self.unit_type == UnitType.DATA:
             left = deepcopy(self)
             if as_coordinate:

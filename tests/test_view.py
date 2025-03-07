@@ -316,7 +316,6 @@ def test_geom_bar():
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
-    # print(res)
     ggdraw_plot(res, data_path / "geom_bar.png")
 
 
