@@ -1,6 +1,7 @@
 # todo, move this into unit tests eventually
 import builtins
 import math
+import os
 
 import pandas as pd
 from rich.console import Console
@@ -52,8 +53,7 @@ from python_ggplot.public_interface.utils import ggcreate
 from tests import data_path
 
 TAU = 6.28318530717958647692528676655900577
-DEBUG = True
-
+DEBUG = os.getenv("DEBUG", "true") not in ("0", "false", "False")
 
 console = Console()
 
