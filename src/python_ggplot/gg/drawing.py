@@ -100,22 +100,23 @@ class GetXY:
         if not self.filled_geom.is_discrete_x():
             if x > self.view.x_scale.high:
                 x = self._change_if_needed(
-                    self.x_outside_range, x, self.theme.x_margin_range.low
+                    self.x_outside_range, x, self.theme.x_margin_range.high
                 )
             if x < self.view.x_scale.low:
                 x = self._change_if_needed(
-                    self.x_outside_range, x, self.theme.x_margin_range.high
+                    self.x_outside_range, x, self.theme.x_margin_range.low
                 )
 
         if not self.filled_geom.is_discrete_y():
             if y > self.view.y_scale.high:
                 y = self._change_if_needed(
-                    self.y_outside_range, y, self.theme.y_margin_range.low
+                    self.y_outside_range, y, self.theme.y_margin_range.high
                 )
             if y < self.view.y_scale.low:
                 y = self._change_if_needed(
-                    self.y_outside_range, y, self.theme.y_margin_range.high
+                    self.y_outside_range, y, self.theme.y_margin_range.low
                 )
+
         if x_is_str:
             return (x, y, self.x_series[self.idx])  # type: ignore
         else:
@@ -835,7 +836,9 @@ def draw_sub_df(
 
             if need_bin_width:
                 bin_widths = calc_bin_widths(df, i, fg)
-                move_bin_positions(point, bin_widths, fg)
+                point = move_bin_positions(point, bin_widths, fg)
+            else:
+                bin_widths = (0.0, 0.0)
 
             pos = get_draw_pos(loc_view, view_idx, fg, point, bin_widths, df, i)
             if fg.gg_data.geom.gg_data.position in {
