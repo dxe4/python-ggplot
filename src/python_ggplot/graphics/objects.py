@@ -549,6 +549,9 @@ class GORaster(GraphicsObject):
 class GOComposite(GraphicsObject):
     kind: CompositeKind
 
+    def get_coords(self) -> Dict[Any, Any]:
+        return {}
+
     def get_pos(self) -> "Coord":
         raise GGException("not implemented")
 
