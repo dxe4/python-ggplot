@@ -760,6 +760,21 @@ def convert_points_to_histogram(
     return result
 
 
+def _needs_bin_width(geom_type: GeomType, bin_position: Optional[BinPositionType]):
+    if geom_type in {
+        GeomType.BAR,
+        GeomType.HISTOGRAM,
+        GeomType.TILE,
+        GeomType.RASTER,
+    }:
+       return True
+    if bin_position in {
+        BinPositionType.CENTER,
+        BinPositionType.RIGHT,
+    }:
+        return True
+    return False
+
 def draw_sub_df(
     view: ViewPort,
     fg: FilledGeom,
@@ -771,7 +786,6 @@ def draw_sub_df(
     """
     TODO restructure this down the line
     """
-    # this was used in get_x_y, we may need that soon
     x_outside_range = theme.x_outside_range or OutsideRangeKind.CLIP
     y_outside_range = theme.y_outside_range or OutsideRangeKind.CLIP
     bin_widths: Tuple[float, float] = tuple()
@@ -781,24 +795,19 @@ def draw_sub_df(
     loc_view: ViewPort = view
     view_idx = 0
 
-    need_bin_width = geom_type in {
-        GeomType.BAR,
-        GeomType.HISTOGRAM,
-        GeomType.TILE,
-        GeomType.RASTER,
-    } or fg.gg_data.geom.gg_data.bin_position in {
-        BinPositionType.CENTER,
-        BinPositionType.RIGHT,
-    }
+    need_bin_width = _needs_bin_width(
+        geom_type,
+        fg.gg_data.geom.gg_data.bin_position
+    )
 
     line_points: List[Coord] = []
     if geom_type != GeomType.RASTER:
         x_tensor = df[fg.gg_data.x_col]  # type: ignore
         y_tensor = df[fg.gg_data.y_col]  # type: ignore
 
-        last_element: int = len(df)
+        last_element: int = len(df) - 1
         if fg.gg_data.geom.gg_data.bin_position == BinPositionType.NONE:
-            last_element = len(df) - 1
+            last_element = len(df)
 
         for i in range(last_element):
             if len(styles) > 1:

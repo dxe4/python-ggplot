@@ -1201,7 +1201,6 @@ def generate_plot(
 ):
     background(view, style=get_plot_background(theme))
 
-    # Change scales to user defined if desired
     view.x_scale = theme.x_range or filled_scales.x_scale
 
     if plot.ridges is not None:
@@ -1714,14 +1713,13 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
     hide_ticks = theme.hide_ticks or False
     hide_labels = theme.hide_labels or False
 
-    img = ViewPort.from_coords(
-        CoordsInput(),
-        ViewPortInput(
-            name="root",
-            w_img=Quantity.points(width),
-            h_img=Quantity.points(height),
-        ),
+    coord_input = CoordsInput()
+    viewport_input = ViewPortInput(
+        name="root",
+        w_img=Quantity.points(width),
+        h_img=Quantity.points(height),
     )
+    img = ViewPort.from_coords(coord_input, viewport_input)
     background(img, style=get_canvas_background(theme))
     create_layout(img, filled_scales, theme)
 
@@ -1767,8 +1765,6 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             and (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
             not in drawn_legends
         ):
-
-            # create deep copy of the original legend pane
             lg = deepcopy(img.children[5])
             create_legend(lg, scale, theme.legend_order)
 
