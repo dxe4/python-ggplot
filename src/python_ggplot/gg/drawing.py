@@ -240,17 +240,12 @@ def prepare_views(view: ViewPort, fg: FilledGeom, theme: Theme):
         rows += 2
         heights = [discrete_margin] + ind_heights + [discrete_margin]
 
-    # TODO this is redundant remove it
-    # but first double check the logic in case something got lost in translation
-    widths_q = [i for i in widths]
-    heights_q = [i for i in heights]
-
     layout(
         view,
         cols=cols,
         rows=rows,
-        col_widths=widths_q,
-        row_heights=heights_q,
+        col_widths=widths,
+        row_heights=heights,
     )
 
 
