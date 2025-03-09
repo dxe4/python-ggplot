@@ -233,10 +233,7 @@ class GeomRectDrawMixin:
         from python_ggplot.gg.drawing import read_or_calc_bin_width
 
         bin_width = read_or_calc_bin_width(
-            df,
-            idx,
-            fg.gg_data.x_col,
-            dc_kind=fg.gg_data.x_discrete_kind.discrete_type
+            df, idx, fg.gg_data.x_col, dc_kind=fg.gg_data.x_discrete_kind.discrete_type
         )
         if bin_width != bin_widths[0]:
             raise GGException("Invalid bin width generated")
@@ -252,6 +249,7 @@ class GeomRectDrawMixin:
             InitRectInput(style=style, name="geom_bar_rect"),
         )
         view.add_obj(new_rect)
+
 
 class GeomHistogramMixin(GeomRectDrawMixin):
     @property

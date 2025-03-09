@@ -894,10 +894,7 @@ def draw_sub_df(
 
 
 def create_gobj_from_geom(
-    view: ViewPort,
-    fg: FilledGeom,
-    theme: Theme,
-    label_val: Optional[Any] = None
+    view: ViewPort, fg: FilledGeom, theme: Theme, label_val: Optional[Any] = None
 ):
     prepare_views(view, fg, theme)
     view_map = calc_view_map(fg)

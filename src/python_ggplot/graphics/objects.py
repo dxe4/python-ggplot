@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
 from python_ggplot.core.common import REPR_CONFIG
 from python_ggplot.core.coord.objects import Coord, Coord1D
@@ -80,6 +80,10 @@ class GraphicsObject(ABC):
     name: str
     config: GraphicsObjectConfig
 
+    @abstractmethod
+    def get_coords(self) -> Dict[Any, Any]:
+        pass
+
     @property
     @abstractmethod
     def go_type(self) -> GOType:
@@ -118,6 +122,12 @@ class StartStopData:
     start: Coord
     stop: Coord
 
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "start": self.start,
+            "end": self.stop,
+        }
+
     def to_global_coords(self, img: Image):
         self.start = mut_coord_to_abs_image(self.start, img)
         self.stop = mut_coord_to_abs_image(self.stop, img)
@@ -126,6 +136,11 @@ class StartStopData:
 @dataclass
 class GOAxis(GraphicsObject):
     data: StartStopData
+
+    def get_coords(self) -> Dict[Any, Any]:
+        data = {"name": self.name, "type": self.__class__.__name__}
+        data.update(self.data.get_coords())
+        return data
 
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
@@ -145,6 +160,11 @@ class GOAxis(GraphicsObject):
 @dataclass
 class GOLine(GraphicsObject):
     data: StartStopData
+
+    def get_coords(self) -> Dict[Any, Any]:
+        data = {"name": self.name, "type": self.__class__.__name__}
+        data.update(self.data.get_coords())
+        return data
 
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
@@ -168,6 +188,9 @@ class TextData:
     pos: Coord
     align: TextAlignKind
 
+    def get_coords(self) -> Dict[Any, Any]:
+        return {"pos": self.pos}
+
     def to_global_coords(self, img: Image):
         self.pos = mut_coord_to_abs_image(self.pos, img)
 
@@ -175,6 +198,11 @@ class TextData:
 @dataclass
 class GOText(GraphicsObject):
     data: TextData
+
+    def get_coords(self) -> Dict[Any, Any]:
+        data = {"name": self.name, "type": self.__class__.__name__}
+        data.update(self.data.get_coords())
+        return data
 
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
@@ -194,6 +222,11 @@ class GOText(GraphicsObject):
 class GOLabel(GraphicsObject):
     data: TextData
 
+    def get_coords(self) -> Dict[Any, Any]:
+        data = {"name": self.name, "type": self.__class__.__name__}
+        data.update(self.data.get_coords())
+        return data
+
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
 
@@ -211,6 +244,11 @@ class GOLabel(GraphicsObject):
 @dataclass
 class GOTickLabel(GraphicsObject):
     data: TextData
+
+    def get_coords(self) -> Dict[Any, Any]:
+        data = {"name": self.name, "type": self.__class__.__name__}
+        data.update(self.data.get_coords())
+        return data
 
     def to_global_coords(self, img: Image):
         self.data.to_global_coords(img)
@@ -231,6 +269,15 @@ class GORect(GraphicsObject):
     origin: Coord
     width: Quantity
     height: Quantity
+
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "origin": self.origin,
+            "width": self.width,
+            "height": self.height,
+        }
 
     def to_global_coords(self, img: Image):
         self.origin = mut_coord_to_abs_image(self.origin, img)
@@ -254,10 +301,20 @@ class GOGrid(GraphicsObject):
     y_pos: List[Coord1D]
     origin: Optional[Coord] = None
     origin_diagonal: Optional[Coord] = None
+
     # TODO double check this, original package seems to start with
     # Relative 0.0 for both origin and origin diagonal
     # embed_into sets the right origin later, so it doesnt seem to matter
     # need to check if this has any impact
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "x_pos": self.x_pos,
+            "y_pos": self.y_pos,
+            "origin": self.origin,
+            "origin_diagonal": self.origin_diagonal,
+        }
 
     def to_global_coords(self, img: Image):
         if self.origin is None:
@@ -302,6 +359,13 @@ class GOTick(GraphicsObject):
     axis: AxisKind
     kind: TickKind
     secondary: bool
+
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "pos": self.pos,
+        }
 
     def to_global_coords(self, img: Image):
         self.pos = mut_coord_to_abs_image(self.pos, img)
@@ -367,6 +431,13 @@ class GOPoint(GraphicsObject):
     size: float
     color: Color
 
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "pos": self.pos,
+        }
+
     def to_global_coords(self, img: Image):
         self.pos = mut_coord_to_abs_image(self.pos, img)
 
@@ -388,6 +459,13 @@ class GOManyPoints(GraphicsObject):
     size: float
     color: Color
 
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "pos": self.pos,
+        }
+
     def to_global_coords(self, img: Image):
         self.pos = [mut_coord_to_abs_image(pos, img) for pos in self.pos]
 
@@ -406,6 +484,13 @@ class GOManyPoints(GraphicsObject):
 @dataclass
 class GOPolyLine(GraphicsObject):
     pos: List[Coord]
+
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "pos": self.pos,
+        }
 
     def to_global_coords(self, img: Image):
         self.pos = [mut_coord_to_abs_image(pos, img) for pos in self.pos]
@@ -430,6 +515,15 @@ class GORaster(GraphicsObject):
     block_x: int
     block_y: int
     draw_cb: Callable[[], List[int]]
+
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "origin": self.origin,
+            "pixel_width": self.pixel_width,
+            "pixel_height": self.pixel_height,
+        }
 
     def to_global_coords(self, img: Image):
         self.origin = mut_coord_to_abs_image(self.origin, img)

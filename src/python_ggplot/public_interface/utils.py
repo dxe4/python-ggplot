@@ -873,16 +873,8 @@ def plot_layout(view: ViewPort, theme_layout: ThemeMarginLayout):
         view=view,
         cols=3,
         rows=3,
-        col_widths=[
-            theme_layout.left,
-            Quantity.relative(0.0),
-            theme_layout.right
-        ],
-        row_heights=[
-            theme_layout.top,
-            Quantity.relative(0.0),
-            theme_layout.bottom
-        ],
+        col_widths=[theme_layout.left, Quantity.relative(0.0), theme_layout.right],
+        row_heights=[theme_layout.top, Quantity.relative(0.0), theme_layout.bottom],
     )
 
     view.children[0].name = "top_left"
@@ -901,9 +893,7 @@ def create_layout(view: ViewPort, filled_scales: FilledScales, theme: Theme):
     hide_labels = theme.hide_labels or False
     tight_layout = hide_labels and hide_ticks
     layout = init_theme_margin_layout(
-        theme,
-        tight_layout,
-        requires_legend(filled_scales, theme)
+        theme, tight_layout, requires_legend(filled_scales, theme)
     )
     plot_layout(view, layout)
 
@@ -1216,24 +1206,14 @@ def generate_plot(
 
     if plot.ridges is not None:
         ridge = plot.ridges
-        generate_ridge(
-            view,
-            ridge,
-            plot,
-            filled_scales,
-            theme,
-            hide_labels,
-            hide_ticks
-        )
+        generate_ridge(view, ridge, plot, filled_scales, theme, hide_labels, hide_ticks)
     else:
         view.y_scale = theme.y_range = theme.y_range or filled_scales.y_scale
 
         for geom in filled_scales.geoms:
             coords_input = CoordsInput()
             viewport_input = ViewPortInput(name="data")
-            p_child = view.add_viewport_from_coords(
-                coords_input, viewport_input
-            )
+            p_child = view.add_viewport_from_coords(coords_input, viewport_input)
             create_gobj_from_geom(p_child, geom, theme)
             view.children.append(p_child)
 
@@ -1677,12 +1657,7 @@ def draw_annotations(view: ViewPort, plot: GgPlot) -> None:
             view.add_obj(text)
 
 
-def draw_title(
-    view: ViewPort,
-    title: str,
-    theme: Theme,
-    width: Quantity
-):
+def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
     title = str(title)  # ensure title is string
     font = theme.title_font or Font(size=16.0)
 
@@ -1725,11 +1700,7 @@ def draw_title(
         view.add_obj(item)
 
 
-def ggcreate(
-    plot: GgPlot,
-    width: float = 640.0,
-    height: float = 480.0
-) -> PlotView:
+def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
     if len(plot.geoms) == 0:
         raise GGException("Please use at least one `geom`!")
 
@@ -1808,10 +1779,7 @@ def ggcreate(
             if scale_col not in scale_names:
                 legends.append(lg)
                 drawn_legends.add(
-                    (
-                        scale.gg_data.discrete_kind.discrete_type,
-                        scale.scale_type
-                    )
+                    (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
                 )
             scale_names.add(scale_col)
 

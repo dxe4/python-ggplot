@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from python_ggplot.core.coord.objects import (
     Coord,
@@ -89,6 +89,24 @@ class ViewPort:
 
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
+
+    def get_coords(self) -> Dict[Any, Any]:
+        return {
+            "type": self.__class__.__name__,
+            "name": self.name,
+            "origin": self.origin,
+            "width": self.width,
+            "height": self.height,
+            "w_img": self.w_img,
+            "h_img": self.h_img,
+            "w_view": self.w_view,
+            "h_view": self.h_view,
+            "objects": [i.get_coords() for i in self.objects],
+            "children": [i.get_coords() for i in self.children],
+        }
+
+    def gather_coords(self) -> Dict[Any, Any]:
+        return self.get_coords()
 
     def find(self, go_type: GOType, recursive: bool = True):
         """

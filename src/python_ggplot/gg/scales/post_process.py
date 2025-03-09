@@ -150,7 +150,7 @@ def separate_scales_apply_transofrmations(
     df: pd.DataFrame,  # type: ignore
     geom: Geom,
     filled_scales: FilledScales,
-    y_is_none: bool = False
+    y_is_none: bool = False,
 ) -> Tuple[GGScale, Optional[GGScale], List[GGScale], List[GGScale]]:
     """
     TODO test this
@@ -176,8 +176,7 @@ def separate_scales_apply_transofrmations(
 
 
 def split_discrete_set_map(
-    df: pd.DataFrame,  # type: ignore
-    scales: List[GGScale]
+    df: pd.DataFrame, scales: List[GGScale]  # type: ignore
 ) -> Tuple[List[str], List[str]]:
     set_disc_cols: List[str] = []
     map_disc_cols: List[str] = []
@@ -196,10 +195,7 @@ def split_discrete_set_map(
 def set_x_attributes(fg: FilledGeom, df: pd.DataFrame, scale: GGScale) -> None:
 
     if isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete):
-        fg.gg_data.num_x = max(
-            fg.gg_data.num_x,
-            df[str(scale.gg_data.col)].nunique()
-        )
+        fg.gg_data.num_x = max(fg.gg_data.num_x, df[str(scale.gg_data.col)].nunique())
         fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
         # and assign the label sequence
         # TODO this assumes fg.gg_data.x_discrete_kind = Discrete
@@ -547,7 +543,9 @@ def filled_identity_geom(
     """
     TODO refactor/test/fix this
     """
-    x, y, discretes, cont = separate_scales_apply_transofrmations(df, geom, filled_scales)
+    x, y, discretes, cont = separate_scales_apply_transofrmations(
+        df, geom, filled_scales
+    )
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
     if y is None:
         # TODO double check if this is correct
@@ -690,7 +688,9 @@ def filled_smooth_geom(
     need a draft version of this to get all the unit tests running
     """
 
-    x, y, discretes, cont = separate_scales_apply_transofrmations(df, geom, filled_scales)
+    x, y, discretes, cont = separate_scales_apply_transofrmations(
+        df, geom, filled_scales
+    )
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
 
     if x.is_discrete():
@@ -1009,7 +1009,7 @@ def count_(
     df: pd.DataFrame,  # type: ignore
     x_col: str,
     name: str,
-    weights: Optional[GGScale] = None
+    weights: Optional[GGScale] = None,
 ) -> pd.DataFrame:
     # TODO critical, medium complexity
     # we rename to counts_GGPLOTNIM_INTERNAL
