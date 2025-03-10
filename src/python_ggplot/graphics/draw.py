@@ -252,8 +252,9 @@ def layout(
                 name=f"{view.name} - layour row: {i} col {j}",
             )
 
+            origin = Coord(x=current_col, y=current_row)
             child: ViewPort = view.add_viewport(
-                Coord(x=current_col, y=current_row), width, height, view_input
+                origin, width, height, view_input
             )
             view.children.append(child)
 
