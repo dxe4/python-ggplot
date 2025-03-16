@@ -319,6 +319,7 @@ def test_geom_bar():
     ggdraw_plot(res, data_path / "geom_bar.png")
     print(res.view.gather_coords())
 
+
 def test_geom_point():
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = (

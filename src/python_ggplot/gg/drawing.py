@@ -285,8 +285,9 @@ def get_discrete_histogram(width: float, ax_kind: AxisKind) -> Coord1D:
         # TODO CRITICAL easy task
         # double check this.
         # templace c1 in ginger has default AxisKind.X which is used in this case
+        # changed to the sensible Y but it still needs double chcking
         top = 1.0
-        return init_coord_1d(top, AxisKind.X, UnitType.RELATIVE)
+        return init_coord_1d(top, AxisKind.Y, UnitType.RELATIVE)
 
 
 def get_discrete_point() -> Coord1D:
@@ -299,7 +300,8 @@ def get_discrete_line(view: ViewPort, axis_kind: AxisKind) -> Coord1D:
         AxisKind.X: init_coord_1d(center_x, AxisKind.X, UnitType.RELATIVE),
         # TODO sanity check this, original code is using AxisKind.X (inferred as default)
         # is this correct?
-        AxisKind.Y: init_coord_1d(center_y, AxisKind.X, UnitType.RELATIVE),
+        # changed to the sensible Y but it still needs double chcking
+        AxisKind.Y: init_coord_1d(center_y, AxisKind.Y, UnitType.RELATIVE),
     }
     return lookup[axis_kind]
 
@@ -763,13 +765,14 @@ def _needs_bin_width(geom_type: GeomType, bin_position: Optional[BinPositionType
         GeomType.TILE,
         GeomType.RASTER,
     }:
-       return True
+        return True
     if bin_position in {
         BinPositionType.CENTER,
         BinPositionType.RIGHT,
     }:
         return True
     return False
+
 
 def draw_sub_df(
     view: ViewPort,
@@ -791,10 +794,7 @@ def draw_sub_df(
     loc_view: ViewPort = view
     view_idx = 0
 
-    need_bin_width = _needs_bin_width(
-        geom_type,
-        fg.gg_data.geom.gg_data.bin_position
-    )
+    need_bin_width = _needs_bin_width(geom_type, fg.gg_data.geom.gg_data.bin_position)
 
     line_points: List[Coord] = []
     if geom_type != GeomType.RASTER:
@@ -904,6 +904,7 @@ def create_gobj_from_geom(
     view: ViewPort, fg: FilledGeom, theme: Theme, label_val: Optional[Any] = None
 ):
     prepare_views(view, fg, theme)
+
     view_map = calc_view_map(fg)
 
     for lab, _, styles, sub_df in fg.enumerate_data():

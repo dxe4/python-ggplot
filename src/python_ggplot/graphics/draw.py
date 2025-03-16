@@ -249,13 +249,11 @@ def layout(
                 x_scale=view.x_scale,
                 y_scale=view.y_scale,
                 style=view.style,
-                name=f"{view.name} - layour row: {i} col {j}",
+                name=f"{view.name} - layer row: {i} col {j}",
             )
 
             origin = Coord(x=current_col, y=current_row)
-            child: ViewPort = view.add_viewport(
-                origin, width, height, view_input
-            )
+            child: ViewPort = view.add_viewport(origin, width, height, view_input)
             view.children.append(child)
 
             coord_cls = coord_type_from_type(widths[j].unit_type)

@@ -241,11 +241,15 @@ class GeomRectDrawMixin:
         if y is None:
             y = 0.0
 
+        #  TODO critical easy fix, default color for geombar is wrong
+        style.fill_color = Color(1, 0, 0, 0.3)
+        style.color = Color(1, 0, 0, 1)
+
         new_rect = init_rect(
             view,
             pos,
             DataUnit(bin_width),
-            DataUnit(y),
+            DataUnit(-y),
             InitRectInput(style=style, name="geom_bar_rect"),
         )
         view.add_obj(new_rect)

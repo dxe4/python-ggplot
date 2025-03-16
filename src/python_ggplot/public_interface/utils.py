@@ -1123,9 +1123,9 @@ def generate_ridge(
     for label, idx in view_map.items():
         view_label = view.children[idx]
 
-        for fg in filled_scales.geoms:
+        for cnt, fg in enumerate(filled_scales.geoms):
             p_child = view_label.add_viewport_from_coords(
-                CoordsInput(), ViewPortInput(name="data")
+                CoordsInput(), ViewPortInput(name=f"data_{cnt}")
             )
 
             # Create theme which ignores points outside the scale
@@ -1213,6 +1213,7 @@ def generate_plot(
             coords_input = CoordsInput()
             viewport_input = ViewPortInput(name="data")
             p_child = view.add_viewport_from_coords(coords_input, viewport_input)
+
             create_gobj_from_geom(p_child, geom, theme)
             view.children.append(p_child)
 

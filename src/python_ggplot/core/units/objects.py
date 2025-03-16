@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Callable, Optional, Type
 from python_ggplot.core.objects import AxisKind, GGException, Scale, UnitType
 
 if TYPE_CHECKING:
+    from python_ggplot.core.coord.objects import OperatorType
     from python_ggplot.graphics.views import ViewPort
 
 
@@ -121,24 +122,34 @@ class Quantity(ABC):
         scale: Optional[Scale],
         as_coordinate: bool,  # noqa TODO fix
         operator: Callable[[float, float], float],
+        operator_type: "OperatorType",
     ) -> "Quantity":
+        # TODO fix circular import
+        from python_ggplot.core.coord.objects import OperatorType
+
         # todo refactor
         # this is ugly, needs to become like the conversion eventually
         if self.unit_type == other.unit_type:
             cls = unit_type_from_type(self.unit_type)
             return cls(operator(self.val, other.val))
         elif self.unit_type.is_length() and other.unit_type == UnitType.RELATIVE:
-            return PointUnit(
-                operator(self.to_points().val, other.to_points(length=length).val)
-            ).to(self.unit_type, length=length, scale=scale)
+            if operator_type in {OperatorType.MUL, OperatorType.DIV}:
+                return PointUnit(operator(self.val, other.val)).to(self.unit_type)
+            else:
+                return PointUnit(
+                    operator(self.to_points().val, other.to_points(length=length).val)
+                ).to(self.unit_type, length=length, scale=scale)
         elif self.unit_type.is_length() and (other.unit_type.is_length()):
             return PointUnit(
                 operator(self.to_points().val, other.to_points(length=length).val)
             ).to(self.unit_type, length=length, scale=scale)
         elif self.unit_type == UnitType.RELATIVE and other.unit_type.is_length():
-            return PointUnit(
-                operator(self.to_points(length=length).val, other.to_points().val)
-            ).to(other.unit_type, length=length, scale=scale)
+            if operator_type in {OperatorType.MUL, OperatorType.DIV}:
+                return PointUnit(operator(self.val, other.val)).to(self.unit_type)
+            else:
+                return PointUnit(
+                    operator(self.to_points(length=length).val, other.to_points().val)
+                ).to(self.unit_type, length=length, scale=scale)
         elif self.unit_type == UnitType.DATA:
             left = deepcopy(self)
             if as_coordinate:
@@ -158,8 +169,11 @@ class Quantity(ABC):
         scale: Optional[Scale] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
+        # TODO fix circular import
+        from python_ggplot.core.coord.objects import OperatorType
+
         return self.apply_operator(
-            other, length, scale, as_coordinate, lambda a, b: a * b
+            other, length, scale, as_coordinate, lambda a, b: a * b, OperatorType.MUL
         )
 
     def add(
@@ -169,8 +183,11 @@ class Quantity(ABC):
         scale: Optional[Scale] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
+        # TODO fix circular import
+        from python_ggplot.core.coord.objects import OperatorType
+
         return self.apply_operator(
-            other, length, scale, as_coordinate, lambda a, b: a + b
+            other, length, scale, as_coordinate, lambda a, b: a + b, OperatorType.ADD
         )
 
     def divide(
@@ -180,8 +197,11 @@ class Quantity(ABC):
         scale: Optional[Scale] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
+        # TODO fix circular import
+        from python_ggplot.core.coord.objects import OperatorType
+
         return self.apply_operator(
-            other, length, scale, as_coordinate, lambda a, b: a / b
+            other, length, scale, as_coordinate, lambda a, b: a / b, OperatorType.DIV
         )
 
     def subtract(
@@ -191,8 +211,11 @@ class Quantity(ABC):
         scale: Optional[Scale] = None,
         as_coordinate: bool = False,
     ) -> "Quantity":
+        # TODO fix circular import
+        from python_ggplot.core.coord.objects import OperatorType
+
         return self.apply_operator(
-            other, length, scale, as_coordinate, lambda a, b: a - b
+            other, length, scale, as_coordinate, lambda a, b: a - b, OperatorType.SUB
         )
 
 

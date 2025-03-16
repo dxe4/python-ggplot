@@ -17,6 +17,7 @@ from python_ggplot.core.units.objects import Quantity, unit_type_from_type
 from python_ggplot.graphics.cairo_backend import CairoBackend
 
 if TYPE_CHECKING:
+    from python_ggplot.core.coord.objects import OperatorType
     from python_ggplot.graphics.views import ViewPort
 
 
@@ -85,6 +86,7 @@ def add_coord_one_length(
     operator: Operator,
     scale: Optional[Scale],
     result_to_clone: "Coord1D",
+    operator_type: "OperatorType",
 ) -> "Coord1D":
     length = result_to_clone.get_length()
     if length is None:
@@ -101,6 +103,7 @@ def add_coord_one_length(
         scale=scale,
         as_coordinate=True,
         operator=operator,
+        operator_type=operator_type,
     )
 
     if quantity.unit_type == UnitType.RELATIVE:
@@ -134,10 +137,10 @@ def coord_operator(
             return res
     elif lhs.unit_type.is_length():
         scale = rhs.get_scale()
-        return add_coord_one_length(lhs, rhs, operator, scale, lhs)
+        return add_coord_one_length(lhs, rhs, operator, scale, lhs, operator_type)
     elif rhs.unit_type.is_length():
         scale = lhs.get_scale()
-        return add_coord_one_length(lhs, rhs, operator, scale, rhs)
+        return add_coord_one_length(lhs, rhs, operator, scale, rhs, operator_type)
     else:
         left = lhs.to(UnitType.RELATIVE)
         right = rhs.to(UnitType.RELATIVE)
