@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import AxisKind, GGException, Scale
-from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull, VString
 from python_ggplot.gg.geom.base import (
     FilledGeom,
     FilledGeomContinuous,
@@ -121,6 +121,7 @@ def apply_transformations(df: pd.DataFrame, scales: List[GGScale]):
     TODO this will need fixing
     """
     transformations: Dict[Any, Any] = {}
+    result: pd.DataFrame = pd.DataFrame()
 
     for scale in scales:
         if scale.scale_type == ScaleType.TRANSFORMED_DATA:
@@ -143,7 +144,8 @@ def apply_transformations(df: pd.DataFrame, scales: List[GGScale]):
                 transformations[scale.get_col_name()] = lambda x, c: c.evaluate()  # type: ignore
 
     for col_name, transform_fn in transformations.items():
-        df[col_name] = transform_fn(df, col_name)
+        result[col_name] = transform_fn(df, col_name)
+    return result
 
 
 def separate_scales_apply_transofrmations(
@@ -167,10 +169,13 @@ def separate_scales_apply_transofrmations(
     if len(discr_cols) > 0:
         df = df.groupby(discr_cols, group_keys=True)  # type: ignore
 
-    if not y_is_none:
-        apply_transformations(df, [x, y] + scales)  # type: ignore
-    else:
-        apply_transformations(df, [x] + scales)
+    # TODO urgent double check this
+    # We may not need this until FormulaNode is Implemented
+
+    # if not y_is_none:
+    #     apply_transformations(df, [x, y] + scales)  # type: ignore
+    # else:
+    #     apply_transformations(df, [x] + scales)
 
     return (x, y, discretes, cont)
 
@@ -591,7 +596,10 @@ def filled_identity_geom(
 
         # TODO this needs fixing, ignore types for now, keep roughly working logic
         for keys, sub_df in grouped:  # type: ignore
-            apply_style(style, sub_df, discretes, keys)  # type: ignore
+            if len(keys) > 1:
+                raise GGException("we assume this is 1")
+
+            apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
 
             yield_df = sub_df.copy()
             set_x_attributes(result, yield_df, x)

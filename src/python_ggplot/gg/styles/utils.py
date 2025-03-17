@@ -156,7 +156,6 @@ def apply_style(
     T = Union[str, FormulaNode]
     keys: List[str, GGValue]
     """
-
     for col, val in keys:
         for scale in scales:
             if scale.scale_type in {

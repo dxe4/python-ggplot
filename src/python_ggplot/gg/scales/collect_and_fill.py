@@ -598,7 +598,10 @@ def fill_scale_impl(
         color_scale = ColorScale.viridis()
 
     if is_discrete:
-        labels = label_seq if label_seq is not None else []
+        if label_seq is not None:
+            labels = label_seq
+        else:
+            labels = []
 
         if scale_type == ScaleType.COLOR:
             return fill_discrete_color_scale(
@@ -785,6 +788,7 @@ def fill_scale(
             continue
 
         if is_discrete:
+            # todo refactor this
             discrete_kind = cast(GGScaleDiscrete, scale.gg_data.discrete_kind)
             if not discrete_kind.label_seq:
                 if isinstance(scale, (LinearDataScale, TransformedDataScale)):
@@ -794,6 +798,8 @@ def fill_scale(
                         label_seq_opt = sorted(data.unique())  # type: ignore
                     else:
                         label_seq_opt = sorted(data.unique(), reverse=True)  # type: ignore
+                else:
+                    label_seq_opt = sorted(data.unique())  # type: ignore
             else:
                 label_seq_opt = discrete_kind.label_seq
 
