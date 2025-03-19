@@ -104,7 +104,7 @@ class SizeScaleValue(ScaleValue):
     size: Optional[float] = None
 
     def update_style(self, style: "GGStyle"):
-        pass
+        style.size = self.size
 
     @property
     def scale_type(self) -> "ScaleType":
@@ -130,7 +130,7 @@ class AlphaScaleValue(ScaleValue):
     alpha: Optional[float] = None
 
     def update_style(self, style: "GGStyle"):
-        pass
+        style.alpha = self.alpha
 
     @property
     def scale_type(self) -> "ScaleType":
