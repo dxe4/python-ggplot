@@ -76,16 +76,21 @@ def _get_field_for_user_style_merge(
 
 
 def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
-    result = Style()
+
+    geom_type: GeomType = fg.geom_type
+    stat_type = fg.gg_data.geom.gg_data.stat_kind.stat_type
+
+    result = default_style(
+        geom_type,
+        stat_type,
+    )
+
     if fg.gg_data.geom.gg_data.user_style is None:
         # TODO double check this logic but i think its correct
         raise GGException("User style not provided")
 
     u_style = fg.gg_data.geom.gg_data.user_style
-    geom_type: GeomType = fg.geom_type
-    stat_type = fg.gg_data.geom.gg_data.stat_kind.stat_type
 
-    style_dict: Dict[Any, Any] = {}
     for field in [
         "color",
         "size",
@@ -99,8 +104,9 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         value = _get_field_for_user_style_merge(
             u_style, style, field, geom_type, stat_type
         )
-        style_dict[field] = value
-    result = Style(**style_dict)
+        if value is not None:
+            setattr(style, field, value)
+
 
     if u_style.alpha is not None:
         result.fill_color.a = u_style.alpha  # type: ignore
