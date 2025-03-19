@@ -625,7 +625,7 @@ def filled_identity_geom(
 
             yield_df = maybe_filter_unique(yield_df, result)
             # tuple_to_object
-            style_, styles_ = apply_cont_scale_if_any(  # type: ignore
+            style_, styles_, _ = apply_cont_scale_if_any(  # type: ignore
                 yield_df, cont, style, geom.geom_type, to_clone=True
             )
             result.gg_data.yield_data[keys] = (style_, styles_)  # type: ignore
