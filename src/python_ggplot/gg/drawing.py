@@ -83,13 +83,20 @@ class GetXY:
         need to decide how to handle that,
         defualt to -inf and +inf, raise exception, or do nothing?
         """
-        x_is_str = isinstance(self.x_series[self.idx], str)
+        x_is_str = isinstance(self.x_series.iloc[self.idx], str)  # type: ignore
         if x_is_str:
             # TODO is this correct?
             x = 0.0
         else:
-            x = 0.0 if pd.isna(self.x_series[self.idx]) else float(self.x_series[self.idx])  # type: ignore
-        y = 0.0 if pd.isna(self.y_series[self.idx]) else float(self.y_series[self.idx])  # type: ignore
+            if pd.isna(self.x_series.iloc[self.idx]): # type: ignore
+                x = 0.0
+            else:
+                x = float(self.x_series.iloc[self.idx])  # type: ignore
+
+        if pd.isna(self.y_series.iloc[self.idx]):  # type: ignore
+            y = 0.0
+        else:
+            y = float(self.y_series.iloc[self.idx])  # type: ignore
         # TODO CRITICAL, easy task
         # write is_continuous and use that
         # although this is binary discrete/continuous
