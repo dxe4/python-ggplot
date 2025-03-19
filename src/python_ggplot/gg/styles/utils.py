@@ -170,11 +170,18 @@ def apply_style(
                 discrete_scale = cast(GGScaleDiscrete, scale.gg_data.discrete_kind)
 
                 if not is_col:
-                    style_val = discrete_scale.value_map[scale.gg_data.col.evaluate(df)]
+                    col_vals = scale.gg_data.col.evaluate(df)
+                    if len(col_vals.unique()) > 1:
+                        raise GGException("Expected one unique value")
+                    value = col_vals.iloc[0]
+                    # TODO value map is sometypes not obeying the type definition of GGValue
+                    # this can cause omse bugs, better to fix it asap
+                    style_val = discrete_scale.value_map[value]
                 elif str(col) == str(scale.gg_data.col):
-                    if (
-                        isinstance(val, VNull)
-                        and VString(data=str(col)) in discrete_scale.value_map
+                    # TODO the or part is temporary
+                    if isinstance(val, VNull) and (
+                        VString(data=str(col)) in discrete_scale.value_map
+                        or col in discrete_scale.value_map
                     ):
                         style_val = discrete_scale.value_map[VString(data=str(col))]
                     elif val in discrete_scale.value_map:
