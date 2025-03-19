@@ -268,6 +268,13 @@ def calc_view_map(fg: FilledGeom) -> Dict[Any, Any]:
             result[(x, y)] = i + 1
     else:
         for i in range(rows):
+            # TODO CRITICAL+
+            # there is an issue with label seq here
+            # we can by pass it for now to fix the rest of the issues
+            # the logic here is most likely fine,
+            # but the issue caused by wrong label seq before coming here
+            if i >= len(fg.gg_data.y_discrete_kind.get_label_seq()):
+                break
             y = fg.gg_data.y_discrete_kind.get_label_seq()[i]
             for j in range(cols):
                 x = fg.get_x_label_seq()[j]
