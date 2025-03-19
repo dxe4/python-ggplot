@@ -63,27 +63,27 @@ class GGValue:
     """
 
 
-@dataclass
+@dataclass(frozen=True)
 class VString(GGValue):
     data: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class VInt(GGValue):
     data: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class VFloat(GGValue):
     data: float
 
 
-@dataclass
+@dataclass(frozen=True)
 class VBool(GGValue):
     data: bool
 
 
-@dataclass
+@dataclass(frozen=True)
 class VObject(GGValue):
     fields: OrderedDict[str, GGValue]
 
@@ -116,6 +116,24 @@ class VFillColor(GGValue):
     """
 
     data: GGValue
+
+
+def python_type_to_gg_value(value: Any) -> GGValue:
+    conversion = {
+        "str": VString,
+        "int": VInt,
+        "float": VFloat,
+        "bool": VBool,
+    }
+    value_type = type(value).__name__
+    if value_type == "NoneType":
+        return VNull()
+
+    try:
+        cls = conversion[value_type]
+        return cls(data=value)
+    except KeyError:
+        raise GGException(f"cannot convert type {value_type} to GGValue")
 
 
 @dataclass
@@ -166,7 +184,7 @@ def series_is_str(series: pd.Series) -> bool:
 
 
 def series_is_obj(series: pd.Series) -> bool:
-    return str(series.dtype) == "object"
+    return str(series.dtype) == "object"  # type: ignore
 
 
 def series_value_type(series: pd.Series) -> str:
