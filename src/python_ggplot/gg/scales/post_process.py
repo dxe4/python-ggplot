@@ -624,11 +624,10 @@ def filled_identity_geom(
                 yield_df[result.gg_data.y_col] = col
 
             yield_df = maybe_filter_unique(yield_df, result)
-            # tuple_to_object
-            style_, styles_, _ = apply_cont_scale_if_any(  # type: ignore
+            style_, styles_, temp_yield_df = apply_cont_scale_if_any(
                 yield_df, cont, style, geom.geom_type, to_clone=True
             )
-            result.gg_data.yield_data[keys] = (style_, styles_)  # type: ignore
+            result.gg_data.yield_data[keys] = (style_, styles_, temp_yield_df)  # type: ignore
 
         if geom.gg_data.position == PositionType.STACK and result.is_discrete_y():
             result.gg_data.y_scale = result.gg_data.y_scale.merge(
