@@ -241,7 +241,9 @@ class GeomRectDrawMixin:
         if y is None:
             y = 0.0
 
-        #  TODO critical easy fix, default color for geombar is wrong
+        # TODO CRITICAL+ easy fix, default color for geombar is wrong
+        # also there is an issue with the background, preventing it to show
+        # look for whats wrong with the background first
         style.fill_color = Color(1, 0, 0, 0.3)
         style.color = Color(1, 0, 0, 1)
 
