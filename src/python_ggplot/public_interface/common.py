@@ -435,9 +435,16 @@ def scale_alpha_continuous(low: float = 0.1, high: float = 1.0) -> GGScale:
 def ggtitle(
     title: str,
     sub_title: str = "",
-    title_font: Font = field(default_factory=Font),
-    sub_title_font: Font = field(default_factory=lambda: Font(size=8.0)),
+    title_font: Optional[Font] = None,
+    sub_title_font: Optional[Font] = None,
 ) -> Theme:
+
+    if title_font is None:
+        title_font = Font()
+
+    if sub_title_font is None:
+        sub_title_font = Font(size=8.0)
+
     theme = Theme(
         title=title,
         title_font=title_font,
