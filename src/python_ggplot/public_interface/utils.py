@@ -635,14 +635,18 @@ def minor_grid_lines(
     return theme
 
 
-def background_color(color: PossibleColor = GREY92) -> Theme:
+def background_color(color: PossibleColor = None) -> Theme:
+    if color is None:
+        color = GREY92
     return Theme(plot_background_color=color)
 
 
-def grid_line_color(color: PossibleColor = WHITE) -> Theme:
+def grid_line_color(color: PossibleColor = None) -> Theme:
     """
     deprecated, use grid_lines
     """
+    if color is None:
+        color = WHITE
     return Theme(grid_line_color=color)
 
 

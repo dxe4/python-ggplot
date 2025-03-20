@@ -317,7 +317,7 @@ def test_geom_bar():
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_bar.png")
-    print(res.view.gather_coords())
+    # print(res.view)
 
 
 def test_geom_point():

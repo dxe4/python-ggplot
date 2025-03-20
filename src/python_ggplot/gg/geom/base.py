@@ -214,11 +214,6 @@ class GeomPoint(Geom):
         idx: int,
         style: Style,
     ):
-        # TODO CRITICAL+
-        # color is patched as red for now, because the background and grid seem to prevent from rendering
-        # this should be an easy fix needs some investigation
-        style.fill_color = Color(1, 0, 0, 1)
-        style.color = Color(1, 0, 0, 1)
         new_point = init_point(pos, style)
         view.add_obj(new_point)
 
@@ -245,12 +240,6 @@ class GeomRectDrawMixin:
 
         if y is None:
             y = 0.0
-
-        # TODO CRITICAL+ easy fix, default color for geombar is wrong
-        # also there is an issue with the background, preventing it to show
-        # look for whats wrong with the background first
-        style.fill_color = Color(1, 0, 0, 0.3)
-        style.color = Color(1, 0, 0, 1)
 
         new_rect = init_rect(
             view,
