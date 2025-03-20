@@ -97,6 +97,7 @@ class GraphicsObject(ABC):
     def get_pos(self) -> "Coord":
         pass
 
+    @abstractmethod
     def update_view_scale(self, view: "ViewPort"):
         pass
 
@@ -360,6 +361,9 @@ class GOTick(GraphicsObject):
     kind: TickKind
     secondary: bool
 
+    def update_view_scale(self, view: "ViewPort"):
+        view.update_scale(self.pos)
+
     def get_coords(self) -> Dict[Any, Any]:
         return {
             "type": self.__class__.__name__,
@@ -449,7 +453,7 @@ class GOPoint(GraphicsObject):
         return GOType.POINT_DATA
 
     def update_view_scale(self, view: "ViewPort"):
-        raise GGException("not implemented")
+        view.update_scale(self.pos)
 
 
 @dataclass
