@@ -187,7 +187,7 @@ class CairoBackend:
             context.set_source_rgba(
                 stroke_color.r, stroke_color.g, stroke_color.b, stroke_color.a
             )
-            context.arc(center[0], center[1], radius, 0.0, 2.0 * pi)
+            context.arc(center.x, center.y, radius, 0.0, 2.0 * pi)
             context.stroke_preserve()
             context.set_source_rgba(
                 fill_color.r, fill_color.g, fill_color.b, fill_color.a
