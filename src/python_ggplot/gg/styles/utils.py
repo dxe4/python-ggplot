@@ -107,7 +107,6 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         if value is not None:
             setattr(style, field, value)
 
-
     if u_style.alpha is not None:
         result.fill_color.a = u_style.alpha  # type: ignore
         if geom_type in {

@@ -88,7 +88,7 @@ class GetXY:
             # TODO is this correct?
             x = 0.0
         else:
-            if pd.isna(self.x_series.iloc[self.idx]): # type: ignore
+            if pd.isna(self.x_series.iloc[self.idx]):  # type: ignore
                 x = 0.0
             else:
                 x = float(self.x_series.iloc[self.idx])  # type: ignore
