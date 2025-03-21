@@ -1704,57 +1704,9 @@ def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
         view.add_obj(item)
 
 
-def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
-    if len(plot.geoms) == 0:
-        raise GGException("Please use at least one `geom`!")
 
-    filled_scales: FilledScales
-    if plot.ridges is not None:
-        filled_scales = collect_scales(plot.update_aes_ridges())
-    else:
-        filled_scales = collect_scales(plot)
-
-    theme = build_theme(filled_scales, plot)
-    hide_ticks = theme.hide_ticks or False
-    hide_labels = theme.hide_labels or False
-
-    coord_input = CoordsInput()
-    viewport_input = ViewPortInput(
-        name="root",
-        w_img=Quantity.points(width),
-        h_img=Quantity.points(height),
-    )
-    img = ViewPort.from_coords(coord_input, viewport_input)
-    background(img, style=get_canvas_background(theme))
-    create_layout(img, filled_scales, theme)
-
-    plt_base = img.get_child_by_name("plot")
-
-    if plot.facet is not None:
-        generate_facet_plots(
-            plt_base,
-            plot,
-            filled_scales,
-            hide_labels=hide_labels,
-            hide_ticks=hide_ticks,
-        )
-    else:
-        generate_plot(
-            plt_base,
-            plot,
-            filled_scales,
-            theme,
-            hide_labels=hide_labels,
-            hide_ticks=hide_ticks,
-        )
-
-    x_scale = plt_base.x_scale
-    y_scale = plt_base.y_scale
-    img.x_scale = x_scale
-    img.y_scale = y_scale
-
-    img.y_scale = plt_base.y_scale
-
+def _draw_legends(img: ViewPort, filled_scales: FilledScales, theme: Theme, plot: GgPlot):
+    # TODO move this out of this file eventually
     drawn_legends: Set[Tuple[DiscreteType, ScaleType]] = set()
     scale_names: Set[str] = set()
     legends: List[ViewPort] = []
@@ -1790,8 +1742,9 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             legend_view.origin.x = pos.x
             legend_view.origin.y = pos.y
 
-    draw_annotations(img.get_child_by_name("plot"), plot)
 
+def _draw_title(img: ViewPort, theme: Theme, plot: GgPlot):
+    # todo move out of this file eventually
     if plot.title and len(plot.title) > 0:
         title_viewport = img.get_child_by_name("title")
         top_right_viewport = img.get_child_by_name("top_right")
@@ -1801,6 +1754,77 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             theme,
             title_viewport.point_width().add(top_right_viewport.point_width()),
         )
+
+
+def _collect_scales(plot: GgPlot) -> FilledScales:
+    # todo move out of this file eventually
+    filled_scales: FilledScales
+    if plot.ridges is not None:
+        filled_scales = collect_scales(plot.update_aes_ridges())
+    else:
+        filled_scales = collect_scales(plot)
+
+    return filled_scales
+
+
+def _generate_plot(plt_base: ViewPort, theme: Theme, plot: GgPlot, filled_scales: FilledScales):
+    # todo move out of this file eventually
+    hide_ticks = theme.hide_ticks or False
+    hide_labels = theme.hide_labels or False
+
+    if plot.facet is not None:
+        generate_facet_plots(
+            plt_base,
+            plot,
+            filled_scales,
+            hide_labels=hide_labels,
+            hide_ticks=hide_ticks,
+        )
+    else:
+        generate_plot(
+            plt_base,
+            plot,
+            filled_scales,
+            theme,
+            hide_labels=hide_labels,
+            hide_ticks=hide_ticks,
+        )
+
+def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
+    if len(plot.geoms) == 0:
+        raise GGException("Please use at least one `geom`!")
+
+    filled_scales: FilledScales = _collect_scales(plot)
+    theme = build_theme(filled_scales, plot)
+
+    coord_input = CoordsInput()
+    viewport_input = ViewPortInput(
+        name="root",
+        w_img=Quantity.points(width),
+        h_img=Quantity.points(height),
+    )
+    img = ViewPort.from_coords(coord_input, viewport_input)
+
+    background(img, style=get_canvas_background(theme))
+    create_layout(img, filled_scales, theme)
+
+    plt_base = img.get_child_by_name("plot")
+
+    _generate_plot(
+        plt_base,
+        theme,
+        plot,
+        filled_scales
+    )
+
+    img.x_scale = plt_base.x_scale
+    # TODO this is overriden, fine for now
+    img.y_scale = plt_base.y_scale
+    img.y_scale = plt_base.y_scale
+
+    _draw_legends(img, filled_scales, theme, plot)
+    draw_annotations(img.get_child_by_name("plot"), plot)
+    _draw_title(img, theme, plot)
 
     return PlotView(filled_scales=filled_scales, view=img)
 

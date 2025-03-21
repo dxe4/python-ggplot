@@ -104,7 +104,7 @@ class ViewPort:
             view.children[8].name = "bottom_right"
         """
         if isinstance(view_name, str):
-            view_name = set(view_name)
+            view_name = {view_name}
         # TODO replace view.children[4] with view.get_child_by_name("plot") etc
         for child in self.children:
             if child.name in view_name:
