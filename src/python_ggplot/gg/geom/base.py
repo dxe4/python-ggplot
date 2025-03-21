@@ -131,6 +131,10 @@ class FilledGeomData:
     y_scale: Scale
     reversed_x: bool
     reversed_y: bool
+    # TODO High priority
+    # Decide if we stick to gg value
+    # this may be legacy, we could potentially use "any" here (whatever value was in df)
+    # the key added is not always GGValue so this is definetly wrong
     yield_data: OrderedDict[GGValue, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
     num_x: int
     num_y: int
