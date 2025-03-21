@@ -320,6 +320,7 @@ def test_geom_bar():
     # print(res.view)
 
 
+
 def test_geom_point():
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = (
@@ -330,3 +331,18 @@ def test_geom_point():
 
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_point.png")
+
+
+def test_geom_point_with_color():
+    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    plot = ggplot(mpg, aes(x="displ", y="hwy")) + geom_point(
+        aes(color="class"), size=3, alpha=0.7
+    )
+    # TODO labs needs to be implemented
+    # + labs(
+    #     title = "Engine Size vs Highway Mileage",
+    #     x = "Engine Displacement (L)",
+    #     y = "Highway Mileage (mpg)"
+    # )
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_point_with_color.png")

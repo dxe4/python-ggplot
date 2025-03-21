@@ -803,7 +803,6 @@ def draw_sub_df(
     y_outside_range = theme.y_outside_range or OutsideRangeKind.CLIP
     bin_widths: Tuple[float, float] = tuple()
     geom_type = fg.geom_type
-
     style = merge_user_style(styles[0], fg)
     loc_view: ViewPort = view
     view_idx = 0
