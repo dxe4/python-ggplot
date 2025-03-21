@@ -896,9 +896,8 @@ def create_layout(view: ViewPort, filled_scales: FilledScales, theme: Theme):
     hide_ticks = theme.hide_ticks or False
     hide_labels = theme.hide_labels or False
     tight_layout = hide_labels and hide_ticks
-    layout = init_theme_margin_layout(
-        theme, tight_layout, requires_legend(filled_scales, theme)
-    )
+    requires_legend_ = requires_legend(filled_scales, theme)
+    layout = init_theme_margin_layout(theme, tight_layout, requires_legend_)
     plot_layout(view, layout)
 
 
@@ -1203,7 +1202,8 @@ def generate_plot(
     hide_labels: bool = False,
     hide_ticks: bool = False,
 ):
-    background(view, style=get_plot_background(theme))
+    background_style = get_plot_background(theme)
+    background(view, style=background_style)
 
     view.x_scale = theme.x_range or filled_scales.x_scale
 
@@ -1704,8 +1704,9 @@ def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
         view.add_obj(item)
 
 
-
-def _draw_legends(img: ViewPort, filled_scales: FilledScales, theme: Theme, plot: GgPlot):
+def _draw_legends(
+    img: ViewPort, filled_scales: FilledScales, theme: Theme, plot: GgPlot
+):
     # TODO move this out of this file eventually
     drawn_legends: Set[Tuple[DiscreteType, ScaleType]] = set()
     scale_names: Set[str] = set()
@@ -1767,7 +1768,9 @@ def _collect_scales(plot: GgPlot) -> FilledScales:
     return filled_scales
 
 
-def _generate_plot(plt_base: ViewPort, theme: Theme, plot: GgPlot, filled_scales: FilledScales):
+def _generate_plot(
+    plt_base: ViewPort, theme: Theme, plot: GgPlot, filled_scales: FilledScales
+):
     # todo move out of this file eventually
     hide_ticks = theme.hide_ticks or False
     hide_labels = theme.hide_labels or False
@@ -1790,6 +1793,7 @@ def _generate_plot(plt_base: ViewPort, theme: Theme, plot: GgPlot, filled_scales
             hide_ticks=hide_ticks,
         )
 
+
 def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
     if len(plot.geoms) == 0:
         raise GGException("Please use at least one `geom`!")
@@ -1805,17 +1809,13 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
     )
     img = ViewPort.from_coords(coord_input, viewport_input)
 
-    background(img, style=get_canvas_background(theme))
+    background_style = get_canvas_background(theme)
+    background(img, style=background_style)
     create_layout(img, filled_scales, theme)
 
     plt_base = img.get_child_by_name("plot")
 
-    _generate_plot(
-        plt_base,
-        theme,
-        plot,
-        filled_scales
-    )
+    _generate_plot(plt_base, theme, plot, filled_scales)
 
     img.x_scale = plt_base.x_scale
     # TODO this is overriden, fine for now
