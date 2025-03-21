@@ -320,7 +320,6 @@ def test_geom_bar():
     # print(res.view)
 
 
-
 def test_geom_point():
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = (

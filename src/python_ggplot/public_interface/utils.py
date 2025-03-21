@@ -1728,10 +1728,7 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
     background(img, style=get_canvas_background(theme))
     create_layout(img, filled_scales, theme)
 
-    # TODO this isnt very readable
-    # maybe img.find_by_name("plot")
-    # children generated in plot_layout func
-    plt_base = img.children[4]
+    plt_base = img.get_child_by_name("plot")
 
     if plot.facet is not None:
         generate_facet_plots(
@@ -1762,6 +1759,8 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
     scale_names: Set[str] = set()
     legends: List[ViewPort] = []
 
+    legend_view = img.get_child_by_name({"legend", "no_legend"})
+
     for scale in filled_scales.enumerate_scales_by_id():
         if (
             theme.hide_legend is None
@@ -1770,7 +1769,7 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             and (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
             not in drawn_legends
         ):
-            lg = deepcopy(img.children[5])
+            lg = deepcopy(legend_view)
             create_legend(lg, scale, theme.legend_order)
 
             # TODO low priority, high difficulty
@@ -1785,20 +1784,22 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
             scale_names.add(scale_col)
 
     if len(legends) > 0:
-        finalize_legend(img.children[5], legends)
+        finalize_legend(legend_view, legends)
         if plot.theme.legend_position:
             pos = plot.theme.legend_position
-            img.children[5].origin.x = pos.x
-            img.children[5].origin.y = pos.y
+            legend_view.origin.x = pos.x
+            legend_view.origin.y = pos.y
 
-    draw_annotations(img.children[4], plot)
+    draw_annotations(img.get_child_by_name("plot"), plot)
 
     if plot.title and len(plot.title) > 0:
+        title_viewport = img.get_child_by_name("title")
+        top_right_viewport = img.get_child_by_name("top_right")
         draw_title(
-            img.children[1],
+            title_viewport,
             plot.title,
             theme,
-            img.children[1].point_width().add(img.children[2].point_width()),
+            title_viewport.point_width().add(top_right_viewport.point_width()),
         )
 
     return PlotView(filled_scales=filled_scales, view=img)

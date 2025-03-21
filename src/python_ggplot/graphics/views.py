@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from python_ggplot.core.coord.objects import (
     Coord,
@@ -90,7 +90,7 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
-    def get_child_by_name(self, view_name: str) -> "ViewPort":
+    def get_child_by_name(self, view_name: Union[str, Set[str]]) -> "ViewPort":
         """
         base layout:
             view.children[0].name = "top_left"
@@ -103,9 +103,11 @@ class ViewPort:
             view.children[7].name = "x_label"
             view.children[8].name = "bottom_right"
         """
+        if isinstance(view_name, str):
+            view_name = set(view_name)
         # TODO replace view.children[4] with view.get_child_by_name("plot") etc
         for child in self.children:
-            if child.name == view_name:
+            if child.name in view_name:
                 return child
 
         raise GGException(f"View with name {view_name} not found")
