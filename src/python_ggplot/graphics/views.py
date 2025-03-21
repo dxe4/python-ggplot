@@ -90,6 +90,26 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
+    def get_child_by_name(self, view_name: str) -> "ViewPort":
+        """
+        base layout:
+            view.children[0].name = "top_left"
+            view.children[1].name = "title"
+            view.children[2].name = "top_right"
+            view.children[3].name = "y_label"
+            view.children[4].name = "plot"
+            view.children[5].name = "legend" if theme_layout.requires_legend else "no_legend"
+            view.children[6].name = "bottom_left"
+            view.children[7].name = "x_label"
+            view.children[8].name = "bottom_right"
+        """
+        # TODO replace view.children[4] with view.get_child_by_name("plot") etc
+        for child in self.children:
+            if child.name == view_name:
+                return child
+
+        raise GGException(f"View with name {view_name} not found")
+
     def get_coords(self) -> Dict[Any, Any]:
         return {
             "type": self.__class__.__name__,
