@@ -4,6 +4,7 @@ it will need lot of fixing once everything is in place
 Smoothing in particular we may skip for alpha version
 """
 
+from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -593,7 +594,6 @@ def filled_identity_geom(
     if len(map_disc_cols) > 0:
         grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
         col = pd.Series(dtype=float)  # type: ignore
-
         # TODO this needs fixing, ignore types for now, keep roughly working logic
         for keys, sub_df in grouped:  # type: ignore
             if len(keys) > 1:
@@ -624,8 +624,10 @@ def filled_identity_geom(
                 yield_df[result.gg_data.y_col] = col
 
             yield_df = maybe_filter_unique(yield_df, result)
+            # this has to be copied otherwise the same style is changed
+            base_style = deepcopy(style)
             style_, styles_, temp_yield_df = apply_cont_scale_if_any(
-                yield_df, cont, style, geom.geom_type, to_clone=True
+                yield_df, cont, base_style, geom.geom_type, to_clone=True
             )
             result.gg_data.yield_data[keys] = (style_, styles_, temp_yield_df)  # type: ignore
 
