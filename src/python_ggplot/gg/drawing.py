@@ -676,8 +676,8 @@ def extend_line_to_axis(
     """
     TODO medium/low priority clean up this logic, after geom re structrure is done
     """
-    l_start: Coord = line_points[0]
-    l_end: Coord = line_points[-1]
+    l_start: Coord = deepcopy(line_points[0])
+    l_end: Coord = deepcopy(line_points[-1])
 
     geom_type: GeomType = filled_geom.geom_type
     discrete_type_x: DiscreteType = filled_geom.discrete_type_x
@@ -888,8 +888,12 @@ def draw_sub_df(
             style = merge_user_style(styles[0], fg)
             if style.fill_color is None:
                 raise GGException("expected fill color")
-            if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
-                line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+
+            # TODO CRITICAL+ easy fix
+            # this logic is correct but is triggered at the wrong conditions
+            # Should not be triggered for geom_line (as draws a line from axis to point)
+            # if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
+                # line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
             poly_line = init_poly_line_from_points(
                 view, [i.point() for i in line_points], style
             )

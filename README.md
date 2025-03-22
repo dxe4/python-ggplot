@@ -10,6 +10,16 @@
 
 plots are still in progress, but some examples:
 ```
+    df = pd.DataFrame(
+        data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
+    )
+    plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point() 
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_line_and_point.png")
+```
+![gg_line_and_point](data/geom_line_and_point.png)
+
+```
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
