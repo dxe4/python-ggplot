@@ -301,7 +301,7 @@ def geom_line(
     if breaks is None:
         breaks = []
     if data is None:
-        data =  pd.DataFrame()
+        data = pd.DataFrame()
     if aes is None:
         aes = Aesthetics()
     df_opt = data if len(data) > 0 else None
@@ -394,8 +394,8 @@ def geom_smooth(
 
 
 def geom_histogram(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     line_type: LINE_TYPE_VALUES = "solid",
@@ -403,7 +403,7 @@ def geom_histogram(
     stat: STAT_TYPE_VALUES = "bin",
     bins: int = 30,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "left",
     position: POSITION_VALUES = "stack",
     bin_by: BIN_BY_VALUES = "full",
@@ -412,6 +412,12 @@ def geom_histogram(
     line_width: PossibleFloat = 0.2,
     drawing_style: HISTOGRAM_DRAWING_STYLE_VALUES = "bars",
 ) -> "Geom":
+    if aes is None:
+        aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
+    if breaks is None:
+        breaks = []
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -589,15 +595,15 @@ def geom_raster(
 
 
 def geom_text(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     fill_color: PossibleColor = None,
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = -1,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
@@ -605,6 +611,12 @@ def geom_text(
     alpha: Optional[float] = None,
     line_width: PossibleFloat = 0.2,
 ) -> "Geom":
+    if breaks is None:
+        breaks = []
+    if aes is None:
+        aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)

@@ -222,7 +222,7 @@ def get_cols_and_rows(fg: FilledGeom) -> Tuple[int, int]:
         cols = len(f_geom_.label_seq)
 
     if fg.is_discrete_y():
-        f_geom_ = cast(FilledGeomDiscrete, fg.gg_data.x_discrete_kind)
+        f_geom_ = cast(FilledGeomDiscrete, fg.gg_data.y_discrete_kind)
         rows = len(f_geom_.label_seq)
 
     return cols, rows
@@ -271,7 +271,7 @@ def calc_view_map(fg: FilledGeom) -> Dict[Any, Any]:
     elif cols == 1 and rows > 1:
         x = VNull()
         for i in range(rows):
-            y = fg.gg_data.x_discrete_kind.get_label_seq()[i]
+            y = fg.gg_data.y_discrete_kind.get_label_seq()[i]
             result[(x, y)] = i + 1
     else:
         for i in range(rows):
@@ -893,7 +893,7 @@ def draw_sub_df(
             # this logic is correct but is triggered at the wrong conditions
             # Should not be triggered for geom_line (as draws a line from axis to point)
             # if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
-                # line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+            # line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
             poly_line = init_poly_line_from_points(
                 view, [i.point() for i in line_points], style
             )

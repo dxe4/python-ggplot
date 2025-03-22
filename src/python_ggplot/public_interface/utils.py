@@ -651,7 +651,7 @@ def grid_line_color(color: PossibleColor = None) -> Theme:
 
 
 def parse_text_align_string(
-    align_to: Literal["none", "left", "right", "center"]
+    align_to: Literal["none", "left", "right", "center"],
 ) -> Optional[TextAlignKind]:
     if align_to == "none":
         return None
@@ -1203,12 +1203,14 @@ def _generate_plot_geoms(view: ViewPort, filled_scales: FilledScales, theme: The
         create_gobj_from_geom(p_child, geom, theme)
         view.children.append(p_child)
 
+
 def _generate_plot_ticks(
     view: ViewPort,
     filled_scales: FilledScales,
     plot: GgPlot,
     theme: Theme,
-    hide_ticks: bool) -> Tuple[List[GraphicsObject], List[GraphicsObject]]:
+    hide_ticks: bool,
+) -> Tuple[List[GraphicsObject], List[GraphicsObject]]:
     # TODO this needs to be moved out of public interface eventually
     x_ticks: List[GraphicsObject] = []
     y_ticks: List[GraphicsObject] = []
@@ -1230,7 +1232,7 @@ def _generate_plot_update_scales(
     y_ticks: List[GraphicsObject],
     theme: Theme,
     hide_ticks: bool,
-    ):
+):
     # TODO this needs to be moved out of public interface eventually
     view.x_scale = theme.x_margin_range
     view.y_scale = theme.y_margin_range
@@ -1244,6 +1246,7 @@ def _generate_plot_update_scales(
     if not hide_ticks:
         view.update_data_scale_for_objects(x_ticks)
         view.update_data_scale_for_objects(y_ticks)
+
 
 # TODO refactor
 def generate_plot(
@@ -1267,9 +1270,16 @@ def generate_plot(
 
         _generate_plot_geoms(view, filled_scales, theme)
 
-        x_ticks, y_ticks = _generate_plot_ticks(view, filled_scales, plot, theme, hide_ticks)
+        x_ticks, y_ticks = _generate_plot_ticks(
+            view, filled_scales, plot, theme, hide_ticks
+        )
         _generate_plot_update_scales(
-            view, filled_scales, x_ticks, y_ticks, theme, hide_ticks,
+            view,
+            filled_scales,
+            x_ticks,
+            y_ticks,
+            theme,
+            hide_ticks,
         )
         grid_lines = handle_grid_lines(view, x_ticks, y_ticks, theme)
 
@@ -1825,6 +1835,7 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
         raise GGException("Please use at least one `geom`!")
 
     filled_scales: FilledScales = _collect_scales(plot)
+    print(filled_scales)
     theme = build_theme(filled_scales, plot)
 
     coord_input = CoordsInput()

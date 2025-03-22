@@ -3,7 +3,7 @@ from typing import Any, List, Tuple, cast
 import pandas as pd
 from typing_extensions import Dict
 
-from python_ggplot.core.objects import GGException, Style, Font
+from python_ggplot.core.objects import Font, GGException, Style
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
 from python_ggplot.gg.geom.base import FilledGeom, GeomType
 from python_ggplot.gg.scales.base import (
@@ -126,7 +126,7 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         }:
             result.color.a = u_style.alpha  # type: ignore
 
-    # TODO check why this is None? 
+    # TODO check why this is None? Should it be None or WTF?
     if result.font is None:
         result.font = Font()
 

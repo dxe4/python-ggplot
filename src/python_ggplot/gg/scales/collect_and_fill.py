@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
 from numpy.typing import NDArray
+from pandas.api.types import is_numeric_dtype
 
 from python_ggplot.core.chroma import int_to_color
 from python_ggplot.core.objects import AxisKind, ColorHCL, LineType, MarkerKind, Scale
@@ -766,7 +766,7 @@ def fill_scale(
     for scale in scales:
         data_kind = scale.gg_data.data_type
         if is_numeric_dtype(df[scale.gg_data.col.col_name]):
-            dc_kind =  GGScaleContinuous()
+            dc_kind = GGScaleContinuous()
         else:
             dc_kind = GGScaleDiscrete()
         dc_kind_opt = dc_kind.discrete_type
