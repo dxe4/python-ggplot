@@ -460,7 +460,7 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
             fg.color_scale = use_or_default(fill_scale.color_scale)  # type: ignore
 
     elif fg.geom_type == GeomType.TEXT:
-        fg.text = str(get_text_scale(fs, fg.geom).col)  # type: ignore
+        fg.text = str(get_text_scale(fs, fg.gg_data.geom).gg_data.col)  # type: ignore
 
     elif fg.geom_type == GeomType.HISTOGRAM:
         fg.hd_kind = fg.geom.hd_kind  # type: ignore
