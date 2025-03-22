@@ -1193,6 +1193,58 @@ def generate_ridge(
         view.y_scale = Scale(low=view.y_scale.high, high=view.y_scale.low)
 
 
+def _generate_plot_geoms(view: ViewPort, filled_scales: FilledScales, theme: Theme):
+    # TODO this needs to be moved out of public interface eventually
+    for geom in filled_scales.geoms:
+        coords_input = CoordsInput()
+        viewport_input = ViewPortInput(name="data")
+        p_child = view.add_viewport_from_coords(coords_input, viewport_input)
+
+        create_gobj_from_geom(p_child, geom, theme)
+        view.children.append(p_child)
+
+def _generate_plot_ticks(
+    view: ViewPort,
+    filled_scales: FilledScales,
+    plot: GgPlot,
+    theme: Theme,
+    hide_ticks: bool) -> Tuple[List[GraphicsObject], List[GraphicsObject]]:
+    # TODO this needs to be moved out of public interface eventually
+    x_ticks: List[GraphicsObject] = []
+    y_ticks: List[GraphicsObject] = []
+    if not hide_ticks:
+        # TODO double check num_ticks_opt=10
+        x_ticks = handle_ticks(
+            view, filled_scales, plot, AxisKind.X, num_ticks_opt=10, theme=theme
+        )
+        y_ticks = handle_ticks(
+            view, filled_scales, plot, AxisKind.Y, num_ticks_opt=10, theme=theme
+        )
+    return x_ticks, y_ticks
+
+
+def _generate_plot_update_scales(
+    view: ViewPort,
+    filled_scales: FilledScales,
+    x_ticks: List[GraphicsObject],
+    y_ticks: List[GraphicsObject],
+    theme: Theme,
+    hide_ticks: bool,
+    ):
+    # TODO this needs to be moved out of public interface eventually
+    view.x_scale = theme.x_margin_range
+    view.y_scale = theme.y_margin_range
+
+    if not filled_scales.discrete_x and filled_scales.reversed_x:
+        view.x_scale = Scale(low=view.x_scale.high, high=view.x_scale.low)
+    if not filled_scales.discrete_y and filled_scales.reversed_y:
+        view.y_scale = Scale(low=view.y_scale.high, high=view.y_scale.low)
+
+    view.update_data_scale()
+    if not hide_ticks:
+        view.update_data_scale_for_objects(x_ticks)
+        view.update_data_scale_for_objects(y_ticks)
+
 # TODO refactor
 def generate_plot(
     view: ViewPort,
@@ -1213,38 +1265,12 @@ def generate_plot(
     else:
         view.y_scale = theme.y_range = theme.y_range or filled_scales.y_scale
 
-        for geom in filled_scales.geoms:
-            coords_input = CoordsInput()
-            viewport_input = ViewPortInput(name="data")
-            p_child = view.add_viewport_from_coords(coords_input, viewport_input)
+        _generate_plot_geoms(view, filled_scales, theme)
 
-            create_gobj_from_geom(p_child, geom, theme)
-            view.children.append(p_child)
-
-        x_ticks: List[GraphicsObject] = []
-        y_ticks: List[GraphicsObject] = []
-        if not hide_ticks:
-            # TODO double check num_ticks_opt=10
-            x_ticks = handle_ticks(
-                view, filled_scales, plot, AxisKind.X, num_ticks_opt=10, theme=theme
-            )
-            y_ticks = handle_ticks(
-                view, filled_scales, plot, AxisKind.Y, num_ticks_opt=10, theme=theme
-            )
-
-        view.x_scale = theme.x_margin_range
-        view.y_scale = theme.y_margin_range
-
-        if not filled_scales.discrete_x and filled_scales.reversed_x:
-            view.x_scale = Scale(low=view.x_scale.high, high=view.x_scale.low)
-        if not filled_scales.discrete_y and filled_scales.reversed_y:
-            view.y_scale = Scale(low=view.y_scale.high, high=view.y_scale.low)
-
-        view.update_data_scale()
-        if not hide_ticks:
-            view.update_data_scale_for_objects(x_ticks)
-            view.update_data_scale_for_objects(y_ticks)
-
+        x_ticks, y_ticks = _generate_plot_ticks(view, filled_scales, plot, theme, hide_ticks)
+        _generate_plot_update_scales(
+            view, filled_scales, x_ticks, y_ticks, theme, hide_ticks,
+        )
         grid_lines = handle_grid_lines(view, x_ticks, y_ticks, theme)
 
         if not hide_labels:
