@@ -48,7 +48,7 @@ from python_ggplot.graphics.initialize import (
 from python_ggplot.graphics.views import ViewPort, ViewPortInput
 from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import ggdraw_plot, ggtitle
-from python_ggplot.public_interface.geom import geom_bar, geom_point, ggplot
+from python_ggplot.public_interface.geom import geom_bar, geom_line, geom_point, ggplot
 from python_ggplot.public_interface.utils import ggcreate
 from tests import data_path
 
@@ -345,3 +345,13 @@ def test_geom_point_with_color():
     # )
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_point_with_color.png")
+
+
+def test_geom_line():
+    df = pd.DataFrame(
+        data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
+    )
+    plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point() 
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_line_and_point.png")
+
