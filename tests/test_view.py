@@ -354,4 +354,3 @@ def test_geom_line():
     plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point() 
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_line_and_point.png")
-
