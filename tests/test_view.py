@@ -51,6 +51,7 @@ from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import ggdraw_plot, ggtitle
 from python_ggplot.public_interface.geom import (
     geom_bar,
+    geom_error_bar,
     geom_histogram,
     geom_line,
     geom_point,
@@ -386,3 +387,20 @@ def test_geom_text():
     # plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_text.png")
+
+@pytest.mark.xfail(reason="KeyError: 'y_min'")
+def test_geom_error_bar():
+    df = pd.DataFrame(
+        data = {
+            "team": ["A", "B", "C"],
+            "mean": [7.5, 23, 13.75],
+            "sd": [3.415650, 2.943920, 3.685557]
+        }
+    )
+    df = df.assign(
+        lower = df['mean'] - df['sd'],
+        upper = df['mean'] + df['sd']
+    )
+    plot = ggplot(df, aes(x="team", y="mean")) + geom_error_bar(aes(ymin="lower", ymax="upper"))
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_error.png")
