@@ -522,8 +522,6 @@ def handle_date_scale_ticks(
     else:
         raise GGException("expected x / y axis")
 
-    print("scale")
-    print(scale)
     if scale.data is None:
         raise GGException("expected scale data")
     date_scale = scale.data.date_scale
