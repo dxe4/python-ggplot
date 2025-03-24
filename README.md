@@ -17,7 +17,7 @@ plots are still in progress, but some examples:
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_line_and_point.png")
 ```
-![gg_line_and_point](data/geom_line_and_point.png)
+![gg_line_and_point](data/geom_line_and_point.png?v=1)
 
 ```
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
@@ -25,7 +25,7 @@ plots are still in progress, but some examples:
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_bar.png")
 ```
-![gg_bar](data/geom_bar.png)
+![gg_bar](data/geom_bar.png?v=1)
 ```
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
@@ -36,6 +36,6 @@ plots are still in progress, but some examples:
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_point.png")
 ```
-![gg_point](data/geom_point.png)
+![gg_point](data/geom_point.png?v=1)
 
-![gg](data/simple_test.png)
+![gg](data/simple_test.png?v=1)
