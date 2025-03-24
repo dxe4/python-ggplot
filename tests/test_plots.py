@@ -73,10 +73,9 @@ def test_geom_line_with_linetype():
     ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
 
 
-@pytest.mark.xfail(reason="TODO")
 def test_geom_histogram():
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x = 'year')) + geom_histogram()
+    plot = ggplot(mpg, aes(x="displ")) + geom_histogram()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_histogram.png")
 
@@ -90,9 +89,9 @@ def test_geom_text():
 
 @pytest.mark.xfail(reason="incorrect plot")
 def test_geom_error_bar():
-    '''
+    """
     this needs some further fixing
-    '''
+    """
     df = pd.DataFrame(
         data={
             "team": ["A", "B", "C"],

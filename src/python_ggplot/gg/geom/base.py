@@ -487,17 +487,21 @@ class TitleRasterData:
     color_scale: "ColorScale"
 
 
+@dataclass
 class FilledGeomTitle(GeomTileMixin, FilledGeom):
     data: TitleRasterData
 
 
+@dataclass
 class FilledGeomRaster(GeomRasterMixin, FilledGeom):
     data: TitleRasterData
 
 
+@dataclass
 class FilledGeomText(GeomTextMixin, FilledGeom):
     text: str
 
 
+@dataclass
 class FilledGeomHistogram(GeomHistogramMixin, FilledGeom):
     histogram_drawing_style: HistogramDrawingStyle

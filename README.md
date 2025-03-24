@@ -1,4 +1,13 @@
 plots are still in progress, but some examples:
+
+```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+plot = ggplot(mpg, aes(x = 'displ')) + geom_histogram()
+res = ggcreate(plot)
+ggdraw_plot(res, data_path / "geom_histogram.png")
+```
+<img src="data/geom_histogram.png?v=1" alt="gg_point" width="400px">
+
 ```python
     df = pd.DataFrame(
         data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}

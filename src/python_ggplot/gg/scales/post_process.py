@@ -20,6 +20,7 @@ from python_ggplot.gg.geom.base import (
     FilledGeomData,
     FilledGeomDiscrete,
     FilledGeomErrorBar,
+    FilledGeomHistogram,
     Geom,
     GeomType,
     HistogramDrawingStyle,
@@ -365,10 +366,11 @@ def get_weight_scale(
 
 
 def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame) -> FilledGeom:
-    '''
+    """
     TODO CRITICAL+ this needs to be deleted and re-worked
     there's a few issues here, but will "fix" ERROR_BAR for now
-    '''
+    """
+
     def assign_if_any(fg: FilledGeom, scale: Optional[GGScale], attr: Any):
         # TODO this is inherited as tempalte assuming for performanece to avoid func calls
         # we can refactor later
@@ -377,10 +379,18 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame) -> Fille
 
     if fg.geom_type == GeomType.ERROR_BAR:
         new_fg = FilledGeomErrorBar(gg_data=fg.gg_data)
-        assign_if_any(new_fg, _get_x_min_scale(fs, new_fg.gg_data.geom, optional=True), "x_min")
-        assign_if_any(new_fg, _get_x_max_scale(fs, new_fg.gg_data.geom, optional=True), "x_max")
-        assign_if_any(new_fg, _get_y_min_scale(fs, new_fg.gg_data.geom, optional=True), "y_min")
-        assign_if_any(new_fg, _get_y_max_scale(fs, new_fg.gg_data.geom, optional=True), "y_max")
+        assign_if_any(
+            new_fg, _get_x_min_scale(fs, new_fg.gg_data.geom, optional=True), "x_min"
+        )
+        assign_if_any(
+            new_fg, _get_x_max_scale(fs, new_fg.gg_data.geom, optional=True), "x_max"
+        )
+        assign_if_any(
+            new_fg, _get_y_min_scale(fs, new_fg.gg_data.geom, optional=True), "y_min"
+        )
+        assign_if_any(
+            new_fg, _get_y_max_scale(fs, new_fg.gg_data.geom, optional=True), "y_max"
+        )
         return new_fg
 
     elif fg.geom_type in {GeomType.TILE, GeomType.RASTER}:
@@ -469,7 +479,10 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame) -> Fille
         fg.text = str(get_text_scale(fs, fg.gg_data.geom).gg_data.col)  # type: ignore
 
     elif fg.geom_type == GeomType.HISTOGRAM:
-        fg.hd_kind = fg.geom.hd_kind  # type: ignore
+        fg = FilledGeomHistogram(
+            gg_data=fg.gg_data,
+            histogram_drawing_style=fg.gg_data.geom.histogram_drawing_style,
+        )
 
     return fg
 
@@ -838,7 +851,9 @@ def call_histogram(
         raise GGException("expected bin stat type")
 
     def read_tmpl(sc: Any):
-        return sc.col.evaluate(df).to_numpy(dtype=float)
+        if sc is None:
+            return []
+        return sc.gg_data.col.evaluate(df).to_numpy(dtype=float)
 
     data = read_tmpl(scale)
     hist = []
@@ -854,7 +869,7 @@ def call_histogram(
         else:
             range_val = (0.0, 0.0)
 
-        weight_data = read_tmpl(weight_scale) or []  # type: ignore
+        weight_data = read_tmpl(weight_scale)  # type: ignore
 
         nonlocal hist, bin_edges
         hist, bin_edges = histogram(
@@ -874,6 +889,10 @@ def call_histogram(
         call_hist(stat_kind.num_bins)
 
     bin_widths = np.diff(bin_edges)  # type: ignore
+    # TODO CRITICAL+ sanity this logic
+    # those go in a df, they have to be of the same size, but clearly  the diff will be off by 1
+    # sanity logic, and probably use the builint hist for this
+    bin_widths = np.concatenate(([0.0], bin_widths))
     hist = np.append(hist, 0.0)  # type: ignore
     return hist, bin_edges, bin_widths  # type: ignore
 
@@ -944,7 +963,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
             yield_df = pd.DataFrame({x.get_col_name(): bins, count_col: hist})
 
             if geom.gg_data.position == PositionType.STACK:
-                yield_df["PREV_VALS"] = col if len(col) > 0 else 0.0
+                yield_df[PREV_VALS_COL] = col if len(col) > 0 else 0.0
 
             add_counts_by_position(col, pd.Series(hist), geom.gg_data.position)
 
@@ -987,14 +1006,14 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
             geom,
             df,
             x,
-            get_weight_scale(filled_scales, geom),
+            get_weight_scale(filled_scales, geom, optional=True),
             x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
         )
 
         yield_df = pd.DataFrame(
             {x.get_col_name(): bins, count_col: hist, width_col: bin_widths}
         )
-        yield_df["PREV_VALS"] = 0.0
+        yield_df[PREV_VALS_COL] = 0.0
         yield_df = maybe_filter_unique(yield_df, result)  # type: ignore
 
         key = ("", VNull())
