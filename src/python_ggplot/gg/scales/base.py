@@ -317,7 +317,8 @@ class GGScaleData:
             if field.name != exclude_field:
                 yield field.name, getattr(self, field.name)
         # this by default would print the whole set, one item at a time
-        yield f"ids -> min: {min(self.ids)} max: {max(self.ids)}"
+        if self.ids:
+            yield f"ids -> min: {min(self.ids)} max: {max(self.ids)}"
 
     @staticmethod
     def create_empty_scale(col: str = "") -> "GGScaleData":

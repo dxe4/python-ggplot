@@ -235,7 +235,7 @@ def handle_continuous_ticks(
     breaks: Optional[List[float]] = None,
     trans: Optional[Callable[[float], float]] = None,
     inv_trans: Optional[Callable[[float], float]] = None,
-    sec_axis_trans: Optional[VectorCol] = None,
+    sec_axis_trans: Optional[Any] = None,
     format_func: Optional[Callable[[float], str]] = None,
     is_secondary: bool = False,
     hide_tick_labels: bool = False,
@@ -245,7 +245,7 @@ def handle_continuous_ticks(
     breaks = breaks or []
 
     bound_scale = _bound_scale(data_scale, theme, ax_kind, is_secondary)
-    sec_axis_trans = sec_axis_trans or VectorCol(col_name="")
+    sec_axis_trans = sec_axis_trans or (lambda : 1)  #type: ignore
 
     if ax_kind == AxisKind.X:
         # todo refacotr this
@@ -719,6 +719,10 @@ def handle_ticks(
         elif isinstance(scale_discrete_kind, GGScaleContinuous):
             data_scale = get_correct_data_scale(view, ax_kind)
             if scale.data is not None and scale.data.date_scale is not None:
+                result = handle_date_scale_ticks(
+                    view, plot, ax_kind, scale, theme, hide_tick_labels, margin_opt
+                )
+            else:
                 result = handle_continuous_ticks(
                     view,
                     plot,
@@ -726,17 +730,13 @@ def handle_ticks(
                     data_scale,
                     scale.scale_type,
                     num_ticks,
-                    breaks=scale.data.date_scale.breaks,  # might be empty
+                    breaks=scale.gg_data.breaks,  # might be empty
                     trans=scale.transform,
-                    inv_trans=scale.inverse_transform,  # type: ignore TODO this needs some more work
+                    inv_trans=getattr(scale, "inverse_transform", None),  # type: ignore TODO this needs some more work
                     theme=theme,
                     hide_tick_labels=hide_tick_labels,
                     margin=margin_opt,
-                    format=scale.format_continuous_label,  # type: ignore TODO this needs more work
-                )
-            else:
-                result = handle_date_scale_ticks(
-                    view, plot, ax_kind, scale, theme, hide_tick_labels, margin_opt
+                    format_func=getattr(scale, "format_continuous_label", None),  # type: ignore TODO this needs more work
                 )
 
             if filled_scales.has_secondary(ax_kind):

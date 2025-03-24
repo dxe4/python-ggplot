@@ -108,11 +108,12 @@ def is_discrete_data(
         return True
 
     elif series_is_obj(col):
-        indices = (
-            draw_sample_idx(col.high) if draw_samples else list(range(col.high + 1))
-        )
+        if draw_samples:
+            indices = draw_sample_idx(len(col))
+        else:
+            indices = list(range(len(col) + 1))
         # TODO handle pandas object type
-        return False
+        return True
 
     # TODO test this with multiple data points
     # NaT will probably fail, and there must be other cases
@@ -765,12 +766,9 @@ def fill_scale(
     result = []
     for scale in scales:
         data_kind = scale.gg_data.data_type
-        if is_numeric_dtype(df[scale.gg_data.col.col_name]):
-            dc_kind = GGScaleContinuous()
-        else:
-            dc_kind = GGScaleDiscrete()
-        dc_kind_opt = dc_kind.discrete_type
-        scale.gg_data.discrete_kind = dc_kind
+        if scale.gg_data.has_discreteness:
+            dc_kind_opt = scale.gg_data.discrete_kind.discrete_type
+
         if isinstance(scale, LinearDataScale):
             if scale.data is None:
                 raise GGException("expected data")
@@ -792,6 +790,13 @@ def fill_scale(
         if isinstance(value_kind, VNull):
             print("WARNING: Unexpected data type!")
             continue
+
+        if is_discrete:
+            discrete_kind = GGScaleDiscrete()
+        else:
+            discrete_kind = GGScaleContinuous()
+
+        scale.gg_data.discrete_kind = discrete_kind
 
         if is_discrete:
             # todo refactor this

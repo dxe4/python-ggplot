@@ -331,7 +331,7 @@ def test_geom_bar():
 def test_geom_point():
     mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
     plot = (
-        ggplot(mpg, aes(x="displ", y="cty", color="class"))
+        ggplot(mpg, aes(x="displ", y="hwy", color="class"))
         + geom_point()
         + ggtitle("gg plotting")
     )
