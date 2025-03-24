@@ -245,7 +245,7 @@ def handle_continuous_ticks(
     breaks = breaks or []
 
     bound_scale = _bound_scale(data_scale, theme, ax_kind, is_secondary)
-    sec_axis_trans = sec_axis_trans or (lambda : 1)  #type: ignore
+    sec_axis_trans = sec_axis_trans or (lambda: 1)  # type: ignore
 
     if ax_kind == AxisKind.X:
         # todo refacotr this

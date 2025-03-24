@@ -393,16 +393,15 @@ def test_geom_text():
 @pytest.mark.xfail(reason="KeyError: 'y_min'")
 def test_geom_error_bar():
     df = pd.DataFrame(
-        data = {
+        data={
             "team": ["A", "B", "C"],
             "mean": [7.5, 23, 13.75],
-            "sd": [3.415650, 2.943920, 3.685557]
+            "sd": [3.415650, 2.943920, 3.685557],
         }
     )
-    df = df.assign(
-        lower = df['mean'] - df['sd'],
-        upper = df['mean'] + df['sd']
+    df = df.assign(lower=df["mean"] - df["sd"], upper=df["mean"] + df["sd"])
+    plot = ggplot(df, aes(x="team", y="mean")) + geom_error_bar(
+        aes(ymin="lower", ymax="upper")
     )
-    plot = ggplot(df, aes(x="team", y="mean")) + geom_error_bar(aes(ymin="lower", ymax="upper"))
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_error.png")

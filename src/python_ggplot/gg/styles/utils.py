@@ -1,7 +1,6 @@
-from typing import Any, List, Tuple, cast
+from typing import Dict, List, Tuple, cast
 
 import pandas as pd
-from typing_extensions import Dict
 
 from python_ggplot.core.objects import Font, GGException, Style
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString

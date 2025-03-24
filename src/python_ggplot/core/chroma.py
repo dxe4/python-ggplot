@@ -1,9 +1,7 @@
 # ported code from num chroma
 # todo port the unit tests too
 from types import NoneType
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
-
-from typing_extensions import Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict, Union
 
 from python_ggplot.core.objects import Color, ColorRGBA, GGException
 
