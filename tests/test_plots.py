@@ -6,8 +6,10 @@ from python_ggplot.public_interface.common import ggdraw_plot, ggtitle
 from python_ggplot.public_interface.geom import (
     geom_bar,
     geom_error_bar,
+    geom_freqpoly,
     geom_histogram,
     geom_line,
+    geom_linerange,
     geom_point,
     geom_text,
     ggplot,
@@ -25,6 +27,25 @@ def test_geom_bar():
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_bar.png")
+
+
+@pytest.mark.xfail(reason="x_opt is None")
+def test_geom_bar_y():
+    # Flip the test_geom_bar
+    # Third plot here https://ggplot2.tidyverse.org/reference/geom_bar.html
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes(y="class")) + geom_bar()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_bar_y.png")
+
+
+def test_geom_bar_fill():
+    # Fill the bars
+    # Fourth plot here https://ggplot2.tidyverse.org/reference/geom_bar.html
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes(fill="drv")) + geom_bar()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_bar_fill.png")
 
 
 def test_geom_point():
@@ -103,4 +124,30 @@ def test_geom_error_bar():
         aes(ymin="lower", ymax="upper")
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_error.png")
+    ggdraw_plot(res, data_path / "geom_error_bar.png")
+
+
+@pytest.mark.xfail(reason="failed to determine discreteness")
+def test_geom_linerange():
+    df = pd.DataFrame(
+        data={
+            "trt": pd.Categorical([1, 1, 2, 2]),
+            "resp": [1, 5, 3, 4],
+            "group": pd.Categorical([1, 2, 1, 2]),
+            "upper": [1.1, 5.3, 3.3, 4.2],
+            "lower": [0.8, 4.6, 2.4, 3.6]
+        }
+    )
+    plot = ggplot(df, aes(x="trt", y="resp")) + geom_linerange(
+        aes(ymin="lower", ymax="upper")
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_linerange.png")
+
+
+@pytest.mark.xfail(reason="'DataFrameGroupBy' object has no attribute 'sort_values'")
+def test_geom_freqpoly():
+    diamonds = pd.read_csv(data_path / "diamonds.csv")
+    plot = ggplot(diamonds, aes("price", color = "cut")) + geom_freqpoly()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_freqpoly.png")
