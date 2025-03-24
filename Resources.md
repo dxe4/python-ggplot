@@ -2,3 +2,4 @@
 - [Top 50 plots](https://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
 - [r-graph-gallery](https://r-graph-gallery.com/)
 - [r4ds](https://r4ds.hadley.nz/data-visualize.html)
+- [ggplot2 reference](https://ggplot2.tidyverse.org/reference/)
