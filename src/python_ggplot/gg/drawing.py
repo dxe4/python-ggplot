@@ -177,7 +177,6 @@ def read_error_data(
     df: pd.DataFrame, idx: int, fg: FilledGeomErrorBar
 ) -> Tuple[Optional[float], Optional[float], Optional[float], Optional[float]]:
     result = {"x_min": None, "x_max": None, "y_min": None, "y_max": None}
-
     if fg.x_min is not None:
         result["x_min"] = float(df[fg.x_min].iloc[idx])  # type: ignore
     if fg.x_max is not None:

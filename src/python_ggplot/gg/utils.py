@@ -73,6 +73,7 @@ BOOL_HANDLERS: Dict[type, Callable[[Any], Any]] = {
 }
 
 GG_TYPE_HANDLERS: Dict[type, Callable[[Any], Any]] = {
+    ErrorBarKind: _handle_gg_type,
     MarkerKind: _handle_gg_type,
     LineType: _handle_gg_type,
     NoneType: _handle_optional,

@@ -226,7 +226,7 @@ def apply_cont_scale_if_any(
 
     for scale in scales:
         # TODO col eval is a global issue, fine for now
-        result_df[scale.get_col_name()] = scale.col.evaluate(result_df)  # type: ignore
+        result_df[scale.get_col_name()] = scale.gg_data.col.evaluate(result_df)  # type: ignore
 
         if scale.scale_type in {ScaleType.TRANSFORMED_DATA, ScaleType.LINEAR_DATA}:
             pass
@@ -364,7 +364,11 @@ def get_weight_scale(
     )
 
 
-def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
+def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame) -> FilledGeom:
+    '''
+    TODO CRITICAL+ this needs to be deleted and re-worked
+    there's a few issues here, but will "fix" ERROR_BAR for now
+    '''
     def assign_if_any(fg: FilledGeom, scale: Optional[GGScale], attr: Any):
         # TODO this is inherited as tempalte assuming for performanece to avoid func calls
         # we can refactor later
@@ -372,18 +376,20 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
             setattr(fg, attr, scale.get_col_name())
 
     if fg.geom_type == GeomType.ERROR_BAR:
-        assign_if_any(fg, _get_x_min_scale(fs, fg.gg_data.geom), "x_min")
-        assign_if_any(fg, _get_x_max_scale(fs, fg.gg_data.geom), "x_max")
-        assign_if_any(fg, _get_y_min_scale(fs, fg.gg_data.geom), "y_min")
-        assign_if_any(fg, _get_y_max_scale(fs, fg.gg_data.geom), "y_max")
+        new_fg = FilledGeomErrorBar(gg_data=fg.gg_data)
+        assign_if_any(new_fg, _get_x_min_scale(fs, new_fg.gg_data.geom, optional=True), "x_min")
+        assign_if_any(new_fg, _get_x_max_scale(fs, new_fg.gg_data.geom, optional=True), "x_max")
+        assign_if_any(new_fg, _get_y_min_scale(fs, new_fg.gg_data.geom, optional=True), "y_min")
+        assign_if_any(new_fg, _get_y_max_scale(fs, new_fg.gg_data.geom, optional=True), "y_max")
+        return new_fg
 
     elif fg.geom_type in {GeomType.TILE, GeomType.RASTER}:
         h_s = _get_height_scale(fs, fg.gg_data.geom)
         w_s = _get_width_scale(fs, fg.gg_data.geom)
-        x_min_s = _get_x_min_scale(fs, fg.gg_data.geom)
-        x_max_s = _get_x_max_scale(fs, fg.gg_data.geom)
-        y_min_s = _get_y_min_scale(fs, fg.gg_data.geom)
-        y_max_s = _get_y_max_scale(fs, fg.gg_data.geom)
+        x_min_s = _get_x_min_scale(fs, fg.gg_data.geom, optional=True)
+        x_max_s = _get_x_max_scale(fs, fg.gg_data.geom, optional=True)
+        y_min_s = _get_y_min_scale(fs, fg.gg_data.geom, optional=True)
+        y_max_s = _get_y_max_scale(fs, fg.gg_data.geom, optional=True)
 
         if h_s is not None:
             # TODO the type: ignore can go away
@@ -464,6 +470,8 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame):
 
     elif fg.geom_type == GeomType.HISTOGRAM:
         fg.hd_kind = fg.geom.hd_kind  # type: ignore
+
+    return fg
 
 
 def encompassing_data_scale(
@@ -574,7 +582,7 @@ def filled_identity_geom(
 
     result = FilledGeom(gg_data=fg_data)
     # TODO refactor
-    fill_opt_fields(result, filled_scales, df)
+    result = fill_opt_fields(result, filled_scales, df)
 
     # TODO this has to change, but is fine for now
     style = GGStyle()
@@ -728,7 +736,7 @@ def filled_smooth_geom(
         num_y=0,
     )
     result = FilledGeom(gg_data=fg_data)
-    fill_opt_fields(result, filled_scales, df)
+    result = fill_opt_fields(result, filled_scales, df)
 
     style = GGStyle()
     for set_val in set_disc_cols:
@@ -911,7 +919,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
     )
     result = FilledGeom(gg_data=fg_data)
 
-    fill_opt_fields(result, filled_scales, df)
+    result = fill_opt_fields(result, filled_scales, df)
 
     style = GGStyle()
     for set_val in set_disc_cols:
@@ -1073,7 +1081,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     )
     result = FilledGeom(gg_data=fg_data)
 
-    fill_opt_fields(result, filled_scales, df)
+    result = fill_opt_fields(result, filled_scales, df)
 
     all_classes = df[x_col].unique()  # type: ignore
     style = GGStyle()
