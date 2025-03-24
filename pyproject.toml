@@ -5,7 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 authors = [{ name = "charalmapos papaloizou", email = "harry@e2e4.email" }]
 requires-python = ">=3.12"
-dependencies = ["pandas>=2.2.3", "pycairo>=1.27.0"]
+dependencies = [
+    "pandas>=2.2.3",
+    "pycairo>=1.27.0",
+]
 
 [build-system]
 requires = ["hatchling"]
