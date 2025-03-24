@@ -88,7 +88,7 @@ def test_geom_text():
     ggdraw_plot(res, data_path / "geom_text.png")
 
 
-@pytest.mark.xfail(reason="KeyError: 'y_min'")
+# @pytest.mark.xfail(reason="KeyError: 'y_min'")
 def test_geom_error_bar():
     df = pd.DataFrame(
         data={
