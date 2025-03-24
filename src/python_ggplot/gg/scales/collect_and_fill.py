@@ -86,11 +86,10 @@ def is_discrete_data(
     """
 
     if series_is_int(col):
-        indices = (
-            draw_sample_idx(col.max())  # type: ignore
-            if draw_samples
-            else list(range(col.max() + 1))  # type: ignore
-        )
+        if draw_samples:
+            indices = draw_sample_idx(len(col))
+        else:
+            indices = list(range(len(col)))
         elements = {col[i] for i in indices}  # type: ignore
 
         if len(elements) > round(len(indices) * discrete_threshold):
