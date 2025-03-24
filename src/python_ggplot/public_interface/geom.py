@@ -146,8 +146,8 @@ def geom_point(
 
 
 def geom_error_bar(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     line_type: LINE_TYPE_VALUES = "none_type",
@@ -155,13 +155,20 @@ def geom_error_bar(
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = -1,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
     density: bool = False,
     alpha: Optional[float] = None,
 ) -> "Geom":
+    if aes is None:
+        aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
+    if breaks is None:
+        breaks = []
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -195,21 +202,28 @@ def geom_error_bar(
 
 
 def geom_linerange(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     line_type: LINE_TYPE_VALUES = "none_type",
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = -1,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
     density: bool = False,
     alpha: Optional[float] = None,
 ) -> "Geom":
+    if aes is None:
+        aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
+    if breaks is None:
+        breaks = []
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -304,6 +318,7 @@ def geom_line(
         data = pd.DataFrame()
     if aes is None:
         aes = Aesthetics()
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -339,8 +354,8 @@ def geom_line(
 
 
 def geom_smooth(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     line_type: LINE_TYPE_VALUES = "none_type",
@@ -348,7 +363,7 @@ def geom_smooth(
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = -1,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
@@ -358,6 +373,13 @@ def geom_smooth(
     smoother: SMOOTH_METHOD_TYPE_VALUES = "svg",
     poly_ordder: int = 5,
 ) -> "Geom":
+    if breaks is None:
+        breaks = []
+    if data is None:
+        data = pd.DataFrame()
+    if aes is None:
+        aes = Aesthetics()
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -452,8 +474,8 @@ def geom_histogram(
 
 
 def geom_freqpoly(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     alpha: Optional[float] = None,
@@ -461,13 +483,20 @@ def geom_freqpoly(
     stat: STAT_TYPE_VALUES = "bin",
     bins: int = 30,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "center",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
     density: bool = False,
     line_type: LINE_TYPE_VALUES = "solid",
 ) -> "Geom":
+    if breaks is None:
+        breaks = []
+    if data is None:
+        data = pd.DataFrame()
+    if aes is None:
+        aes = Aesthetics()
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -501,15 +530,15 @@ def geom_freqpoly(
 
 
 def geom_tile(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     fill_color: PossibleColor = None,
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = 30,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
@@ -517,6 +546,13 @@ def geom_tile(
     alpha: Optional[float] = None,
     line_width: PossibleFloat = 0.2,
 ) -> "Geom":
+    if breaks is None:
+        breaks = []
+    if data is None:
+        data = pd.DataFrame()
+    if aes is None:
+        aes = Aesthetics()
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
@@ -548,15 +584,15 @@ def geom_tile(
 
 
 def geom_raster(
-    aes: Aesthetics = field(default_factory=Aesthetics),
-    data: pd.DataFrame = field(default_factory=pd.DataFrame),
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     fill_color: PossibleColor = None,
     stat: STAT_TYPE_VALUES = "identity",
     bins: int = 30,
     bin_width: float = 0.0,
-    breaks: List[float] = field(default_factory=list),
+    breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",
     bin_by: BIN_BY_VALUES = "full",
@@ -564,6 +600,13 @@ def geom_raster(
     alpha: Optional[float] = None,
     line_width: PossibleFloat = 0.2,
 ) -> "Geom":
+    if breaks is None:
+        breaks = []
+    if data is None:
+        data = pd.DataFrame()
+    if aes is None:
+        aes = Aesthetics()
+
     df_opt = data if len(data) > 0 else None
     bin_position_ = BinPositionType.eitem(bin_position)
     stat_ = StatType.eitem(stat)
