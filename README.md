@@ -10,7 +10,7 @@ plots are still in progress, but some examples:
 <img src="data/geom_line_and_point.png?v=1" alt="gg_point" width="400px">
 
 ```python
-    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_bar.png")

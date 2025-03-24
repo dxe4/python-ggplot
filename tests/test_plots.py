@@ -28,7 +28,7 @@ def test_geom_bar():
 
 
 def test_geom_point():
-    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
         ggplot(mpg, aes(x="displ", y="hwy", color="class"))
         + geom_point()
@@ -40,7 +40,7 @@ def test_geom_point():
 
 
 def test_geom_point_with_color():
-    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(x="displ", y="hwy")) + geom_point(
         aes(color="class"), size=3, alpha=0.7
     )
@@ -75,7 +75,7 @@ def test_geom_line_with_linetype():
 
 @pytest.mark.xfail(reason="TODO")
 def test_geom_histogram():
-    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(x = 'year')) + geom_histogram()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_histogram.png")
