@@ -82,7 +82,7 @@ def test_geom_line_with_linetype():
 
 def test_geom_text():
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
+    plot = ggplot(mpg, aes(x="displ", y="cty", text="manufacturer")) + geom_text()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_text.png")
 
