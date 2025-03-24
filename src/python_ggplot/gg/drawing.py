@@ -924,8 +924,7 @@ def create_gobj_from_geom(
     view_map = calc_view_map(fg)
 
     for lab, _, styles, sub_df in fg.enumerate_data():
-        if label_val is not None:
-            if label_val not in lab:
-                # skip this label
-                continue
+        if label_val is not None and label_val not in lab:
+            # skip this label
+            continue
         draw_sub_df(view, fg, view_map, sub_df, styles, theme)

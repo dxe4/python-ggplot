@@ -88,7 +88,7 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         # TODO double check this logic but i think its correct
         raise GGException("User style not provided")
 
-    u_style = fg.gg_data.geom.gg_data.user_style
+    user_style = fg.gg_data.geom.gg_data.user_style
 
     for field in [
         "color",
@@ -101,20 +101,20 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         "font",
     ]:
         value = _get_field_for_user_style_merge(
-            u_style, style, field, geom_type, stat_type
+            user_style, style, field, geom_type, stat_type
         )
         if value is not None:
-            setattr(style, field, value)
+            setattr(result, field, value)
 
-    if u_style.alpha is not None:
-        result.fill_color.a = u_style.alpha  # type: ignore
+    if user_style.alpha is not None:
+        result.fill_color.a = user_style.alpha  # type: ignore
         if geom_type in {
             GeomType.POINT,
             GeomType.LINE,
             GeomType.ERROR_BAR,
             GeomType.TEXT,
         }:
-            result.color.a = u_style.alpha
+            result.color.a = user_style.alpha
     elif style.alpha is not None:
         result.fill_color.a = style.alpha  # type: ignore
         if geom_type in {
@@ -123,7 +123,7 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
             GeomType.ERROR_BAR,
             GeomType.TEXT,
         }:
-            result.color.a = u_style.alpha  # type: ignore
+            result.color.a = user_style.alpha  # type: ignore
 
     # TODO check why this is None? Should it be None or WTF?
     if result.font is None:

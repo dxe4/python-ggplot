@@ -61,7 +61,6 @@ def test_geom_line():
     ggdraw_plot(res, data_path / "geom_line_and_point.png")
 
 
-@pytest.mark.xfail(reason="fix merge of user styles")
 def test_geom_line_with_linetype():
     df = pd.DataFrame(data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]})
     plot = (

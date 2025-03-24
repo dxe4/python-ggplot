@@ -14,9 +14,9 @@ ggdraw_plot(res, data_path / "geom_histogram.png")
     )
     plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_line_and_point.png")
+    ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
 ```
-<img src="data/geom_line_and_point.png?v=1" alt="geom_line_and_point" width="400px">
+<img src="data/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
@@ -28,15 +28,14 @@ ggdraw_plot(res, data_path / "geom_histogram.png")
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = (
-        ggplot(mpg, aes(x="displ", y="hwy", color="class"))
-        + geom_point()
+    plot = ggplot(mpg, aes(x="displ", y="hwy")) + geom_point(
+        aes(color="class"), size=3, alpha=0.7
     )
 
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_point.png")
+    ggdraw_plot(res, data_path / "geom_point_with_color.png")
 ```
-<img src="data/geom_point.png?v=1" alt="gg_point" width="400px">
+<img src="data/geom_point_with_color.png?v=1" alt="gg_point" width="400px">
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
