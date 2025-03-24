@@ -1835,7 +1835,6 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
         raise GGException("Please use at least one `geom`!")
 
     filled_scales: FilledScales = _collect_scales(plot)
-    print(filled_scales)
     theme = build_theme(filled_scales, plot)
 
     coord_input = CoordsInput()

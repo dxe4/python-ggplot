@@ -13,7 +13,7 @@ plots are still in progress, but some examples:
     df = pd.DataFrame(
         data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
     )
-    plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point() 
+    plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_line_and_point.png")
 ```
@@ -27,11 +27,10 @@ plots are still in progress, but some examples:
 ```
 ![gg_bar](data/geom_bar.png)
 ```
-    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
+    mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
-        ggplot(mpg, aes(x="displ", y="cty", color="class"))
+        ggplot(mpg, aes(x="displ", y="hwy", color="class"))
         + geom_point()
-        + ggtitle("gg plotting")
     )
 
     res = ggcreate(plot)

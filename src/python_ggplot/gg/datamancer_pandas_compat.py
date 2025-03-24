@@ -140,6 +140,7 @@ def python_type_to_gg_value(value: Any) -> GGValue:
 class VectorCol:
     col_name: str
     res_type: Optional[Any] = None
+    series: Optional[pd.Series] = None  # type: ignore
 
     def __str__(self) -> str:
         return self.col_name
