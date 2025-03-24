@@ -1,0 +1,4 @@
+- [Complete List of all Geoms](https://sape.inf.usi.ch/quick-reference/ggplot2/geom.html)
+- [Top 50 plots](https://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
+- [r-graph-gallery](https://r-graph-gallery.com/)
+- [r4ds](https://r4ds.hadley.nz/data-visualize.html)
