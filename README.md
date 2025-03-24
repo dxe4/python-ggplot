@@ -38,4 +38,12 @@ plots are still in progress, but some examples:
 ```
 ![gg_point](data/geom_point.png?v=1)
 
+```
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_text.png")
+```
+![gg_text](data/geom_text.png?v=1)
+
 ![gg](data/simple_test.png?v=1)

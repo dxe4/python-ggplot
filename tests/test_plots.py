@@ -80,11 +80,9 @@ def test_geom_line_with_linetype():
 #     ggdraw_plot(res, data_path / "geom_histogram.png")
 
 
-@pytest.mark.xfail(reason="skip for now")
 def test_geom_text():
-    mpg = pd.read_csv(data_path / "mpg.csv")  # type: ignore
-    plot = ggplot(mpg, aes(x="displ", y="cty")) + geom_point()
-    # plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_text.png")
 
