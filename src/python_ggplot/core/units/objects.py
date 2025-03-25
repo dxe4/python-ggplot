@@ -145,7 +145,7 @@ class Quantity(ABC):
             ).to(self.unit_type, length=length, scale=scale)
         elif self.unit_type == UnitType.RELATIVE and other.unit_type.is_length():
             if operator_type in {OperatorType.MUL, OperatorType.DIV}:
-                return PointUnit(operator(self.val, other.val)).to(self.unit_type)
+                return PointUnit(operator(self.val, other.val)).to(other.unit_type)
             else:
                 return PointUnit(
                     operator(self.to_points(length=length).val, other.to_points().val)
