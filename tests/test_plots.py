@@ -29,10 +29,17 @@ def test_geom_bar():
     ggdraw_plot(res, data_path / "geom_bar.png")
 
 
-@pytest.mark.xfail(reason="x_opt is None")
+@pytest.mark.xfail(reason="x and y flipped for now (intentional)")
 def test_geom_bar_y():
-    # Flip the test_geom_bar
-    # Third plot here https://ggplot2.tidyverse.org/reference/geom_bar.html
+    """
+    this produces the plot but it doesnt flip the axis for now
+    post_process.get_scales flips the axis
+    post_process needs an overall clean up, but the plan is to getting working first
+
+    Flip the test_geom_bar
+    Third plot here https://ggplot2.tidyverse.org/reference/geom_bar.html
+    """
+
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(y="class")) + geom_bar()
     res = ggcreate(plot)

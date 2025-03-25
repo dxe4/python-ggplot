@@ -625,6 +625,35 @@ def handle_date_scale_ticks(
     return list(tick_objs)
 
 
+def _tick_config(
+    view: ViewPort,
+    theme: Theme,
+    axis_kind: AxisKind,
+    scale: Optional[GGScale],
+    margin: Optional[float],
+    num_ticks_opt: Optional[int],
+) -> Tuple[Optional[Coord1D], int, bool]:
+
+    margin_opt: Optional[Coord1D] = None
+    num_ticks: int = 10
+    if scale:
+        if num_ticks_opt is not None:
+            num_ticks = num_ticks_opt
+        else:
+            num_ticks = get_ticks(scale)
+    if margin is not None:
+        margin_opt = get_tick_label_margin(view, theme, axis_kind)
+
+    if scale is None:
+        has_scale = False
+    elif len(scale.gg_data.col.col_name) > 0:
+        has_scale = True
+    else:
+        has_scale = False
+
+    return margin_opt, num_ticks, has_scale
+
+
 def handle_ticks(
     view: ViewPort,
     filled_scales: FilledScales,
@@ -640,21 +669,20 @@ def handle_ticks(
     margin_opt: Optional[Coord1D] = None
     scale: Optional[GGScale] = None
     num_ticks: int = 10
+    has_scale = False
 
     if ax_kind == AxisKind.X:
-        scale = filled_scales.get_scale(filled_scales.x)
-        num_ticks = num_ticks_opt if num_ticks_opt is not None else get_ticks(scale)
-        if theme.x_tick_label_margin is not None:
-            margin_opt = get_tick_label_margin(view, theme, ax_kind)
+        scale = filled_scales.get_scale(filled_scales.x, optional=True)
+        margin_opt, num_ticks, has_scale = _tick_config(
+            view, theme, ax_kind, scale, theme.x_tick_label_margin, num_ticks_opt
+        )
     elif ax_kind == AxisKind.Y:
+        scale = filled_scales.get_scale(filled_scales.x, optional=True)
+        margin_opt, num_ticks, has_scale = _tick_config(
+            view, theme, ax_kind, scale, theme.y_tick_label_margin, num_ticks_opt
+        )
         if num_ticks_opt is not None:
             num_ticks = num_ticks_opt
-        else:
-            scale = filled_scales.get_scale(filled_scales.y)
-            num_ticks = get_ticks(scale)
-
-        if theme.y_tick_label_margin is not None:
-            margin_opt = get_tick_label_margin(view, theme, ax_kind)
     else:
         raise GGException("expected x/y axis")
 
@@ -664,13 +692,6 @@ def handle_ticks(
     #     raise GGException(
     #         f"Expected LinearData or TransformedData received {scale.__class__.__name__}"
     #     )
-
-    if scale is None:
-        has_scale = False
-    elif len(scale.gg_data.col.col_name) > 0:
-        has_scale = True
-    else:
-        has_scale = False
 
     result: List[GraphicsObject] = []
 

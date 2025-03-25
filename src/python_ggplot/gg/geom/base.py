@@ -15,8 +15,8 @@ from typing import (
 import pandas as pd
 
 from python_ggplot.core.coord.objects import Coord
-from python_ggplot.core.objects import Color, GGEnum, GGException, Scale, Style
-from python_ggplot.core.units.objects import CentimeterUnit, DataUnit
+from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
+from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.types import (
     Aesthetics,
@@ -38,6 +38,7 @@ from python_ggplot.graphics.initialize import (
     init_text,
 )
 from python_ggplot.graphics.views import ViewPort
+from tests.test_view import AxisKind
 
 if TYPE_CHECKING:
     from python_ggplot.gg.scales.base import ColorScale
@@ -125,18 +126,18 @@ class Geom(ABC):
 @dataclass
 class FilledGeomData:
     geom: Geom
-    x_col: str
-    y_col: str
-    x_scale: Scale
-    y_scale: Scale
+    x_col: Optional[str]
+    y_col: Optional[str]
+    x_scale: Optional[Scale]
+    y_scale: Optional[Scale]
     reversed_x: bool
     reversed_y: bool
     # TODO this logic needs some reworking
     yield_data: OrderedDict[Any, Tuple[GGStyle, List[GGStyle], pd.DataFrame]]
     num_x: int
     num_y: int
-    x_discrete_kind: "FilledGeomDiscreteKind"
-    y_discrete_kind: "FilledGeomDiscreteKind"
+    x_discrete_kind: Optional["FilledGeomDiscreteKind"]
+    y_discrete_kind: Optional["FilledGeomDiscreteKind"]
 
 
 @dataclass
@@ -149,22 +150,45 @@ class FilledGeom:
 
     gg_data: FilledGeomData
 
+    def _ensure_discrete_kind_exists(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            if self.gg_data.x_discrete_kind is None:
+                raise GGException("x_discrete_kind is None")
+        elif axis_kind == AxisKind.Y:
+            if self.gg_data.y_discrete_kind is None:
+                raise GGException("y_discrete_kind is None")
+        else:
+            raise GGException("incorrect axis type")
+
+    def _ensure_x_discrete_kind_exists(self):
+        self._ensure_discrete_kind_exists(AxisKind.X)
+
+    def _ensure_y_discrete_kind_exists(self):
+        self._ensure_discrete_kind_exists(AxisKind.Y)
+
     def is_discrete_y(self) -> bool:
+        self._ensure_y_discrete_kind_exists()
         return self.gg_data.y_discrete_kind.discrete_type == DiscreteType.DISCRETE
 
     def is_discrete_x(self) -> bool:
+        self._ensure_x_discrete_kind_exists()
         return self.gg_data.x_discrete_kind.discrete_type == DiscreteType.DISCRETE
 
     @property
     def discrete_type_y(self) -> DiscreteType:
+        self._ensure_y_discrete_kind_exists()
         return self.gg_data.y_discrete_kind.discrete_type
 
     @property
     def discrete_type_x(self) -> DiscreteType:
+        self._ensure_x_discrete_kind_exists()
         return self.gg_data.x_discrete_kind.discrete_type
 
     @property
     def discrete_type(self) -> Optional[DiscreteType]:
+        self._ensure_x_discrete_kind_exists()
+        self._ensure_y_discrete_kind_exists()
+
         left = self.gg_data.x_discrete_kind.discrete_type
         right = self.gg_data.y_discrete_kind.discrete_type
         if left != right:
@@ -172,9 +196,11 @@ class FilledGeom:
         return left
 
     def get_x_label_seq(self) -> List[GGValue]:
+        self._ensure_x_discrete_kind_exists()
         return self.gg_data.x_discrete_kind.get_label_seq()
 
     def get_y_label_seq(self) -> List[GGValue]:
+        self._ensure_y_discrete_kind_exists()
         return self.gg_data.y_discrete_kind.get_label_seq()
 
     @property

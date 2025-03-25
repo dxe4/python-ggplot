@@ -55,7 +55,7 @@ from python_ggplot.graphics.initialize import calc_tick_locations
 
 def get_scales(
     geom: Geom, filled_scales: FilledScales, y_is_none: bool = False
-) -> Tuple[GGScale, Optional[GGScale], List[GGScale]]:
+) -> Tuple[Optional[GGScale], Optional[GGScale], List[GGScale]]:
     gid = geom.gg_data.gid
 
     def get_scale(field: Optional[MainAddScales]) -> Optional[GGScale]:
@@ -74,24 +74,17 @@ def get_scales(
 
     x_opt = get_scale(filled_scales.x)
     y_opt = get_scale(filled_scales.y)
-    if x_opt is None:
-        raise GGException("x_opt is None")
+
+    if y_is_none and y_opt is not None and x_opt is None:
+        # TODO high priority
+        # if only y is given, we flip the plot
+        # this really shouldnt happen, the previous behaviour was that both x and y have to be given
+        # so this is a step forward
+        # some geom logic is hard coded so that x is the default
+        # there is a plan to refactor this soon
+        y_opt, x_opt = x_opt, y_opt
 
     other_scales: List[GGScale] = []
-
-    if not y_is_none:
-        if y_opt is None:
-            raise GGException(
-                "The desired geom requires a `y` scale, but none was given. "
-                "(Note: The name may differ to the one used in your code as multiple "
-                "`geom_*` procedures are mapped to the same kind)"
-            )
-    elif y_is_none and y_opt is not None:
-        raise GGException(
-            "The desired geom was given a `y` scale, but none was expected. "
-            "(Note: The name may differ to the one used in your code as multiple "
-            "`geom_*` procedures are mapped to the same kind)"
-        )
 
     attrs_ = [
         filled_scales.color,
@@ -155,7 +148,7 @@ def separate_scales_apply_transofrmations(
     geom: Geom,
     filled_scales: FilledScales,
     y_is_none: bool = False,
-) -> Tuple[GGScale, Optional[GGScale], List[GGScale], List[GGScale]]:
+) -> Tuple[Optional[GGScale], Optional[GGScale], List[GGScale], List[GGScale]]:
     """
     TODO test this
     """
@@ -505,8 +498,11 @@ def encompassing_data_scale(
 
 
 def determine_data_scale(
-    scale: GGScale, additional: List[GGScale], df: pd.DataFrame
-) -> Scale:
+    scale: Optional[GGScale], additional: List[GGScale], df: pd.DataFrame
+) -> Optional[Scale]:
+
+    if scale is None:
+        return None
 
     if not str(scale.gg_data.col) in df.columns:
         # TODO, port this logic on formula node
@@ -564,6 +560,18 @@ def maybe_filter_unique(df: pd.DataFrame, fg: FilledGeom):
     return df
 
 
+def _get_scale_col_name(scale: Optional[GGScale]) -> Optional[str]:
+    if scale is None:
+        return None
+    return scale.get_col_name()
+
+
+def _get_filled_geom_from_scale(scale: Optional[GGScale]):
+    if scale is None:
+        return None
+    return scale.gg_data.discrete_kind.to_filled_geom_kind()
+
+
 def filled_identity_geom(
     df: pd.DataFrame, geom: Geom, filled_scales: FilledScales
 ) -> FilledGeom:
@@ -574,21 +582,21 @@ def filled_identity_geom(
         df, geom, filled_scales
     )
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
-    if y is None:
-        # TODO double check if this is correct
-        raise GGException("y is None")
+
+    x_col = _get_scale_col_name(x)
+    y_col = _get_scale_col_name(y)
 
     fg_data = FilledGeomData(
         geom=geom,
-        x_col=x.get_col_name(),
-        y_col=y.get_col_name(),
+        x_col=x_col,
+        y_col=y_col,
         x_scale=determine_data_scale(x, cont, df),
         y_scale=determine_data_scale(y, cont, df),
         reversed_x=False,
         reversed_y=False,
         yield_data={},  # type: ignore
-        x_discrete_kind=x.gg_data.discrete_kind.to_filled_geom_kind(),
-        y_discrete_kind=y.gg_data.discrete_kind.to_filled_geom_kind(),
+        x_discrete_kind=_get_filled_geom_from_scale(x),
+        y_discrete_kind=_get_filled_geom_from_scale(y),
         num_x=0,
         num_y=0,
     )
@@ -673,7 +681,7 @@ def filled_identity_geom(
             yield_df, cont, style, geom.geom_type
         )
 
-    if y.is_discrete():
+    if y is not None and y.is_discrete():
         # TODO fix
         # y.label_seqwill exist since is discrete, but this needs refactor anyway
         result.gg_data.y_discrete_kind.label_seq = y.gg_data.discrete_kind.label_seq  # type: ignore
