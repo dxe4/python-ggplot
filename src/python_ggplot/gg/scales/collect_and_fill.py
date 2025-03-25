@@ -86,10 +86,12 @@ def is_discrete_data(
     """
 
     if series_is_int(col):
-        if draw_samples:
+        # do we really want to draw samples on a df with 5 items?
+        if draw_samples and len(col) > 1000:
             indices = draw_sample_idx(len(col))
         else:
             indices = list(range(len(col)))
+
         elements = {col[i] for i in indices}  # type: ignore
 
         if len(elements) > round(len(indices) * discrete_threshold):
@@ -114,6 +116,8 @@ def is_discrete_data(
         # TODO handle pandas object type
         return True
 
+    if pd.api.types.is_categorical_dtype(col.dtype):
+        return True
     # TODO test this with multiple data points
     # NaT will probably fail, and there must be other cases
     raise GGException("failed to determine discreteness")

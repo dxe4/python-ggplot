@@ -135,7 +135,7 @@ def test_geom_error_bar():
     ggdraw_plot(res, data_path / "geom_error_bar.png")
 
 
-@pytest.mark.xfail(reason="failed to determine discreteness")
+@pytest.mark.xfail(reason="incorrect plot")
 def test_geom_linerange():
     df = pd.DataFrame(
         data={

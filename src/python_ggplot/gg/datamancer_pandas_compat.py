@@ -207,11 +207,13 @@ def series_value_type(series: pd.Series) -> str:
         "float64",
     ]:
         return "float"
-    elif dtype in ["bool"]:
+    elif dtype == "bool":
         return "bool"
-    elif dtype in ["string"]:
+    elif dtype == "string":
         return "string"
-    elif dtype in ["object"]:
+    elif dtype == "object":
         return "object"
+    elif dtype == "category":
+        return "category"
 
     raise GGException(f"dtype not supported {dtype}")
