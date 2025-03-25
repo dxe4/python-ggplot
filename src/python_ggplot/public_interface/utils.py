@@ -64,7 +64,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom.base import FilledGeom
+from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType
 from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.scales.base import (
     ColorScale,
@@ -110,7 +110,7 @@ from python_ggplot.gg.types import (
     ThemeMarginLayout,
 )
 from python_ggplot.gg.utils import calc_rows_columns, to_opt_sec_axis
-from python_ggplot.graphics.draw import background, draw_to_file, layout
+from python_ggplot.graphics.draw import background, draw_line, draw_to_file, layout
 from python_ggplot.graphics.initialize import (
     InitMultiLineInput,
     InitRectInput,
@@ -1740,22 +1740,38 @@ def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
         view.add_obj(item)
 
 
+def _get_geom_for_scale(plot: GgPlot, scale: GGScale) -> Optional[Geom]:
+    """
+    TODO i don't like this logic, fine for now
+    """
+    for geom in plot.geoms:
+        if geom.gg_data.gid in scale.gg_data.ids:
+            return geom
+
+
 def _draw_legends(
     img: ViewPort, filled_scales: FilledScales, theme: Theme, plot: GgPlot
 ):
     # TODO move this out of this file eventually
-    drawn_legends: Set[Tuple[DiscreteType, ScaleType]] = set()
+    drawn_legends: Set[Tuple[DiscreteType, ScaleType, GeomType]] = set()
     scale_names: Set[str] = set()
     legends: List[ViewPort] = []
 
     legend_view = img.get_child_by_name({"legend", "no_legend"})
 
     for scale in filled_scales.enumerate_scales_by_id():
+        scale_geom: Optional[Geom] = _get_geom_for_scale(plot, scale)
+        if scale_geom is None:
+            raise GGException("expected to find a geom for the sacale")
         if (
             theme.hide_legend is None
             and scale.scale_type
             not in {ScaleType.LINEAR_DATA, ScaleType.TRANSFORMED_DATA}
-            and (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
+            and (
+                scale.gg_data.discrete_kind.discrete_type,
+                scale.scale_type,
+                scale_geom.geom_type,
+            )
             not in drawn_legends
         ):
             lg = deepcopy(legend_view)
@@ -1768,7 +1784,7 @@ def _draw_legends(
             if scale_col not in scale_names:
                 legends.append(lg)
                 drawn_legends.add(
-                    (scale.gg_data.discrete_kind.discrete_type, scale.scale_type)
+                    (scale.gg_data.discrete_kind.discrete_type, scale.scale_type, scale_geom.geom_type)
                 )
             scale_names.add(scale_col)
 

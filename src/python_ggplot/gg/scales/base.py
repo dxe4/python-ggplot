@@ -767,8 +767,9 @@ class FilledScales:
         ]
         for fs_field in fs_fields:
             field_: Optional[MainAddScales] = getattr(self, fs_field, None)
-            if field_ and field_.main:
-                yield field_.main
+            if field_:
+                if field_.main:
+                    yield field_.main
                 for more_ in field_.more or []:
                     yield more_
 

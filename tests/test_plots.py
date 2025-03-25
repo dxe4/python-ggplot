@@ -136,7 +136,7 @@ def test_geom_linerange():
             "resp": [1, 5, 3, 4],
             "group": pd.Categorical([1, 2, 1, 2]),
             "upper": [1.1, 5.3, 3.3, 4.2],
-            "lower": [0.8, 4.6, 2.4, 3.6]
+            "lower": [0.8, 4.6, 2.4, 3.6],
         }
     )
     plot = ggplot(df, aes(x="trt", y="resp")) + geom_linerange(
@@ -149,6 +149,6 @@ def test_geom_linerange():
 @pytest.mark.xfail(reason="'DataFrameGroupBy' object has no attribute 'sort_values'")
 def test_geom_freqpoly():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
-    plot = ggplot(diamonds, aes("price", color = "cut")) + geom_freqpoly()
+    plot = ggplot(diamonds, aes("price", color="cut")) + geom_freqpoly()
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_freqpoly.png")
