@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
 import pandas as pd
 
@@ -155,15 +155,8 @@ def apply_style(
     style: GGStyle,
     df: pd.DataFrame,
     scales: List[GGScale],
-    keys: List[Tuple[str, GGValue]],
+    keys: List[Tuple[str, Any]],
 ):
-    """
-    # TODO high priority this function is unlikely to work, we will have to revisit later
-    # part of doing datamancer -> pandas
-    TODO Key can be str or FormulaNode. FormulaNode is from datamancer, we need to use pandas isntead
-    T = Union[str, FormulaNode]
-    keys: List[str, GGValue]
-    """
     for col, val in keys:
         for scale in scales:
             if scale.scale_type in {
