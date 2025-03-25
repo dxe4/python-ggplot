@@ -953,10 +953,11 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if map_disc_cols:
-        df = df.group_by(map_disc_cols)  # type: ignore TODO
+        df = df.groupby(map_disc_cols)  # type: ignore TODO
         col = pd.Series(dtype=float)
 
-        for keys, sub_df in df.sort_values(ascending=False):  # type: ignore
+        # for keys, sub_df in df: df.sort_values(ascending=False)
+        for keys, sub_df in df:  # type: ignore
             # now consider settings
             apply_style(style, sub_df, discretes, keys)  # type: ignore
             # before we assign calculate histogram
