@@ -298,7 +298,7 @@ def scale_color_or_fill_manual(
 
 
 def generate_legend_markers(
-    plt: ViewPort, scale: GGScale, access_idx: Optional[List[int]] = None
+    plt: ViewPort, scale: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
 ) -> List[GraphicsObject]:
     """
     TODO this is noty a public function it can be pulled out
@@ -312,7 +312,7 @@ def generate_legend_markers(
         if isinstance(scale, (SizeScale, ShapeScale, ColorScaleKind, FillColorScale)):
             # TODO discrete_legend_markers can become more re_usable with a yield
             # for now its fine, clean up later
-            result.extend(scale.discrete_legend_markers(plt, access_idx))
+            result.extend(scale.discrete_legend_markers(plt, geom_type, access_idx))
         else:
             raise Exception("`create_legend` unsupported for this scale")
 
@@ -355,12 +355,12 @@ def generate_legend_markers(
 
 
 def gen_discrete_legend(
-    view: ViewPort, cat: GGScale, access_idx: Optional[List[int]] = None
+    view: ViewPort, cat: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
 ):
     if not isinstance(cat.gg_data.discrete_kind, GGScaleDiscrete):
         raise GGException("expected a discrete scale")
 
-    markers = generate_legend_markers(view, cat, access_idx)
+    markers = generate_legend_markers(view, cat, geom_type, access_idx)
     num_elems = len(cat.gg_data.discrete_kind.value_map)
 
     layout(
@@ -463,7 +463,7 @@ def gen_discrete_legend(
 
 
 def gen_continuous_legend(
-    view: ViewPort, scale: GGScale, access_idx: Optional[List[int]] = None
+    view: ViewPort, scale: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
 ) -> None:
     """
     this could go on _ColorScaleMixin
@@ -534,17 +534,17 @@ def gen_continuous_legend(
 
 
 def create_legend(
-    view: ViewPort, cat: GGScale, access_idx: Optional[List[int]] = None
-) -> None:
+    view: ViewPort, cat: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
+):
     # TODO high priority / easy task
     # double check this to be sure, original code is len(view)
     # i remember ginger sets this up, its either len(view.objects) or  len(view.children)
     start_idx = len(view.children)
 
     if cat.is_discrete():
-        gen_discrete_legend(view, cat, access_idx)
+        gen_discrete_legend(view, cat, geom_type, access_idx)
     elif cat.is_continuous():
-        gen_continuous_legend(view, cat, access_idx)
+        gen_continuous_legend(view, cat, geom_type, access_idx)
     else:
         raise GGException("unexpected discrete type")
 
@@ -1775,7 +1775,7 @@ def _draw_legends(
             not in drawn_legends
         ):
             lg = deepcopy(legend_view)
-            create_legend(lg, scale, theme.legend_order)
+            create_legend(lg, scale, scale_geom.geom_type, theme.legend_order)
 
             # TODO low priority, high difficulty
             # support FormulaNode

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -26,7 +27,9 @@ from python_ggplot.colormaps.color_maps import (
     PLASMA_RAW,
     VIRIDIS_RAW,
 )
+from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
+    BLACK,
     AxisKind,
     Color,
     GGEnum,
@@ -36,6 +39,7 @@ from python_ggplot.core.objects import (
     Point,
     Scale,
 )
+from python_ggplot.core.units.objects import RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     ColumnType,
@@ -49,8 +53,9 @@ from python_ggplot.gg.geom.base import (
     FilledGeomDiscrete,
     FilledGeomDiscreteKind,
     Geom,
+    GeomType,
 )
-from python_ggplot.gg.styles.config import DEFAULT_ALPHA_RANGE_TUPLE
+from python_ggplot.gg.styles.config import DEFAULT_ALPHA_RANGE_TUPLE, HISTO_DEFAULT_STYLE, LINE_DEFAULT_STYLE
 from python_ggplot.gg.types import (
     ContinuousFormat,
     DataType,
@@ -60,9 +65,10 @@ from python_ggplot.gg.types import (
     DiscreteType,
     SecondaryAxis,
 )
-from python_ggplot.graphics.initialize import init_point_from_point
+from python_ggplot.graphics.initialize import InitLineInput, InitRectInput, init_line, init_point_from_coord, init_point_from_point, init_rect
 from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
+from tests.test_view import init_poly_line_from_points
 
 if typing.TYPE_CHECKING:
     from python_ggplot.gg.types import GGStyle
@@ -469,30 +475,69 @@ def discrete_legend_markers_params(
     return discrete_kind, idx
 
 
+
+def _line_legend(name: str, color: Optional[Color] = None):
+    # TODO move some logic to legends.py
+    style = deepcopy(LINE_DEFAULT_STYLE)
+    style.color = color
+    style.line_width = 2.0
+    start = Coord.relative(0.0, 0.5)
+    end = Coord.relative(1.0, 0.5)
+    init_line_input = InitLineInput(style=style, name=name)
+    return init_line(start, end, init_line_input)
+
+
+def _rect_legend(name: str, plt: ViewPort, color: Color):
+    # TODO move some logic to legends.py
+    style = deepcopy(HISTO_DEFAULT_STYLE)
+    style.color = color
+    style.fill_color = color
+    origin = Coord.relative(0.05, 0.05)
+    width = RelativeUnit(0.9)
+    height = RelativeUnit(0.9)
+    init_rect_input = InitRectInput(name=name)
+    return init_rect(plt, origin, width, height, init_rect_input)
+
+def _point_legend(name: str, color: Optional[Color] = None):
+    # TODO move some logic to legends.py
+    coord = Coord.relative(0.5, 0.5)
+    return init_point_from_coord(
+        coord,
+        marker=MarkerKind.CIRCLE,
+        color=color or deepcopy(BLACK),
+        name=name,
+    )
+
+
+def _enumerate_scale_value_map(scale: GGScale, access_idx: Optional[List[int]] = None) -> Generator[tuple[GGValue, Color], Any, None]:
+    (discrete_kind, idx) = discrete_legend_markers_params(scale, access_idx)
+    for i in idx:
+        key = discrete_kind.label_seq[i]
+        val = discrete_kind.value_map[key]
+
+        # TODO are those exceptions correct for every case?
+        if not isinstance(val, (FillColorScaleValue, ColorScaleValue)):
+            raise GGException("expected value of color")
+        if val.color is None:
+            raise GGException("expected color")
+
+        yield key, val.color
+
 class _ColorScaleMixin(GGScale):
 
     def discrete_legend_markers(
-        self, plt: ViewPort, access_idx: Optional[List[int]] = None
+        self, plt: ViewPort, geom_type: GeomType, access_idx: Optional[List[int]] = None
     ) -> List[GraphicsObject]:
         result: List[GraphicsObject] = []
-        (discrete_kind, idx) = discrete_legend_markers_params(self, access_idx)
-        for i in idx:
-            key = discrete_kind.label_seq[i]
-            val = discrete_kind.value_map[key]
+        for key, val in _enumerate_scale_value_map(self, access_idx):
+            if geom_type in {GeomType.LINE, GeomType.HISTOGRAM}:
+                new_go = _line_legend(str(key), val)
+            elif geom_type == GeomType.TILE:
+                new_go = _rect_legend(str(key), plt, val)
+            else:
+                new_go = _point_legend(str(key), val)
 
-            if not isinstance(val, (FillColorScaleValue, ColorScaleValue)):
-                raise GGException("expected value of color")
-            if val.color is None:
-                raise GGException("expected color")
-
-            new_point = init_point_from_point(
-                plt,
-                Point(0.0, 0.0),
-                marker=MarkerKind.CIRCLE,
-                color=val.color,
-                name=str(key),
-            )
-            result.append(new_point)
+            result.append(new_go)
         return result
 
 
@@ -534,23 +579,20 @@ class AlphaScale(GGScale):
 class ShapeScale(GGScale):
 
     def discrete_legend_markers(
-        self, plt: ViewPort, access_idx: Optional[List[int]] = None
+        self, plt: ViewPort, geom_type: GeomType, access_idx: Optional[List[int]] = None
     ) -> List[GraphicsObject]:
         result: List[GraphicsObject] = []
-        (discrete_kind, idx) = discrete_legend_markers_params(self, access_idx)
-        for i in idx:
-            key = discrete_kind.label_seq[i]
-            val = discrete_kind.value_map[key]
+        for key, _ in _enumerate_scale_value_map(self, access_idx):
+            if geom_type == GeomType.LINE:
+                # TODO high priority/easy fix this needs some overriding of the values:
+                # let size = scale.getValue(scale.getLabelKey(i)).size
+                # var st = LineDefaultStyle
+                # st.lineWidth = size
+                new_go = _line_legend(str(key))
+            else:
+                new_go = _point_legend(str(key))
 
-            if not isinstance(val, ShapeScaleValue):
-                raise GGException("expected value of shape")
-            if val.marker is None:
-                raise GGException("expected color")
-
-            new_point = init_point_from_point(
-                plt, Point(0.0, 0.0), marker=val.marker, name=str(key)
-            )
-            result.append(new_point)
+            result.append(new_go)
         return result
 
     @property
@@ -569,27 +611,18 @@ class SizeScale(GGScale):
     size_range: Tuple[float, float] = field(default=(0.0, 0.0))
 
     def discrete_legend_markers(
-        self, plt: ViewPort, access_idx: Optional[List[int]] = None
+        self, plt: ViewPort, geom_type: GeomType, access_idx: Optional[List[int]] = None
     ) -> List[GraphicsObject]:
         result: List[GraphicsObject] = []
-        (discrete_kind, idx) = discrete_legend_markers_params(self, access_idx)
-        for i in idx:
-            key = discrete_kind.label_seq[i]
-            val = discrete_kind.value_map[key]
+        for key, _ in _enumerate_scale_value_map(self, access_idx):
+            if geom_type == GeomType.LINE:
+                # TODO high priority/easy fix this needs some overriding of the values:
+                # st.lineType = scale.getValue(scale.getLabelKey(i)).lineType
+                new_go = _line_legend(str(key))
+            else:
+                new_go = _point_legend(str(key))
 
-            if not isinstance(val, SizeScaleValue):
-                raise GGException("expected value of size")
-            if val.size is None:
-                raise GGException("expected color")
-
-            new_point = init_point_from_point(
-                plt,
-                Point(0.0, 0.0),
-                marker=MarkerKind.CIRCLE,
-                size=val.size,
-                name=str(key),
-            )
-            result.append(new_point)
+            result.append(new_go)
         return result
 
     def update_style(self, style: "GGStyle"):
