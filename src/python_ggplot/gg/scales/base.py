@@ -1,7 +1,7 @@
-from copy import deepcopy
 import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from datetime import datetime, timedelta
 from enum import auto
@@ -55,7 +55,11 @@ from python_ggplot.gg.geom.base import (
     Geom,
     GeomType,
 )
-from python_ggplot.gg.styles.config import DEFAULT_ALPHA_RANGE_TUPLE, HISTO_DEFAULT_STYLE, LINE_DEFAULT_STYLE
+from python_ggplot.gg.styles.config import (
+    DEFAULT_ALPHA_RANGE_TUPLE,
+    HISTO_DEFAULT_STYLE,
+    LINE_DEFAULT_STYLE,
+)
 from python_ggplot.gg.types import (
     ContinuousFormat,
     DataType,
@@ -65,7 +69,14 @@ from python_ggplot.gg.types import (
     DiscreteType,
     SecondaryAxis,
 )
-from python_ggplot.graphics.initialize import InitLineInput, InitRectInput, init_line, init_point_from_coord, init_point_from_point, init_rect
+from python_ggplot.graphics.initialize import (
+    InitLineInput,
+    InitRectInput,
+    init_line,
+    init_point_from_coord,
+    init_point_from_point,
+    init_rect,
+)
 from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
 from tests.test_view import init_poly_line_from_points
@@ -475,7 +486,6 @@ def discrete_legend_markers_params(
     return discrete_kind, idx
 
 
-
 def _line_legend(name: str, color: Optional[Color] = None):
     # TODO move some logic to legends.py
     style = deepcopy(LINE_DEFAULT_STYLE)
@@ -498,6 +508,7 @@ def _rect_legend(name: str, plt: ViewPort, color: Color):
     init_rect_input = InitRectInput(name=name)
     return init_rect(plt, origin, width, height, init_rect_input)
 
+
 def _point_legend(name: str, color: Optional[Color] = None):
     # TODO move some logic to legends.py
     coord = Coord.relative(0.5, 0.5)
@@ -509,7 +520,9 @@ def _point_legend(name: str, color: Optional[Color] = None):
     )
 
 
-def _enumerate_scale_value_map(scale: GGScale, access_idx: Optional[List[int]] = None) -> Generator[tuple[GGValue, Color], Any, None]:
+def _enumerate_scale_value_map(
+    scale: GGScale, access_idx: Optional[List[int]] = None
+) -> Generator[tuple[GGValue, Color], Any, None]:
     (discrete_kind, idx) = discrete_legend_markers_params(scale, access_idx)
     for i in idx:
         key = discrete_kind.label_seq[i]
@@ -522,6 +535,7 @@ def _enumerate_scale_value_map(scale: GGScale, access_idx: Optional[List[int]] =
             raise GGException("expected color")
 
         yield key, val.color
+
 
 class _ColorScaleMixin(GGScale):
 

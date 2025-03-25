@@ -298,7 +298,10 @@ def scale_color_or_fill_manual(
 
 
 def generate_legend_markers(
-    plt: ViewPort, scale: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
+    plt: ViewPort,
+    scale: GGScale,
+    geom_type: GeomType,
+    access_idx: Optional[List[int]] = None,
 ) -> List[GraphicsObject]:
     """
     TODO this is noty a public function it can be pulled out
@@ -355,7 +358,10 @@ def generate_legend_markers(
 
 
 def gen_discrete_legend(
-    view: ViewPort, cat: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
+    view: ViewPort,
+    cat: GGScale,
+    geom_type: GeomType,
+    access_idx: Optional[List[int]] = None,
 ):
     if not isinstance(cat.gg_data.discrete_kind, GGScaleDiscrete):
         raise GGException("expected a discrete scale")
@@ -463,7 +469,10 @@ def gen_discrete_legend(
 
 
 def gen_continuous_legend(
-    view: ViewPort, scale: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
+    view: ViewPort,
+    scale: GGScale,
+    geom_type: GeomType,
+    access_idx: Optional[List[int]] = None,
 ) -> None:
     """
     this could go on _ColorScaleMixin
@@ -534,7 +543,10 @@ def gen_continuous_legend(
 
 
 def create_legend(
-    view: ViewPort, cat: GGScale, geom_type: GeomType, access_idx: Optional[List[int]] = None
+    view: ViewPort,
+    cat: GGScale,
+    geom_type: GeomType,
+    access_idx: Optional[List[int]] = None,
 ):
     # TODO high priority / easy task
     # double check this to be sure, original code is len(view)
@@ -1784,7 +1796,11 @@ def _draw_legends(
             if scale_col not in scale_names:
                 legends.append(lg)
                 drawn_legends.add(
-                    (scale.gg_data.discrete_kind.discrete_type, scale.scale_type, scale_geom.geom_type)
+                    (
+                        scale.gg_data.discrete_kind.discrete_type,
+                        scale.scale_type,
+                        scale_geom.geom_type,
+                    )
                 )
             scale_names.add(scale_col)
 
