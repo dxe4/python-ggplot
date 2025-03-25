@@ -143,6 +143,7 @@ def fill_discrete_color_scale(
     column: Any,
     data_type: DataType,
     label_seq: List[Any],
+    color_scale: ColorScale,
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]] = None,
 ) -> GGScale:
     discrete_kind = GGScaleDiscrete(
@@ -168,7 +169,7 @@ def fill_discrete_color_scale(
         data_type=data_type,
         discrete_kind=discrete_kind,
     )
-    result = cls(gg_data=gg_data)
+    result = cls(gg_data=gg_data, color_scale=color_scale)
     return result
 
 
@@ -606,11 +607,11 @@ def fill_scale_impl(
 
         if scale_type == ScaleType.COLOR:
             return fill_discrete_color_scale(
-                ScaleType.COLOR, value_kind, col, data_type, labels, value_map
+                ScaleType.COLOR, value_kind, col, data_type, labels, color_scale, value_map
             )
         elif scale_type == ScaleType.FILL_COLOR:
             return fill_discrete_color_scale(
-                ScaleType.FILL_COLOR, value_kind, col, data_type, labels, value_map
+                ScaleType.FILL_COLOR, value_kind, col, data_type, labels, color_scale, value_map
             )
         elif scale_type == ScaleType.SIZE:
             if not size_range:
