@@ -46,6 +46,16 @@ def test_geom_bar_y():
     ggdraw_plot(res, data_path / "geom_bar_y.png")
 
 
+@pytest.mark.xfail(reason="issue with apply style when no value exists")
+def test_geom_freq_ploy():
+    #  this needs  scale_y_continuous/scale_x_continuous
+    # (temporary fix would be to adjust the discrete check param which should have been configurable)
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes(x="cty", fill="class")) + geom_freqpoly()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_freqpoly.png")
+
+
 @pytest.mark.xfail(reason="same issue with test_geom_bar_fill")
 def test_geom_histogram_fill():
     mpg = pd.read_csv(data_path / "mpg.csv")
