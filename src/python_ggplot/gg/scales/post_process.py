@@ -788,7 +788,8 @@ def filled_smooth_geom(
                 yield_df[PREV_VALS_COL] = pd.Series(0.0, index=yield_df.index) if len(col) == 0 else col.copy()  # type: ignore
 
             # possibly modify `col` if stacking
-            add_counts_by_position(
+            # TODO double check this
+            yield_df[result.y_col] = add_counts_by_position(
                 yield_df[result.y_col],  # type: ignore
                 col,  # type: ignore
                 geom.gg_data.position,
@@ -965,7 +966,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
                 geom,
                 sub_df,  # type: ignore
                 x,
-                get_weight_scale(filled_scales, geom),
+                get_weight_scale(filled_scales, geom, optional=True),
                 x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
             )
 
@@ -974,7 +975,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
             if geom.gg_data.position == PositionType.STACK:
                 yield_df[PREV_VALS_COL] = col if len(col) > 0 else 0.0
 
-            add_counts_by_position(col, pd.Series(hist), geom.gg_data.position)
+            col = add_counts_by_position(col, pd.Series(hist), geom.gg_data.position)
 
             if geom.gg_data.position == PositionType.STACK:
                 if not (
@@ -988,7 +989,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
                     yield_df[result.gg_data.y_col] = col
 
             yield_df = maybe_filter_unique(yield_df, result)  # type: ignore
-            result.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
+            result.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
                 yield_df, cont, style, geom.geom_type, to_clone=True  # type: ignore
             )
 
@@ -1037,6 +1038,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
         result.gg_data.x_scale = result.gg_data.x_scale.merge(
             Scale(low=float(min(bins)), high=float(max(bins)))
         )
+
         result.gg_data.y_scale = result.gg_data.y_scale.merge(
             Scale(low=0.0, high=float(max(hist)))
         )
@@ -1129,7 +1131,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         for keys, sub_df in grouped:  # type: ignore
             apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
 
-            weight_scale = get_weight_scale(filled_scales, geom)
+            weight_scale = get_weight_scale(filled_scales, geom, optional=True)
             yield_df = count_(sub_df, x_col, "", weight_scale)
 
             add_zero_keys(yield_df, all_classes, x_col, "count")  # type: ignore
