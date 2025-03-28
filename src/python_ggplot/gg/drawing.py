@@ -594,7 +594,7 @@ def gg_draw(
     idx: int,
     style: Style,
 ):
-    fg.gg_data.geom.draw(
+    fg.gg_data.geom.draw_geom(
         view,
         fg,
         pos,

@@ -100,7 +100,7 @@ class Geom(ABC):
             stat_kind.density = density
 
     @abstractmethod
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -230,7 +230,7 @@ class GeomPoint(Geom):
     def geom_type(self) -> GeomType:
         return GeomType.POINT
 
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -246,7 +246,7 @@ class GeomPoint(Geom):
 
 
 class GeomRectDrawMixin:
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -310,7 +310,7 @@ class GeomFreqPoly(Geom):
     def geom_type(self) -> GeomType:
         return GeomType.FREQ_POLY
 
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -325,7 +325,7 @@ class GeomFreqPoly(Geom):
 
 
 class GeomErrorBarMixin:
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -356,7 +356,7 @@ class GeomTextMixin:
     def geom_type(self) -> GeomType:
         return GeomType.TEXT
 
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -396,7 +396,7 @@ class GeomRasterMixin:
     def geom_type(self) -> GeomType:
         return GeomType.RASTER
 
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -419,7 +419,7 @@ class GeomTileMixin:
     def geom_type(self) -> GeomType:
         return GeomType.TILE
 
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
@@ -449,7 +449,7 @@ class GeomLine(Geom):
     def geom_type(self) -> GeomType:
         return GeomType.LINE
 
-    def draw(
+    def draw_geom(
         self,
         view: ViewPort,
         fg: "FilledGeom",
