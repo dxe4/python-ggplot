@@ -766,13 +766,13 @@ def filled_smooth_geom(
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if len(map_disc_cols) > 0:
-        df = df.groupby(map_disc_cols)  # type: ignore
+        grouped = df.groupby(map_disc_cols)  # type: ignore
         col = pd.Series(dtype=float)  # type: ignore
 
         # TODO CRITICAL deal with pandas multi index...
         # assume this works for now to finish the rest
-        for keys, sub_df in df.sort_values(ascending=False):  # type: ignore
-            apply_style(style, sub_df, discretes, keys)  # type: ignore
+        for keys, sub_df in grouped.sort_values(ascending=False):  # type: ignore
+            apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
             yield_df = sub_df.copy()  # type: ignore
 
             smoothed = call_smoother(
@@ -953,13 +953,13 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: FilledScales):
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if map_disc_cols:
-        df = df.groupby(map_disc_cols)  # type: ignore TODO
+        grouped = df.groupby(map_disc_cols)  # type: ignore TODO
         col = pd.Series(dtype=float)
 
         # for keys, sub_df in df: df.sort_values(ascending=False)
-        for keys, sub_df in df:  # type: ignore
+        for keys, sub_df in grouped:  # type: ignore
             # now consider settings
-            apply_style(style, sub_df, discretes, keys)  # type: ignore
+            apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
             # before we assign calculate histogram
             hist, bins, _ = call_histogram(
                 geom,
@@ -1127,7 +1127,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
             raise GGException("cont >0")
 
         for keys, sub_df in grouped:  # type: ignore
-            apply_style(style, sub_df, discretes, keys)  # type: ignore
+            apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
 
             weight_scale = get_weight_scale(filled_scales, geom)
             yield_df = count_(sub_df, x_col, "", weight_scale)
