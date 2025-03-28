@@ -25,6 +25,19 @@ from python_ggplot.gg.geom.base import (
     GeomType,
     HistogramDrawingStyle,
 )
+from python_ggplot.gg.scales import (
+    get_fill_scale,
+    get_height_scale,
+    get_text_scale,
+    get_weight_scale,
+    get_width_scale,
+    get_x_max_scale,
+    get_x_min_scale,
+    get_x_scale,
+    get_y_max_scale,
+    get_y_min_scale,
+    get_y_scale,
+)
 from python_ggplot.gg.scales.base import (
     FilledScales,
     GGScale,
@@ -268,96 +281,6 @@ def add_zero_keys(
     return pd.concat([df, df_zero], ignore_index=True)
 
 
-# TODO the following functions are repetitive
-# we can make something more re-usable
-# we keep them for now for backwards compat
-# the original ones created by macro
-
-
-def _get_y_max_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.y_max, geom=geom, optional=optional
-    )
-
-
-def _get_y_min_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.y_min, geom=geom, optional=optional
-    )
-
-
-def _get_x_max_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.x_max, geom=geom, optional=optional
-    )
-
-
-def _get_x_min_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.x_min, geom=geom, optional=optional
-    )
-
-
-def _get_height_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.height, geom=geom, optional=optional
-    )
-
-
-def _get_width_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.width, geom=geom, optional=optional
-    )
-
-
-def get_y_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.y, geom=geom, optional=optional)
-
-
-def get_x_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(attr=filled_scales.x, geom=geom, optional=optional)
-
-
-def get_text_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.text, geom=geom, optional=optional
-    )
-
-
-def get_fill_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.fill, geom=geom, optional=optional
-    )
-
-
-def get_weight_scale(
-    filled_scales: FilledScales, geom: Geom, optional: bool = False
-) -> Optional[GGScale]:
-    return filled_scales.get_scale(
-        attr=filled_scales.weight, geom=geom, optional=optional
-    )
-
-
 def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame) -> FilledGeom:
     """
     TODO CRITICAL+ this needs to be deleted and re-worked
@@ -373,26 +296,26 @@ def fill_opt_fields(fg: FilledGeom, fs: FilledScales, df: pd.DataFrame) -> Fille
     if fg.geom_type == GeomType.ERROR_BAR:
         new_fg = FilledGeomErrorBar(gg_data=fg.gg_data)
         assign_if_any(
-            new_fg, _get_x_min_scale(fs, new_fg.gg_data.geom, optional=True), "x_min"
+            new_fg, get_x_min_scale(fs, new_fg.gg_data.geom, optional=True), "x_min"
         )
         assign_if_any(
-            new_fg, _get_x_max_scale(fs, new_fg.gg_data.geom, optional=True), "x_max"
+            new_fg, get_x_max_scale(fs, new_fg.gg_data.geom, optional=True), "x_max"
         )
         assign_if_any(
-            new_fg, _get_y_min_scale(fs, new_fg.gg_data.geom, optional=True), "y_min"
+            new_fg, get_y_min_scale(fs, new_fg.gg_data.geom, optional=True), "y_min"
         )
         assign_if_any(
-            new_fg, _get_y_max_scale(fs, new_fg.gg_data.geom, optional=True), "y_max"
+            new_fg, get_y_max_scale(fs, new_fg.gg_data.geom, optional=True), "y_max"
         )
         return new_fg
 
     elif fg.geom_type in {GeomType.TILE, GeomType.RASTER}:
-        h_s = _get_height_scale(fs, fg.gg_data.geom)
-        w_s = _get_width_scale(fs, fg.gg_data.geom)
-        x_min_s = _get_x_min_scale(fs, fg.gg_data.geom, optional=True)
-        x_max_s = _get_x_max_scale(fs, fg.gg_data.geom, optional=True)
-        y_min_s = _get_y_min_scale(fs, fg.gg_data.geom, optional=True)
-        y_max_s = _get_y_max_scale(fs, fg.gg_data.geom, optional=True)
+        h_s = get_height_scale(fs, fg.gg_data.geom)
+        w_s = get_width_scale(fs, fg.gg_data.geom)
+        x_min_s = get_x_min_scale(fs, fg.gg_data.geom, optional=True)
+        x_max_s = get_x_max_scale(fs, fg.gg_data.geom, optional=True)
+        y_min_s = get_y_min_scale(fs, fg.gg_data.geom, optional=True)
+        y_max_s = get_y_max_scale(fs, fg.gg_data.geom, optional=True)
 
         if h_s is not None:
             # TODO the type: ignore can go away

@@ -611,11 +611,23 @@ def fill_scale_impl(
 
         if scale_type == ScaleType.COLOR:
             return fill_discrete_color_scale(
-                ScaleType.COLOR, value_kind, col, data_type, labels, color_scale, value_map
+                ScaleType.COLOR,
+                value_kind,
+                col,
+                data_type,
+                labels,
+                color_scale,
+                value_map,
             )
         elif scale_type == ScaleType.FILL_COLOR:
             return fill_discrete_color_scale(
-                ScaleType.FILL_COLOR, value_kind, col, data_type, labels, color_scale, value_map
+                ScaleType.FILL_COLOR,
+                value_kind,
+                col,
+                data_type,
+                labels,
+                color_scale,
+                value_map,
             )
         elif scale_type == ScaleType.SIZE:
             if not size_range:

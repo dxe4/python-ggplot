@@ -895,3 +895,93 @@ def scale_type_to_cls(scale_type: ScaleType) -> Type[GGScale]:
         ScaleType.TEXT: TextScale,
     }
     return data[scale_type]
+
+
+# TODO the following functions are repetitive
+# we can make something more re-usable
+# we keep them for now for backwards compat
+# the original ones created by macro
+
+
+def get_y_max_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.y_max, geom=geom, optional=optional
+    )
+
+
+def get_y_min_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.y_min, geom=geom, optional=optional
+    )
+
+
+def get_x_max_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.x_max, geom=geom, optional=optional
+    )
+
+
+def get_x_min_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.x_min, geom=geom, optional=optional
+    )
+
+
+def get_height_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.height, geom=geom, optional=optional
+    )
+
+
+def get_width_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.width, geom=geom, optional=optional
+    )
+
+
+def get_y_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.y, geom=geom, optional=optional)
+
+
+def get_x_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(attr=filled_scales.x, geom=geom, optional=optional)
+
+
+def get_text_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.text, geom=geom, optional=optional
+    )
+
+
+def get_fill_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.fill, geom=geom, optional=optional
+    )
+
+
+def get_weight_scale(
+    filled_scales: FilledScales, geom: Geom, optional: bool = False
+) -> Optional[GGScale]:
+    return filled_scales.get_scale(
+        attr=filled_scales.weight, geom=geom, optional=optional
+    )
