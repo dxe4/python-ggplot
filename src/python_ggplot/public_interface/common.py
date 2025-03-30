@@ -2,7 +2,7 @@ import os
 from collections import OrderedDict
 from dataclasses import field
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Callable, Dict, List, Literal, Optional, Union
 
 from python_ggplot.common.enum_literals import (
     DISCRETE_TYPE_VALUES,
@@ -18,7 +18,7 @@ from python_ggplot.core.objects import (
     GGException,
     Scale,
 )
-from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol
+from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol, VNull
 from python_ggplot.gg.scales import ScaleValue, SizeScaleValue
 from python_ggplot.gg.scales.base import (
     AlphaScale,
@@ -29,8 +29,11 @@ from python_ggplot.gg.scales.base import (
     GGScaleContinuous,
     GGScaleData,
     GGScaleDiscrete,
+    LinearAndTransformScaleData,
+    LinearDataScale,
     ScaleFreeKind,
     ScaleTransformFunc,
+    ScaleType,
     SizeScale,
     TransformedDataScale,
 )
@@ -159,6 +162,114 @@ def scale_y_discrete(
         return scale_axis_discrete_with_labels(AxisKind.Y, name, labels, sec_axis)
     else:
         return scale_axis_discrete_with_label_fn(AxisKind.Y, name, labels_fn, sec_axis)
+
+
+def _scale_axis_continuous(
+    axis_kind: AxisKind,
+    breaks: Optional[List[float]] = None,
+    labels: Optional[Callable[[float], float]] = None,
+    trans: Optional[Callable[[float], float]] = None,
+    inv_trans: Optional[Callable[[float], float]] = None,
+    sec_axis: Optional[SecondaryAxis] = None,
+    name: str = "",
+):
+    if breaks is None:
+        breaks = []
+
+    if sec_axis:
+        sec_axis.axis_kind = axis_kind
+
+    if trans is not None and inv_trans is not None:
+        transform_data = LinearAndTransformScaleData(
+            axis_kind=axis_kind,
+            secondary_axis=sec_axis,
+        )
+        discrete_kind = GGScaleContinuous(
+            # todo sanity check this
+            format_continuous_label=labels,  # type: ignore
+        )
+        gg_data = GGScaleData(
+            col=VectorCol(name),  # TODO
+            value_kind=VNull(),  # TODO
+            name=name,
+            discrete_kind=discrete_kind,
+            has_discreteness=True,
+        )
+        result = TransformedDataScale(
+            gg_data=gg_data,
+            data=transform_data,
+            transform=trans,
+            inverse_transform=inv_trans,
+        )
+
+    elif (trans is None) != (inv_trans is None):
+        raise Exception(
+            "If scale_x_continuous is used for a custom transformed data scale "
+            "both the transformation and inverse have to be defined!"
+        )
+    else:
+        transform_data = LinearAndTransformScaleData(
+            axis_kind=axis_kind,
+            secondary_axis=sec_axis,
+        )
+        discrete_kind = GGScaleContinuous(
+            # todo sanity check this
+            format_continuous_label=labels,  # type: ignore
+        )
+        gg_data = GGScaleData(
+            col=VectorCol(name),  # TODO  sanity check
+            value_kind=VNull(),  # TODO sanity check
+            name=name,
+            discrete_kind=discrete_kind,
+            has_discreteness=True,
+        )
+        result = LinearDataScale(
+            gg_data=gg_data,
+            data=transform_data,
+        )
+
+    result.assign_breaks(breaks)
+    return result
+
+
+def scale_x_continuous(
+    breaks: Optional[List[float]] = None,
+    labels: Optional[Callable[[float], float]] = None,
+    trans: Optional[Callable[[float], float]] = None,
+    inv_trans: Optional[Callable[[float], float]] = None,
+    sec_axis: Optional[SecondaryAxis] = None,
+    name: str = "",
+):
+    result = _scale_axis_continuous(
+        axis_kind=AxisKind.X,
+        breaks=breaks,
+        labels=labels,
+        trans=trans,
+        inv_trans=inv_trans,
+        sec_axis=sec_axis,
+        name=name,
+    )
+    return result
+
+
+def scale_y_continuous(
+    breaks: Optional[List[float]],
+    labels: Optional[Callable[[float], float]] = None,
+    trans: Optional[Callable[[float], float]] = None,
+    inv_trans: Optional[Callable[[float], float]] = None,
+    sec_axis: Optional[SecondaryAxis] = None,
+    name: str = "",
+):
+    result = _scale_axis_continuous(
+        axis_kind=AxisKind.Y,
+        breaks=breaks,
+        labels=labels,
+        trans=trans,
+        inv_trans=inv_trans,
+        sec_axis=sec_axis,
+        name=name,
+    )
+    return result
 
 
 def scale_x_reverse(

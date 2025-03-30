@@ -789,8 +789,8 @@ def apply_scale(aes: Aesthetics, scale: GGScale):
         if hasattr(aes, field) and getattr(aes, field) is not None:
             new_scale = deepcopy(scale)
             field_value = getattr(aes, field)
-            new_scale.gg_data.col = field_value.col
-            new_scale.gg_data.ids = field_value.ids
+            new_scale.gg_data.col = field_value.gg_data.col
+            new_scale.gg_data.ids = field_value.gg_data.ids
             setattr(result, field, new_scale)
 
     SCALE_TYPE_TO_FIELD = {

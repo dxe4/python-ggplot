@@ -2,7 +2,11 @@ import pandas as pd
 import pytest
 
 from python_ggplot.public_interface.aes import aes
-from python_ggplot.public_interface.common import ggdraw_plot, ggtitle
+from python_ggplot.public_interface.common import (
+    ggdraw_plot,
+    ggtitle,
+    scale_x_continuous,
+)
 from python_ggplot.public_interface.geom import (
     geom_bar,
     geom_error_bar,
@@ -46,12 +50,12 @@ def test_geom_bar_y():
     ggdraw_plot(res, data_path / "geom_bar_y.png")
 
 
-@pytest.mark.xfail(reason="issue with apply style when no value exists")
+@pytest.mark.xfail(reason="wrong plot")
 def test_geom_freq_ploy():
-    #  this needs  scale_y_continuous/scale_x_continuous
-    # (temporary fix would be to adjust the discrete check param which should have been configurable)
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x="cty", fill="class")) + geom_freqpoly()
+    plot = (
+        ggplot(mpg, aes(x="cty", fill="class")) + geom_freqpoly() + scale_x_continuous()
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_freqpoly.png")
 

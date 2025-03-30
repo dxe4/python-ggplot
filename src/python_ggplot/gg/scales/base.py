@@ -288,7 +288,7 @@ class GGScaleDiscreteKind(DiscreteKind, ABC):
 class GGScaleDiscrete(GGScaleDiscreteKind):
     value_map: OrderedDict[GGValue, "ScaleValue"] = field(default_factory=OrderedDict)
     label_seq: List[GGValue] = field(default_factory=list)
-    format_discrete_label: Optional[DiscreteFormat] = None
+    format_continuous_label: Optional[DiscreteFormat] = None
 
     def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
         return FilledGeomDiscrete(label_seq=self.label_seq)
