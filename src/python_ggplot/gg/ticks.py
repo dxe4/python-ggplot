@@ -54,11 +54,11 @@ def get_ticks(scale: Union[GGScale, Scale]) -> int:
 
 
 def get_x_ticks(scale: FilledScales) -> int:
-    return get_ticks(scale.get_x_scale())
+    return get_ticks(scale.x_scale)
 
 
 def get_y_ticks(scale: FilledScales) -> int:
-    return get_ticks(scale.get_y_scale())
+    return get_ticks(scale.y_scale)
 
 
 def smallest_pow(inv_trans: ScaleTransformFunc, x: float):

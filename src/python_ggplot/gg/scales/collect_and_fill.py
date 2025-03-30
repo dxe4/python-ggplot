@@ -22,6 +22,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     series_is_str,
     series_value_type,
 )
+from python_ggplot.gg.geom.base import post_process_scales
 from python_ggplot.gg.scales import (
     AlphaScale,
     GGScale,
@@ -52,13 +53,14 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
     scale_type_to_cls,
 )
-from python_ggplot.gg.scales.post_process import post_process_scales
 from python_ggplot.gg.styles.config import (
     DEFAULT_ALPHA_RANGE_TUPLE,
     DEFAULT_SIZE_RANGE_TUPLE,
 )
 from python_ggplot.gg.types import DataType, DiscreteType, GgPlot
 from python_ggplot.gg.utils import GGException
+
+# from python_ggplot.gg.scales.post_process import post_process_scales
 
 
 def add_identity_data(col: "str", df: pd.DataFrame, scale: GGScale):

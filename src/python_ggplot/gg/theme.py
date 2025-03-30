@@ -91,7 +91,7 @@ def _get_x_label(filled_scales: "FilledScales") -> str:
               if geom.gid == 0 or geom.gid in s.ids:
                 return s
     """
-    filled_scales.get_x_scale()
+    filled_scales.x_scale
     return "x_scale"
 
 
@@ -99,7 +99,7 @@ def _get_y_label(filled_scales: "FilledScales") -> str:
     """
     TODO CRITICAL, medium difficulty
     """
-    y_scale = filled_scales.get_y_scale()
+    y_scale = filled_scales.y_scale
     if y_scale:
         return "y_scale"
     else:
