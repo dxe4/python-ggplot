@@ -447,35 +447,15 @@ def determine_data_scale(
 
 
 def maybe_filter_unique(df: pd.DataFrame, fg: FilledGeom):
-    """
-    TODO refactor
-    """
-
     if isinstance(fg, FilledGeomErrorBar):
-        collect_cols: List[Any] = []
-        has_x = False
-        has_y = False
 
-        def add_it(field: Any, is_x: Any):
-            """
-            TODO reafctor this
-            """
-            nonlocal has_x, has_y
-            if field is not None:
-                collect_cols.append(field)
-                if is_x:
-                    has_x = True
-                else:
-                    has_y = True
+        x_values = [i for i in [fg.x_min, fg.x_max] if i is not None]
+        y_values = [i for i in [fg.y_min, fg.y_max] if i is not None]
+        collect_cols = x_values + y_values
 
-        add_it(fg.x_min, True)
-        add_it(fg.x_max, True)
-        add_it(fg.y_min, False)
-        add_it(fg.y_max, False)
-
-        if has_x:
+        if len(x_values) > 0:
             collect_cols.append(fg.gg_data.y_col)
-        if has_y:
+        if len(y_values) > 0:
             collect_cols.append(fg.gg_data.x_col)
 
         return df.drop_duplicates(subset=collect_cols)
