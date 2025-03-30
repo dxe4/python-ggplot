@@ -983,7 +983,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     )
 
     if x.is_continuous():
-        raise ValueError("For continuous data columns use `geom_histogram` instead!")
+        raise GGException("For continuous data columns use `geom_histogram` instead!")
 
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discretes)
     x_col = x.get_col_name()
@@ -1143,11 +1143,11 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
                 # calculate histogram
                 filled_geom = filled_bin_geom(df, geom, filled_scales)
             elif geom.stat_type == StatType.COUNT:
-                raise Exception(
+                raise GGException(
                     "For discrete counts of your data use " "`geom_bar` instead!"
                 )
             elif geom.stat_type == StatType.SMOOTH:
-                raise Exception(
+                raise GGException(
                     "Smoothing statistics not implemented for histogram & frequency polygons. "
                     "Do you want a `density` plot using `geom_density` instead?"
                 )
@@ -1165,12 +1165,12 @@ def post_process_scales(filled_scales: FilledScales, plot: GgPlot):
                 # count values in classes
                 filled_geom = filled_count_geom(df, geom, filled_scales)
             elif geom.stat_type == StatType.BIN:
-                raise Exception(
+                raise GGException(
                     "For continuous binning of your data use "
                     "`geom_histogram` instead!"
                 )
             elif geom.stat_type == StatType.SMOOTH:
-                raise Exception(
+                raise GGException(
                     "Smoothing statistics not supported for bar plots. Do you want a "
                     "`density` plot using `geom_density` instead?"
                 )
