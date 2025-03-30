@@ -80,6 +80,9 @@ class StatKind(ABC):
             StatType.COUNT: StatCount,
             StatType.SMOOTH: StatSmooth,
         }
+        if stat_type == StatType.DENSITY:
+            raise GGException("not supported yet")
+
         if data is None:
             data = {}
         return classes[stat_type](**data)
