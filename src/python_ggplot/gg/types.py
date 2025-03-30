@@ -59,6 +59,7 @@ class StatType(GGEnum):
     COUNT = auto()
     BIN = auto()
     SMOOTH = auto()
+    DENSITY = auto()
 
 
 @dataclass(frozen=True)
