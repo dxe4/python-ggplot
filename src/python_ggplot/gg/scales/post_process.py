@@ -251,29 +251,29 @@ def apply_cont_scale_if_any(
 
 
 def add_counts_by_position(
-    col_sum: pd.Series,  # type: ignore
-    col: pd.Series,  # type: ignore
+    col_sum: pd.Series[Any],  # type: ignore
+    col: pd.Series[Any],  # type: ignore
     pos: Optional[PositionType],
-):
+) -> pd.Series[Any]:
     # TODO use is_numeric_dtype in other places of the code base
     if pd.api.types.is_numeric_dtype(col):  # type: ignore
         if pos == PositionType.STACK:
             if len(col_sum) == 0:
-                col_sum = col.copy()
+                return col.copy()
             else:
-                col_sum += col
+                return col_sum + col
         elif pos in (PositionType.IDENTITY, PositionType.DODGE):
-            col_sum = col.copy()
+            return col.copy()
         elif pos == PositionType.FILL:
-            col_sum = pd.Series([1.0])
+            return pd.Series([1.0])
+        else:
+            raise GGException("unexpected position type")
     else:
-        col_sum = col.copy()
-
-    return col_sum
+        return col.copy()
 
 
 def add_zero_keys(
-    df: pd.DataFrame, keys: pd.Series, x_col: Any, count_col: str
+    df: pd.DataFrame, keys: pd.Series[Any], x_col: Any, count_col: str
 ) -> pd.DataFrame:
     exist_keys = df[x_col].unique()  # type: ignore
     df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore
