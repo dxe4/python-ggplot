@@ -5,6 +5,7 @@ from enum import auto
 from typing import (
     TYPE_CHECKING,
     Any,
+    Dict,
     Generator,
     List,
     Optional,
@@ -25,6 +26,7 @@ from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
 from python_ggplot.gg.types import (
     COUNT_COL,
     PREV_VALS_COL,
+    SMOOTH_VALS_COL,
     Aesthetics,
     BinByType,
     BinPositionType,
@@ -33,8 +35,10 @@ from python_ggplot.gg.types import (
     GgPlot,
     GGStyle,
     PositionType,
+    SmoothMethodType,
     StatBin,
     StatKind,
+    StatSmooth,
     StatType,
 )
 from python_ggplot.graphics.initialize import (
@@ -604,6 +608,7 @@ def apply_cont_scale_if_any(
     geom_type: GeomType,
     to_clone: bool = False,
 ):
+    from python_ggplot.gg.scales.base import ScaleType
     result_style = base_style
     result_styles = []
     result_df = yield_df.copy() if to_clone else yield_df
