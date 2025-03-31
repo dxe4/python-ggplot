@@ -51,7 +51,7 @@ def test_geom_bar_y():
 
 
 @pytest.mark.xfail(reason="wrong plot")
-def test_geom_freq_ploy():
+def test_geom_freq_poly():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
         ggplot(mpg, aes(x="cty", fill="class")) + geom_freqpoly() + scale_x_continuous()
