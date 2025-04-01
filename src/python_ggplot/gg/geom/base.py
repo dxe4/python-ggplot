@@ -726,6 +726,7 @@ def assign_if_any(fg: FilledGeom, scale: Optional["GGScale"], attr: Any):
 
 
 def create_filled_geom(fg: FilledGeom, fs: "FilledScales", geom_type: GeomType, df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    # Originally "fill_opt_fields"
     # this is a bit ugly, but its lot better than the original
     # its readable enough for now
     if fg.geom_type == GeomType.ERROR_BAR:
