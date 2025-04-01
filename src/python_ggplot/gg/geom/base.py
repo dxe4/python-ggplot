@@ -534,11 +534,11 @@ class FilledGeomContinuous(FilledGeomDiscreteKind):
         return DiscreteType.CONTINUOUS
 
 
-
 def _optional_scale_col(scale: Optional["GGScale"]) -> Optional[str]:
     if scale is None:
         return None
     return scale.get_col_name()
+
 
 @dataclass
 class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
@@ -548,7 +548,9 @@ class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
     y_max: Optional[str] = None
 
     @classmethod
-    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    def from_geom(
+        cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[FilledGeom, pd.DataFrame]:
         new_fg = FilledGeomErrorBar(
             gg_data=fg_data,
             x_min=_optional_scale_col(fs.get_x_min_scale(geom, optional=True)),
@@ -557,6 +559,7 @@ class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
             y_max=_optional_scale_col(fs.get_y_max_scale(geom, optional=True)),
         )
         return new_fg, df
+
 
 @dataclass
 class TitleRasterData:
@@ -567,7 +570,9 @@ class TitleRasterData:
     color_scale: Optional["ColorScale"]
 
     @staticmethod
-    def _get_width(geom: Geom, fs: "FilledScales", df: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
+    def _get_width(
+        geom: Geom, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[str, pd.DataFrame]:
         # todo clean up
         width_scale = fs.get_width_scale(geom)
         x_min_s = fs.get_x_min_scale(geom, optional=True)
@@ -602,7 +607,9 @@ class TitleRasterData:
             return "width", df
 
     @staticmethod
-    def _get_height(geom: Geom, fs: "FilledScales", df: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
+    def _get_height(
+        geom: Geom, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[str, pd.DataFrame]:
         # todo clean up
         height_scale = fs.get_height_scale(geom)
         y_min_s = fs.get_y_min_scale(geom, optional=True)
@@ -633,7 +640,7 @@ class TitleRasterData:
                 col_name = get_y_scale(fs, fg.geom).get_col_name()  # type: ignore
                 y_col = df[col_name].unique()  # type: ignore
                 fg.num_y = len(y_col)  # type: ignore
-                df["height"] = abs(y_col[1] - y_col[0]) # type: ignore
+                df["height"] = abs(y_col[1] - y_col[0])  # type: ignore
             else:
                 print(
                     "INFO: using default height of 1 since no height information supplied. "
@@ -643,7 +650,9 @@ class TitleRasterData:
             return "height", df
 
     @staticmethod
-    def get_height_and_width(geom: Geom, fs: "FilledScales", df: pd.DataFrame) -> Tuple[Optional[str], Optional[str], pd.DataFrame]:
+    def get_height_and_width(
+        geom: Geom, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[Optional[str], Optional[str], pd.DataFrame]:
 
         height, df = TitleRasterData._get_height(geom, fs, df)
         width, df = TitleRasterData._get_width(geom, fs, df)
@@ -651,7 +660,13 @@ class TitleRasterData:
         return width, height, df
 
 
-def create_filled_geom_tile_and_raster(cls: Union[Type["FilledGeomTitle"], Type["FilledGeomRaster"]], geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+def create_filled_geom_tile_and_raster(
+    cls: Union[Type["FilledGeomTitle"], Type["FilledGeomRaster"]],
+    geom: Geom,
+    fg_data: FilledGeomData,
+    fs: "FilledScales",
+    df: pd.DataFrame,
+) -> Tuple[FilledGeom, pd.DataFrame]:
     fill_data_scale: Optional[Scale] = None
     color_scale: Optional["ColorScale"] = None
     fill_col: str = ""
@@ -677,31 +692,40 @@ def create_filled_geom_tile_and_raster(cls: Union[Type["FilledGeomTitle"], Type[
     new_fg = cls(gg_data=fg_data, data=tile_raster_data)
     return new_fg, df
 
+
 @dataclass
 class FilledGeomTitle(GeomTileMixin, FilledGeom):
     data: TitleRasterData
 
     @classmethod
-    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    def from_geom(
+        cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[FilledGeom, pd.DataFrame]:
         return create_filled_geom_tile_and_raster(cls, geom, fg_data, fs, df)
+
 
 @dataclass
 class FilledGeomRaster(GeomRasterMixin, FilledGeom):
     data: TitleRasterData
 
     @classmethod
-    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    def from_geom(
+        cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[FilledGeom, pd.DataFrame]:
         return create_filled_geom_tile_and_raster(cls, geom, fg_data, fs, df)
+
 
 @dataclass
 class FilledGeomText(GeomTextMixin, FilledGeom):
     text: str
 
     @classmethod
-    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    def from_geom(
+        cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[FilledGeom, pd.DataFrame]:
         new_fg = FilledGeomText(
             gg_data=fg_data,
-            text=str(fs.get_text_scale(geom).gg_data.col)  # type: ignore
+            text=str(fs.get_text_scale(geom).gg_data.col),  # type: ignore
         )
         return new_fg, df
 
@@ -711,12 +735,15 @@ class FilledGeomHistogram(GeomHistogramMixin, FilledGeom):
     histogram_drawing_style: HistogramDrawingStyle
 
     @classmethod
-    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    def from_geom(
+        cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+    ) -> Tuple[FilledGeom, pd.DataFrame]:
         new_fg = FilledGeomHistogram(
             gg_data=fg_data,
             histogram_drawing_style=geom.histogram_drawing_style,  # type: ignore
         )
         return new_fg, df
+
 
 def assign_if_any(fg: FilledGeom, scale: Optional["GGScale"], attr: Any):
     # TODO this is inherited as tempalte assuming for performanece to avoid func calls
@@ -725,14 +752,16 @@ def assign_if_any(fg: FilledGeom, scale: Optional["GGScale"], attr: Any):
         setattr(fg, attr, scale.get_col_name())
 
 
-def create_filled_geom(fg: FilledGeom, fs: "FilledScales", geom_type: GeomType, df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+def create_filled_geom(
+    fg: FilledGeom, fs: "FilledScales", geom_type: GeomType, df: pd.DataFrame
+) -> Tuple[FilledGeom, pd.DataFrame]:
     # Originally "fill_opt_fields"
     # this is a bit ugly, but its lot better than the original
     # its readable enough for now
     if fg.geom_type == GeomType.ERROR_BAR:
         return FilledGeomErrorBar.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
     # tile and raster is really the same. fine for now
-    elif fg.geom_type  == GeomType.TILE:
+    elif fg.geom_type == GeomType.TILE:
         return FilledGeomTitle.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
     elif fg.geom_type == GeomType.RASTER:
         return FilledGeomRaster.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
@@ -784,6 +813,7 @@ def apply_cont_scale_if_any(
     to_clone: bool = False,
 ):
     from python_ggplot.gg.scales.base import ScaleType
+
     result_style = base_style
     result_styles = []
     result_df = yield_df.copy() if to_clone else yield_df
