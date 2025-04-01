@@ -11,6 +11,8 @@ from typing import (
     Optional,
     OrderedDict,
     Tuple,
+    Type,
+    Union,
     cast,
 )
 
@@ -532,41 +534,213 @@ class FilledGeomContinuous(FilledGeomDiscreteKind):
         return DiscreteType.CONTINUOUS
 
 
+
+def _optional_scale_col(scale: Optional["GGScale"]) -> Optional[str]:
+    if scale is None:
+        return None
+    return scale.get_col_name()
+
 @dataclass
 class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
-    x_min: Optional[float] = None
-    y_min: Optional[float] = None
-    x_max: Optional[float] = None
-    y_max: Optional[float] = None
+    x_min: Optional[str] = None
+    y_min: Optional[str] = None
+    x_max: Optional[str] = None
+    y_max: Optional[str] = None
 
+    @classmethod
+    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+        new_fg = FilledGeomErrorBar(
+            gg_data=fg_data,
+            x_min=_optional_scale_col(fs.get_x_min_scale(geom, optional=True)),
+            x_max=_optional_scale_col(fs.get_x_max_scale(geom, optional=True)),
+            y_min=_optional_scale_col(fs.get_y_min_scale(geom, optional=True)),
+            y_max=_optional_scale_col(fs.get_y_max_scale(geom, optional=True)),
+        )
+        return new_fg, df
 
 @dataclass
 class TitleRasterData:
     fill_col: str
-    fill_data_scale: Scale
+    fill_data_scale: Optional[Scale]
     width: Optional[str]
     height: Optional[str]
-    color_scale: "ColorScale"
+    color_scale: Optional["ColorScale"]
 
+    @staticmethod
+    def _get_width(geom: Geom, fs: "FilledScales", df: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
+        # todo clean up
+        width_scale = fs.get_width_scale(geom)
+        x_min_s = fs.get_x_min_scale(geom, optional=True)
+        x_max_s = fs.get_x_max_scale(geom, optional=True)
+        # Handle width
+        if width_scale is not None:
+            width = width_scale.get_col_name()  # type: ignore
+            return width, df
+
+        elif x_min_s is not None and x_max_s is not None:
+            min_name = x_min_s.get_col_name()  # type: ignore
+            max_name = x_max_s.get_col_name()  # type: ignore
+            x_col_name = get_x_scale(fs, fg.geom).get_col_name()  # type: ignore
+            df["width"] = df[max_name] - df[min_name]
+            df[x_col_name] = df[min_name]
+            return "width", df
+        elif x_min_s is not None or x_max_s is not None:
+            raise GGException(
+                "Invalid combination of aesthetics! If no width given both an `x_min` and `x_max` has to be supplied for geom_{fg.geom_kind}!"
+            )
+        else:
+            if geom.geom_type == GeomType.RASTER:
+                x_col = df[get_x_scale(fs, fg.geom).get_col_name()].unique()  # type: ignore
+                fg.num_x = len(x_col)  # type: ignore
+                df["width"] = abs(x_col[1] - x_col[0])
+            else:
+                print(
+                    "INFO: using default width of 1 since no width information supplied. "
+                    "Add `width` or (`x_min`, `x_max`) as aesthetics for different values."
+                )
+                df["width"] = 1.0
+            return "width", df
+
+    @staticmethod
+    def _get_height(geom: Geom, fs: "FilledScales", df: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
+        # todo clean up
+        height_scale = fs.get_height_scale(geom)
+        y_min_s = fs.get_y_min_scale(geom, optional=True)
+        y_max_s = fs.get_y_max_scale(geom, optional=True)
+
+        if height_scale is not None:
+            return height_scale.get_col_name(), df
+
+        elif y_min_s is not None and y_max_s is not None:
+            min_name = y_min_s.get_col_name()
+            max_name = y_max_s.get_col_name()
+
+            y_scale = fs.get_y_scale(geom)
+            if y_scale is None:
+                raise GGException("expected a y_scale")
+
+            y_col_name = y_scale.get_col_name()
+            df["height"] = df[max_name] - df[min_name]
+            df[y_col_name] = df[min_name]
+            return "height", df
+
+        elif y_min_s is not None or y_max_s is not None:
+            raise GGException(
+                "Invalid combination of aesthetics! If no height given both an `y_min` and `y_max` has to be supplied for geom_{fg.geom_kind}!"
+            )
+        else:
+            if geom.geom_type == GeomType.RASTER:
+                col_name = get_y_scale(fs, fg.geom).get_col_name()  # type: ignore
+                y_col = df[col_name].unique()  # type: ignore
+                fg.num_y = len(y_col)  # type: ignore
+                df["height"] = abs(y_col[1] - y_col[0]) # type: ignore
+            else:
+                print(
+                    "INFO: using default height of 1 since no height information supplied. "
+                    "Add `height` or (`y_min`, `y_max`) as aesthetics for different values."
+                )
+                df["height"] = 1.0
+            return "height", df
+
+    @staticmethod
+    def get_height_and_width(geom: Geom, fs: "FilledScales", df: pd.DataFrame) -> Tuple[Optional[str], Optional[str], pd.DataFrame]:
+
+        height, df = TitleRasterData._get_height(geom, fs, df)
+        width, df = TitleRasterData._get_width(geom, fs, df)
+
+        return width, height, df
+
+
+def create_filled_geom_tile_and_raster(cls: Union[Type["FilledGeomTitle"], Type["FilledGeomRaster"]], geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    fill_data_scale: Optional[Scale] = None
+    color_scale: Optional["ColorScale"] = None
+    fill_col: str = ""
+
+    width, height, df = TitleRasterData.get_height_and_width(geom, fs, df)
+
+    fill_scale = get_fill_scale(fs)  # type: ignore
+    if fill_scale is None:
+        raise GGException("requires a `fill` aesthetic scale!")
+
+    fill_col = fill_scale.get_col_name()  # type: ignore
+    if fill_scale.is_continuous():  # type: ignore
+        fill_data_scale = fill_scale.data_scale  # type: ignore
+        color_scale = use_or_default(fill_scale.color_scale)  # type: ignore
+
+    tile_raster_data = TitleRasterData(
+        fill_col=fill_col,
+        fill_data_scale=fill_data_scale,
+        width=width,
+        height=height,
+        color_scale=color_scale,
+    )
+    new_fg = cls(gg_data=fg_data, data=tile_raster_data)
+    return new_fg, df
 
 @dataclass
 class FilledGeomTitle(GeomTileMixin, FilledGeom):
     data: TitleRasterData
 
+    @classmethod
+    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+        return create_filled_geom_tile_and_raster(cls, geom, fg_data, fs, df)
 
 @dataclass
 class FilledGeomRaster(GeomRasterMixin, FilledGeom):
     data: TitleRasterData
 
+    @classmethod
+    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+        return create_filled_geom_tile_and_raster(cls, geom, fg_data, fs, df)
 
 @dataclass
 class FilledGeomText(GeomTextMixin, FilledGeom):
     text: str
 
+    @classmethod
+    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+        new_fg = FilledGeomText(
+            gg_data=fg_data,
+            text=str(fs.get_text_scale(geom).gg_data.col)  # type: ignore
+        )
+        return new_fg, df
+
 
 @dataclass
 class FilledGeomHistogram(GeomHistogramMixin, FilledGeom):
     histogram_drawing_style: HistogramDrawingStyle
+
+    @classmethod
+    def from_geom(cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+        new_fg = FilledGeomHistogram(
+            gg_data=fg_data,
+            histogram_drawing_style=geom.histogram_drawing_style,  # type: ignore
+        )
+        return new_fg, df
+
+def assign_if_any(fg: FilledGeom, scale: Optional["GGScale"], attr: Any):
+    # TODO this is inherited as tempalte assuming for performanece to avoid func calls
+    # we can refactor later
+    if scale is not None:
+        setattr(fg, attr, scale.get_col_name())
+
+
+def create_filled_geom(fg: FilledGeom, fs: "FilledScales", geom_type: GeomType, df: pd.DataFrame) -> Tuple[FilledGeom, pd.DataFrame]:
+    # this is a bit ugly, but its lot better than the original
+    # its readable enough for now
+    if fg.geom_type == GeomType.ERROR_BAR:
+        return FilledGeomErrorBar.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
+    # tile and raster is really the same. fine for now
+    elif fg.geom_type  == GeomType.TILE:
+        return FilledGeomTitle.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
+    elif fg.geom_type == GeomType.RASTER:
+        return FilledGeomRaster.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
+    elif fg.geom_type == GeomType.TEXT:
+        return FilledGeomText.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
+    elif fg.geom_type == GeomType.HISTOGRAM:
+        return FilledGeomHistogram.from_geom(fg.gg_data.geom, fg.gg_data, fs, df)
+    else:
+        return fg, df
 
 
 def apply_transformations(df: pd.DataFrame, scales: List["GGScale"]):
@@ -1027,128 +1201,6 @@ def call_smoother(
     raise GGException("Unknown smoothing method")
 
 
-def fill_opt_fields(fg: FilledGeom, fs: "FilledScales", df: pd.DataFrame) -> FilledGeom:
-    """
-    TODO CRITICAL+ this needs to be deleted and re-worked
-    there's a few issues here, but will "fix" ERROR_BAR for now
-    """
-
-    def assign_if_any(fg: FilledGeom, scale: Optional["GGScale"], attr: Any):
-        # TODO this is inherited as tempalte assuming for performanece to avoid func calls
-        # we can refactor later
-        if scale is not None:
-            setattr(fg, attr, scale.get_col_name())
-
-    if fg.geom_type == GeomType.ERROR_BAR:
-        new_fg = FilledGeomErrorBar(gg_data=fg.gg_data)
-        assign_if_any(
-            new_fg, fs.get_x_min_scale(new_fg.gg_data.geom, optional=True), "x_min"
-        )
-        assign_if_any(
-            new_fg, fs.get_x_max_scale(new_fg.gg_data.geom, optional=True), "x_max"
-        )
-        assign_if_any(
-            new_fg, fs.get_y_min_scale(new_fg.gg_data.geom, optional=True), "y_min"
-        )
-        assign_if_any(
-            new_fg, fs.get_y_max_scale(new_fg.gg_data.geom, optional=True), "y_max"
-        )
-        return new_fg
-
-    elif fg.geom_type in {GeomType.TILE, GeomType.RASTER}:
-        h_s = fs.get_height_scale(fg.gg_data.geom)
-        w_s = fs.get_width_scale(fg.gg_data.geom)
-        x_min_s = fs.get_x_min_scale(fg.gg_data.geom, optional=True)
-        x_max_s = fs.get_x_max_scale(fg.gg_data.geom, optional=True)
-        y_min_s = fs.get_y_min_scale(fg.gg_data.geom, optional=True)
-        y_max_s = fs.get_y_max_scale(fg.gg_data.geom, optional=True)
-
-        if h_s is not None:
-            # TODO the type: ignore can go away
-            # if we change the if from enum check to isinstance
-            # but id rather make something poly morphic on a secondary wave
-            # for now just port as is
-            fg.data.height = h_s.get_col_name()  # type: ignore
-        elif y_min_s is not None and y_max_s is not None:
-            min_name = y_min_s.get_col_name()
-            max_name = y_max_s.get_col_name()
-
-            # TODO CRITICAL this also comes from macro (non ported yet)
-            y_scale = get_y_scale(fs, fg.geom)  # type: ignore
-            y_col_name = y_scale.get_col_name()
-            df["height"] = df[max_name] - df[min_name]
-            df[y_col_name] = df[min_name]
-            # TODO the type: ignore can go away, just make it polymorphic instead
-            # also not sure why height = some('height') ?????
-            fg.gg_data.height = "height"  # type: ignore
-        elif y_min_s is not None or y_max_s is not None:
-            raise GGException(
-                "Invalid combination of aesthetics! If no height given both an `y_min` and `y_max` has to be supplied for geom_{fg.geom_kind}!"
-            )
-        else:
-            if fg.geom_type == GeomType.RASTER:
-                col_name = get_y_scale(fs, fg.geom).get_col_name()  # type: ignore
-                y_col = df[col_name].unique()  # type: ignore
-                # TODO here is the same as before, make polymorphic
-                fg.num_y = len(y_col)  # type: ignore
-                df["height"] = abs(y_col[1] - y_col[0])
-            else:
-                print(
-                    "INFO: using default height of 1 since no height information supplied. "
-                    "Add `height` or (`y_min`, `y_max`) as aesthetics for different values."
-                )
-                df["height"] = 1.0
-            # TODO here is the same as before, make polymorphic
-            # also not sure why height = some('height') ?????
-            fg.height = "height"  # type: ignore
-
-        # Handle width
-        if w_s is not None:
-            fg.width = w_s.get_col_name()  # type: ignore
-        elif x_min_s is not None and x_max_s is not None:
-            min_name = x_min_s.get_col_name()  # type: ignore
-            max_name = x_max_s.get_col_name()  # type: ignore
-            x_col_name = get_x_scale(fs, fg.geom).get_col_name()  # type: ignore
-            df["width"] = df[max_name] - df[min_name]
-            df[x_col_name] = df[min_name]
-            fg.width = "width"  # type: ignore
-        elif x_min_s is not None or x_max_s is not None:
-            raise GGException(
-                "Invalid combination of aesthetics! If no width given both an `x_min` and `x_max` has to be supplied for geom_{fg.geom_kind}!"
-            )
-        else:
-            if fg.geom_type == GeomType.RASTER:
-                x_col = df[get_x_scale(fs, fg.geom).get_col_name()].unique()  # type: ignore
-                fg.num_x = len(x_col)  # type: ignore
-                df["width"] = abs(x_col[1] - x_col[0])
-            else:
-                print(
-                    "INFO: using default width of 1 since no width information supplied. "
-                    "Add `width` or (`x_min`, `x_max`) as aesthetics for different values."
-                )
-                df["width"] = 1.0
-            fg.width = "width"  # type: ignore
-
-        fill_scale = get_fill_scale(fs)  # type: ignore
-        if fill_scale is None:
-            raise GGException("requires a `fill` aesthetic scale!")
-        fg.fill_col = fill_scale.get_col_name()  # type: ignore
-        if fill_scale.is_continuous():  # type: ignore
-            fg.fill_data_scale = fill_scale.data_scale  # type: ignore
-            fg.color_scale = use_or_default(fill_scale.color_scale)  # type: ignore
-
-    elif fg.geom_type == GeomType.TEXT:
-        fg.text = str(fs.get_text_scale(fg.gg_data.geom).gg_data.col)  # type: ignore
-
-    elif fg.geom_type == GeomType.HISTOGRAM:
-        fg = FilledGeomHistogram(
-            gg_data=fg.gg_data,
-            histogram_drawing_style=fg.gg_data.geom.histogram_drawing_style,
-        )
-
-    return fg
-
-
 def _get_scale_col_name(scale: Optional["GGScale"]) -> Optional[str]:
     if scale is None:
         return None
@@ -1236,9 +1288,8 @@ def filled_identity_geom(
         num_y=0,
     )
 
-    result = FilledGeom(gg_data=fg_data)
-    # TODO refactor
-    result = fill_opt_fields(result, filled_scales, df)
+    fg = FilledGeom(gg_data=fg_data)
+    result, df = create_filled_geom(fg, filled_scales, geom.geom_type, df)
 
     # TODO this has to change, but is fine for now
     style = GGStyle()
@@ -1365,9 +1416,8 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         num_x=0,
         num_y=0,
     )
-    result = FilledGeom(gg_data=fg_data)
-
-    result = fill_opt_fields(result, filled_scales, df)
+    fg = FilledGeom(gg_data=fg_data)
+    result, df = create_filled_geom(fg, filled_scales, geom.geom_type, df)
 
     all_classes = df[x_col].unique()  # type: ignore
     style = GGStyle()
@@ -1461,7 +1511,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales")
     if getattr(stat_kind, "density", False):
         count_col = "density"
     else:
-        count_col = "COUNT"
+        count_col = COUNT_COL
 
     width_col = "binWidths"
 
@@ -1492,7 +1542,8 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales")
     )
     result = FilledGeom(gg_data=fg_data)
 
-    result = fill_opt_fields(result, filled_scales, df)
+    fg = FilledGeom(gg_data=fg_data)
+    result, df = create_filled_geom(fg, filled_scales, geom.geom_type, df)
 
     style = GGStyle()
     for set_val in set_disc_cols:
@@ -1640,8 +1691,8 @@ def filled_smooth_geom(
         num_x=0,
         num_y=0,
     )
-    result = FilledGeom(gg_data=fg_data)
-    result = fill_opt_fields(result, filled_scales, df)
+    fg = FilledGeom(gg_data=fg_data)
+    result, df = create_filled_geom(fg, filled_scales, geom.geom_type, df)
 
     style = GGStyle()
     for set_val in set_disc_cols:
