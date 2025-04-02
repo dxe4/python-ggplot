@@ -985,6 +985,9 @@ def post_process_scales(filled_scales: "FilledScales", plot: "GgPlot"):
                 # essentially take same data as for point
                 filled_geom = filled_identity_geom(df, geom, filled_scales)
                 # still a histogram like geom, make sure bottom is still at 0!
+                if filled_geom.gg_data.y_scale is None:
+                    raise GGException("expected y_scale")
+
                 filled_geom.gg_data.y_scale = Scale(
                     low=min(0.0, filled_geom.gg_data.y_scale.low),
                     high=filled_geom.gg_data.y_scale.high,
@@ -1007,6 +1010,9 @@ def post_process_scales(filled_scales: "FilledScales", plot: "GgPlot"):
                 # essentially take same data as for point
                 filled_geom = filled_identity_geom(df, geom, filled_scales)
                 # still a geom_bar, make sure bottom is still at 0!
+                if filled_geom.gg_data.y_scale is None:
+                    raise GGException("expected y scale")
+
                 filled_geom.gg_data.y_scale = Scale(
                     low=min(0.0, filled_geom.gg_data.y_scale.low),
                     high=filled_geom.gg_data.y_scale.high,
@@ -1266,8 +1272,12 @@ def maybe_filter_unique(df: pd.DataFrame, fg: FilledGeom):
         collect_cols = x_values + y_values
 
         if len(x_values) > 0:
+            if fg.gg_data.y_col is None:
+                raise GGException("expected y_col")
             collect_cols.append(fg.gg_data.y_col)
         if len(y_values) > 0:
+            if fg.gg_data.x_col is None:
+                raise GGException("expected x_col")
             collect_cols.append(fg.gg_data.x_col)
 
         return df.drop_duplicates(subset=collect_cols)
