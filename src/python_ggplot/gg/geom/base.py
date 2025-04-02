@@ -1350,16 +1350,7 @@ def filled_identity_geom(
     style = GGStyle()
 
     # Apply style for set values
-    for set_val in set_disc_cols:
-        # TODO
-        # this may be bug in the original code that loops through set_disc_cols twice
-        # (hence the unused varialbe)
-        # highly probably this is the case
-        # for setVal in setDiscCols:
-        #    applyStyle(style, df, discretes, setDiscCols.mapIt((it, Value(kind: VNull))))
-        # we should double check and make a PR to the nim package if thats the case
-        # seems extra computation but probably no visual issues
-        apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
+    apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if len(map_disc_cols) > 0:
         grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
@@ -1477,10 +1468,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
     all_classes = df[x_col].unique()  # type: ignore
     style = GGStyle()
 
-    # TODO bug in original code? set_val is not used
-    # it does another loop inside
-    for set_val in set_disc_cols:
-        apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
+    apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if len(map_disc_cols) > 0:
         grouped = df.groupby(map_disc_cols, sort=False)  # type: ignore
@@ -1601,8 +1589,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales")
     result, df = create_filled_geom(fg, filled_scales, geom.geom_type, df)
 
     style = GGStyle()
-    for set_val in set_disc_cols:
-        apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
+    apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if map_disc_cols:
         grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore TODO
@@ -1750,10 +1737,7 @@ def filled_smooth_geom(
     result, df = create_filled_geom(fg, filled_scales, geom.geom_type, df)
 
     style = GGStyle()
-    for set_val in set_disc_cols:
-        # same with filled_identity_geom
-        # this may be a bug
-        apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
+    apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if len(map_disc_cols) > 0:
         grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
