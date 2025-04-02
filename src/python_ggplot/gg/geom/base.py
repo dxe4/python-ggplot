@@ -1101,22 +1101,6 @@ def add_counts_by_position(
         return col.copy()
 
 
-def set_x_attributes(fg: FilledGeom, df: pd.DataFrame, scale: "GGScale") -> None:
-    from python_ggplot.gg.scales.base import GGScaleContinuous, GGScaleDiscrete
-
-    if isinstance(scale.gg_data.discrete_kind, GGScaleDiscrete):
-        fg.gg_data.num_x = max(fg.gg_data.num_x, df[str(scale.gg_data.col)].nunique())
-        fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
-        # and assign the label sequence
-        # TODO this assumes fg.gg_data.x_discrete_kind = Discrete
-        fg.gg_data.x_discrete_kind.label_seq = scale.gg_data.discrete_kind.label_seq  # type: ignore
-    elif isinstance(scale.gg_data.discrete_kind, GGScaleContinuous):
-        if fg.geom_type != GeomType.RASTER:
-            fg.gg_data.num_x = max(fg.gg_data.num_x, len(df))
-    else:
-        raise GGException("unexpected discrete type")
-
-
 def split_discrete_set_map(
     df: pd.DataFrame, scales: List["GGScale"]  # type: ignore
 ) -> Tuple[List[str], List[str]]:
@@ -1363,7 +1347,11 @@ def filled_identity_geom(
             apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
 
             yield_df = sub_df.copy()
-            set_x_attributes(result, yield_df, x)
+            if x is None:
+                #we should have not reached this point, but raise here for now
+                raise GGException("x scale is None")
+
+            x.set_x_attributes(result, yield_df)
 
             if geom.gg_data.position == PositionType.STACK:
                 yield_df[PREV_VALS_COL] = 0.0 if len(col) == 0 else col.copy()  # type: ignore
@@ -1407,7 +1395,10 @@ def filled_identity_geom(
         yield_df = df.copy()
         yield_df[PREV_VALS_COL] = 0.0
         yield_df = result.maybe_filter_unique(yield_df)
-        set_x_attributes(result, yield_df, x)
+        if x is None:
+            #we should have not reached this point, but raise here for now
+            raise GGException("x scale is None")
+        x.set_x_attributes(result, yield_df)
         key = ("", None)
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
@@ -1509,7 +1500,11 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
                 yield_df, cont, style, geom.kind, to_clone=True
             )
 
-            set_x_attributes(result, yield_df, x)
+            if x is None:
+                #we should have not reached this point, but raise here for now
+                raise GGException("x scale is None")
+            x.set_x_attributes(result, yield_df)
+
             result.gg_data.y_scale = result.gg_data.y_scale.merge(
                 Scale(low=0.0, high=float(col.max()))  # type: ignore
             )
@@ -1527,7 +1522,10 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
         )
-        set_x_attributes(result, yield_df, x)
+        if x is None:
+            #we should have not reached this point, but raise here for now
+            raise GGException("x scale is None")
+        x.set_x_attributes(result, yield_df)
         result.gg_data.y_scale = result.gg_data.y_scale.merge(
             Scale(low=0.0, high=float(yield_df[COUNT_COL].max()))  # type: ignore
         )
@@ -1754,7 +1752,10 @@ def filled_smooth_geom(
                 range=x.gg_data.discrete_kind.data_scale,  # type: ignore
             )
             yield_df[SMOOTH_VALS_COL] = smoothed
-            set_x_attributes(result, yield_df, x)  # type: ignore
+            if x is None:
+                #we should have not reached this point, but raise here for now
+                raise GGException("x scale is None")
+            x.set_x_attributes(result, yield_df)
 
             if geom.gg_data.position == PositionType.STACK:
                 yield_df[PREV_VALS_COL] = pd.Series(0.0, index=yield_df.index) if len(col) == 0 else col.copy()  # type: ignore
@@ -1802,7 +1803,12 @@ def filled_smooth_geom(
         yield_df[PREV_VALS_COL] = pd.Series(0.0, index=yield_df.index)  # type: ignore
         yield_df[SMOOTH_VALS_COL] = smoothed
         yield_df = result.maybe_filter_unique(yield_df)
-        set_x_attributes(result, yield_df, x)
+
+        if x is None:
+            #we should have not reached this point, but raise here for now
+            raise GGException("x scale is None")
+        x.set_x_attributes(result, yield_df)
+
         key = ("", VNull())
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type

@@ -275,6 +275,10 @@ class LinearAndTransformScaleData:
 class GGScaleDiscreteKind(DiscreteKind, ABC):
 
     @abstractmethod
+    def update_filled_geom_x_attributes(self, fg: FilledGeom, df: pd.DataFrame, scale_col: str):
+        pass
+
+    @abstractmethod
     def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
         pass
 
@@ -290,6 +294,14 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
     label_seq: List[GGValue] = field(default_factory=list)
     format_discrete_label: Optional[DiscreteFormat] = None
 
+    def update_filled_geom_x_attributes(self, fg: FilledGeom, df: pd.DataFrame, scale_col: str):
+        fg.gg_data.num_x = max(fg.gg_data.num_x, df[scale_col].nunique())
+        fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
+        # and assign the label sequence
+        # TODO this assumes fg.gg_data.x_discrete_kind = Discrete
+        # we have to double check this or it can cause bugs
+        fg.gg_data.x_discrete_kind.label_seq = self.label_seq  # type: ignore
+
     def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
         return FilledGeomDiscrete(label_seq=self.label_seq)
 
@@ -302,6 +314,10 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
 class GGScaleContinuous(GGScaleDiscreteKind):
     data_scale: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))
     format_continuous_label: Optional[ContinuousFormat] = None
+
+    def update_filled_geom_x_attributes(self, fg: FilledGeom, df: pd.DataFrame, scale_col: str):
+        if fg.geom_type != GeomType.RASTER:
+            fg.gg_data.num_x = max(fg.gg_data.num_x, len(df))
 
     def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
         return FilledGeomContinuous()
@@ -354,6 +370,11 @@ class GGScale(ABC):
     """
 
     gg_data: GGScaleData
+
+    def set_x_attributes(self, fg: FilledGeom, df: pd.DataFrame):
+        self.gg_data.discrete_kind.update_filled_geom_x_attributes(
+            fg, df, str(self.gg_data.col)
+        )
 
     def assign_breaks(self, breaks: Union[int, List[float]]) -> None:
         """
