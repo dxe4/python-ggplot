@@ -1605,7 +1605,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales")
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if map_disc_cols:
-        grouped = df.groupby(map_disc_cols)  # type: ignore TODO
+        grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore TODO
         col = pd.Series(dtype=float)
 
         # for keys, sub_df in df: df.sort_values(ascending=False)
@@ -1756,12 +1756,10 @@ def filled_smooth_geom(
         apply_style(style, df, discretes, [(col, VNull()) for col in set_disc_cols])
 
     if len(map_disc_cols) > 0:
-        grouped = df.groupby(map_disc_cols)  # type: ignore
+        grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
         col = pd.Series(dtype=float)  # type: ignore
 
-        # TODO CRITICAL deal with pandas multi index...
-        # assume this works for now to finish the rest
-        for keys, sub_df in grouped.sort_values(ascending=False):  # type: ignore
+        for keys, sub_df in grouped:  # type: ignore
             apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
             yield_df = sub_df.copy()  # type: ignore
 
