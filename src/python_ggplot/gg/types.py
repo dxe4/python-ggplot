@@ -4,7 +4,9 @@ from enum import auto
 from types import NoneType
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from python_ggplot.common.maths import poly_fit, savitzky_golay
 from python_ggplot.core.coord.objects import Coord
@@ -118,22 +120,24 @@ class StatSmooth(StatKind):
     poly_order: int
     method_type: "SmoothMethodType"
 
-    def polynomial_smooth(self, x: pd.Series, y: pd.Series):
+    def polynomial_smooth(
+        self, x: pd.Series, y: pd.Series
+    ) -> NDArray[np.floating[Any]]:
         return poly_fit(
             x.to_numpy(),  # type: ignore
             y.to_numpy(),  # type: ignore
             self.poly_order,
         )
 
-    def svg_smooth(self, data: pd.Series):
-        window_size = round(len(data) * self.span)
+    def svg_smooth(self, data: pd.Series) -> NDArray[np.floating[Any]]:
+        window_size = round(data.size * self.span)
         if window_size % 2 == 0:
             window_size += 1
-        if window_size < 1 or window_size > len(data):
+        if window_size < 1 or window_size > data.size:
             raise GGException(
                 f"The given `span` value results in a "
                 f"Savitzky-Golay filter window of {window_size} for input "
-                f"data with length {len(data)}."
+                f"data with length {data.size}."
             )
         # TODO high priority, this can return int or poly1d
         return savitzky_golay(

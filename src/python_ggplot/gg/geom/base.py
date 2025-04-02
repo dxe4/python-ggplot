@@ -572,7 +572,6 @@ class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
 
         return df.drop_duplicates(subset=collect_cols)
 
-
     @classmethod
     def from_geom(
         cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
@@ -1233,7 +1232,7 @@ def encompassing_data_scale(
 
 def call_smoother(
     fg: FilledGeom, df: pd.DataFrame, scale: "GGScale", range: Any
-) -> NDArray[Any]:
+) -> NDArray[np.floating[Any]]:
 
     geom = fg.gg_data.geom
     stat_kind = geom.gg_data.stat_kind
@@ -1348,7 +1347,7 @@ def filled_identity_geom(
 
             yield_df = sub_df.copy()
             if x is None:
-                #we should have not reached this point, but raise here for now
+                # we should have not reached this point, but raise here for now
                 raise GGException("x scale is None")
 
             x.set_x_attributes(result, yield_df)
@@ -1396,7 +1395,7 @@ def filled_identity_geom(
         yield_df[PREV_VALS_COL] = 0.0
         yield_df = result.maybe_filter_unique(yield_df)
         if x is None:
-            #we should have not reached this point, but raise here for now
+            # we should have not reached this point, but raise here for now
             raise GGException("x scale is None")
         x.set_x_attributes(result, yield_df)
         key = ("", None)
@@ -1501,7 +1500,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
             )
 
             if x is None:
-                #we should have not reached this point, but raise here for now
+                # we should have not reached this point, but raise here for now
                 raise GGException("x scale is None")
             x.set_x_attributes(result, yield_df)
 
@@ -1523,7 +1522,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
             yield_df, cont, style, geom.geom_type
         )
         if x is None:
-            #we should have not reached this point, but raise here for now
+            # we should have not reached this point, but raise here for now
             raise GGException("x scale is None")
         x.set_x_attributes(result, yield_df)
         result.gg_data.y_scale = result.gg_data.y_scale.merge(
@@ -1749,11 +1748,12 @@ def filled_smooth_geom(
                 result,
                 yield_df,  # type: ignore
                 y,
+                # This has to be continuous for data scale to exist needs cleanup
                 range=x.gg_data.discrete_kind.data_scale,  # type: ignore
             )
             yield_df[SMOOTH_VALS_COL] = smoothed
             if x is None:
-                #we should have not reached this point, but raise here for now
+                # we should have not reached this point, but raise here for now
                 raise GGException("x scale is None")
             x.set_x_attributes(result, yield_df)
 
@@ -1762,8 +1762,8 @@ def filled_smooth_geom(
 
             # possibly modify `col` if stacking
             # TODO double check this
-            yield_df[result.y_col] = add_counts_by_position(
-                yield_df[result.y_col],  # type: ignore
+            yield_df[result.gg_data.y_col] = add_counts_by_position(
+                yield_df[result.gg_data.y_col],  # type: ignore
                 col,  # type: ignore
                 geom.gg_data.position,
             )
@@ -1805,7 +1805,7 @@ def filled_smooth_geom(
         yield_df = result.maybe_filter_unique(yield_df)
 
         if x is None:
-            #we should have not reached this point, but raise here for now
+            # we should have not reached this point, but raise here for now
             raise GGException("x scale is None")
         x.set_x_attributes(result, yield_df)
 

@@ -46,7 +46,9 @@ def savitzky_golay(
     return np.convolve(m[::-1], y, mode="valid")  # type: ignore
 
 
-def poly_fit(x: NDArray[np.float64], y: NDArray[np.float64], degree: int):
+def poly_fit(
+    x: NDArray[np.floating[Any]], y: NDArray[np.floating[Any]], degree: int
+) -> NDArray[np.floating[Any]]:
     poly_coeff = np.polyfit(x, y, degree)
     result = np.polyval(poly_coeff, x)
     return result

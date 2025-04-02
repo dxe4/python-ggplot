@@ -275,7 +275,9 @@ class LinearAndTransformScaleData:
 class GGScaleDiscreteKind(DiscreteKind, ABC):
 
     @abstractmethod
-    def update_filled_geom_x_attributes(self, fg: FilledGeom, df: pd.DataFrame, scale_col: str):
+    def update_filled_geom_x_attributes(
+        self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
+    ):
         pass
 
     @abstractmethod
@@ -294,7 +296,9 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
     label_seq: List[GGValue] = field(default_factory=list)
     format_discrete_label: Optional[DiscreteFormat] = None
 
-    def update_filled_geom_x_attributes(self, fg: FilledGeom, df: pd.DataFrame, scale_col: str):
+    def update_filled_geom_x_attributes(
+        self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
+    ):
         fg.gg_data.num_x = max(fg.gg_data.num_x, df[scale_col].nunique())
         fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
         # and assign the label sequence
@@ -315,7 +319,9 @@ class GGScaleContinuous(GGScaleDiscreteKind):
     data_scale: Scale = field(default_factory=lambda: Scale(low=0.0, high=0.0))
     format_continuous_label: Optional[ContinuousFormat] = None
 
-    def update_filled_geom_x_attributes(self, fg: FilledGeom, df: pd.DataFrame, scale_col: str):
+    def update_filled_geom_x_attributes(
+        self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
+    ):
         if fg.geom_type != GeomType.RASTER:
             fg.gg_data.num_x = max(fg.gg_data.num_x, len(df))
 
