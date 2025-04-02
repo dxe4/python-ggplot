@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
 
@@ -49,8 +49,8 @@ def default_style(geom_type: GeomType, stat_type: StatType) -> Style:
     return _style_lookup[geom_type]
 
 
-def use_or_default(c: ColorScale) -> ColorScale:
-    if len(c.colors) == 0:
+def use_or_default(c: Optional[ColorScale]) -> ColorScale:
+    if c is None or len(c.colors) == 0:
         return ColorScale.viridis()
     else:
         return c

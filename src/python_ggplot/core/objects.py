@@ -169,8 +169,8 @@ class Color:
     def to_rgba(self) -> "ColorRGBA":
         return ColorRGBA(
             r=int(self.r * 255),
-            b=int(self.b),
-            g=int(self.g),
+            b=int(self.b * 255),
+            g=int(self.g * 255),
             a=int(self.a),
         )
 
@@ -180,10 +180,15 @@ class ColorRGBA:
     r: int
     g: int
     b: int
-    a: int = 255
+    a: int = 1
 
-    def float_alpha(self) -> float:
-        return self.a / 255
+    def to_color(self):
+        return Color(
+            r=int(self.r / 255),
+            b=int(self.b / 255),
+            g=int(self.g / 255),
+            a=int(self.a),
+        )
 
     def __eq__(self, o: Any) -> bool:
         return self.r == o.r and self.g == o.g and self.b == o.b and self.a == o.a

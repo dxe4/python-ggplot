@@ -191,40 +191,40 @@ class FilledGeom:
 
     def is_discrete_y(self) -> bool:
         self._ensure_y_discrete_kind_exists()
-        return self.gg_data.y_discrete_kind.discrete_type == DiscreteType.DISCRETE
+        return self.gg_data.y_discrete_kind.discrete_type == DiscreteType.DISCRETE  # type: ignore
 
     def is_discrete_x(self) -> bool:
         self._ensure_x_discrete_kind_exists()
-        return self.gg_data.x_discrete_kind.discrete_type == DiscreteType.DISCRETE
+        return self.gg_data.x_discrete_kind.discrete_type == DiscreteType.DISCRETE  # type: ignore
 
     @property
     def discrete_type_y(self) -> DiscreteType:
         self._ensure_y_discrete_kind_exists()
-        return self.gg_data.y_discrete_kind.discrete_type
+        return self.gg_data.y_discrete_kind.discrete_type  # type: ignore
 
     @property
     def discrete_type_x(self) -> DiscreteType:
         self._ensure_x_discrete_kind_exists()
-        return self.gg_data.x_discrete_kind.discrete_type
+        return self.gg_data.x_discrete_kind.discrete_type  # type: ignore
 
     @property
     def discrete_type(self) -> Optional[DiscreteType]:
         self._ensure_x_discrete_kind_exists()
         self._ensure_y_discrete_kind_exists()
 
-        left = self.gg_data.x_discrete_kind.discrete_type
-        right = self.gg_data.y_discrete_kind.discrete_type
+        left = self.gg_data.x_discrete_kind.discrete_type  # type: ignore
+        right = self.gg_data.y_discrete_kind.discrete_type  # type: ignore
         if left != right:
             return None
         return left
 
     def get_x_label_seq(self) -> List[GGValue]:
         self._ensure_x_discrete_kind_exists()
-        return self.gg_data.x_discrete_kind.get_label_seq()
+        return self.gg_data.x_discrete_kind.get_label_seq()  # type: ignore
 
     def get_y_label_seq(self) -> List[GGValue]:
         self._ensure_y_discrete_kind_exists()
-        return self.gg_data.y_discrete_kind.get_label_seq()
+        return self.gg_data.y_discrete_kind.get_label_seq()  # type: ignore
 
     @property
     def geom_type(self) -> GeomType:
@@ -293,6 +293,11 @@ class GeomRectDrawMixin:
         style: Style,
     ):
         from python_ggplot.gg.drawing import read_or_calc_bin_width
+
+        if fg.gg_data.x_col is None:
+            raise GGException("x_col does not exist")
+        if fg.gg_data.x_discrete_kind is None:
+            raise GGException("x_discrete_kind does not exist")
 
         bin_width = read_or_calc_bin_width(
             df, idx, fg.gg_data.x_col, dc_kind=fg.gg_data.x_discrete_kind.discrete_type
@@ -597,7 +602,7 @@ class TitleRasterData:
             if geom.geom_type == GeomType.RASTER:
                 x_col = df[get_x_scale(fs, fg.geom).get_col_name()].unique()  # type: ignore
                 fg.num_x = len(x_col)  # type: ignore
-                df["width"] = abs(x_col[1] - x_col[0])
+                df["width"] = abs(x_col[1] - x_col[0])  # type: ignore
             else:
                 print(
                     "INFO: using default width of 1 since no width information supplied. "
@@ -667,24 +672,30 @@ def create_filled_geom_tile_and_raster(
     fs: "FilledScales",
     df: pd.DataFrame,
 ) -> Tuple[FilledGeom, pd.DataFrame]:
+    from python_ggplot.gg.styles.utils import use_or_default
+
     fill_data_scale: Optional[Scale] = None
     color_scale: Optional["ColorScale"] = None
     fill_col: str = ""
 
     width, height, df = TitleRasterData.get_height_and_width(geom, fs, df)
 
-    fill_scale = get_fill_scale(fs)  # type: ignore
+    fill_scale = fs.get_fill_scale(geom)
     if fill_scale is None:
         raise GGException("requires a `fill` aesthetic scale!")
 
-    fill_col = fill_scale.get_col_name()  # type: ignore
-    if fill_scale.is_continuous():  # type: ignore
-        fill_data_scale = fill_scale.data_scale  # type: ignore
-        color_scale = use_or_default(fill_scale.color_scale)  # type: ignore
+    fill_col = fill_scale.get_col_name()
+    if fill_scale.is_continuous():
+        fill_data_scale = fill_scale.gg_data.discrete_kind.data_scale  # type: ignore
+        # TODO fix this, fine for now
+        potential_color_scale: Optional[ColorScale] = getattr(
+            fill_scale, "color_scale", None
+        )
+        color_scale = use_or_default(potential_color_scale)
 
     tile_raster_data = TitleRasterData(
         fill_col=fill_col,
-        fill_data_scale=fill_data_scale,
+        fill_data_scale=fill_data_scale,  # type: ignore
         width=width,
         height=height,
         color_scale=color_scale,
@@ -777,6 +788,8 @@ def apply_transformations(df: pd.DataFrame, scales: List["GGScale"]):
     """
     TODO this will need fixing
     """
+    from python_ggplot.gg.scales.base import ScaleType
+
     transformations: Dict[Any, Any] = {}
     result: pd.DataFrame = pd.DataFrame()
 
@@ -813,6 +826,7 @@ def apply_cont_scale_if_any(
     to_clone: bool = False,
 ):
     from python_ggplot.gg.scales.base import ScaleType
+    from python_ggplot.gg.styles.utils import change_style
 
     result_style = base_style
     result_styles = []
@@ -828,8 +842,8 @@ def apply_cont_scale_if_any(
             # avoid expensive computation for raster
             if geom_type != GeomType.RASTER:
                 # TODO high priority map_data logic is funny overall, add ignore type for now
-                sc_vals = scale.map_data(result_df)  # type: ignore
-                result_styles = [change_style(base_style, val) for val in sc_vals]  # type: ignore
+                sc_vals = scale.map_data(result_df)
+                result_styles = [change_style(base_style, val) for val in sc_vals]
 
     if not result_styles:
         result_styles = [base_style]

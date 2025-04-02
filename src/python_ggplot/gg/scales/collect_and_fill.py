@@ -7,8 +7,15 @@ import pandas as pd
 from numpy.typing import NDArray
 from pandas.api.types import is_numeric_dtype
 
-from python_ggplot.core.chroma import int_to_color
-from python_ggplot.core.objects import AxisKind, ColorHCL, LineType, MarkerKind, Scale
+from python_ggplot.core.chroma import int_to_color, value_to_color
+from python_ggplot.core.objects import (
+    AxisKind,
+    Color,
+    ColorHCL,
+    LineType,
+    MarkerKind,
+    Scale,
+)
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -433,15 +440,12 @@ def fill_continuous_color_scale(
         gg_data=gg_data, color_scale=color_scale
     )
 
-    def map_data(df: pd.DataFrame) -> List[Any]:
+    def map_data(df: pd.DataFrame) -> List[Union[FillColorScaleValue, ColorScaleValue]]:
         # TODO FIX THIS
-        result: List[Any] = []
+        # this logic is still funny, needs improvement
         t_col = col.evaluate(df)
-        scale_val: Dict[Any, Any] = {}
-        if scale_type == ScaleType.COLOR:
-            scale_val = {"kind": "color"}
-        else:
-            scale_val = {"kind": "fill_color"}
+
+        colors: List[Color] = []
 
         if data_type == DataType.MAPPING:
             t = t_col.to_numpy(dtype=float)
@@ -457,8 +461,8 @@ def fill_continuous_color_scale(
                 )
                 color_idx = max(0, min(255, color_idx))
                 c_val = color_scale.colors[color_idx]
-                scale_val["color"] = int_to_color(c_val)
-                result.append(scale_val.copy())
+
+                colors.append(int_to_color(c_val).to_color())
         elif data_type == DataType.SETTING:
             t = t_col.to_numpy()
             if len(t) != len(df):
@@ -466,15 +470,19 @@ def fill_continuous_color_scale(
 
             if np.issubdtype(t.dtype, np.integer) or np.issubdtype(t.dtype, np.str_):
                 for val in t:
-                    scale_val["color"] = val.to_color()
-                    result.append(scale_val.copy())
+                    colors.append(value_to_color(val).to_color())
             else:
                 raise ValueError(
                     f"Invalid column type {t.dtype} of column {col} to set a color!"
                 )
         else:
             raise GGException("expected mapping or setting for data type")
-        return result
+
+        if scale_type == ScaleType.COLOR:
+            cls_ = ColorScaleValue
+        else:
+            cls_ = FillColorScaleValue
+        return [cls_(color=i) for i in colors]
 
     result.map_data = map_data
     return result  # type: ignore

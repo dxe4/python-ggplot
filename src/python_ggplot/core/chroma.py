@@ -137,9 +137,9 @@ def value_to_color(c: int | str) -> ColorRGBA:
     # port bit by bit
     if isinstance(c, int):
         return int_to_color(c)
-    if isinstance(c, str):
+    elif isinstance(c, str):
         return parse_html_color(c)
-    raise ValueError("expected str or int")
+    raise GGException("expected str or int")
 
 
 def to_opt_color(x: Union[Color, int, str, None]) -> Optional[Color]:
