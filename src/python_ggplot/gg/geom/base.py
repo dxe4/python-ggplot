@@ -247,6 +247,10 @@ class FilledGeom:
         for label, tup in self.gg_data.yield_data.items():
             yield label, tup[0], tup[1], tup[2]
 
+    def maybe_filter_unique(self, df: pd.DataFrame) -> pd.DataFrame:
+        # this is only needed for FilledGeomErrorBar as of now
+        return df
+
 
 class XYCreateFilledGeom:
 
@@ -551,6 +555,23 @@ class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
     y_min: Optional[str] = None
     x_max: Optional[str] = None
     y_max: Optional[str] = None
+
+    def maybe_filter_unique(self, df: pd.DataFrame) -> pd.DataFrame:
+        x_values = [i for i in [self.x_min, self.x_max] if i is not None]
+        y_values = [i for i in [self.y_min, self.y_max] if i is not None]
+        collect_cols = x_values + y_values
+
+        if len(x_values) > 0:
+            if self.gg_data.y_col is None:
+                raise GGException("expected y_col")
+            collect_cols.append(self.gg_data.y_col)
+        if len(y_values) > 0:
+            if self.gg_data.x_col is None:
+                raise GGException("expected x_col")
+            collect_cols.append(self.gg_data.x_col)
+
+        return df.drop_duplicates(subset=collect_cols)
+
 
     @classmethod
     def from_geom(
@@ -1264,27 +1285,6 @@ def _get_filled_geom_from_scale(scale: Optional["GGScale"]):
     return scale.gg_data.discrete_kind.to_filled_geom_kind()
 
 
-def maybe_filter_unique(df: pd.DataFrame, fg: FilledGeom):
-    if isinstance(fg, FilledGeomErrorBar):
-
-        x_values = [i for i in [fg.x_min, fg.x_max] if i is not None]
-        y_values = [i for i in [fg.y_min, fg.y_max] if i is not None]
-        collect_cols = x_values + y_values
-
-        if len(x_values) > 0:
-            if fg.gg_data.y_col is None:
-                raise GGException("expected y_col")
-            collect_cols.append(fg.gg_data.y_col)
-        if len(y_values) > 0:
-            if fg.gg_data.x_col is None:
-                raise GGException("expected x_col")
-            collect_cols.append(fg.gg_data.x_col)
-
-        return df.drop_duplicates(subset=collect_cols)
-
-    return df
-
-
 def determine_data_scale(
     scale: Optional["GGScale"], additional: List["GGScale"], df: pd.DataFrame
 ) -> Optional[Scale]:
@@ -1384,7 +1384,7 @@ def filled_identity_geom(
             ):
                 yield_df[result.gg_data.y_col] = col
 
-            yield_df = maybe_filter_unique(yield_df, result)
+            yield_df = result.maybe_filter_unique(yield_df)
             # this has to be copied otherwise the same style is changed
             base_style = deepcopy(style)
             style_, styles_, temp_yield_df = apply_cont_scale_if_any(
@@ -1406,7 +1406,7 @@ def filled_identity_geom(
     else:
         yield_df = df.copy()
         yield_df[PREV_VALS_COL] = 0.0
-        yield_df = maybe_filter_unique(yield_df, result)
+        yield_df = result.maybe_filter_unique(yield_df)
         set_x_attributes(result, yield_df, x)
         key = ("", None)
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
@@ -1503,7 +1503,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
             ):
                 yield_df["count"] = col
 
-            maybe_filter_unique(yield_df, result)
+            yield_df = result.maybe_filter_unique(yield_df)
 
             result.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
                 yield_df, cont, style, geom.kind, to_clone=True
@@ -1523,7 +1523,7 @@ def filled_count_geom(df: pd.DataFrame, geom: Any, filled_scales: Any) -> Filled
         yield_df[PREV_VALS_COL] = 0.0
 
         key = ("", VNull())
-        yield_df = maybe_filter_unique(yield_df, result)
+        yield_df = result.maybe_filter_unique(yield_df)
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
             yield_df, cont, style, geom.geom_type
         )
@@ -1626,7 +1626,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales")
                 ):
                     yield_df[result.gg_data.y_col] = col
 
-            yield_df = maybe_filter_unique(yield_df, result)  # type: ignore
+            yield_df = result.maybe_filter_unique(yield_df)
             result.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
                 yield_df, cont, style, geom.geom_type, to_clone=True  # type: ignore
             )
@@ -1662,7 +1662,7 @@ def filled_bin_geom(df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales")
             {x.get_col_name(): bins, count_col: hist, width_col: bin_widths}
         )
         yield_df[PREV_VALS_COL] = 0.0
-        yield_df = maybe_filter_unique(yield_df, result)  # type: ignore
+        yield_df = result.maybe_filter_unique(yield_df)
 
         key = ("", VNull())
 
@@ -1777,7 +1777,7 @@ def filled_smooth_geom(
             ):
                 yield_df[result.y_col] = col  # type: ignore
 
-            yield_df = maybe_filter_unique(yield_df, result)  # type: ignore
+            yield_df = result.maybe_filter_unique(yield_df)
             result.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
                 yield_df, cont, style, geom.geom_type, to_clone=True  # type: ignore
             )
@@ -1801,7 +1801,7 @@ def filled_smooth_geom(
         )
         yield_df[PREV_VALS_COL] = pd.Series(0.0, index=yield_df.index)  # type: ignore
         yield_df[SMOOTH_VALS_COL] = smoothed
-        yield_df = maybe_filter_unique(yield_df, result)
+        yield_df = result.maybe_filter_unique(yield_df)
         set_x_attributes(result, yield_df, x)
         key = ("", VNull())
         result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
