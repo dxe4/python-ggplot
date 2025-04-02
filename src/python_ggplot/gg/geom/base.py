@@ -864,7 +864,7 @@ def call_histogram(
     if not isinstance(stat_kind, StatBin):
         raise GGException("expected bin stat type")
 
-    def read_tmpl(sc: Any):
+    def read_tmpl(sc: Any) -> NDArray[np.float64]:
         if sc is None:
             return []
         return sc.gg_data.col.evaluate(df).to_numpy(dtype=float)
