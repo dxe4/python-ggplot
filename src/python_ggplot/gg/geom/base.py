@@ -873,10 +873,44 @@ def add_zero_keys(
     return pd.concat([df, df_zero], ignore_index=True)
 
 
+def _scale_to_numpy_array(df: pd.DataFrame, scale: Optional["GGScale"]) -> NDArray[np.floating[Any]]:
+    if scale is None:
+        return np.empty(0, dtype=np.float64)
+    else:
+        return df[str(scale.gg_data.col)].to_numpy(dtype=float)  # type: ignore
+
+
+def call_hist(
+    df: pd.DataFrame,
+    bins_arg: Any,
+    stat_kind: StatBin,
+    range_scale: Scale,
+    weight_scale: Optional["GGScale"],
+    data: NDArray[np.floating[Any]],
+):
+    if stat_kind.bin_by == BinByType.FULL:
+        range_val = (range_scale.low, range_scale.high)
+    else:
+        range_val = (0.0, 0.0)
+
+    weight_data = _scale_to_numpy_array(df, weight_scale)
+    if len(weight_data) == 0:
+        weight_data = None
+
+    hist, bin_edges = histogram(
+        data,
+        bins_arg,
+        weights=weight_data,
+        range=range_val,
+        density=stat_kind.density,
+    )
+    return hist, bin_edges
+
+
 def call_histogram(
     geom: Geom,
     df: pd.DataFrame,
-    scale: "GGScale",
+    scale: Optional["GGScale"],
     weight_scale: Optional["GGScale"],
     range_scale: Scale,
 ) -> Tuple[
@@ -891,43 +925,24 @@ def call_histogram(
     if not isinstance(stat_kind, StatBin):
         raise GGException("expected bin stat type")
 
-    def read_tmpl(sc: Any) -> NDArray[np.float64]:
-        if sc is None:
-            return []
-        return sc.gg_data.col.evaluate(df).to_numpy(dtype=float)
-
-    data = read_tmpl(scale)
+    data = _scale_to_numpy_array(df, scale)
     hist = []
     bin_edges = []
     bin_widths = []
 
-    def call_hist(bins_arg: Any):
-        """
-        TODO refactor this
-        """
-        if stat_kind.bin_by == BinByType.FULL:
-            range_val = (range_scale.low, range_scale.high)
-        else:
-            range_val = (0.0, 0.0)
-
-        weight_data = read_tmpl(weight_scale)  # type: ignore
-
-        hist, bin_edges = histogram(
-            data,
-            bins_arg,
-            weights=weight_data or None,  # type: ignore
-            range=range_val,
-            density=stat_kind.density,
-        )
-        return hist, bin_edges
-
     if stat_kind.bin_edges is not None:
-        hist, bin_edges = call_hist(stat_kind.bin_edges)
+        hist, bin_edges = call_hist(
+            df, stat_kind.bin_edges, stat_kind, range_scale, weight_scale, data
+        )
     elif stat_kind.bin_width is not None:
         bins = round((range_scale.high - range_scale.low) / stat_kind.bin_width)
-        hist, bin_edges = call_hist(int(bins))
+        hist, bin_edges = call_hist(
+            df, int(bins), stat_kind, range_scale, weight_scale, data
+        )
     else:
-        hist, bin_edges = call_hist(stat_kind.num_bins)
+        hist, bin_edges = call_hist(
+            df, stat_kind.num_bins, stat_kind, range_scale, weight_scale, data
+        )
 
     bin_widths = np.diff(bin_edges)  # type: ignore
     # TODO CRITICAL+ sanity this logic

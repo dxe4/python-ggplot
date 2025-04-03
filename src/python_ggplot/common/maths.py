@@ -80,11 +80,11 @@ def bincount(x: List[int], sorted_: bool = False) -> NDArray[Any]:
 
 
 def histogram(
-    x: NDArray[np.float64],
+    x: NDArray[np.floating[Any]],
     bins: Union[int, str],
     range: Optional[Tuple[float, float]] = None,
     normed: bool = False,
-    weights: Optional[List[float]] = None,
+    weights: Union[Optional[List[float]], Optional[NDArray[np.floating[Any]]]] = None,
     density: bool = False,
 ) -> Tuple[NDArray[Any], NDArray[Any]]:
     """
