@@ -912,7 +912,6 @@ def call_histogram(
 
         weight_data = read_tmpl(weight_scale)  # type: ignore
 
-        nonlocal hist, bin_edges
         hist, bin_edges = histogram(
             data,
             bins_arg,
@@ -920,14 +919,15 @@ def call_histogram(
             range=range_val,
             density=stat_kind.density,
         )
+        return hist, bin_edges
 
     if stat_kind.bin_edges is not None:
-        call_hist(stat_kind.bin_edges)
+        hist, bin_edges = call_hist(stat_kind.bin_edges)
     elif stat_kind.bin_width is not None:
         bins = round((range_scale.high - range_scale.low) / stat_kind.bin_width)
-        call_hist(int(bins))
+        hist, bin_edges = call_hist(int(bins))
     else:
-        call_hist(stat_kind.num_bins)
+        hist, bin_edges = call_hist(stat_kind.num_bins)
 
     bin_widths = np.diff(bin_edges)  # type: ignore
     # TODO CRITICAL+ sanity this logic
