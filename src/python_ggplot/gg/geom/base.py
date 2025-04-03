@@ -776,13 +776,6 @@ class FilledGeomHistogram(GeomHistogramMixin, FilledGeom):
         return new_fg, df
 
 
-def assign_if_any(fg: FilledGeom, scale: Optional["GGScale"], attr: Any):
-    # TODO this is inherited as tempalte assuming for performanece to avoid func calls
-    # we can refactor later
-    if scale is not None:
-        setattr(fg, attr, scale.get_col_name())
-
-
 def create_filled_geom(
     fg: FilledGeom, fs: "FilledScales", geom_type: GeomType, df: pd.DataFrame
 ) -> Tuple[FilledGeom, pd.DataFrame]:
