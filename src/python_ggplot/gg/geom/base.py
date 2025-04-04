@@ -147,7 +147,6 @@ class Geom(ABC):
         pass
 
 
-
 @dataclass
 class FilledGeomData:
     geom: Geom
@@ -258,7 +257,13 @@ class GeomPoint(Geom):
 
     @property
     def allowed_stat_types(self) -> List["StatType"]:
-        return [StatType.IDENTITY, StatType.COUNT, StatType.SMOOTH, StatType.BIN, StatType.DENSITY]
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.SMOOTH,
+            StatType.BIN,
+            StatType.DENSITY,
+        ]
 
     @property
     def geom_type(self) -> GeomType:
@@ -404,8 +409,13 @@ class GeomErrorBar(GeomErrorBarMixin, Geom):
 
     @property
     def allowed_stat_types(self) -> List["StatType"]:
-        return [StatType.IDENTITY, StatType.COUNT, StatType.SMOOTH, StatType.BIN, StatType.DENSITY]
-
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.SMOOTH,
+            StatType.BIN,
+            StatType.DENSITY,
+        ]
 
 
 class GeomTextMixin:
@@ -447,7 +457,13 @@ class GeomTextMixin:
 class GeomText(GeomTextMixin, Geom):
     @property
     def allowed_stat_types(self) -> List["StatType"]:
-        return [StatType.IDENTITY, StatType.COUNT, StatType.SMOOTH, StatType.BIN, StatType.DENSITY]
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.SMOOTH,
+            StatType.BIN,
+            StatType.DENSITY,
+        ]
 
 
 class GeomRasterMixin:
@@ -472,7 +488,13 @@ class GeomRasterMixin:
 class GeomRaster(GeomRasterMixin, Geom):
     @property
     def allowed_stat_types(self) -> List["StatType"]:
-        return [StatType.IDENTITY, StatType.COUNT, StatType.SMOOTH, StatType.BIN, StatType.DENSITY]
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.SMOOTH,
+            StatType.BIN,
+            StatType.DENSITY,
+        ]
 
 
 class GeomTileMixin:
@@ -504,13 +526,25 @@ class GeomTileMixin:
 class GeomTile(GeomTileMixin, Geom):
     @property
     def allowed_stat_types(self) -> List["StatType"]:
-        return [StatType.IDENTITY, StatType.COUNT, StatType.SMOOTH, StatType.BIN, StatType.DENSITY]
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.SMOOTH,
+            StatType.BIN,
+            StatType.DENSITY,
+        ]
 
 
 class GeomLine(Geom):
     @property
     def allowed_stat_types(self) -> List["StatType"]:
-        return [StatType.IDENTITY, StatType.COUNT, StatType.SMOOTH, StatType.BIN, StatType.DENSITY]
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.SMOOTH,
+            StatType.BIN,
+            StatType.DENSITY,
+        ]
 
     @property
     def geom_type(self) -> GeomType:
@@ -893,7 +927,9 @@ def add_zero_keys(
     return pd.concat([df, df_zero], ignore_index=True)
 
 
-def _scale_to_numpy_array(df: pd.DataFrame, scale: Optional["GGScale"]) -> NDArray[np.floating[Any]]:
+def _scale_to_numpy_array(
+    df: pd.DataFrame, scale: Optional["GGScale"]
+) -> NDArray[np.floating[Any]]:
     if scale is None:
         return np.empty(0, dtype=np.float64)
     else:
@@ -1848,7 +1884,6 @@ def filled_smooth_geom(
     return result
 
 
-
 def stat_kind_fg_class(stat_type: StatType) -> Type["FilledStatGeom"]:
     lookup = {
         StatType.IDENTITY: FilledIdentityGeom,
@@ -1863,7 +1898,9 @@ def stat_kind_fg_class(stat_type: StatType) -> Type["FilledStatGeom"]:
     return lookup[stat_type]
 
 
-def create_fillsed_scale_geom(df: pd.DataFrame, geom: Any, filled_scales: "FilledScales") -> "FilledStatGeom":
+def create_fillsed_scale_stat_geom(
+    df: pd.DataFrame, geom: Any, filled_scales: "FilledScales"
+) -> "FilledStatGeom":
     x, y, discrete_scales, continuous_scales = separate_scales_apply_transofrmations(
         df, geom, filled_scales, y_is_none=True
     )
@@ -1883,12 +1920,54 @@ def create_fillsed_scale_geom(df: pd.DataFrame, geom: Any, filled_scales: "Fille
     return fsg
 
 
-def create_filled_geom_(df: pd.DataFrame, geom: Any, filled_scales: "FilledScales"):
+def create_filled_geom_from_geom(
+    df: pd.DataFrame, geom: Geom, filled_scales: "FilledScales"
+) -> "FilledGeom":
     if geom.stat_type not in geom.allowed_stat_types:
-        raise GGException(f"{geom} has stat_type {geom.stat_type} but onle allowed {geom.allowed_stat_types}")
+        raise GGException(
+            f"{geom} has stat_type {geom.stat_type} but onle allowed {geom.allowed_stat_types}"
+        )
 
-    filled_scale_geom = create_fillsed_scale_geom(df, geom, filled_scales)
-    filled_geom, df = filled_scale_geom.create_filled_geom(filled_scales)
+    filled_scale_stat_geom = create_fillsed_scale_stat_geom(df, geom, filled_scales)
+    filled_geom, df = filled_scale_stat_geom.create_filled_geom(filled_scales)
+    geom.gg_data.data = df
+    return filled_geom
+
+
+def create_filled_geoms_for_filled_scales(
+    filled_scales: "FilledScales", plot: "GgPlot"
+):
+    from python_ggplot.gg.ticks import get_x_ticks, get_y_ticks
+
+    x_scale: Optional[Scale] = None
+    y_scale: Optional[Scale] = None
+
+    for geom in plot.geoms:
+        df = geom.gg_data.data or plot.data.copy(deep=False)
+        filled_geom = create_filled_geom_from_geom(df, geom, filled_scales)
+
+        if (
+            x_scale is not None
+            and not x_scale.is_empty()
+            and y_scale is not None
+            and not y_scale.is_empty()
+        ):
+            x_scale = x_scale.merge(filled_geom.gg_data.x_scale)
+            y_scale = y_scale.merge(filled_geom.gg_data.y_scale)
+        else:
+            x_scale = filled_geom.gg_data.x_scale
+            y_scale = filled_geom.gg_data.y_scale
+
+        filled_scales.geoms.append(filled_geom)
+
+    if x_scale is None or y_scale is None:
+        raise GGException("x and y scale have not exist by this point")
+
+    final_x_scale, _, _ = calc_tick_locations(x_scale, get_x_ticks(filled_scales))
+    final_y_scale, _, _ = calc_tick_locations(y_scale, get_y_ticks(filled_scales))
+
+    filled_scales.x_scale = final_x_scale
+    filled_scales.y_scale = final_y_scale
 
 
 @dataclass
@@ -1902,7 +1981,9 @@ class FilledStatGeom(ABC):
     set_discrete_columns: List["str"]
     map_discrete_columns: List["str"]
 
-    def create_filled_geom(self, filled_scales: "FilledScales") -> Tuple[FilledGeom, pd.DataFrame]:
+    def create_filled_geom(
+        self, filled_scales: "FilledScales"
+    ) -> Tuple[FilledGeom, pd.DataFrame]:
         self.validate()
         fg_data = FilledGeomData(
             geom=self.geom,
@@ -1919,8 +2000,13 @@ class FilledStatGeom(ABC):
             num_y=0,
         )
         fg = FilledGeom(gg_data=fg_data)
-        result, df = create_filled_geom(fg, filled_scales, self.geom.geom_type, self.df)
-        return result, df
+        fg, df = create_filled_geom(fg, filled_scales, self.geom.geom_type, self.df)
+        self.post_process(fg)
+        return fg, df
+
+    @abstractmethod
+    def post_process(self, fg: FilledGeom):
+        pass
 
     @abstractmethod
     def validate(self):
@@ -1950,7 +2036,11 @@ class FilledStatGeom(ABC):
     def get_y_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
         pass
 
+
 class FilledSmoothGeom(FilledStatGeom):
+
+    def post_process(self, fg: FilledGeom):
+        pass
 
     def validate(self):
         if self.x.is_discrete():
@@ -1981,7 +2071,12 @@ class FilledSmoothGeom(FilledStatGeom):
     def get_y_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
         return FilledGeomContinuous()
 
+
 class FilledBinGeom(FilledStatGeom):
+
+    def post_process(self, fg: FilledGeom):
+        pass
+
     def validate(self):
         if self.x.is_discrete():
             raise GGException("For discrete data columns use `geom_bar` instead!")
@@ -2009,10 +2104,17 @@ class FilledBinGeom(FilledStatGeom):
     def get_y_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
         return FilledGeomContinuous()
 
+
 class FilledCountGeom(FilledStatGeom):
+
+    def post_process(self, fg: FilledGeom):
+        pass
+
     def validate(self):
         if self.x.is_continuous():
-            raise GGException("For continuous data columns use `geom_histogram` instead!")
+            raise GGException(
+                "For continuous data columns use `geom_histogram` instead!"
+            )
 
     def get_x_col(self) -> Optional[str]:
         return self.x.get_col_name()
@@ -2038,7 +2140,26 @@ class FilledCountGeom(FilledStatGeom):
     def get_y_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
         return FilledGeomContinuous()
 
+
 class FilledIdentityGeom(FilledStatGeom):
+
+    def post_process(self, fg: FilledGeom):
+        if self.geom.geom_type not in {
+            GeomType.HISTOGRAM,
+            GeomType.FREQ_POLY,
+            GeomType.BAR,
+        }:
+            return
+
+        if fg.gg_data.y_scale is None:
+            raise GGException(
+                f"expected y scale for geom {self.geom.geom_type} and stat_type IDENTIDY"
+            )
+
+        fg.gg_data.y_scale = Scale(
+            low=min(0.0, fg.gg_data.y_scale.low),
+            high=fg.gg_data.y_scale.high,
+        )
 
     def validate(self):
         pass
