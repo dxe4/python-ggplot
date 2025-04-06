@@ -1166,56 +1166,6 @@ class FilledStatGeom(ABC):
     set_discrete_columns: List["str"]
     map_discrete_columns: List["str"]
 
-    def _modify_for_stacking(self) -> bool:
-        if self.geom.gg_data.position == PositionType.STACK and not (
-            (
-                self.geom.geom_type == GeomType.HISTOGRAM
-                and self.geom.gg_data.histogram_drawing_style
-                == HistogramDrawingStyle.BARS
-            )
-            or (self.geom.geom_type == GeomType.BAR)
-        ):
-            return True
-        return False
-
-    @abstractmethod
-    def process_set_discrete_columns(
-        self,
-        df: pd.DataFrame,
-        fg: FilledGeom,
-        filled_scales: "FilledScales",
-        col: pd.Series[float],
-        style: "GGStyle",
-    ):
-        pass
-
-    @abstractmethod
-    def process_map_discrete_columns(
-        self,
-        df: pd.DataFrame,
-        fg: FilledGeom,
-        filled_scales: "FilledScales",
-        col: pd.Series[float],
-        style: "GGStyle",
-    ) -> pd.Series[float]:
-        pass
-
-    def process_map_columns(
-        self,
-        df: pd.DataFrame,
-        style: "GGStyle",
-        fg: FilledGeom,
-        filled_scales: "FilledScales",
-    ):
-        grouped = df.groupby(self.map_discrete_columns, sort=True)  # type: ignore
-        col = pd.Series(dtype=float)  # type: ignore
-        for keys, sub_df in grouped:  # type: ignore
-            apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
-            col = self.process_map_discrete_columns(
-                sub_df, fg, filled_scales, col, style  # type: ignore
-            )
-        self.post_process(fg, df)
-
     def create_filled_geom(
         self, filled_scales: "FilledScales"
     ) -> Tuple[FilledGeom, pd.DataFrame, "GGStyle"]:
