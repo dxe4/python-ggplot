@@ -16,18 +16,14 @@ from typing import (
     cast,
 )
 
-import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 
-from python_ggplot.common.maths import histogram
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
-from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
+from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull
 from python_ggplot.gg.types import (
     COUNT_COL,
-    PREV_VALS_COL,
     SMOOTH_VALS_COL,
     Aesthetics,
     BinByType,
@@ -37,10 +33,8 @@ from python_ggplot.gg.types import (
     GgPlot,
     GGStyle,
     PositionType,
-    SmoothMethodType,
     StatBin,
     StatKind,
-    StatSmooth,
     StatType,
 )
 from python_ggplot.graphics.initialize import (
@@ -1167,7 +1161,9 @@ class FilledStatGeom(ABC):
     map_discrete_columns: List["str"]
 
     @abstractmethod
-    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+    def fill_crated_geom(
+        self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
+    ) -> "FilledGeom":
         pass
 
     def create_filled_geom(
@@ -1239,8 +1235,11 @@ class FilledStatGeom(ABC):
 
 
 class FilledSmoothGeom(FilledStatGeom):
-    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+    def fill_crated_geom(
+        self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
+    ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_smooth_geom
+
         return filled_smooth_geom(self.df, filled_geom, self, filled_scales, style)
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):
@@ -1277,8 +1276,11 @@ class FilledSmoothGeom(FilledStatGeom):
 
 
 class FilledBinGeom(FilledStatGeom):
-    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+    def fill_crated_geom(
+        self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
+    ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_bin_geom
+
         return filled_bin_geom(self.df, filled_geom, self, filled_scales, style)
 
     def count_col(self):
@@ -1319,8 +1321,11 @@ class FilledBinGeom(FilledStatGeom):
 
 
 class FilledCountGeom(FilledStatGeom):
-    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+    def fill_crated_geom(
+        self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
+    ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_count_geom
+
         return filled_count_geom(self.df, filled_geom, self, filled_scales, style)
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):
@@ -1358,8 +1363,11 @@ class FilledCountGeom(FilledStatGeom):
 
 
 class FilledIdentityGeom(FilledStatGeom):
-    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+    def fill_crated_geom(
+        self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
+    ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_identity_geom
+
         return filled_identity_geom(self.df, filled_geom, self, filled_scales, style)
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):

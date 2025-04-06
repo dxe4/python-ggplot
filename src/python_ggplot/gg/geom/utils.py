@@ -470,7 +470,10 @@ def _filled_bin_geom_set(
         raise GGException("seems the data is discrete")
 
     filled_geom.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
-        yield_df, filled_stat_geom.continuous_scales, style, filled_stat_geom.geom.geom_type
+        yield_df,
+        filled_stat_geom.continuous_scales,
+        style,
+        filled_stat_geom.geom.geom_type,
     )
     filled_geom.gg_data.num_x = len(yield_df)
     filled_geom.gg_data.x_scale = filled_geom.gg_data.x_scale.merge(

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from pandas.api.types import is_numeric_dtype
 
 from python_ggplot.core.chroma import int_to_color, value_to_color
 from python_ggplot.core.objects import (
@@ -22,12 +21,6 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VectorCol,
     VNull,
     VString,
-    series_is_bool,
-    series_is_float,
-    series_is_int,
-    series_is_obj,
-    series_is_str,
-    series_value_type,
 )
 from python_ggplot.gg.geom.base import post_process_scales
 from python_ggplot.gg.scales import (

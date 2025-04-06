@@ -36,7 +36,6 @@ from python_ggplot.core.objects import (
     GGException,
     LineType,
     MarkerKind,
-    Point,
     Scale,
 )
 from python_ggplot.core.units.objects import RelativeUnit
@@ -45,7 +44,6 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
     GGValue,
     VectorCol,
-    pandas_series_to_column,
 )
 from python_ggplot.gg.geom.base import (
     FilledGeom,
@@ -74,12 +72,10 @@ from python_ggplot.graphics.initialize import (
     InitRectInput,
     init_line,
     init_point_from_coord,
-    init_point_from_point,
     init_rect,
 )
 from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
-from tests.test_view import init_poly_line_from_points
 
 if typing.TYPE_CHECKING:
     from python_ggplot.gg.types import GGStyle
