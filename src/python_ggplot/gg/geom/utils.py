@@ -434,7 +434,7 @@ def _filled_bin_geom_map(
         filled_geom.gg_data.y_scale = filled_geom.gg_data.y_scale.merge(
             Scale(low=0.0, high=float(col.max()))  # type: ignore
         )
-        return filled_geom
+    return filled_geom
 
 
 def _filled_bin_geom_set(
@@ -565,12 +565,13 @@ def _filled_smooth_geom_set(
     filled_stat_geom.x.set_x_attributes(filled_geom, yield_df)
 
     key = ("", VNull())
-    result.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
+    filled_geom.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
         yield_df,
         filled_stat_geom.continuous_scales,
         style,
         filled_stat_geom.geom.geom_type,
     )
+    return filled_geom
 
 
 def filled_identity_geom(
