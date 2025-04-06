@@ -1166,6 +1166,10 @@ class FilledStatGeom(ABC):
     set_discrete_columns: List["str"]
     map_discrete_columns: List["str"]
 
+    @abstractmethod
+    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+        pass
+
     def create_filled_geom(
         self, filled_scales: "FilledScales"
     ) -> Tuple[FilledGeom, pd.DataFrame, "GGStyle"]:
@@ -1198,6 +1202,7 @@ class FilledStatGeom(ABC):
         )
         self.geom.gg_data.data = df
         self.df = df
+        fg = self.fill_crated_geom(filled_scales, fg, style)
         return fg, df, style
 
     @abstractmethod
@@ -1234,6 +1239,9 @@ class FilledStatGeom(ABC):
 
 
 class FilledSmoothGeom(FilledStatGeom):
+    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+        from python_ggplot.gg.geom.utils import filled_smooth_geom
+        return filled_smooth_geom(self.df, filled_geom, self, filled_scales, style)
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):
         pass
@@ -1269,6 +1277,9 @@ class FilledSmoothGeom(FilledStatGeom):
 
 
 class FilledBinGeom(FilledStatGeom):
+    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+        from python_ggplot.gg.geom.utils import filled_bin_geom
+        return filled_bin_geom(self.df, filled_geom, self, filled_scales, style)
 
     def count_col(self):
         stat_kind = self.geom.gg_data.stat_kind
@@ -1308,6 +1319,9 @@ class FilledBinGeom(FilledStatGeom):
 
 
 class FilledCountGeom(FilledStatGeom):
+    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+        from python_ggplot.gg.geom.utils import filled_count_geom
+        return filled_count_geom(self.df, filled_geom, self, filled_scales, style)
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):
         pass
@@ -1344,6 +1358,9 @@ class FilledCountGeom(FilledStatGeom):
 
 
 class FilledIdentityGeom(FilledStatGeom):
+    def fill_crated_geom(self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle") -> "FilledGeom":
+        from python_ggplot.gg.geom.utils import filled_identity_geom
+        return filled_identity_geom(self.df, filled_geom, self, filled_scales, style)
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):
         if self.geom.geom_type not in {

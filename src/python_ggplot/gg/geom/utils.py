@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
-from python_ggplot.gg.datamancer_pandas_compat import VNull
+from python_ggplot.gg.datamancer_pandas_compat import VNull, VString
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
 from python_ggplot.gg.types import (
     COUNT_COL,
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 def call_smoother(
-    fg: FilledGeom, df: pd.DataFrame, scale: "GGScale", range: Any
+    fg: "FilledGeom", df: pd.DataFrame, scale: "GGScale", range: Any
 ) -> NDArray[np.floating[Any]]:
 
     geom = fg.gg_data.geom
@@ -89,7 +89,7 @@ def _scale_to_numpy_array(
 
 
 def call_histogram(
-    geom: Geom,
+    geom: "Geom",
     df: pd.DataFrame,
     scale: Optional["GGScale"],
     weight_scale: Optional["GGScale"],
@@ -230,10 +230,10 @@ def _filled_identity_geom_map(
     from python_ggplot.gg.styles.utils import apply_style
 
     geom = filled_stat_geom.geom
-    grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
+    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
     for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
         yield_df: pd.DataFrame = sub_df.copy()  # type: ignore
         filled_stat_geom.x.set_x_attributes(filled_geom, yield_df)
 
@@ -311,7 +311,7 @@ def _filled_count_geom_map(
         raise GGException("continuous_scales > 0")
 
     for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
 
         weight_scale = filled_scales.get_weight_scale(
             filled_stat_geom.geom, optional=True
@@ -357,7 +357,7 @@ def _filled_count_geom_set(
     style: "GGStyle",
 ) -> "FilledGeom":
     weight_scale = filled_scales.get_weight_scale(filled_stat_geom.geom, optional=True)
-    yield_df = count_(df, filled_stat_geom.x_col, COUNT_COL, weight_scale)
+    yield_df = count_(df, filled_stat_geom.get_x_col(), COUNT_COL, weight_scale)
     # TODO double check prev_vals
     yield_df[PREV_VALS_COL] = 0.0
 
@@ -388,13 +388,13 @@ def _filled_bin_geom_map(
     col = pd.Series(dtype=float)
 
     for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
         hist, bins, _ = call_histogram(
             filled_stat_geom.geom,
             sub_df,  # type: ignore
             filled_stat_geom.x,
             filled_scales.get_weight_scale(filled_stat_geom.geom, optional=True),
-            x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
+            filled_stat_geom.x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
         )
         count_col = filled_stat_geom.count_col()  # type: ignore
         yield_df = pd.DataFrame(
@@ -449,7 +449,7 @@ def _filled_bin_geom_set(
         df,
         filled_stat_geom.x,
         filled_scales.get_weight_scale(filled_stat_geom.geom, optional=True),
-        x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
+        filled_stat_geom.x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
     )
 
     count_col = filled_stat_geom.count_col()  # type: ignore
@@ -470,7 +470,7 @@ def _filled_bin_geom_set(
         raise GGException("seems the data is discrete")
 
     filled_geom.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
-        yield_df, cont, style, geom.geom_type
+        yield_df, filled_stat_geom.continuous_scales, style, filled_stat_geom.geom.geom_type
     )
     filled_geom.gg_data.num_x = len(yield_df)
     filled_geom.gg_data.x_scale = filled_geom.gg_data.x_scale.merge(
@@ -490,11 +490,11 @@ def _filled_smooth_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore
+    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
 
     for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, discretes, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
         yield_df = sub_df.copy()  # type: ignore
 
         smoothed = call_smoother(
@@ -502,7 +502,7 @@ def _filled_smooth_geom_map(
             yield_df,  # type: ignore
             filled_stat_geom.y,
             # This has to be continuous for data scale to exist needs cleanup
-            range=x.gg_data.discrete_kind.data_scale,  # type: ignore
+            range=filled_stat_geom.x.gg_data.discrete_kind.data_scale,  # type: ignore
         )
         yield_df[SMOOTH_VALS_COL] = smoothed
 
@@ -577,10 +577,10 @@ def _filled_smooth_geom_set(
 def filled_identity_geom(
     df: pd.DataFrame,
     filled_geom: "FilledGeom",
-    filled_stat_geom: FilledStatGeom,
+    filled_stat_geom: "FilledStatGeom",
     filled_scales: "FilledScales",
     style: "GGStyle",
-) -> FilledGeom:
+) -> "FilledGeom":
 
     if len(filled_stat_geom.map_discrete_columns) > 0:
         filled_geom = _filled_identity_geom_map(
@@ -594,7 +594,7 @@ def filled_identity_geom(
     if filled_stat_geom.y is not None and filled_stat_geom.y.is_discrete():
         # TODO fix
         # y.label_seqwill exist since is discrete, but this needs refactor anyway
-        result.gg_data.y_discrete_kind.label_seq = y.gg_data.discrete_kind.label_seq  # type: ignore
+        filled_geom.gg_data.y_discrete_kind.label_seq = filled_stat_geom.y.gg_data.discrete_kind.label_seq  # type: ignore
 
     filled_geom.gg_data.num_y = filled_geom.gg_data.num_x
     return filled_geom
@@ -603,11 +603,11 @@ def filled_identity_geom(
 def filled_count_geom(
     df: pd.DataFrame,
     filled_geom: "FilledGeom",
-    filled_stat_geom: FilledStatGeom,
+    filled_stat_geom: "FilledStatGeom",
     filled_scales: "FilledScales",
     style: "GGStyle",
-) -> FilledGeom:
-    all_classes = df[x_col].unique()  # type: ignore
+) -> "FilledGeom":
+    all_classes = df[filled_stat_geom.get_x_col()].unique()  # type: ignore
 
     if len(filled_stat_geom.map_discrete_columns) > 0:
         filled_geom = _filled_count_geom_map(
@@ -633,10 +633,10 @@ def filled_count_geom(
 def filled_bin_geom(
     df: pd.DataFrame,
     filled_geom: "FilledGeom",
-    filled_stat_geom: FilledStatGeom,
+    filled_stat_geom: "FilledStatGeom",
     filled_scales: "FilledScales",
     style: "GGStyle",
-) -> FilledGeom:
+) -> "FilledGeom":
     if len(filled_stat_geom.map_discrete_columns) > 0:
         filled_geom = _filled_bin_geom_map(
             df, filled_scales, filled_stat_geom, filled_geom, style
@@ -658,7 +658,7 @@ def filled_bin_geom(
 def filled_smooth_geom(
     df: pd.DataFrame,
     filled_geom: "FilledGeom",
-    filled_stat_geom: FilledStatGeom,
+    filled_stat_geom: "FilledStatGeom",
     filled_scales: "FilledScales",
     style: "GGStyle",
 ) -> "FilledGeom":
