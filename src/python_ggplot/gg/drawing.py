@@ -96,7 +96,12 @@ class GetXY:
         if pd.isna(self.y_series.iloc[self.idx]):  # type: ignore
             y = 0.0
         else:
-            y = float(self.y_series.iloc[self.idx])  # type: ignore
+            temp = self.y_series.iloc[self.idx]
+            if isinstance(temp, str):
+                # TODO CRITICAL+ double check this, how is y str handled
+                y = temp
+            else:
+                y = float(self.y_series.iloc[self.idx])  # type: ignore
         # TODO CRITICAL, easy task
         # write is_continuous and use that
         # although this is binary discrete/continuous

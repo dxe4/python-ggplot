@@ -33,6 +33,28 @@ def test_geom_bar():
     ggdraw_plot(res, data_path / "geom_bar.png")
 
 
+@pytest.mark.xfail(reason="fix")
+def test_geom_point_and_text():
+    """
+    There's a few issues with this
+    1) python_ggplot/gg/drawing.GetXY.calculate doesn't deal with y str
+    2) multiple aes y cols conflict (the original here would have been a formula node)
+    """
+    mpg = pd.read_csv(data_path / "mpg.csv")
+
+    mpg["mpgMean"] = (mpg["cty"] + mpg["hwy"]) / 2.0
+    df_max = mpg.sort_values("mpgMean").tail(1)
+
+    plot = (
+        ggplot(mpg, aes("hwy", "class"))
+        + geom_point(aes(color="cty"))
+        + geom_text(data=df_max, aes=aes(y="displ", text="model"))
+        + geom_text(data=df_max, aes=aes(y="displ", text="mpgMean"))
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_point_and_text.png")
+
+
 @pytest.mark.xfail(reason="x and y flipped for now (intentional)")
 def test_geom_bar_y():
     """

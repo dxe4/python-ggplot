@@ -1122,7 +1122,11 @@ def create_filled_geoms_for_filled_scales(
     y_scale: Optional[Scale] = None
 
     for geom in plot.geoms:
-        df = geom.gg_data.data or plot.data.copy(deep=False)
+        if geom.gg_data.data is not None:
+            df = geom.gg_data.data
+        else:
+            df = plot.data.copy(deep=False)
+
         filled_geom = create_filled_geom_from_geom(df, geom, filled_scales)
 
         if (
