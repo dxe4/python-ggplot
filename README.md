@@ -19,6 +19,18 @@ plots are still in progress, but some examples:
 ```
 <img src="plots/geom_point_with_color.png?v=1" alt="gg_point" width="400px">
 
+
+```python
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = (
+        ggplot(mpg, aes(x="cty", color="class")) + geom_freqpoly() + scale_x_continuous()
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_freqpoly.png")
+```
+<img src="plots/geom_freqpoly.png?v=1" alt="gg_point" width="400px">
+
+
 ```python
 mpg = pd.read_csv(data_path / "mpg.csv")
 plot = ggplot(mpg, aes(x = 'displ')) + geom_histogram()
