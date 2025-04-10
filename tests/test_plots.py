@@ -72,11 +72,10 @@ def test_geom_bar_y():
     ggdraw_plot(res, plots_path / "geom_bar_y.png")
 
 
-@pytest.mark.xfail(reason="wrong plot")
 def test_geom_freq_poly():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
-        ggplot(mpg, aes(x="cty", fill="class")) + geom_freqpoly() + scale_x_continuous()
+        ggplot(mpg, aes(x="cty", color="class")) + geom_freqpoly() + scale_x_continuous()
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_freqpoly.png")
