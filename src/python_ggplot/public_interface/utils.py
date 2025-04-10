@@ -428,17 +428,19 @@ def gen_discrete_legend(
         )
 
         current_marker = markers[j]
-        if not isinstance(current_marker, GOPoint):
-            # TODO this needs some refactoring on the type that is being returned
-            raise GGException("expected GOPoint or ")
+        #  TODO double check, why was this logic here, market is already a GOText
+        # so this looks redundant
+        # if not isinstance(current_marker, GOPoint):
+        #     # TODO this needs some refactoring on the type that is being returned
+        #     raise GGException(f"expected GOPoint found {current_marker} ")
 
-        point = init_point_from_coord(
-            pos=Coord(x=RelativeCoordType(0.5), y=RelativeCoordType(0.5)),
-            marker=current_marker.marker,
-            size=current_marker.size,
-            color=current_marker.color,
-            name="markerPoint",
-        )
+        # point = init_point_from_coord(
+        #     pos=Coord(x=RelativeCoordType(0.5), y=RelativeCoordType(0.5)),
+        #     marker=current_marker.marker,
+        #     size=current_marker.size,
+        #     color=current_marker.color,
+        #     name="markerPoint",
+        # )
 
         if isinstance(cat, (ColorScaleKind, FillColorScale, ShapeScale, SizeScale)):
             label_text = markers[j].name
@@ -459,7 +461,7 @@ def gen_discrete_legend(
         )
 
         leg_box.add_obj(rect)
-        leg_box.add_obj(point)
+        leg_box.add_obj(current_marker)
         leg_label.add_obj(label)
         leg[i] = leg_box
         leg[i + 2] = leg_label

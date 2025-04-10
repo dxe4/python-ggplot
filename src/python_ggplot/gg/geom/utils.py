@@ -384,7 +384,8 @@ def _filled_bin_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    grouped = df.groupby(map_disc_cols, sort=True)  # type: ignore TODO
+    from python_ggplot.gg.styles.utils import apply_style
+    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore TODO
     col = pd.Series(dtype=float)
 
     for keys, sub_df in grouped:  # type: ignore
@@ -413,7 +414,11 @@ def _filled_bin_geom_map(
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
         filled_geom.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
-            yield_df, cont, style, geom.geom_type, to_clone=True  # type: ignore
+            yield_df,
+            filled_stat_geom.continuous_scales,
+            style,
+            filled_stat_geom.geom.geom_type,
+            to_clone=True  # type: ignore
         )
 
         filled_geom.gg_data.num_x = max(filled_geom.gg_data.num_x, len(yield_df))
