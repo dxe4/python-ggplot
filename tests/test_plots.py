@@ -19,7 +19,7 @@ from python_ggplot.public_interface.geom import (
     ggplot,
 )
 from python_ggplot.public_interface.utils import ggcreate
-from tests import data_path
+from tests import data_path, plots_path
 
 
 def test_geom_bar():
@@ -30,7 +30,7 @@ def test_geom_bar():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_bar.png")
+    ggdraw_plot(res, plots_path / "geom_bar.png")
 
 
 @pytest.mark.xfail(reason="fix")
@@ -52,7 +52,7 @@ def test_geom_point_and_text():
         + geom_text(data=df_max, aes=aes(y="displ", text="mpgMean"))
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_point_and_text.png")
+    ggdraw_plot(res, plots_path / "geom_point_and_text.png")
 
 
 @pytest.mark.xfail(reason="x and y flipped for now (intentional)")
@@ -69,7 +69,7 @@ def test_geom_bar_y():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(y="class")) + geom_bar()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_bar_y.png")
+    ggdraw_plot(res, plots_path / "geom_bar_y.png")
 
 
 @pytest.mark.xfail(reason="wrong plot")
@@ -79,7 +79,7 @@ def test_geom_freq_poly():
         ggplot(mpg, aes(x="cty", fill="class")) + geom_freqpoly() + scale_x_continuous()
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_freqpoly.png")
+    ggdraw_plot(res, plots_path / "geom_freqpoly.png")
 
 
 @pytest.mark.xfail(reason="same issue with test_geom_bar_fill")
@@ -87,7 +87,7 @@ def test_geom_histogram_fill():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(x="displ", fill="class")) + geom_histogram()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_histogram_fill.png")
+    ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 @pytest.mark.xfail(reason="")
@@ -97,7 +97,7 @@ def test_geom_bar_fill():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(fill="drv")) + geom_bar()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_bar_fill.png")
+    ggdraw_plot(res, plots_path / "geom_bar_fill.png")
 
 
 def test_geom_point():
@@ -109,7 +109,7 @@ def test_geom_point():
     )
 
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_point.png")
+    ggdraw_plot(res, plots_path / "geom_point.png")
 
 
 def test_geom_point_with_color():
@@ -124,14 +124,14 @@ def test_geom_point_with_color():
     #     y = "Highway Mileage (mpg)"
     # )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_point_with_color.png")
+    ggdraw_plot(res, plots_path / "geom_point_with_color.png")
 
 
 def test_geom_line():
     df = pd.DataFrame(data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]})
     plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_line_and_point.png")
+    ggdraw_plot(res, plots_path / "geom_line_and_point.png")
 
 
 def test_geom_line_with_linetype():
@@ -142,21 +142,21 @@ def test_geom_line_with_linetype():
         + geom_point()
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
+    ggdraw_plot(res, plots_path / "geom_line_and_point_with_linetype.png")
 
 
 def test_geom_histogram():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(x="displ")) + geom_histogram()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_histogram.png")
+    ggdraw_plot(res, plots_path / "geom_histogram.png")
 
 
 def test_geom_text():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(x="displ", y="cty", text="manufacturer")) + geom_text()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_text.png")
+    ggdraw_plot(res, plots_path / "geom_text.png")
 
 
 @pytest.mark.xfail(reason="incorrect plot")
@@ -176,7 +176,7 @@ def test_geom_error_bar():
         aes(ymin="lower", ymax="upper")
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_error_bar.png")
+    ggdraw_plot(res, plots_path / "geom_error_bar.png")
 
 
 @pytest.mark.xfail(reason="incorrect plot")
@@ -194,7 +194,7 @@ def test_geom_linerange():
         aes(ymin="lower", ymax="upper")
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_linerange.png")
+    ggdraw_plot(res, plots_path / "geom_linerange.png")
 
 
 @pytest.mark.xfail(reason="'DataFrameGroupBy' object has no attribute 'sort_values'")
@@ -202,4 +202,4 @@ def test_geom_freqpoly():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
     plot = ggplot(diamonds, aes("price", color="cut")) + geom_freqpoly()
     res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_freqpoly.png")
+    ggdraw_plot(res, plots_path / "geom_freqpoly.png")

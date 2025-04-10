@@ -6,7 +6,7 @@ plots are still in progress, but some examples:
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_bar.png")
 ```
-<img src="data/geom_bar.png?v=1" alt="geom_bar" width="400px">
+<img src="plots/geom_bar.png?v=1" alt="geom_bar" width="400px">
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
@@ -17,7 +17,7 @@ plots are still in progress, but some examples:
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_point_with_color.png")
 ```
-<img src="data/geom_point_with_color.png?v=1" alt="gg_point" width="400px">
+<img src="plots/geom_point_with_color.png?v=1" alt="gg_point" width="400px">
 
 ```python
 mpg = pd.read_csv(data_path / "mpg.csv")
@@ -25,7 +25,7 @@ plot = ggplot(mpg, aes(x = 'displ')) + geom_histogram()
 res = ggcreate(plot)
 ggdraw_plot(res, data_path / "geom_histogram.png")
 ```
-<img src="data/geom_histogram.png?v=1" alt="geom_histogram" width="400px">
+<img src="plots/geom_histogram.png?v=1" alt="geom_histogram" width="400px">
 
 ```python
     df = pd.DataFrame(
@@ -35,7 +35,7 @@ ggdraw_plot(res, data_path / "geom_histogram.png")
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
 ```
-<img src="data/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
+<img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
@@ -43,6 +43,6 @@ ggdraw_plot(res, data_path / "geom_histogram.png")
     res = ggcreate(plot)
     ggdraw_plot(res, data_path / "geom_text.png")
 ```
-<img src="data/geom_text.png?v=1" alt="geom_text" width="400px">
+<img src="plots/geom_text.png?v=1" alt="geom_text" width="400px">
 
-![gg](data/simple_test.png?v=1)
+![gg](plots/simple_test.png?v=1)
