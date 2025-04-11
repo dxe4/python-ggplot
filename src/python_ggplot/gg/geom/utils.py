@@ -394,8 +394,8 @@ def _filled_bin_geom_map(
     for keys in sorted_keys:  # type: ignore
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-        apply_style(
-            style,
+        current_style = apply_style(
+            deepcopy(style),
             sub_df,
             filled_stat_geom.discrete_scales,
             key_values
@@ -427,7 +427,7 @@ def _filled_bin_geom_map(
         filled_geom.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
             yield_df,
             filled_stat_geom.continuous_scales,
-            style,
+            current_style,
             filled_stat_geom.geom.geom_type,
             to_clone=True  # type: ignore
         )
