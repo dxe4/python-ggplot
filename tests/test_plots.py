@@ -78,7 +78,7 @@ def test_geom_freq_poly():
         ggplot(mpg, aes(x="cty", color="class")) + geom_freqpoly() + scale_x_continuous()
     )
     res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_freqpoly.png")
+    ggdraw_plot(res, plots_path / "geom_freqpoly_cty_class.png")
 
 
 def test_geom_histogram_fill():
@@ -195,7 +195,6 @@ def test_geom_linerange():
     ggdraw_plot(res, plots_path / "geom_linerange.png")
 
 
-@pytest.mark.xfail(reason="'DataFrameGroupBy' object has no attribute 'sort_values'")
 def test_geom_freqpoly():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
     plot = ggplot(diamonds, aes("price", color="cut")) + geom_freqpoly()
