@@ -607,7 +607,7 @@ def gg_draw(
         bin_widths,
         df,
         idx,
-        style,
+        deepcopy(style),
     )
 
 

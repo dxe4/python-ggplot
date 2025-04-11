@@ -81,10 +81,9 @@ def test_geom_freq_poly():
     ggdraw_plot(res, plots_path / "geom_freqpoly.png")
 
 
-@pytest.mark.xfail(reason="same issue with test_geom_bar_fill")
 def test_geom_histogram_fill():
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x="displ", fill="class")) + geom_histogram()
+    plot = ggplot(mpg, aes(x="cty", fill="class")) + geom_histogram() + scale_x_continuous()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 

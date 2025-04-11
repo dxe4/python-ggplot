@@ -40,6 +40,15 @@ ggdraw_plot(res, data_path / "geom_histogram.png")
 <img src="plots/geom_histogram.png?v=1" alt="geom_histogram" width="400px">
 
 ```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+plot = ggplot(mpg, aes(x="cty", fill="class")) + geom_histogram() + scale_x_continuous()
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
+```
+<img src="plots/geom_histogram_fill.png?v=1" alt="geom_histogram" width="400px">
+
+
+```python
     df = pd.DataFrame(
         data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
     )
