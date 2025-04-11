@@ -27,6 +27,15 @@ if TYPE_CHECKING:
     from python_ggplot.gg.scales.base import FilledScales, GGScale
 
 
+def add_zero_keys(
+    df: pd.DataFrame, keys: pd.Series, x_col: Any, count_col: str
+) -> pd.DataFrame:
+    exist_keys = df[x_col].unique()  # type: ignore
+    df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore
+    df_zero[count_col] = 0
+    return pd.concat([df, df_zero], ignore_index=True)
+
+
 def call_smoother(
     fg: "FilledGeom", df: pd.DataFrame, scale: "GGScale", range: Any
 ) -> NDArray[np.floating[Any]]:
@@ -305,9 +314,11 @@ def _filled_count_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    grouped = df.groupby(map_disc_cols, sort=False)  # type: ignore
+    from python_ggplot.gg.styles.utils import apply_style
+    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=False)  # type: ignore
     col = pd.Series(dtype=float)  # For stacking
 
+    all_classes = pd.Series(df[filled_stat_geom.get_x_col()].unique())  # type: ignore
     if len(filled_stat_geom.continuous_scales) > 0:
         raise GGException("continuous_scales > 0")
 
@@ -317,16 +328,16 @@ def _filled_count_geom_map(
         weight_scale = filled_scales.get_weight_scale(
             filled_stat_geom.geom, optional=True
         )
-        yield_df = count_(sub_df, filled_stat_geom.x_col, "", weight_scale)  # type: ignore
+        yield_df = count_(sub_df, filled_stat_geom.get_x_col(), "", weight_scale)  # type: ignore
 
-        add_zero_keys(yield_df, all_classes, x_col, "count")  # type: ignore
-        yield_df = yield_df.sort_values(x_col)  # type: ignore
+        add_zero_keys(yield_df, all_classes, filled_stat_geom.get_x_col(), "count")  # type: ignore
+        yield_df = yield_df.sort_values(filled_stat_geom.get_x_col())  # type: ignore
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
             yield_df["prev_vals"] = 0.0 if len(col) == 0 else col.copy()
 
         col = add_counts_by_position(
-            col, yield_df["count"], geom.position  # type: ignore
+            col, yield_df["count"], filled_stat_geom.geom.gg_data.position  # type: ignore
         )
 
         if _modify_for_stacking(filled_stat_geom.geom):
@@ -334,7 +345,7 @@ def _filled_count_geom_map(
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
 
-        result.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
+        filled_geom.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
             yield_df,
             filled_stat_geom.continuous_scales,
             style,

@@ -93,7 +93,7 @@ def test_geom_bar_fill():
     # Fill the bars
     # Fourth plot here https://ggplot2.tidyverse.org/reference/geom_bar.html
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(fill="drv")) + geom_bar()
+    plot = ggplot(mpg, aes(y="class")) + geom_bar(aes(fill="drv"))
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_bar_fill.png")
 

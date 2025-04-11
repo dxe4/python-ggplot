@@ -879,14 +879,6 @@ def apply_transformations(df: pd.DataFrame, scales: List["GGScale"]):
     return result
 
 
-def add_zero_keys(
-    df: pd.DataFrame, keys: pd.Series, x_col: Any, count_col: str
-) -> pd.DataFrame:
-    exist_keys = df[x_col].unique()  # type: ignore
-    df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore
-    df_zero[count_col] = 0
-    return pd.concat([df, df_zero], ignore_index=True)
-
 
 def post_process_scales(filled_scales: "FilledScales", plot: "GgPlot"):
     # keeping as is for backwards compatibility for now
