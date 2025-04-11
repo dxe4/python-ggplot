@@ -1,5 +1,6 @@
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from itertools import product
 
 import numpy as np
 import pandas as pd
@@ -386,10 +387,19 @@ def _filled_bin_geom_map(
 ) -> "FilledGeom":
     from python_ggplot.gg.styles.utils import apply_style
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore TODO
+
+    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)
 
-    for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+    for keys in sorted_keys:  # type: ignore
+        sub_df = grouped.get_group(keys)  # type: ignore
+        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
+        apply_style(
+            style,
+            sub_df,
+            filled_stat_geom.discrete_scales,
+            key_values
+        )  # type: ignore
         hist, bins, _ = call_histogram(
             filled_stat_geom.geom,
             sub_df,  # type: ignore
@@ -397,6 +407,7 @@ def _filled_bin_geom_map(
             filled_scales.get_weight_scale(filled_stat_geom.geom, optional=True),
             filled_stat_geom.x.gg_data.discrete_kind.data_scale,  # type: ignore TODO
         )
+
         count_col = filled_stat_geom.count_col()  # type: ignore
         yield_df = pd.DataFrame(
             {filled_stat_geom.x.get_col_name(): bins, count_col: hist}
@@ -645,6 +656,7 @@ def filled_bin_geom(
     filled_scales: "FilledScales",
     style: "GGStyle",
 ) -> "FilledGeom":
+
     if len(filled_stat_geom.map_discrete_columns) > 0:
         filled_geom = _filled_bin_geom_map(
             df, filled_scales, filled_stat_geom, filled_geom, style

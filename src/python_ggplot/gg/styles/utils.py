@@ -169,7 +169,6 @@ def apply_style(
             if scale.is_discrete():
                 is_col = col in df.columns
                 discrete_scale = cast(GGScaleDiscrete, scale.gg_data.discrete_kind)
-
                 if not is_col:
                     col_vals = scale.gg_data.col.evaluate(df)
                     if len(col_vals.unique()) > 1:
