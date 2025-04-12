@@ -516,7 +516,7 @@ def draw_error_bar(
             point=pos,
             error_up=error_up,
             error_down=error_down,
-            axis_kind=AxisKind.X,
+            axis_kind=AxisKind.Y,
             error_bar_kind=style.error_bar_kind,
             style=style,
         )

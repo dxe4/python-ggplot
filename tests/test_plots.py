@@ -6,6 +6,7 @@ from python_ggplot.public_interface.common import (
     ggdraw_plot,
     ggtitle,
     scale_x_continuous,
+    scale_y_continuous,
 )
 from python_ggplot.public_interface.geom import (
     geom_bar,
@@ -157,21 +158,20 @@ def test_geom_text():
     ggdraw_plot(res, plots_path / "geom_text.png")
 
 
-@pytest.mark.xfail(reason="incorrect plot")
+@pytest.mark.xfail(reason="needs improvements")
 def test_geom_error_bar():
     """
     this needs some further fixing
     """
-    df = pd.DataFrame(
-        data={
-            "team": ["A", "B", "C"],
-            "mean": [7.5, 23, 13.75],
-            "sd": [3.415650, 2.943920, 3.685557],
-        }
-    )
-    df = df.assign(lower=df["mean"] - df["sd"], upper=df["mean"] + df["sd"])
-    plot = ggplot(df, aes(x="team", y="mean")) + geom_error_bar(
-        aes(ymin="lower", ymax="upper")
+    df = pd.DataFrame({
+        'trt': [1, 1, 2, 2],
+        'resp': [1, 5, 3, 4],
+        'group': pd.Categorical([1, 2, 1, 2]),
+        'upper': [1.1, 5.3, 3.3, 4.2],
+        'lower': [0.8, 4.6, 2.4, 3.6]
+    })
+    plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_error_bar(
+        aes(ymin="lower", ymax="upper"), size=20
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_error_bar.png")

@@ -253,7 +253,7 @@ def scale_x_continuous(
 
 
 def scale_y_continuous(
-    breaks: Optional[List[float]],
+    breaks: Optional[List[float]] = None,
     labels: Optional[Callable[[float], float]] = None,
     trans: Optional[Callable[[float], float]] = None,
     inv_trans: Optional[Callable[[float], float]] = None,

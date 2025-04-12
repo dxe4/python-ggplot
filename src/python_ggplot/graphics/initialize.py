@@ -510,9 +510,7 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
             raise GGException("expected style size")
 
         if data.axis_kind == AxisKind.X:
-            scale2: Optional[Scale] = data.point.y.get_scale()
-            if scale2 is None:
-                raise GGException("expected scale")
+            scale2 = data.point.y.get_scale()
 
             local_abs: Quantity = Quantity.points(data.style.size).to_data(
                 scale=scale2, length=data.view.point_height()
@@ -536,6 +534,7 @@ def init_error_bar(data: InitErrorBarData) -> GOComposite:
 
         else:  # AxisKind.Y
             scale2 = data.point.x.get_scale()
+
             local_abs2: Quantity = Quantity.points(data.style.size).to_data(
                 scale=scale2, length=data.view.point_width()
             )

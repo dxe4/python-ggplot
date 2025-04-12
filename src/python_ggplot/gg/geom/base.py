@@ -390,8 +390,8 @@ class GeomErrorBarMixin:
     ):
         from python_ggplot.gg.drawing import draw_error_bar
 
-        temp = cast(FilledGeomErrorBar, fg)
-        new_error_bar = draw_error_bar(view, temp, pos, df, idx, style)
+        temp_fg = cast(FilledGeomErrorBar, fg)
+        new_error_bar = draw_error_bar(view, temp_fg, pos, df, idx, style)
         view.add_obj(new_error_bar)
 
     @property
@@ -582,6 +582,7 @@ class FilledGeomDiscrete(FilledGeomDiscreteKind):
         return DiscreteType.DISCRETE
 
 
+@dataclass
 class FilledGeomContinuous(FilledGeomDiscreteKind):
     def get_label_seq(self) -> List[GGValue]:
         raise GGException("attempt to get discrete values on continiuous kind")
@@ -613,6 +614,7 @@ class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
             if self.gg_data.y_col is None:
                 raise GGException("expected y_col")
             collect_cols.append(self.gg_data.y_col)
+
         if len(y_values) > 0:
             if self.gg_data.x_col is None:
                 raise GGException("expected x_col")
