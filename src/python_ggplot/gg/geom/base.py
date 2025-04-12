@@ -881,7 +881,6 @@ def apply_transformations(df: pd.DataFrame, scales: List["GGScale"]):
     return result
 
 
-
 def post_process_scales(filled_scales: "FilledScales", plot: "GgPlot"):
     # keeping as is for backwards compatibility for now
     create_filled_geoms_for_filled_scales(filled_scales, plot)

@@ -76,7 +76,9 @@ def test_geom_bar_y():
 def test_geom_freq_poly():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
-        ggplot(mpg, aes(x="cty", color="class")) + geom_freqpoly() + scale_x_continuous()
+        ggplot(mpg, aes(x="cty", color="class"))
+        + geom_freqpoly()
+        + scale_x_continuous()
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_freqpoly_cty_class.png")
@@ -84,7 +86,11 @@ def test_geom_freq_poly():
 
 def test_geom_histogram_fill():
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x="cty", fill="class")) + geom_histogram() + scale_x_continuous()
+    plot = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
@@ -162,13 +168,15 @@ def test_geom_error_bar():
     """
     this needs some further fixing
     """
-    df = pd.DataFrame({
-        'trt': [1, 1, 2, 2],
-        'resp': [1, 5, 3, 4],
-        'group': pd.Categorical([1, 2, 1, 2]),
-        'upper': [1.5, 5.0, 3.3, 4.2],
-        'lower': [1, 4.0, 2.4, 3.6]
-    })
+    df = pd.DataFrame(
+        {
+            "trt": [1, 1, 2, 2],
+            "resp": [1, 5, 3, 4],
+            "group": pd.Categorical([1, 2, 1, 2]),
+            "upper": [1.5, 5.0, 3.3, 4.2],
+            "lower": [1, 4.0, 2.4, 3.6],
+        }
+    )
     plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_error_bar(
         aes(ymin="lower", ymax="upper"), size=20
     )

@@ -1,6 +1,6 @@
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 from itertools import product
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -315,6 +315,7 @@ def _filled_count_geom_map(
     style: "GGStyle",
 ) -> "FilledGeom":
     from python_ggplot.gg.styles.utils import apply_style
+
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=False)  # type: ignore
     col = pd.Series(dtype=float)  # For stacking
 
@@ -397,6 +398,7 @@ def _filled_bin_geom_map(
     style: "GGStyle",
 ) -> "FilledGeom":
     from python_ggplot.gg.styles.utils import apply_style
+
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore TODO
 
     sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
@@ -406,10 +408,7 @@ def _filled_bin_geom_map(
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
         current_style = apply_style(
-            deepcopy(style),
-            sub_df,
-            filled_stat_geom.discrete_scales,
-            key_values
+            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
         )  # type: ignore
         hist, bins, _ = call_histogram(
             filled_stat_geom.geom,
@@ -440,7 +439,7 @@ def _filled_bin_geom_map(
             filled_stat_geom.continuous_scales,
             current_style,
             filled_stat_geom.geom.geom_type,
-            to_clone=True  # type: ignore
+            to_clone=True,  # type: ignore
         )
 
         filled_geom.gg_data.num_x = max(filled_geom.gg_data.num_x, len(yield_df))
