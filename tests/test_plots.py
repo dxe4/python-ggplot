@@ -158,7 +158,6 @@ def test_geom_text():
     ggdraw_plot(res, plots_path / "geom_text.png")
 
 
-@pytest.mark.xfail(reason="needs improvements")
 def test_geom_error_bar():
     """
     this needs some further fixing
@@ -167,8 +166,8 @@ def test_geom_error_bar():
         'trt': [1, 1, 2, 2],
         'resp': [1, 5, 3, 4],
         'group': pd.Categorical([1, 2, 1, 2]),
-        'upper': [1.1, 5.3, 3.3, 4.2],
-        'lower': [0.8, 4.6, 2.4, 3.6]
+        'upper': [1.5, 5.0, 3.3, 4.2],
+        'lower': [1, 4.0, 2.4, 3.6]
     })
     plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_error_bar(
         aes(ymin="lower", ymax="upper"), size=20

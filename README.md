@@ -54,7 +54,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 ```
 <img src="plots/geom_histogram_fill.png?v=1" alt="geom_histogram" width="400px">
 
-
 ```python
     df = pd.DataFrame(
         data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
@@ -64,6 +63,23 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
     ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
 ```
 <img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
+
+```python
+df = pd.DataFrame({
+    'trt': [1, 1, 2, 2],
+    'resp': [1, 5, 3, 4],
+    'group': pd.Categorical([1, 2, 1, 2]),
+    'upper': [1.5, 5.0, 3.3, 4.2],
+    'lower': [1, 4.0, 2.4, 3.6]
+})
+plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_error_bar(
+    aes(ymin="lower", ymax="upper"), size=20
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_error_bar.png")
+```
+<img src="plots/geom_error_bar.png?v=1" alt="geom_error_bar" width="400px">
+
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
