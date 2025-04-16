@@ -241,9 +241,16 @@ def _filled_identity_geom_map(
 
     geom = filled_stat_geom.geom
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
+    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
-    for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+
+    for keys in sorted_keys:  # type: ignore
+        sub_df = grouped.get_group(keys)  # type: ignore
+        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
+        current_style = apply_style(
+            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+        )  # type: ignore
+
         yield_df: pd.DataFrame = sub_df.copy()  # type: ignore
         filled_stat_geom.x.set_x_attributes(filled_geom, yield_df)
 
@@ -261,7 +268,7 @@ def _filled_identity_geom_map(
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
         # this has to be copied otherwise the same style is changed
-        base_style = deepcopy(style)
+        base_style = deepcopy(current_style)
         style_, styles_, temp_yield_df = apply_cont_scale_if_any(
             yield_df,
             filled_stat_geom.continuous_scales,
@@ -519,11 +526,18 @@ def _filled_smooth_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
+    from python_ggplot.gg.styles.utils import apply_style
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
+    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
 
-    for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+    for keys in sorted_keys:  # type: ignore
+        sub_df = grouped.get_group(keys)  # type: ignore
+        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
+        current_style = apply_style(
+            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+        ) # type: ignore
+
         yield_df = sub_df.copy()  # type: ignore
 
         smoothed = call_smoother(
@@ -553,7 +567,7 @@ def _filled_smooth_geom_map(
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
         filled_geom.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
-            yield_df, cont, style, geom.geom_type, to_clone=True  # type: ignore
+            yield_df, cont, current_style, geom.geom_type, to_clone=True  # type: ignore
         )
 
     if (
