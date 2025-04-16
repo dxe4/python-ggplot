@@ -346,6 +346,12 @@ class GGScaleData:
     breaks: Optional[List[float]] = None
     name: str = ""
 
+    def get_name(self) -> str:
+        if self.name:
+            return self.name
+        else:
+            return str(self.col)
+
     def __rich_repr__(self):
         exclude_field = "ids"
         for field in fields(self):
@@ -694,6 +700,17 @@ class ScaleFreeKind(GGEnum):
 class MainAddScales:
     main: Optional["GGScale"] = None
     more: Optional[List["GGScale"]] = None
+
+    def get_name(self) -> str:
+        if self.main:
+            return self.main.gg_data.get_name()
+        elif self.more:
+            for scale in self.more:
+                name = scale.gg_data.get_name()
+                if name:
+                    return name
+        print(self)
+        raise GGException("No name found")
 
 
 @dataclass
