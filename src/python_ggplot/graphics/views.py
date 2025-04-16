@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from python_ggplot.core.coord.objects import (
     Coord,
@@ -130,22 +130,26 @@ class ViewPort:
     def gather_coords(self) -> Dict[Any, Any]:
         return self.get_coords()
 
-    def find(self, go_type: GOType, recursive: bool = True):
-        """
-        TODO write docs and make this more flexible
-        currently goes through all the object of current view and sub views
-        returns the ones that match the type given
-        """
+
+    def find_go_by_go_by_filter(self, filter_: Callable[[GraphicsObject], bool], recursive: bool = True):
         result: List[GraphicsObject] = []
         for object in self.objects:
-            if object.go_type == go_type:
+            if filter_(object):
                 result.append(object)
 
         if recursive:
             for sub_view in self.children:
-                result.extend(sub_view.find(go_type))
+                result.extend(sub_view.find_go_by_go_by_filter(filter_))
 
         return result
+
+    def find_go_by_go_name(self, go_name: str, recursive: bool = True):
+        filter_: Callable[[GraphicsObject], bool] = lambda x: x.name == go_name
+        return self.find_go_by_go_by_filter(filter_)
+
+    def find_go_by_go_type(self, go_type: GOType, recursive: bool = True):
+        filter_: Callable[[GraphicsObject], bool] = lambda x: x.go_type == go_type
+        return self.find_go_by_go_by_filter(filter_)
 
     def get_center(self) -> Tuple[float, float]:
         center_x: float = self.left().pos + (
