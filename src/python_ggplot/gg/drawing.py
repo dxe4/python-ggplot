@@ -897,7 +897,8 @@ def draw_sub_df(
             # this logic is correct but is triggered at the wrong conditions
             # Should not be triggered for geom_line (as draws a line from axis to point)
             # if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
-            # line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+            if geom_type == GeomType.FREQ_POLY:
+                line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
             poly_line = init_poly_line_from_points(
                 view, [i.point() for i in line_points], style
             )
