@@ -73,17 +73,6 @@ def test_geom_bar_y():
     ggdraw_plot(res, plots_path / "geom_bar_y.png")
 
 
-def test_geom_freq_poly():
-    mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = (
-        ggplot(mpg, aes(x="cty", color="class"))
-        + geom_freqpoly()
-        + scale_x_continuous()
-    )
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_freqpoly_cty_class.png")
-
-
 def test_geom_histogram_fill():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
@@ -207,3 +196,25 @@ def test_geom_freqpoly():
     plot = ggplot(diamonds, aes("price", color="cut")) + geom_freqpoly()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_freqpoly.png")
+
+
+def test_geom_freqpoly_cty_class():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = (
+        ggplot(mpg, aes(x="cty", color="class"))
+        + geom_freqpoly()
+        + scale_x_continuous()
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_freqpoly_cty_class.png")
+
+
+def test_geom_freqpoly_cty_class_fill():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_freqpoly(alpha=0.3)
+        + scale_x_continuous()
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "freqpoly_cty_class_fill.png")

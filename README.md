@@ -40,6 +40,19 @@ ggdraw_plot(res, plots_path / "geom_freqpoly.png")
 
 ```python
 mpg = pd.read_csv(data_path / "mpg.csv")
+plot = (
+    ggplot(mpg, aes(x="cty", fill="class"))
+    + geom_freqpoly(alpha=0.3)
+    + scale_x_continuous()
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "test_geom_freqpoly_cty_class_fill.png")
+```
+<img src="plots/freqpoly_cty_class_fill.png?v=1" alt="gg_point" width="400px">
+
+
+```python
+mpg = pd.read_csv(data_path / "mpg.csv")
 plot = ggplot(mpg, aes(x = 'displ')) + geom_histogram()
 res = ggcreate(plot)
 ggdraw_plot(res, data_path / "geom_histogram.png")
