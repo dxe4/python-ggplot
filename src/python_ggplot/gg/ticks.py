@@ -677,7 +677,7 @@ def handle_ticks(
             view, theme, ax_kind, scale, theme.x_tick_label_margin, num_ticks_opt
         )
     elif ax_kind == AxisKind.Y:
-        scale = filled_scales.get_scale(filled_scales.x, optional=True)
+        scale = filled_scales.get_scale(filled_scales.y, optional=True)
         margin_opt, num_ticks, has_scale = _tick_config(
             view, theme, ax_kind, scale, theme.y_tick_label_margin, num_ticks_opt
         )
