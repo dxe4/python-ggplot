@@ -102,6 +102,7 @@ class GetXY:
                 y = temp
             else:
                 y = float(self.y_series.iloc[self.idx])  # type: ignore
+
         # TODO CRITICAL, easy task
         # write is_continuous and use that
         # although this is binary discrete/continuous

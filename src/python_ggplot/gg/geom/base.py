@@ -303,7 +303,7 @@ class GeomRectDrawMixin:
         if bin_width != bin_widths[0]:
             raise GGException("Invalid bin width generated")
 
-        if y is None:
+        if y is None or pd.isna(y):
             y = 0.0
 
         new_rect = init_rect(

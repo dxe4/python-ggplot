@@ -343,7 +343,7 @@ def _filled_count_geom_map(
         )
         yield_df = count_(sub_df, filled_stat_geom.get_x_col(), "", weight_scale)  # type: ignore
 
-        add_zero_keys(yield_df, all_classes, filled_stat_geom.get_x_col(), "count")  # type: ignore
+        yield_df = add_zero_keys(yield_df, all_classes, filled_stat_geom.get_x_col(), "count")  # type: ignore
         yield_df = yield_df.sort_values(filled_stat_geom.get_x_col())  # type: ignore
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
