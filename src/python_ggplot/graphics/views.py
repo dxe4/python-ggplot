@@ -130,8 +130,9 @@ class ViewPort:
     def gather_coords(self) -> Dict[Any, Any]:
         return self.get_coords()
 
-
-    def find_go_by_go_by_filter(self, filter_: Callable[[GraphicsObject], bool], recursive: bool = True):
+    def find_go_by_go_by_filter(
+        self, filter_: Callable[[GraphicsObject], bool], recursive: bool = True
+    ):
         result: List[GraphicsObject] = []
         for object in self.objects:
             if filter_(object):

@@ -34,6 +34,14 @@ def test_geom_bar():
     ggdraw_plot(res, plots_path / "geom_bar.png")
 
 
+def test_geom_bar_fill():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_bar_fill.png")
+    # print(res.view.find_go_by_go_name("geom_bar_rect"))
+
+
 @pytest.mark.xfail(reason="fix")
 def test_geom_point_and_text():
     """
@@ -85,7 +93,7 @@ def test_geom_histogram_fill():
 
 
 @pytest.mark.xfail(reason="")
-def test_geom_bar_fill():
+def test_geom_bar_fill_y_only():
     # Fill the bars
     # Fourth plot here https://ggplot2.tidyverse.org/reference/geom_bar.html
     mpg = pd.read_csv(data_path / "mpg.csv")

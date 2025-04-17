@@ -709,7 +709,6 @@ class MainAddScales:
                 name = scale.gg_data.get_name()
                 if name:
                     return name
-        print(self)
         raise GGException("No name found")
 
 

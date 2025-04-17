@@ -324,14 +324,19 @@ def _filled_count_geom_map(
     from python_ggplot.gg.styles.utils import apply_style
 
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=False)  # type: ignore
+    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)  # For stacking
 
     all_classes = pd.Series(df[filled_stat_geom.get_x_col()].unique())  # type: ignore
     if len(filled_stat_geom.continuous_scales) > 0:
         raise GGException("continuous_scales > 0")
 
-    for keys, sub_df in grouped:  # type: ignore
-        apply_style(style, sub_df, filled_stat_geom.discrete_scales, [(keys[0], VString(i)) for i in grouped.groups])  # type: ignore
+    for keys in sorted_keys:  # type: ignore
+        sub_df = grouped.get_group(keys)  # type: ignore
+        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
+        current_style = apply_style(
+            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+        )  # type: ignore
 
         weight_scale = filled_scales.get_weight_scale(
             filled_stat_geom.geom, optional=True
@@ -356,7 +361,7 @@ def _filled_count_geom_map(
         filled_geom.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
             yield_df,
             filled_stat_geom.continuous_scales,
-            style,
+            current_style,
             filled_stat_geom.geom.geom_type,
             to_clone=True,
         )
@@ -527,6 +532,7 @@ def _filled_smooth_geom_map(
     style: "GGStyle",
 ) -> "FilledGeom":
     from python_ggplot.gg.styles.utils import apply_style
+
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
     sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
@@ -536,7 +542,7 @@ def _filled_smooth_geom_map(
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
         current_style = apply_style(
             deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-        ) # type: ignore
+        )  # type: ignore
 
         yield_df = sub_df.copy()  # type: ignore
 

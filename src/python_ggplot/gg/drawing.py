@@ -916,7 +916,9 @@ def draw_sub_df(
             for i in range(len(styles) - 1):
                 style = merge_user_style(styles[i], fg)
                 poly_line = init_poly_line_from_points(
-                    view, [line_points[i].point(), line_points[i + 1].point()], deepcopy(style)
+                    view,
+                    [line_points[i].point(), line_points[i + 1].point()],
+                    deepcopy(style),
                 )
                 view.add_obj(poly_line)
     elif geom_type == GeomType.RASTER:

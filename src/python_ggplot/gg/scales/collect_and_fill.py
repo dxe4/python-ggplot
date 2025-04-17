@@ -28,7 +28,6 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     series_is_str,
     series_value_type,
 )
-from python_ggplot.gg.geom.base import post_process_scales
 from python_ggplot.gg.scales import (
     AlphaScale,
     GGScale,
@@ -1090,5 +1089,4 @@ def collect_scales(plot: GgPlot) -> FilledScales:
     if plot.facet is not None:
         add_facets(filled_scales_result, plot)
 
-    post_process_scales(filled_scales_result, plot)
     return filled_scales_result

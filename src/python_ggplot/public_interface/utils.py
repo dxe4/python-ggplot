@@ -64,7 +64,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType
+from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType, post_process_scales
 from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.scales.base import (
     ColorScale,
@@ -1869,6 +1869,7 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
         raise GGException("Please use at least one `geom`!")
 
     filled_scales: FilledScales = _collect_scales(plot)
+    post_process_scales(filled_scales, plot)
     theme = build_theme(filled_scales, plot)
 
     coord_input = CoordsInput()
