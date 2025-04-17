@@ -325,6 +325,8 @@ def _filled_count_geom_map(
 
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=False)  # type: ignore
     sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
+
+    # TODO fix col type, issue with pandas index
     col = pd.Series(dtype=float)  # For stacking
 
     all_classes = pd.Series(df[filled_stat_geom.get_x_col()].unique())  # type: ignore
@@ -352,6 +354,7 @@ def _filled_count_geom_map(
         col = add_counts_by_position(
             col, yield_df["count"], filled_stat_geom.geom.gg_data.position  # type: ignore
         )
+        col = col.to_numpy()
 
         if _modify_for_stacking(filled_stat_geom.geom):
             yield_df["count"] = col
