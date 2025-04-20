@@ -219,13 +219,13 @@ def add_counts_by_position(
 
 
 def _modify_for_stacking(geom: "Geom") -> bool:
-    if geom.gg_data.position == PositionType.STACK and not (
-        (
-            geom.geom_type == GeomType.HISTOGRAM
-            and geom.gg_data.histogram_drawing_style == HistogramDrawingStyle.BARS
-        )
-        or (geom.geom_type == GeomType.BAR)
-    ):
+    is_bar = (
+        geom.geom_type == GeomType.HISTOGRAM
+        and geom.gg_data.histogram_drawing_style == HistogramDrawingStyle.BARS
+    ) or (
+        geom.geom_type == GeomType.BAR
+    )
+    if geom.gg_data.position == PositionType.STACK and not is_bar:
         return True
     return False
 
@@ -357,7 +357,8 @@ def _filled_count_geom_map(
         col = col.to_numpy()
 
         if _modify_for_stacking(filled_stat_geom.geom):
-            yield_df["count"] = col
+            y_col = filled_stat_geom.get_y_col()
+            yield_df[y_col] = col
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
 
