@@ -6,6 +6,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict, Union
 
 from python_ggplot.core.objects import Color, ColorRGBA, GGException
 
+WHITE_X = 0.95047
+WHITE_Y = 1
+WHITE_Z = 1.08883
+
 
 class RGBADict(TypedDict):
     r: float
@@ -71,38 +75,60 @@ def fixup_color(
     return r, g, b
 
 
-def rgb255(v: float) -> int:
-    return max(0, min(255, v))
+def hcl_to_rgb_via_luv_and_xyz(h: float, c: float, l: float):
 
+    def hcl_to_luv(h: float, c: float, l: float):
+        h_rad = math.radians(h)
+        u = c * math.cos(h_rad)
+        v = c * math.sin(h_rad)
+        return l, u, v
 
-def b1(v: float) -> float:
-    return (v ** (1 / 2.4) * 269.025 - 14.025) if v > 0.0031308 else v * 3294.6
+    def luv_to_xyz(l: float, u: float, v: float):
+        xn, yn, zn = 0.95047, 1.00000, 1.08883
+        un = 4 * xn / (xn + 15 * yn + 3 * zn)
+        vn = 9 * yn / (xn + 15 * yn + 3 * zn)
 
+        if l == 0:
+            return 0, 0, 0
 
-def b2(v: float) -> float:
-    return v**3 if v > 0.2068965 else (v - 4 / 29) * (108 / 841)
+        y = (l + 16) / 116
+        y = y ** 3 if y > 0.008856 else l / 903.3
 
+        u_prime = u / (13 * l) + un if l != 0 else 0
+        v_prime = v / (13 * l) + vn if l != 0 else 0
 
-def a1(v: float) -> float:
-    return ((v + 14.025) / 269.025) ** 2.4 if v > 10.314724 else v / 3294.6
+        x = 9 * u_prime * y / (4 * v_prime)
+        z = (12 - 3 * u_prime - 20 * v_prime) * y / (4 * v_prime)
 
+        return x, y, z
 
-def a2(v: float):
-    return v ** (1 / 3) if v > 0.0088564 else v / (108 / 841) + 4 / 29
+    def xyz_to_rgb(x: float, y: float, z: float):
+        r = (3.240479 * x - 1.53715 * y - 0.498535 * z) * WHITE_Y
+        g = (-0.969256 * x + 1.875992 * y + 0.041556 * z) * WHITE_Y
+        b = (0.055648 * x - 0.204043 * y + 1.057311 * z) * WHITE_Y
 
+        def gamma_correct(u: float):
+            GAMMA = 2.4
+            if u > 0.00304:
+                return 1.055 * (u ** (1.0 / GAMMA)) - 0.055
+            else:
+                return 12.92 * u
 
-def hcl_to_rgb_2(h: float, c: float, l: float) -> list[int]:
-    h = math.radians(h)
-    l = (l + 16) / 116
-    y = b2(l)
-    x = b2(l + (c / 500) * math.cos(h))
-    z = b2(l - (c / 200) * math.sin(h))
+        r = max(0, min(1, gamma_correct(r)))
+        g = max(0, min(1, gamma_correct(g)))
+        b = max(0, min(1, gamma_correct(b)))
 
-    r = rgb255(b1(x * 3.021973625 - y * 1.617392459 - z * 0.404875592))
-    g = rgb255(b1(x * -0.943766287 + y * 1.916279586 + z * 0.027607165))
-    b = rgb255(b1(x * 0.069407491 - y * 0.22898585 + z * 1.159737864))
+        return (
+            float(round(r, 5)),
+            float(round(g, 5)),
+            float(round(b, 5))
+        )
 
-    return {"r": r / 255, "g": g / 255, "b": b / 255, "a": 1.0}
+    l, u, v = hcl_to_luv(h, c, l)
+    x, y, z = luv_to_xyz(l, u, v)
+    r, g, b = xyz_to_rgb(x, y, z)
+
+    return {"r": r, "g": g, "b": b, "a": 1.0}
 
 
 def hcl_to_rgb(h: float, c: float, l: float):

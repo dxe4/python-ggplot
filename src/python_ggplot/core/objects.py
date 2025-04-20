@@ -201,9 +201,10 @@ class ColorHCL:
     l: float
 
     def to_rgb(self) -> Color:
-        from python_ggplot.core.chroma import hcl_to_rgb
+        from python_ggplot.core.chroma import hcl_to_rgb_via_luv_and_xyz
 
-        return Color(**hcl_to_rgb(self.h, self.c, self.l))
+
+        return Color(**hcl_to_rgb_via_luv_and_xyz(self.h, self.c, self.l))
 
     @staticmethod
     def gg_color_hue(num: int, hue_config: Optional[HueConfig] = None) -> List["Color"]:
