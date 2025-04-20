@@ -1,5 +1,6 @@
 # ported code from num chroma
 # todo port the unit tests too
+import math
 from types import NoneType
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict, Union
 
@@ -54,7 +55,7 @@ def fixup_color(
 
     def fix_c(c: Union[int, float]):
         if c < 0:
-            c = type(c)(0)
+            c = 0
         if isinstance(c, int):
             if c > 255:
                 c = 255
@@ -68,6 +69,78 @@ def fixup_color(
     b = fix_c(b)
 
     return r, g, b
+
+
+def rgb255(v: float) -> int:
+    return max(0, min(255, v))
+
+
+def b1(v: float) -> float:
+    return (v ** (1 / 2.4) * 269.025 - 14.025) if v > 0.0031308 else v * 3294.6
+
+
+def b2(v: float) -> float:
+    return v**3 if v > 0.2068965 else (v - 4 / 29) * (108 / 841)
+
+
+def a1(v: float) -> float:
+    return ((v + 14.025) / 269.025) ** 2.4 if v > 10.314724 else v / 3294.6
+
+
+def a2(v: float):
+    return v ** (1 / 3) if v > 0.0088564 else v / (108 / 841) + 4 / 29
+
+
+def hcl_to_rgb_2(h: float, c: float, l: float) -> list[int]:
+    h = math.radians(h)
+    l = (l + 16) / 116
+    y = b2(l)
+    x = b2(l + (c / 500) * math.cos(h))
+    z = b2(l - (c / 200) * math.sin(h))
+
+    r = rgb255(b1(x * 3.021973625 - y * 1.617392459 - z * 0.404875592))
+    g = rgb255(b1(x * -0.943766287 + y * 1.916279586 + z * 0.027607165))
+    b = rgb255(b1(x * 0.069407491 - y * 0.22898585 + z * 1.159737864))
+
+    return {"r": r / 255, "g": g / 255, "b": b / 255, "a": 1.0}
+
+
+def hcl_to_rgb(h: float, c: float, l: float):
+    h_rad = math.radians(h)
+    a = c * math.cos(h_rad)
+    b = c * math.sin(h_rad)
+
+    y = (l + 16) / 116
+    x = a / 500 + y
+    z = y - b / 200
+
+    def f_inv(t: float):
+        if t > 6 / 29:
+            return t**3
+        else:
+            return 3 * (6 / 29) ** 2 * (t - 4 / 29)
+
+    x = f_inv(x) * 0.95047
+    y = f_inv(y) * 1.0
+    z = f_inv(z) * 1.08883
+
+    r = x * 3.2406 + y * -1.5372 + z * -0.4986
+    g = x * -0.9689 + y * 1.8758 + z * 0.0415
+    b = x * 0.0557 + y * -0.2040 + z * 1.0570
+
+    def gamma_correction(c: float):
+        if c <= 0.0031308:
+            return 12.92 * c
+        else:
+            return 1.055 * c ** (1 / 2.4) - 0.055
+
+    r = gamma_correction(r)
+    g = gamma_correction(g)
+    b = gamma_correction(b)
+
+    r, g, b = fixup_color(r, g, b)
+
+    return {"r": r, "g": g, "b": b, "a": 1.0}
 
 
 def color_from_hsl(h: float, s: float, l: float) -> RGBADict:

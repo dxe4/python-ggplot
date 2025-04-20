@@ -222,9 +222,7 @@ def _modify_for_stacking(geom: "Geom") -> bool:
     is_bar = (
         geom.geom_type == GeomType.HISTOGRAM
         and geom.gg_data.histogram_drawing_style == HistogramDrawingStyle.BARS
-    ) or (
-        geom.geom_type == GeomType.BAR
-    )
+    ) or (geom.geom_type == GeomType.BAR)
     if geom.gg_data.position == PositionType.STACK and not is_bar:
         return True
     return False

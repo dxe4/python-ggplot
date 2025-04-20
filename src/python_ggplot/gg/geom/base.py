@@ -292,6 +292,7 @@ class GeomRectDrawMixin:
         style: Style,
     ):
         from python_ggplot.gg.drawing import read_or_calc_bin_width
+
         if fg.gg_data.x_col is None:
             raise GGException("x_col does not exist")
         if fg.gg_data.x_discrete_kind is None:
@@ -318,7 +319,9 @@ class GeomRectDrawMixin:
             # with fill/count we generate empty 0 sized elements for every combo
             # we shouldn't really deal with this here, but outside
             # for now its fine
-            print("WARNING: trying to render a rect of height 0.0. this can happen with fill/stack")
+            print(
+                "WARNING: trying to render a rect of height 0.0. this can happen with fill/stack"
+            )
         else:
             view.add_obj(new_rect)
 

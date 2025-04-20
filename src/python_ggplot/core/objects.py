@@ -201,14 +201,15 @@ class ColorHCL:
     l: float
 
     def to_rgb(self) -> Color:
-        from python_ggplot.core.chroma import color_from_hsl
+        from python_ggplot.core.chroma import hcl_to_rgb
 
-        return Color(**color_from_hsl(self.h, self.c, self.l))
+        return Color(**hcl_to_rgb(self.h, self.c, self.l))
 
     @staticmethod
     def gg_color_hue(num: int, hue_config: Optional[HueConfig] = None) -> List["Color"]:
         if not hue_config:
             hue_config = HueConfig()
+        # the colors are slighly off, but moslty fine
         hues = linspace(
             hue_config.hue_start, hue_config.hue_start + 360.0, num + 1, endpoint=True
         )
