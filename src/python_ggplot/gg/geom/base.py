@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import auto
+from math import isclose
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -291,7 +292,6 @@ class GeomRectDrawMixin:
         style: Style,
     ):
         from python_ggplot.gg.drawing import read_or_calc_bin_width
-
         if fg.gg_data.x_col is None:
             raise GGException("x_col does not exist")
         if fg.gg_data.x_discrete_kind is None:
@@ -313,7 +313,14 @@ class GeomRectDrawMixin:
             DataUnit(-y),
             InitRectInput(style=style, name="geom_bar_rect"),
         )
-        view.add_obj(new_rect)
+
+        if isclose(y, 0.0):
+            # with fill/count we generate empty 0 sized elements for every combo
+            # we shouldn't really deal with this here, but outside
+            # for now its fine
+            print("WARNING: trying to render a rect of height 0.0. this can happen with fill/stack")
+        else:
+            view.add_obj(new_rect)
 
 
 class GeomHistogramMixin(GeomRectDrawMixin):
