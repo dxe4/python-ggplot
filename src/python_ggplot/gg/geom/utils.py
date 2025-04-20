@@ -347,6 +347,7 @@ def _filled_count_geom_map(
 
         yield_df = add_zero_keys(yield_df, all_classes, filled_stat_geom.get_x_col(), "count")  # type: ignore
         yield_df = yield_df.sort_values(filled_stat_geom.get_x_col())  # type: ignore
+        yield_df = yield_df.reset_index(drop=True)
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
             yield_df["prev_vals"] = 0.0 if len(col) == 0 else col.copy()

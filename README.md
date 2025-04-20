@@ -22,6 +22,15 @@ plots are still in progress, but some examples:
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_bar_fill.png")
+```
+<img src="plots/geom_bar_fill.png?v=1" alt="gg_point" width="400px">
+
+
+```python
+    mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
         ggplot(mpg, aes(x="cty", color="class")) + geom_freqpoly() + scale_x_continuous()
     )

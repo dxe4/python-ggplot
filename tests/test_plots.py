@@ -39,7 +39,6 @@ def test_geom_bar_fill():
     plot = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_bar_fill.png")
-    # print(res.view.find_go_by_go_name("geom_bar_rect"))
 
 
 @pytest.mark.xfail(reason="fix")
