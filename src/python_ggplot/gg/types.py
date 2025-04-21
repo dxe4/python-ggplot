@@ -288,7 +288,7 @@ class Theme:
     )  # TODO double check
     x_ticks_rotate: float = 0.0
     y_ticks_rotate: float = 0.0
-    x_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
+    x_ticks_text_align: TextAlignKind = TextAlignKind.CENTER
     y_ticks_text_align: TextAlignKind = TextAlignKind.LEFT
 
     base_font_size: Optional[float] = None

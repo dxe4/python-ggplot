@@ -803,7 +803,7 @@ def y_label_origin_offset(
         pos = 1.5
     str_height_coord = Coord1D.create_str_width(pos, font).to_points()
     str_height_quantity = view.get_str_height(text, font).to_points()
-    str_height_quantity.val = str_height_quantity.val * 1.7
+    str_height_quantity.val = str_height_quantity.val / 2
 
     return coord_quantity_sub(str_height_coord, str_height_quantity)
 
