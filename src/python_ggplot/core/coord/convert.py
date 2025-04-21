@@ -157,7 +157,7 @@ def relative_to_point(data: CoordConversionData) -> Coord1D:
         raise GGException("expected length for conversion")
 
     return PointCoordType(
-        data.coord.pos + data.length.val, LengthCoord(length=data.length)
+        data.coord.pos * data.length.val, LengthCoord(length=data.length)
     )
 
 

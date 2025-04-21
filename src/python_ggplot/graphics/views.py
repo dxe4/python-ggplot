@@ -9,18 +9,22 @@ from python_ggplot.core.coord.objects import (
     LengthCoord,
     PointCoordType,
     RelativeCoordType,
+    StrHeightCoordType,
+    TextCoordData,
     path_coord_view_port,
 )
 from python_ggplot.core.objects import (
     BLACK,
     AxisKind,
     Color,
+    Font,
     GGException,
+    Point,
     Scale,
     Style,
     UnitType,
 )
-from python_ggplot.core.units.objects import Quantity, RelativeUnit
+from python_ggplot.core.units.objects import PointUnit, Quantity, RelativeUnit
 from python_ggplot.graphics.objects import GOType, GraphicsObject
 
 
@@ -374,6 +378,20 @@ class ViewPort:
 
         return init_axis(AxisKind.Y, InitAxisInput(width=width, color=color))
 
+    def get_str_height(self, text:str, font: Font) -> Quantity:
+        line_spread = 1.4
+        num_lines = len(text.split("\n"))
+        scale = 1.0
+        if num_lines > 1:
+            scale = num_lines * line_spread
+
+        positition = StrHeightCoordType(
+            scale,
+            data=TextCoordData(text=text, font=font)
+        ).to_points().pos
+        return PointUnit(val=positition)
+
+
     # def __rich_repr__(self):
     #     yield "width", self.width
     #     yield "height", self.height
@@ -388,13 +406,19 @@ def x_axis_y_pos(
     margin: float = 0.0,
     is_secondary: bool = False,
 ) -> Coord1D:
-    if view:
-        pos = -margin if is_secondary else view.point_height().val + margin
-        length = view.point_height() if is_secondary else view.h_img
+    if view is not None:
+        length = view.point_height()
+        if is_secondary:
+            pos = view.point_height().val + margin
+        else:
+            pos = -margin
         result = PointCoordType(pos, LengthCoord(length=length))
         return result
     else:
-        pos = 0.0 if is_secondary else 1.0
+        if is_secondary:
+            pos = 0.0
+        else:
+            pos = 1.0
         return RelativeCoordType(pos)
 
 
@@ -403,13 +427,20 @@ def y_axis_x_pos(
     margin: float = 0.0,
     is_secondary: bool = False,
 ) -> Coord1D:
-    if view:
-        pos = view.point_width().val + margin if is_secondary else -margin
-        length = view.w_img if is_secondary else view.point_width()
+    if view is not None:
+        if is_secondary:
+            pos = view.point_width().val + margin
+        else:
+            pos = -margin
+
+        length = view.point_width()
         result = PointCoordType(pos, LengthCoord(length=length))
         return result
     else:
-        pos = 1.0 if is_secondary else 0.0
+        if is_secondary:
+            pos = 1.0
+        else:
+            pos = 0.0
         return RelativeCoordType(pos)
 
 

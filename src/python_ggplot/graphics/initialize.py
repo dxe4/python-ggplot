@@ -783,19 +783,29 @@ def ylabel_from_float(
     )
 
 
-# TODO start - this should move out
 def x_label_origin_offset(
-    view: ViewPort, font: Font, is_secondary: Optional[bool] = False
+    view: ViewPort, text: str, font: Font, is_secondary: Optional[bool] = False
 ) -> Coord1D:
-    pos = -1.15 if not is_secondary else 1.15
-    return Coord1D.create_str_width(pos, font).to_relative(view.point_width())
+    if is_secondary:
+        pos = 1.5
+    else:
+        pos = -1.5
+
+    return Coord1D.create_str_height(pos, font).to_points()
 
 
 def y_label_origin_offset(
-    view: ViewPort, font: Font, is_secondary: Optional[bool] = False
+    view: ViewPort, text: str, font: Font, is_secondary: Optional[bool] = False
 ) -> Coord1D:
-    pos = 1.75 if not is_secondary else -1.75
-    return Coord1D.create_str_height(pos, font).to_relative(view.point_height())
+    if is_secondary:
+        pos = -1.5
+    else:
+        pos = 1.5
+    str_height_coord = Coord1D.create_str_width(pos, font).to_points()
+    str_height_quantity = view.get_str_height(text, font).to_points()
+    str_height_quantity.val = str_height_quantity.val * 1.7
+
+    return coord_quantity_sub(str_height_coord, str_height_quantity)
 
 
 def set_text_align_kind(
@@ -845,13 +855,22 @@ def init_tick_label_with_override(
     )
 
     if tick.axis == AxisKind.X:
-        y_offset = margin or y_label_origin_offset(view, font_, is_secondary)
-        origin = Coord(x=loc.x, y=(loc.y + y_offset).to_relative(None))
+        if margin is not None:
+            y_offset = margin
+        else:
+            y_offset = y_label_origin_offset(view, data.text, font_, is_secondary)
+        y = loc.y.to_points(length=view.point_height()) + y_offset
+        origin = Coord(x=loc.x, y=y)
         return init_text(view, origin, data)
 
     elif tick.axis == AxisKind.Y:
-        x_offset = margin or x_label_origin_offset(view, font_, is_secondary)
-        origin = Coord(x=(loc.x + x_offset).to_relative(None), y=loc.y)
+        if margin is not None:
+            x_offset = margin
+        else:
+            x_offset = x_label_origin_offset(view, data.text, font_, is_secondary)
+
+        x = loc.x.to_points(length=view.point_width()) - x_offset
+        origin = Coord(x=x, y=loc.y)
         return init_text(view, origin, data)
     else:
         raise GGException("unexpected axis")
@@ -862,8 +881,10 @@ def axis_coord(
 ) -> Coord:
     if axis_kind == AxisKind.X:
         return Coord(x=coord, y=x_axis_y_pos(is_secondary=is_secondary))
-    else:  # AxisKind.Y
+    elif axis_kind == AxisKind.Y:
         return Coord(x=y_axis_x_pos(is_secondary=is_secondary), y=coord)
+    else:
+        raise GGException("expected x or y axis")
 
 
 TickFormat = Callable[[float], str]
