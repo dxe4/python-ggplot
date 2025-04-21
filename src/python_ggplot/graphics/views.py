@@ -408,10 +408,11 @@ def x_axis_y_pos(
 ) -> Coord1D:
     if view is not None:
         length = view.point_height()
-        if is_secondary:
+        if not is_secondary:
             pos = view.point_height().val + margin
         else:
             pos = -margin
+
         result = PointCoordType(pos, LengthCoord(length=length))
         return result
     else:
