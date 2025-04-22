@@ -444,6 +444,7 @@ def _filled_bin_geom_map(
         col = add_counts_by_position(
             col, pd.Series(hist), filled_stat_geom.geom.gg_data.position
         )
+        col = col.to_numpy()
 
         if _modify_for_stacking(filled_stat_geom.geom):
             yield_df[filled_geom.gg_data.y_col] = col

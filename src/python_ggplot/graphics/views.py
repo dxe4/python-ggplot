@@ -378,19 +378,19 @@ class ViewPort:
 
         return init_axis(AxisKind.Y, InitAxisInput(width=width, color=color))
 
-    def get_str_height(self, text:str, font: Font) -> Quantity:
+    def get_str_height(self, text: str, font: Font) -> Quantity:
         line_spread = 1.4
         num_lines = len(text.split("\n"))
         scale = 1.0
         if num_lines > 1:
             scale = num_lines * line_spread
 
-        positition = StrHeightCoordType(
-            scale,
-            data=TextCoordData(text=text, font=font)
-        ).to_points().pos
+        positition = (
+            StrHeightCoordType(scale, data=TextCoordData(text=text, font=font))
+            .to_points()
+            .pos
+        )
         return PointUnit(val=positition)
-
 
     # def __rich_repr__(self):
     #     yield "width", self.width

@@ -203,7 +203,6 @@ class ColorHCL:
     def to_rgb(self) -> Color:
         from python_ggplot.core.chroma import hcl_to_rgb_via_luv_and_xyz
 
-
         return Color(**hcl_to_rgb_via_luv_and_xyz(self.h, self.c, self.l))
 
     @staticmethod

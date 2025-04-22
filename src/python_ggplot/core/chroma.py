@@ -92,7 +92,7 @@ def hcl_to_rgb_via_luv_and_xyz(h: float, c: float, l: float):
             return 0, 0, 0
 
         y = (l + 16) / 116
-        y = y ** 3 if y > 0.008856 else l / 903.3
+        y = y**3 if y > 0.008856 else l / 903.3
 
         u_prime = u / (13 * l) + un if l != 0 else 0
         v_prime = v / (13 * l) + vn if l != 0 else 0
@@ -118,11 +118,7 @@ def hcl_to_rgb_via_luv_and_xyz(h: float, c: float, l: float):
         g = max(0, min(1, gamma_correct(g)))
         b = max(0, min(1, gamma_correct(b)))
 
-        return (
-            float(round(r, 5)),
-            float(round(g, 5)),
-            float(round(b, 5))
-        )
+        return (float(round(r, 5)), float(round(g, 5)), float(round(b, 5)))
 
     l, u, v = hcl_to_luv(h, c, l)
     x, y, z = luv_to_xyz(l, u, v)

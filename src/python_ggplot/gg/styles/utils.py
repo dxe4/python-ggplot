@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
@@ -42,11 +43,11 @@ def default_style(geom_type: GeomType, stat_type: StatType) -> Style:
         GeomType.ERROR_BAR,
     ]:
         if stat_type == StatType.SMOOTH:
-            return SMOOTH_DEFAULT_STYLE
+            return deepcopy(SMOOTH_DEFAULT_STYLE)
         else:
-            return LINE_DEFAULT_STYLE
+            return deepcopy(LINE_DEFAULT_STYLE)
 
-    return _style_lookup[geom_type]
+    return deepcopy(_style_lookup[geom_type])
 
 
 def use_or_default(c: Optional[ColorScale]) -> ColorScale:
