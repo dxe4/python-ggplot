@@ -187,6 +187,8 @@ def apply_cont_scale_if_any(
             # avoid expensive computation for raster
             if geom_type != GeomType.RASTER:
                 # TODO high priority map_data logic is funny overall, add ignore type for now
+                print(scale)
+                print(scale.map_data)
                 sc_vals = scale.map_data(result_df)
                 result_styles = [change_style(base_style, val) for val in sc_vals]
 
@@ -219,11 +221,13 @@ def add_counts_by_position(
 
 
 def _modify_for_stacking(geom: "Geom") -> bool:
+    if geom.gg_data.position != PositionType.STACK:
+        return False
     is_bar = (
         geom.geom_type == GeomType.HISTOGRAM
         and geom.gg_data.histogram_drawing_style == HistogramDrawingStyle.BARS
     ) or (geom.geom_type == GeomType.BAR)
-    if geom.gg_data.position == PositionType.STACK and not is_bar:
+    if not is_bar:
         return True
     return False
 
@@ -412,6 +416,7 @@ def _filled_bin_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
+    DISABLE_MODIFY_FOR_STACKING = True
     from python_ggplot.gg.styles.utils import apply_style
 
     grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore TODO
@@ -434,19 +439,24 @@ def _filled_bin_geom_map(
         )
 
         count_col = filled_stat_geom.count_col()  # type: ignore
-        yield_df = pd.DataFrame(
-            {filled_stat_geom.x.get_col_name(): bins, count_col: hist}
-        )
+        yield_df = pd.DataFrame({
+            filled_stat_geom.x.get_col_name(): bins,
+            count_col: hist
+        })
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
             yield_df[PREV_VALS_COL] = col if len(col) > 0 else 0.0
 
         col = add_counts_by_position(
-            col, pd.Series(hist), filled_stat_geom.geom.gg_data.position
+            col, hist, filled_stat_geom.geom.gg_data.position
         )
-        col = col.to_numpy()
 
-        if _modify_for_stacking(filled_stat_geom.geom):
+        # TODO CRITICAL+
+        # This does what was intented, it adds the previous values to the current
+        # if previous his is 10,10 and current is 0,1, we end up with 10, 11
+        # the issue is this eventually draws 10 + 10 instead of 10 + 0
+        # revisit this later, for now disable
+        if _modify_for_stacking(filled_stat_geom.geom) and not DISABLE_MODIFY_FOR_STACKING:
             yield_df[filled_geom.gg_data.y_col] = col
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
