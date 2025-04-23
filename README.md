@@ -8,17 +8,6 @@ plots are still in progress, but some examples:
 ```
 <img src="plots/geom_bar.png?v=1" alt="geom_bar" width="400px">
 
-```python
-    mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x="displ", y="hwy")) + geom_point(
-        aes(color="class"), size=3, alpha=0.7
-    )
-
-    res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_point_with_color.png")
-```
-<img src="plots/geom_point_with_color.png?v=1" alt="gg_point" width="400px">
-
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
