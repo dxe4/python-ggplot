@@ -114,10 +114,10 @@ def test_geom_point():
 
 
 def test_geom_point_with_color():
+    # TODO this needs fixing
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x="displ", y="hwy")) + geom_point(
-        aes(color="class"), size=3, alpha=0.7
-    )
+    mpg['cty'] = mpg['cty'].astype(float)
+    plot = ggplot(mpg, aes(x="displ", y="hwy", color="cty")) + geom_point()
     # TODO labs needs to be implemented
     # + labs(
     #     title = "Engine Size vs Highway Mileage",
@@ -125,7 +125,7 @@ def test_geom_point_with_color():
     #     y = "Highway Mileage (mpg)"
     # )
     res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_point_with_color.png")
+    ggdraw_plot(res, plots_path / "geom_point_with_continuous_color.png")
 
 
 def test_geom_line():

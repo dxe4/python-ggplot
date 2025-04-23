@@ -421,7 +421,7 @@ def fill_continuous_color_scale(
     color_scale: ColorScale,
 ) -> Union[ColorScaleKind, FillColorScale]:
     cls = scale_type_to_cls(scale_type)
-    if not isinstance(cls, (ColorScaleKind, FillColorScale)):
+    if cls not in (ColorScaleKind, FillColorScale):
         raise GGException("expected color or fill color scale")
 
     gg_data = GGScaleData(
@@ -811,6 +811,7 @@ def fill_scale(
             alpha_range = scale.alpha_range
 
         (is_discrete, value_kind) = discrete_and_type(data, scale, dc_kind_opt)
+
         if isinstance(value_kind, VNull):
             print("WARNING: Unexpected data type!")
             continue
