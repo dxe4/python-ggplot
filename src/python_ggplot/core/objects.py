@@ -180,14 +180,14 @@ class ColorRGBA:
     r: int
     g: int
     b: int
-    a: int = 1
+    a: float = 1
 
     def to_color(self):
         return Color(
-            r=int(self.r / 255),
-            b=int(self.b / 255),
-            g=int(self.g / 255),
-            a=int(self.a),
+            r=self.r / 255,
+            b=self.b / 255,
+            g=self.g / 255,
+            a=self.a,
         )
 
     def __eq__(self, o: Any) -> bool:
