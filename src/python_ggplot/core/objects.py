@@ -180,7 +180,7 @@ class ColorRGBA:
     r: int
     g: int
     b: int
-    a: float = 1
+    a: float = 1.0
 
     def to_color(self):
         return Color(
