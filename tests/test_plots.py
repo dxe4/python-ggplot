@@ -116,7 +116,7 @@ def test_geom_point():
 def test_geom_point_with_color():
     # TODO this needs fixing
     mpg = pd.read_csv(data_path / "mpg.csv")
-    mpg['cty'] = mpg['cty'].astype(float)
+    mpg["cty"] = mpg["cty"].astype(float)
     plot = ggplot(mpg, aes(x="displ", y="hwy", color="cty")) + geom_point()
     # TODO labs needs to be implemented
     # + labs(

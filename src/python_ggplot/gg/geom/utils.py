@@ -188,7 +188,9 @@ def apply_cont_scale_if_any(
             if geom_type != GeomType.RASTER:
                 # TODO high priority map_data logic is funny overall, add ignore type for now
                 sc_vals = scale.map_data(result_df)
-                result_styles = [change_style(deepcopy(base_style), val) for val in sc_vals]
+                result_styles = [
+                    change_style(deepcopy(base_style), val) for val in sc_vals
+                ]
 
     if not result_styles:
         result_styles = [base_style]
@@ -438,24 +440,24 @@ def _filled_bin_geom_map(
         )
 
         count_col = filled_stat_geom.count_col()  # type: ignore
-        yield_df = pd.DataFrame({
-            filled_stat_geom.x.get_col_name(): bins,
-            count_col: hist
-        })
+        yield_df = pd.DataFrame(
+            {filled_stat_geom.x.get_col_name(): bins, count_col: hist}
+        )
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
             yield_df[PREV_VALS_COL] = col if len(col) > 0 else 0.0
 
-        col = add_counts_by_position(
-            col, hist, filled_stat_geom.geom.gg_data.position
-        )
+        col = add_counts_by_position(col, hist, filled_stat_geom.geom.gg_data.position)
 
         # TODO CRITICAL+
         # This does what was intented, it adds the previous values to the current
         # if previous his is 10,10 and current is 0,1, we end up with 10, 11
         # the issue is this eventually draws 10 + 10 instead of 10 + 0
         # revisit this later, for now disable
-        if _modify_for_stacking(filled_stat_geom.geom) and not DISABLE_MODIFY_FOR_STACKING:
+        if (
+            _modify_for_stacking(filled_stat_geom.geom)
+            and not DISABLE_MODIFY_FOR_STACKING
+        ):
             yield_df[filled_geom.gg_data.y_col] = col
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)

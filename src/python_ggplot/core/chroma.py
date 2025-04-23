@@ -209,11 +209,11 @@ def color_from_hsl(h: float, s: float, l: float) -> RGBADict:
 
 def to_rgba(c: int) -> tuple[int, int, int, float]:
     # todo decide what stays in color maps and what goes in chroma
-    return  (
-        (c >> 16)  & 0xFF,  # red
+    return (
+        (c >> 16) & 0xFF,  # red
         (c >> 8) & 0xFF,  # green
         c & 0xFF,  # blue
-        ((c >> 24)  & 0xFF) / 255,  # alpha
+        ((c >> 24) & 0xFF) / 255,  # alpha
     )
 
 
