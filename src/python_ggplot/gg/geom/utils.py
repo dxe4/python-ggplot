@@ -188,7 +188,7 @@ def apply_cont_scale_if_any(
             if geom_type != GeomType.RASTER:
                 # TODO high priority map_data logic is funny overall, add ignore type for now
                 sc_vals = scale.map_data(result_df)
-                result_styles = [change_style(base_style, val) for val in sc_vals]
+                result_styles = [change_style(deepcopy(base_style), val) for val in sc_vals]
 
     if not result_styles:
         result_styles = [base_style]
@@ -305,6 +305,7 @@ def _filled_identity_geom_set(
     yield_df = filled_geom.maybe_filter_unique(yield_df)
     filled_stat_geom.x.set_x_attributes(filled_geom, yield_df)
     key = ("", None)
+
     filled_geom.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
         yield_df,
         filled_stat_geom.continuous_scales,
