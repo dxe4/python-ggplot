@@ -86,6 +86,17 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 ```
 <img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
 
+
+```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+mpg["cty"] = mpg["cty"].astype(float)
+plot = ggplot(mpg, aes(x="displ", y="hwy", color="cty")) + geom_point()
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_point_with_continuous_color.png")
+```
+<img src="plots/geom_point_with_continuous_color.png?v=1" alt="geom_point_with_continuous_color" width="400px">
+
+
 ```python
 df = pd.DataFrame({
     'trt': [1, 1, 2, 2],
