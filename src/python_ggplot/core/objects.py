@@ -1,5 +1,5 @@
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from typing import Any, Generic, List, Literal, Optional, Type, TypeVar, Union
 
@@ -263,6 +263,18 @@ class Style:
     error_bar_kind: Optional[ErrorBarKind] = ErrorBarKind.LINES
     gradient: Optional[Gradient] = None
     font: Optional[Font] = None
+
+    def __rich_repr__(self):
+        """
+        TODO make this generic?
+        """
+        exclude_field = "gradient"
+        for field in fields(self):
+            if field.name != exclude_field:
+                yield field.name, getattr(self, field.name)
+        # this by default would print the whole set, one item at a time
+        if self.gradient is not None:
+            yield f"gradient -> min: {self.gradient.colors[0]} max: {self.gradient.colors[-1]} count: {len(self.gradient.colors)}"
 
 
 class CompositeKind(GGEnum):

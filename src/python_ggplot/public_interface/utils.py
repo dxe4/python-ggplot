@@ -484,6 +484,15 @@ def gen_continuous_legend(
         layout(view, cols=1, rows=6, col_widths=[], row_heights=[])
 
     elif isinstance(scale, (ColorScaleKind, FillColorScale)):
+        # TODO this needs to come from theme.base_scale with default 1.0
+        base_scale = 1.0
+        # use theme.continuous_legend_height or 4.5
+        height = 4.5
+        # use theme.legend_header_height or 1.0
+        legend_header_height = 1.0
+        # use theme.continuous_legend_width
+        width = 1.0
+
         discrete_kind = scale.gg_data.discrete_kind
         if not isinstance(discrete_kind, GGScaleContinuous):
             raise GGException("expected continuous scales")
@@ -493,12 +502,12 @@ def gen_continuous_legend(
             rows=2,
             cols=2,
             col_widths=[
-                Quantity.centimeters(0.5),
+                Quantity.centimeters(0.5 * base_scale),
                 Quantity.relative(0.0),
             ],
             row_heights=[
-                Quantity.centimeters(1.0),
-                Quantity.centimeters(4.5),
+                Quantity.centimeters(legend_header_height),
+                Quantity.centimeters(height),
             ],
         )
 
@@ -509,8 +518,8 @@ def gen_continuous_legend(
             3,
             1,
             col_widths=[
-                Quantity.centimeters(1.0),
-                Quantity.centimeters(0.5),
+                Quantity.centimeters(width * base_scale),
+                Quantity.centimeters(0.5 * base_scale),
                 Quantity.relative(0.0),
             ],
         )
@@ -534,14 +543,14 @@ def gen_continuous_legend(
             width=Quantity.relative(1.0),
             height=Quantity.relative(1.0),
             init_rect_input=InitRectInput(
-                name="legendGradientBackground", gradient=gradient
+                name="legend_gradient_background", gradient=gradient
             ),
         )
 
         leg_grad.add_obj(grad_rect)
         leg_view[0] = leg_grad
         view[3] = leg_view
-        view.height = Quantity.centimeters(5.5)
+        view.height = Quantity.centimeters(legend_header_height + height)
 
 
 def create_legend(

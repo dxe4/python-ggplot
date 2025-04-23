@@ -340,6 +340,14 @@ class Theme:
     facet_margin: Optional[Quantity] = None
     prefer_rows_over_columns: Optional[bool] = None
 
+    # TODO use this for create_legends
+    base_scale: Optional[float] = None
+    continuous_legend_height: Optional[float] = None
+    continuous_legend_width: Optional[float] = None
+    legend_header_height: Optional[float] = None
+    legend_title_font: Optional[Font] = None
+    legend_font: Optional[Font] = None
+
 
 @dataclass
 class Facet:
