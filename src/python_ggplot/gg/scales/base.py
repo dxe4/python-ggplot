@@ -213,12 +213,10 @@ class ColorScale:
     @classmethod
     def from_color_map(cls, name: str, color_map: List[List[float]]) -> "ColorScale":
         def _to_val(x: float):
-            # TODO, add tests for this and make sure
-            # it only happens at the right times
-            # i dont like silencing errors by shifting the value to valid bounds
-            # if it silnences things that are actual errors
-            # and not out of bounds because expected, this can be very hard to debug
-            return max(0, min(int(round(x * 255.0)), 255))
+            if x > 255 or x < 0:
+                raise GGException("incorrect color")
+            int_x = int(round(x * 255.0))
+            return max(0, min(int_x, 255))
 
         colors: List[int] = []
         for r, g, b in color_map:

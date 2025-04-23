@@ -187,8 +187,6 @@ def apply_cont_scale_if_any(
             # avoid expensive computation for raster
             if geom_type != GeomType.RASTER:
                 # TODO high priority map_data logic is funny overall, add ignore type for now
-                print(scale)
-                print(scale.map_data)
                 sc_vals = scale.map_data(result_df)
                 result_styles = [change_style(base_style, val) for val in sc_vals]
 
