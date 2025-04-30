@@ -559,9 +559,6 @@ def create_legend(
     geom_type: GeomType,
     access_idx: Optional[List[int]] = None,
 ):
-    # TODO high priority / easy task
-    # double check this to be sure, original code is len(view)
-    # i remember ginger sets this up, its either len(view.objects) or  len(view.children)
     start_idx = len(view.children)
 
     if cat.is_discrete():
