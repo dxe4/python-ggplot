@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os
 from collections import OrderedDict
 from dataclasses import field
@@ -9,15 +10,19 @@ from python_ggplot.common.enum_literals import (
     OUTSIDE_RANGE_KIND_VALUES,
     SCALE_FREE_KIND_VALUES,
 )
+from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
     TRANSPARENT,
     WHITE,
     AxisKind,
     Color,
+    ColorHCL,
     Font,
     GGException,
     Scale,
+    Style,
 )
+from python_ggplot.core.units.objects import RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import VTODO, GGValue, VectorCol, VNull
 from python_ggplot.gg.scales import ScaleValue, SizeScaleValue
 from python_ggplot.gg.scales.base import (
@@ -51,6 +56,7 @@ from python_ggplot.gg.types import (
     Theme,
 )
 from python_ggplot.graphics.draw import draw_to_file
+from python_ggplot.graphics.initialize import InitRectInput, init_rect
 from python_ggplot.graphics.views import ViewPort
 from python_ggplot.public_interface.utils import (
     ggcreate,
@@ -61,6 +67,7 @@ from python_ggplot.public_interface.utils import (
     scale_color_or_fill_manual,
     scale_reverse,
 )
+from tests.test_view import RelativeCoordType
 
 
 def ggridges(
@@ -688,3 +695,31 @@ def ggsave(p: GgPlot, fname: str, width: float = 640.0, height: float = 480.0):
     plt = ggcreate(p, width=width, height=height)
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     ggdraw(plt.view, fname)
+
+
+def draw_layout(plt: PlotView, fname: Union[str, Path], filter_view_names: Optional[List[str]] = None):
+    base_view = deepcopy(plt.view)
+    new_children: List[ViewPort] = []
+    colors = ColorHCL.gg_color_hue(len(base_view.children))
+    for idx, sub_view in enumerate(base_view.children):
+        copied_view = deepcopy(sub_view)
+        rect = init_rect(
+            copied_view,
+            Coord.relative(0.0, 0.0),
+            RelativeUnit(1.0),
+            RelativeUnit(1.0),
+            InitRectInput(style=Style(
+                fill_color=colors[idx],
+                color=colors[idx]
+            ))
+        )
+        copied_view.children = []
+        copied_view.objects = [rect]
+        if filter_view_names is None:
+            new_children.append(copied_view)
+        elif copied_view.name in filter_view_names
+            new_children.append(copied_view)
+
+    base_view.children = new_children
+
+    draw_to_file(base_view, fname)
