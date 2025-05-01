@@ -717,7 +717,7 @@ def draw_layout(plt: PlotView, fname: Union[str, Path], filter_view_names: Optio
         copied_view.objects = [rect]
         if filter_view_names is None:
             new_children.append(copied_view)
-        elif copied_view.name in filter_view_names
+        elif copied_view.name in filter_view_names:
             new_children.append(copied_view)
 
     base_view.children = new_children
