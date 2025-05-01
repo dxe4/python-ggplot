@@ -3,6 +3,8 @@ import pytest
 
 from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import (
+    draw_layout,
+    ggdraw,
     ggdraw_plot,
     ggtitle,
     scale_x_continuous,
@@ -19,7 +21,7 @@ from python_ggplot.public_interface.geom import (
     geom_text,
     ggplot,
 )
-from python_ggplot.public_interface.utils import ggcreate
+from python_ggplot.public_interface.utils import ggcreate, plot_layout
 from tests import data_path, plots_path
 
 

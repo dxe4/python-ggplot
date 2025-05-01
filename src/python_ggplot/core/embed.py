@@ -67,9 +67,10 @@ def coord_embed_into(coord: Coord, into: "ViewPort") -> Coord:
 def quantity_embed_into_origin(view: "ViewPort", axis_kind: AxisKind):
     if axis_kind == AxisKind.X:
         return view.width, view.point_width(), view.x_scale
-    if axis_kind == AxisKind.Y:
+    elif axis_kind == AxisKind.Y:
         return view.height, view.point_height(), view.y_scale
-    raise GGException("unexpected")
+    else:
+        raise GGException("Axis kind should be X or Y")
 
 
 def relative_quantity_embed_into(

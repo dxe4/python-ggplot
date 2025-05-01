@@ -321,11 +321,7 @@ def generate_legend_markers(
 
     elif isinstance(discrete_kind, GGScaleContinuous):
         if isinstance(scale, (ColorScaleKind, FillColorScale)):
-            # TODO CRITICAL
-            # examine this in detail, do we need a deepcopy?
-            # why does the original code do var mplt = plt
-            # we have to investigate, this can cause many bugs
-            mplt = plt
+            mplt = deepcopy(plt)
             mplt.y_scale = discrete_kind.data_scale
 
             ticks = init_ticks(
@@ -343,9 +339,6 @@ def generate_legend_markers(
                 ticks,  # type: ignore
                 tick_labels_input=TickLabelsInput(
                     is_secondary=True,
-                    margin=init_coord_1d_from_view(
-                        view=plt, at=0.3, axis_kind=AxisKind.X, kind=UnitType.CENTIMETER
-                    ),
                     format_fn=discrete_kind.format_continuous_label,
                 ),
             )
@@ -514,9 +507,9 @@ def gen_continuous_legend(
         leg_view = view.children[3]
         leg_view.y_scale = discrete_kind.data_scale
         layout(
-            leg_view,
-            3,
-            1,
+            view=leg_view,
+            cols=3,
+            rows=1,
             col_widths=[
                 Quantity.centimeters(width * base_scale),
                 Quantity.centimeters(0.5 * base_scale),
@@ -526,7 +519,7 @@ def gen_continuous_legend(
 
         leg_grad = leg_view.children[0]
 
-        markers = generate_legend_markers(leg_grad, scale, access_idx)
+        markers = generate_legend_markers(leg_grad, scale, geom_type, access_idx)
         for marker in markers:
             leg_grad.add_obj(marker)
 

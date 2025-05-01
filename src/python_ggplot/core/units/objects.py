@@ -134,7 +134,8 @@ class Quantity(ABC):
             return cls(operator(self.val, other.val))
         elif self.unit_type.is_length() and other.unit_type == UnitType.RELATIVE:
             if operator_type in {OperatorType.MUL, OperatorType.DIV}:
-                return PointUnit(operator(self.val, other.val)).to(self.unit_type)
+                cls = unit_type_from_type(self.unit_type)
+                return cls(operator(self.val, other.val))
             else:
                 return PointUnit(
                     operator(self.to_points().val, other.to_points(length=length).val)
@@ -145,7 +146,8 @@ class Quantity(ABC):
             ).to(self.unit_type, length=length, scale=scale)
         elif self.unit_type == UnitType.RELATIVE and other.unit_type.is_length():
             if operator_type in {OperatorType.MUL, OperatorType.DIV}:
-                return PointUnit(operator(self.val, other.val)).to(other.unit_type)
+                cls = unit_type_from_type(other.unit_type)
+                return cls(operator(self.val, other.val))
             else:
                 return PointUnit(
                     operator(self.to_points(length=length).val, other.to_points().val)
