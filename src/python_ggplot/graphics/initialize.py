@@ -869,7 +869,7 @@ def init_tick_label_with_override(
         else:
             x_offset = x_label_origin_offset(view, data.text, font_, is_secondary)
 
-        x = loc.x.to_points(length=view.point_width()) - x_offset
+        x = loc.x.to_points(length=view.point_width()) + x_offset
         origin = Coord(x=x, y=loc.y)
         return init_text(view, origin, data)
     else:
@@ -981,6 +981,7 @@ def tick_labels(
             label_text=label_text,
             axis_kind=axis_kind,
             data=data,
+            margin=tick_labels_input.margin
         )
         result.append(new_tick_label)
 
