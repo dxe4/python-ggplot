@@ -54,7 +54,9 @@ def create_gradient(
     num_colors = len(gradient.colors)
 
     for i, color in enumerate(gradient.colors):
-        result.add_color_stop_rgb(i / num_colors, color.r, color.g, color.b)
+        # temporar fix, need to change the colors
+        # the real fix is to have the correct colors setup so that r,g,b are in range 0-1
+        result.add_color_stop_rgb(i / num_colors, color.r / 255, color.g / 255, color.b / 255)
 
     return result
 
