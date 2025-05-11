@@ -245,7 +245,7 @@ class CairoBackend:
 
             if align_kind == TextAlignKind.LEFT:
                 move_to_x = x
-                move_to_y = y - extends.height / 2.0 + extends.y_bearing
+                move_to_y = y - (extends.height / 2.0 + extends.y_bearing)
             elif align_kind == TextAlignKind.RIGHT:
                 move_to_x = x - (extends.width + extends.x_bearing)
                 move_to_y = y - (extends.height / 2.0 + extends.y_bearing)
