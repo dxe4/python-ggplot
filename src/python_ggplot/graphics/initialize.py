@@ -861,7 +861,7 @@ def init_tick_label_with_override(
             y_offset = margin
         else:
             y_offset = y_label_origin_offset(view, data.text, font_, is_secondary)
-        y = loc.y.to_points(length=view.point_height()) + y_offset
+        y = (loc.y.to_points(length=view.point_height()) + y_offset).to_relative(length=view.point_height())
         origin = Coord(x=loc.x, y=y)
         return init_text(view, origin, data)
 
@@ -871,7 +871,16 @@ def init_tick_label_with_override(
         else:
             x_offset = x_label_origin_offset(view, data.text, font_, is_secondary)
 
-        x = loc.x.to_points(length=view.point_width()) + x_offset
+        if x_offset.pos < 0:
+            # TODO high priority
+            # this fixes an issue with Y tick labels, but couldn't figure out where the issue originates
+            # why does the nim package not need this? maybe the font is different?
+            # can we not just take the size of the line of the tick and draw after that?
+            # this needs some re-thinking and maybe investigating
+            # for now this will work fine, just not ideal
+            x_offset.pos  = x_offset.pos * 2.1
+
+        x = (loc.x.to_points(length=view.point_width()) + x_offset).to_relative(length=view.point_width())
         origin = Coord(x=x, y=loc.y)
         return init_text(view, origin, data)
     else:
@@ -977,6 +986,7 @@ def tick_labels(
             font=tick_labels_input.font,
             rotate=rotate,
         )
+
         new_tick_label = init_tick_label_with_override(
             view=view,
             tick=obj,

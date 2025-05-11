@@ -699,7 +699,6 @@ def handle_ticks(
         scale_discrete_kind = scale.gg_data.discrete_kind
         if isinstance(scale_discrete_kind, GGScaleDiscrete):
             format_fn = scale_discrete_kind.format_discrete_label or (lambda x: str(x))  # type: ignore
-
             if scale.data is not None and scale.data.date_scale is not None:
                 result = handle_date_scale_ticks(
                     view,
