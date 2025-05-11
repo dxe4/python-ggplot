@@ -566,18 +566,21 @@ def create_legend(
         # TODO: add support to change font of legend
         label = init_text(
             header,
-            origin=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.5)),
+            # TODO sanity check this
+            # nim version uses y relative(0.5)
+            # both seem to be created with 1cm height
+            # so probably something else causing an issue here
+            # this is fine for now, but most likely to cause using when using themes
+            origin=Coord(x=RelativeCoordType(0.0), y=RelativeCoordType(0.1)),
             init_text_data=InitTextInput(
-                # TODO sanity check this, original code calls evaluate (for FormulaNode)
-                # make sure we are fine with this, certainly not calling eval
                 text=str(cat.gg_data.col),
                 align_kind=TextAlignKind.LEFT,
-                name="legendHeader",
+                name="legend_header",
+                font=Font(size=12.0, bold=True)
             ),
         )
         label.data.font.bold = True
         header.add_obj(label)
-        view[1] = header
 
 
 def finalize_legend(view: ViewPort, legends: List[ViewPort]):
