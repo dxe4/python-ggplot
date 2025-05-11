@@ -613,7 +613,7 @@ class StrHeightCoordType(Coord1D):
 
     def point_dimension(self):
         text_extend = self.data.get_text_extend()
-        return text_extend.y_bearing + text_extend.y_advance
+        return text_extend.y_bearing - text_extend.y_advance
 
     def text_extend_dimension(self, text_extend: Any) -> float:
         return text_extend.height

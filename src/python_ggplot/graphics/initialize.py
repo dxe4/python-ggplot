@@ -818,11 +818,13 @@ def set_text_align_kind(
 
     if axis_kind == AxisKind.X:
         return TextAlignKind.CENTER
-    else:  # axis_kind == AxisKind.Y
-        return TextAlignKind.RIGHT if is_secondary else TextAlignKind.LEFT
-
-
-# TODO end
+    elif axis_kind == AxisKind.Y:
+        if is_secondary:
+            return TextAlignKind.RIGHT
+        else:
+            return TextAlignKind.LEFT
+    else:
+        raise GGException("Expect X or Y axis")
 
 
 def init_tick_label_with_override(
@@ -981,7 +983,9 @@ def tick_labels(
             label_text=label_text,
             axis_kind=axis_kind,
             data=data,
-            margin=tick_labels_input.margin
+            margin=tick_labels_input.margin,
+            is_secondary=tick_labels_input.is_secondary,
+            align_override=TextAlignKind.LEFT,
         )
         result.append(new_tick_label)
 

@@ -126,7 +126,7 @@ def text_to_point(data: CoordConversionData) -> Coord1D:
     if not isinstance(data.coord, (StrHeightCoordType, StrWidthCoordType)):
         raise GGException("unexpected")
 
-    dimension = data.coord.point_dimension()
+    dimension = data.coord.relative_dimension()
     pos = data.coord.pos * dimension
     return PointCoordType(pos, LengthCoord(length=data.length))
 
