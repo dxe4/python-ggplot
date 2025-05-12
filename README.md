@@ -87,6 +87,16 @@ ggdraw_plot(res, plots_path / "geom_point_with_continuous_color.png")
 
 
 ```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+mpg["cty"] = mpg["cty"].astype(float)
+plot = ggplot(mpg, aes(x="cty", y="displ", size = "cyl", color="cty")) + geom_point()
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
+```
+<img src="plots/geom_point_with_continuous_color_and_size.png?v=1" alt="geom_point_with_continuous_color_and_size" width="400px">
+
+
+```python
 df = pd.DataFrame({
     'trt': [1, 1, 2, 2],
     'resp': [1, 5, 3, 4],
