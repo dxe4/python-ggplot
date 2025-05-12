@@ -549,19 +549,19 @@ def _point_legend(name: str, color: Optional[Color] = None):
 
 def _enumerate_scale_value_map(
     scale: GGScale, access_idx: Optional[List[int]] = None
-) -> Generator[tuple[GGValue, Color], Any, None]:
+) -> Generator[tuple[GGValue, Any], Any, None]:
     (discrete_kind, idx) = discrete_legend_markers_params(scale, access_idx)
     for i in idx:
         key = discrete_kind.label_seq[i]
         val = discrete_kind.value_map[key]
 
-        # TODO are those exceptions correct for every case?
         if not isinstance(val, (FillColorScaleValue, ColorScaleValue)):
-            raise GGException("expected value of color")
-        if val.color is None:
-            raise GGException("expected color")
+            yield key, val
+        else:
+            if val.color is None:
+                raise GGException("expected color")
 
-        yield key, val.color
+            yield key, val.color
 
 
 class _ColorScaleMixin(GGScale):
@@ -655,7 +655,7 @@ class SizeScale(GGScale):
         self, plt: ViewPort, geom_type: GeomType, access_idx: Optional[List[int]] = None
     ) -> List[GraphicsObject]:
         result: List[GraphicsObject] = []
-        for key, _ in _enumerate_scale_value_map(self, access_idx):
+        for key, val in _enumerate_scale_value_map(self, access_idx):
             if geom_type == GeomType.LINE:
                 # TODO high priority/easy fix this needs some overriding of the values:
                 # st.lineType = scale.getValue(scale.getLabelKey(i)).lineType

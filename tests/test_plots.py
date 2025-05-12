@@ -129,6 +129,16 @@ def test_geom_point_with_color():
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_point_with_continuous_color.png")
 
+
+def test_geom_point_with_color_and_size():
+    # TODO this needs fixing
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    mpg["cty"] = mpg["cty"].astype(float)
+    plot = ggplot(mpg, aes(x="cty", y="displ", size = "cyl", color="cty")) + geom_point()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
+
+
 def test_geom_line():
     df = pd.DataFrame(data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]})
     plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()

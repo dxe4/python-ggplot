@@ -192,8 +192,10 @@ def fill_discrete_size_scale(
     value_map_opt: Optional[OrderedDict[GGValue, ScaleValue]],
     size_range: Tuple[float, float],
 ) -> GGScale:
-    if size_range[0] != size_range[1]:
-        raise GGException("Size range must be defined in this context!")
+    if size_range[0] == size_range[1]:
+        raise GGException(
+            f"Size range must be defined in this context, current values are: {size_range}"
+        )
 
     value_map: OrderedDict[GGValue, ScaleValue] = OrderedDict()
 
@@ -638,16 +640,16 @@ def fill_scale_impl(
                 value_map,
             )
         elif scale_type == ScaleType.SIZE:
-            if not size_range:
-                raise GGException("expected size range")
+            # TODO sanity check this logic, although those are the correct values
+            # why did the scale not have them already?
+            # fine for now
+            if size_range == (0.0, 0.0):
+                size_range = DEFAULT_SIZE_RANGE_TUPLE
 
             return fill_discrete_size_scale(
                 value_kind, col, data_type, labels, value_map, size_range
             )
         elif scale_type == ScaleType.ALPHA:
-            if not alpha_range:
-                raise GGException("expected alpha range")
-
             return fill_discrete_alpha_scale(
                 value_kind, col, data_type, labels, value_map, alpha_range
             )
@@ -784,8 +786,8 @@ def fill_scale(
     value_map_opt = None
     dc_kind_opt = None
     color_scale = None
-    size_range = (0.0, 0.0)
-    alpha_range = (0.0, 0.0)
+    size_range = None
+    alpha_range = None
 
     result = []
     for scale in scales:
