@@ -30,6 +30,8 @@ from python_ggplot.colormaps.color_maps import (
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
     BLACK,
+    GREY20,
+    TRANSPARENT,
     AxisKind,
     Color,
     GGEnum,
@@ -37,6 +39,7 @@ from python_ggplot.core.objects import (
     LineType,
     MarkerKind,
     Scale,
+    Style,
 )
 from python_ggplot.core.units.objects import RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import (
@@ -513,11 +516,11 @@ def discrete_legend_markers_params(
     return discrete_kind, idx
 
 
-def _line_legend(name: str, color: Optional[Color] = None):
+def _line_legend(name: str, color: Optional[Color] = None, line_width: Optional[float] = None):
     # TODO move some logic to legends.py
     style = deepcopy(LINE_DEFAULT_STYLE)
     style.color = color
-    style.line_width = 2.0
+    style.line_width = line_width or 2.0
     start = Coord.relative(0.0, 0.5)
     end = Coord.relative(1.0, 0.5)
     init_line_input = InitLineInput(style=style, name=name)
@@ -536,7 +539,7 @@ def _rect_legend(name: str, plt: ViewPort, color: Color):
     return init_rect(plt, origin, width, height, init_rect_input)
 
 
-def _point_legend(name: str, color: Optional[Color] = None):
+def _point_legend(name: str, color: Optional[Color] = None, size: Optional[float] = None):
     # TODO move some logic to legends.py
     coord = Coord.relative(0.5, 0.5)
     return init_point_from_coord(
@@ -544,6 +547,7 @@ def _point_legend(name: str, color: Optional[Color] = None):
         marker=MarkerKind.CIRCLE,
         color=color or deepcopy(BLACK),
         name=name,
+        size=size or 3.0
     )
 
 
@@ -623,13 +627,14 @@ class ShapeScale(GGScale):
         self, plt: ViewPort, geom_type: GeomType, access_idx: Optional[List[int]] = None
     ) -> List[GraphicsObject]:
         result: List[GraphicsObject] = []
-        for key, _ in _enumerate_scale_value_map(self, access_idx):
+        for key, val in _enumerate_scale_value_map(self, access_idx):
             if geom_type == GeomType.LINE:
+                # improve logic from generateLegendMarkers
                 # TODO high priority/easy fix this needs some overriding of the values:
                 # let size = scale.getValue(scale.getLabelKey(i)).size
                 # var st = LineDefaultStyle
                 # st.lineWidth = size
-                new_go = _line_legend(str(key))
+                new_go = _line_legend(str(key), line_width=3.0)
             else:
                 new_go = _point_legend(str(key))
 
@@ -655,13 +660,13 @@ class SizeScale(GGScale):
         self, plt: ViewPort, geom_type: GeomType, access_idx: Optional[List[int]] = None
     ) -> List[GraphicsObject]:
         result: List[GraphicsObject] = []
+
         for key, val in _enumerate_scale_value_map(self, access_idx):
+            size = val.size
             if geom_type == GeomType.LINE:
-                # TODO high priority/easy fix this needs some overriding of the values:
-                # st.lineType = scale.getValue(scale.getLabelKey(i)).lineType
-                new_go = _line_legend(str(key))
+                new_go = _line_legend(str(key), line_width=size)
             else:
-                new_go = _point_legend(str(key))
+                new_go = _point_legend(str(key), size=size)
 
             result.append(new_go)
         return result
