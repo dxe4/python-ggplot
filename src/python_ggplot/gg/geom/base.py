@@ -659,7 +659,7 @@ class TitleRasterData:
         geom: Geom, fs: "FilledScales", df: pd.DataFrame
     ) -> Tuple[str, pd.DataFrame]:
         # todo clean up
-        width_scale = fs.get_width_scale(geom)
+        width_scale = fs.get_width_scale(geom, optional=True)
         x_min_s = fs.get_x_min_scale(geom, optional=True)
         x_max_s = fs.get_x_max_scale(geom, optional=True)
         # Handle width
@@ -696,7 +696,7 @@ class TitleRasterData:
         geom: Geom, fs: "FilledScales", df: pd.DataFrame
     ) -> Tuple[str, pd.DataFrame]:
         # todo clean up
-        height_scale = fs.get_height_scale(geom)
+        height_scale = fs.get_height_scale(geom, optional=True)
         y_min_s = fs.get_y_min_scale(geom, optional=True)
         y_max_s = fs.get_y_max_scale(geom, optional=True)
 

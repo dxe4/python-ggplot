@@ -17,6 +17,24 @@ plots are still in progress, but some examples:
 ```
 <img src="plots/geom_bar_fill.png?v=1" alt="gg_point" width="400px">
 
+```python
+    rng = np.random.default_rng(42)
+
+    x_vals = np.repeat(np.arange(28), 28)
+    y_vals = np.tile(np.arange(28), 28)
+    z_vals = rng.random(28 * 28)
+
+    df = pd.DataFrame({
+        'xs': x_vals.astype(float),
+        'ys': y_vals.astype(float),
+        'zs': z_vals
+    })
+    plot = ggplot(df, aes("xs", "ys", fill="zs")) + geom_tile()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_tile.png")
+```
+<img src="plots/geom_tile.png?v=1" alt="geom_tile" width="400px">
+
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
