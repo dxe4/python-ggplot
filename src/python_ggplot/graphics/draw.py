@@ -508,6 +508,12 @@ def draw_text(img: Image, gobj: Union[GOText, GOLabel, GOTickLabel]):
     align_kind = data.align
 
     img_copy = img
+    if not isinstance(text, str):
+        # TODO we should process this earlier, by this point it should be a string
+        # this is not really critical, the intention by now should have been to draw a string
+        print(f"draw text was called with a type of {type(text)}")
+        text = str(round(text, 2))
+
     img_copy.backend.draw_text(  # type: ignore -> pycairo headache
         img, text, font, at, align_kind, gobj.config.rotate, None
     )

@@ -131,7 +131,7 @@ class GetXY:
                 )
 
         if x_is_str:
-            return (x, y, self.x_series[self.idx])  # type: ignore
+            return (x, y, self.x_series.iloc[self.idx])  # type: ignore
         else:
             return (x, y, x)  # type: ignore
 
