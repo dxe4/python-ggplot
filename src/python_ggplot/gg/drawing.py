@@ -806,7 +806,7 @@ def draw_sub_df(
     """
     x_outside_range = theme.x_outside_range or OutsideRangeKind.CLIP
     y_outside_range = theme.y_outside_range or OutsideRangeKind.CLIP
-    bin_widths: Tuple[float, float] = tuple()
+    bin_widths: Tuple[float, float] = (0.0, 0.0)
     geom_type = fg.geom_type
     style = merge_user_style(styles[0], fg)
     loc_view: ViewPort = view
@@ -869,12 +869,8 @@ def draw_sub_df(
                     if temp.histogram_drawing_style == HistogramDrawingStyle.OUTLINE:
                         line_points.append(pos)
                     else:
-                        if pos is None:
-                            raise GGException("pos shouldnt be none")
                         gg_draw(loc_view, fg, pos, point[1], bin_widths, df, i, style)
                 else:
-                    if pos is None:
-                        raise GGException("pos shouldnt be none")
                     gg_draw(loc_view, fg, pos, point[1], bin_widths, df, i, style)
 
             if view_map:

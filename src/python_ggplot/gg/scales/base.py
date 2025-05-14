@@ -516,7 +516,9 @@ def discrete_legend_markers_params(
     return discrete_kind, idx
 
 
-def _line_legend(name: str, color: Optional[Color] = None, line_width: Optional[float] = None):
+def _line_legend(
+    name: str, color: Optional[Color] = None, line_width: Optional[float] = None
+):
     # TODO move some logic to legends.py
     style = deepcopy(LINE_DEFAULT_STYLE)
     style.color = color
@@ -539,7 +541,9 @@ def _rect_legend(name: str, plt: ViewPort, color: Color):
     return init_rect(plt, origin, width, height, init_rect_input)
 
 
-def _point_legend(name: str, color: Optional[Color] = None, size: Optional[float] = None):
+def _point_legend(
+    name: str, color: Optional[Color] = None, size: Optional[float] = None
+):
     # TODO move some logic to legends.py
     coord = Coord.relative(0.5, 0.5)
     return init_point_from_coord(
@@ -547,7 +551,7 @@ def _point_legend(name: str, color: Optional[Color] = None, size: Optional[float
         marker=MarkerKind.CIRCLE,
         color=color or deepcopy(BLACK),
         name=name,
-        size=size or 3.0
+        size=size or 3.0,
     )
 
 

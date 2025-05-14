@@ -861,7 +861,9 @@ def init_tick_label_with_override(
             y_offset = margin
         else:
             y_offset = y_label_origin_offset(view, data.text, font_, is_secondary)
-        y = (loc.y.to_points(length=view.point_height()) + y_offset).to_relative(length=view.point_height())
+        y = (loc.y.to_points(length=view.point_height()) + y_offset).to_relative(
+            length=view.point_height()
+        )
         origin = Coord(x=loc.x, y=y)
         return init_text(view, origin, data)
 
@@ -878,9 +880,11 @@ def init_tick_label_with_override(
             # can we not just take the size of the line of the tick and draw after that?
             # this needs some re-thinking and maybe investigating
             # for now this will work fine, just not ideal
-            x_offset.pos  = x_offset.pos * 2.1
+            x_offset.pos = x_offset.pos * 2.1
 
-        x = (loc.x.to_points(length=view.point_width()) + x_offset).to_relative(length=view.point_width())
+        x = (loc.x.to_points(length=view.point_width()) + x_offset).to_relative(
+            length=view.point_width()
+        )
         origin = Coord(x=x, y=loc.y)
         return init_text(view, origin, data)
     else:

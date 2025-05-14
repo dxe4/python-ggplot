@@ -1,6 +1,6 @@
-from copy import deepcopy
 import os
 from collections import OrderedDict
+from copy import deepcopy
 from dataclasses import field
 from pathlib import Path
 from typing import Callable, Dict, List, Literal, Optional, Union
@@ -697,7 +697,11 @@ def ggsave(p: GgPlot, fname: str, width: float = 640.0, height: float = 480.0):
     ggdraw(plt.view, fname)
 
 
-def draw_layout(plt: PlotView, fname: Union[str, Path], filter_view_names: Optional[List[str]] = None):
+def draw_layout(
+    plt: PlotView,
+    fname: Union[str, Path],
+    filter_view_names: Optional[List[str]] = None,
+):
     base_view = deepcopy(plt.view)
     new_children: List[ViewPort] = []
     colors = ColorHCL.gg_color_hue(len(base_view.children))
@@ -708,10 +712,7 @@ def draw_layout(plt: PlotView, fname: Union[str, Path], filter_view_names: Optio
             Coord.relative(0.0, 0.0),
             RelativeUnit(1.0),
             RelativeUnit(1.0),
-            InitRectInput(style=Style(
-                fill_color=colors[idx],
-                color=colors[idx]
-            ))
+            InitRectInput(style=Style(fill_color=colors[idx], color=colors[idx])),
         )
         copied_view.children = []
         copied_view.objects = [rect]

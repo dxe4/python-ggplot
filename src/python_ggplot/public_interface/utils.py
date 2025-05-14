@@ -576,7 +576,7 @@ def create_legend(
                 text=str(cat.gg_data.col),
                 align_kind=TextAlignKind.LEFT,
                 name="legend_header",
-                font=Font(size=12.0, bold=True)
+                font=Font(size=12.0, bold=True),
             ),
         )
         label.data.font.bold = True
@@ -1213,6 +1213,8 @@ def _generate_plot_geoms(view: ViewPort, filled_scales: FilledScales, theme: The
     # TODO this needs to be moved out of public interface eventually
     for geom in filled_scales.geoms:
         coords_input = CoordsInput()
+        # TODO would be good to have unique names for all views
+        # maybe enumerate with f"data_{count}" ?
         viewport_input = ViewPortInput(name="data")
         p_child = view.add_viewport_from_coords(coords_input, viewport_input)
 
