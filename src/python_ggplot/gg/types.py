@@ -348,6 +348,14 @@ class Theme:
     legend_title_font: Optional[Font] = None
     legend_font: Optional[Font] = None
 
+    def rotate_for_axis(self, axis_kind: AxisKind):
+        if axis_kind == AxisKind.X:
+            return self.x_ticks_rotate
+        elif axis_kind == AxisKind.Y:
+            return self.y_ticks_rotate
+        else:
+            raise GGException("Axis has to be X or Y")
+
 
 @dataclass
 class Facet:

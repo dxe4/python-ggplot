@@ -782,7 +782,7 @@ def annotate(
 def apply_theme(plt_theme: Theme, theme: Theme) -> None:
     for field in theme.__dataclass_fields__:
         value = getattr(theme, field)
-        if value is not None:
+        if value:
             setattr(plt_theme, field, value)
 
 
@@ -1024,7 +1024,7 @@ def handle_labels(view: ViewPort, theme: Theme):
             return lab_proc(
                 view,
                 lab_txt,
-                margin=theme_field,
+                margin=margin_val,
                 is_custom_margin=True,
                 is_secondary=is_second,
                 font=fnt,

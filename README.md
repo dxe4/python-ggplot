@@ -64,8 +64,18 @@ ggdraw_plot(res, plots_path / "geom_tile_mpg.png")
 <img src="plots/geom_freqpoly_cty_class.png?v=1" alt="gg_point" width="400px">
 
 ```python
+def test_geom_freqpoly_diamonds():
 diamonds = pd.read_csv(data_path / "diamonds.csv")
-plot = ggplot(diamonds, aes("price", color="cut")) + geom_freqpoly()
+plot = ggplot(
+    diamonds, aes("price", color="cut")
+) + geom_freqpoly(
+) + ylab(
+    label="custom label",
+    rotate=-45
+) + xlab(
+    rotate=45,
+    tick_margin=2.5
+)
 res = ggcreate(plot)
 ggdraw_plot(res, plots_path / "geom_freqpoly.png")
 ```

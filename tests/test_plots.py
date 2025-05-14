@@ -11,6 +11,8 @@ from python_ggplot.public_interface.common import (
     scale_x_continuous,
     scale_y_continuous,
     scale_y_discrete,
+    xlab,
+    ylab,
 )
 from python_ggplot.public_interface.geom import (
     geom_bar,
@@ -241,9 +243,18 @@ def test_geom_linerange():
     ggdraw_plot(res, plots_path / "geom_linerange.png")
 
 
-def test_geom_freqpoly():
+def test_geom_freqpoly_diamonds():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
-    plot = ggplot(diamonds, aes("price", color="cut")) + geom_freqpoly()
+    plot = ggplot(
+        diamonds, aes("price", color="cut")
+    ) + geom_freqpoly(
+    ) + ylab(
+        label="custom label",
+        rotate=-45
+    ) + xlab(
+        rotate=45,
+        tick_margin=2.5
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_freqpoly.png")
 

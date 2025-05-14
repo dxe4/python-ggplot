@@ -698,6 +698,7 @@ def xlabel(
     font: Optional[Font] = None,
     name: Optional[str] = None,
     is_secondary: Optional[bool] = None,
+    is_custom_margin: bool = False,
     rotate: Optional[float] = None,
 ) -> GraphicsObject:
 
@@ -708,7 +709,7 @@ def xlabel(
         margin=margin,
         font=font,
         name=name,
-        is_custom_margin=False,
+        is_custom_margin=is_custom_margin,
         is_secondary=is_secondary,
         rotate=rotate,
     )
@@ -721,9 +722,9 @@ def ylabel(
     font: Optional[Font] = None,
     name: Optional[str] = None,
     is_secondary: Optional[bool] = None,
+    is_custom_margin: bool = False,
     rotate: Optional[float] = None,
 ) -> GraphicsObject:
-
     return init_axis_label(
         view=view,
         label=label,
@@ -731,7 +732,7 @@ def ylabel(
         margin=margin,
         font=font,
         name=name,
-        is_custom_margin=False,
+        is_custom_margin=is_custom_margin,
         is_secondary=is_secondary,
         rotate=rotate,
     )
