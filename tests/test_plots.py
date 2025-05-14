@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
 from python_ggplot.public_interface.aes import aes
@@ -10,6 +10,7 @@ from python_ggplot.public_interface.common import (
     ggtitle,
     scale_x_continuous,
     scale_y_continuous,
+    scale_y_discrete,
 )
 from python_ggplot.public_interface.geom import (
     geom_bar,
@@ -135,7 +136,7 @@ def test_geom_point_with_color():
 def test_geom_point_with_color_and_size():
     mpg = pd.read_csv(data_path / "mpg.csv")
     mpg["cty"] = mpg["cty"].astype(float)
-    plot = ggplot(mpg, aes(x="cty", y="displ", size = "cyl", color="cty")) + geom_point()
+    plot = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_point()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
 
@@ -147,14 +148,27 @@ def test_geom_tile():
     y_vals = np.tile(np.arange(28), 28)
     z_vals = rng.random(28 * 28)
 
-    df = pd.DataFrame({
-        'xs': x_vals.astype(float),
-        'ys': y_vals.astype(float),
-        'zs': z_vals
-    })
+    df = pd.DataFrame(
+        {"xs": x_vals.astype(float), "ys": y_vals.astype(float), "zs": z_vals}
+    )
     plot = ggplot(df, aes("xs", "ys", fill="zs")) + geom_tile()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_tile.png")
+
+
+def test_geom_tile_mpg():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+
+    df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+
+    plot = (
+        ggplot(df, aes("class", "cyl", fill="meanHwy"))
+        + geom_tile()
+        + geom_text(aes(text="meanHwy"))
+        + scale_y_discrete()
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_tile_mpg.png")
 
 
 def test_geom_line():

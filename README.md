@@ -37,6 +37,23 @@ plots are still in progress, but some examples:
 
 
 ```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+
+df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+
+plot = (
+    ggplot(df, aes("class", "cyl", fill="meanHwy"))
+    + geom_tile()
+    + geom_text(aes(text="meanHwy"))
+    + scale_y_discrete()
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_tile_mpg.png")
+```
+<img src="plots/geom_tile_mpg.png?v=1" alt="geom_tile" width="400px">
+
+
+```python
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = (
         ggplot(mpg, aes(x="cty", color="class")) + geom_freqpoly() + scale_x_continuous()
