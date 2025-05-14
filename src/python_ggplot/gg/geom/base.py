@@ -521,7 +521,7 @@ class GeomTileMixin:
             view,
             pos,
             DataUnit(bin_widths[0]),
-            DataUnit(bin_widths[1]),
+            DataUnit(-bin_widths[1]),
             InitRectInput(style=style),
         )
         view.add_obj(new_rect)
