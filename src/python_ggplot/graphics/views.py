@@ -116,20 +116,44 @@ class ViewPort:
 
         raise GGException(f"View with name {view_name} not found")
 
-    def get_coords(self) -> Dict[Any, Any]:
-        return {
-            "type": self.__class__.__name__,
-            "name": self.name,
-            "origin": self.origin,
-            "width": self.width,
-            "height": self.height,
-            "w_img": self.w_img,
-            "h_img": self.h_img,
-            "w_view": self.w_view,
-            "h_view": self.h_view,
-            "objects": [i.get_coords() for i in self.objects],
-            "children": [i.get_coords() for i in self.children],
-        }
+    def get_view_structure(self, filter_empty: bool=True, only_names_and_types: bool=False) -> Dict[Any, Any]:
+        children_coords = [
+            i.get_view_structure(
+                filter_empty=filter_empty,
+                only_names_and_types=only_names_and_types
+            )
+            for i in self.children
+        ]
+        object_coords = [i.get_coords() for i in self.objects]
+
+        if filter_empty:
+            children_coords = [i for i in children_coords if i]
+            object_coords = [i for i in object_coords if i]
+            if not children_coords and not object_coords:
+                return {}
+
+        if only_names_and_types:
+            object_coords = [{"name": i["name"], "type": i["type"]} for i in object_coords]
+            return {
+                "type": self.__class__.__name__,
+                "name": self.name,
+                "objects": object_coords,
+                "children": children_coords,
+            }
+        else:
+            return {
+                "type": self.__class__.__name__,
+                "name": self.name,
+                "origin": self.origin,
+                "width": self.width,
+                "height": self.height,
+                "w_img": self.w_img,
+                "h_img": self.h_img,
+                "w_view": self.w_view,
+                "h_view": self.h_view,
+                "objects": object_coords,
+                "children": children_coords,
+            }
 
     def gather_coords(self) -> Dict[Any, Any]:
         return self.get_coords()
