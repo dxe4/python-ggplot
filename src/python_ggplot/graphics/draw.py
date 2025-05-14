@@ -249,7 +249,7 @@ def layout(
                 x_scale=view.x_scale,
                 y_scale=view.y_scale,
                 style=view.style,
-                name=f"{view.name} - layer row: {i} col {j}",
+                name=f"{view.name} - grid: ({i},{j})",
             )
 
             origin = Coord(x=current_col, y=current_row)
