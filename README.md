@@ -110,6 +110,17 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 <img src="plots/geom_histogram_fill.png?v=1" alt="geom_histogram" width="400px">
 
 ```python
+    df = create_dataframe()
+    plot = ggplot(
+        df, aes("tenors", "pathValues", color = "pathNames")
+    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_line_With_color.png")
+```
+<img src="plots/geom_line_With_color.png?v=1" alt="geom_line_With_color" width="400px">
+
+
+```python
     df = pd.DataFrame(
         data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
     )
@@ -118,7 +129,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
     ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
 ```
 <img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
-
 
 ```python
 mpg = pd.read_csv(data_path / "mpg.csv")

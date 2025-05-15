@@ -9,6 +9,7 @@ from python_ggplot.public_interface.common import (
     ggdraw_plot,
     ggtitle,
     scale_x_continuous,
+    scale_x_discrete,
     scale_y_continuous,
     scale_y_discrete,
     xlab,
@@ -173,11 +174,46 @@ def test_geom_tile_mpg():
     ggdraw_plot(res, plots_path / "geom_tile_mpg.png")
 
 
-def test_geom_line():
+def test_geom_line_and_point():
     df = pd.DataFrame(data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]})
     plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_line_and_point.png")
+
+
+def test_geom_line_With_color():
+    def create_dataframe(paths=10, dates=50, sigma=0.10, seed=124325):
+        np.random.seed(seed)
+
+        tenors = []
+        path_names = []
+        path_values = []
+
+        for j in range(paths):
+            values = [100.0]
+            for i in range(1, dates):
+                gaussian = np.random.normal(0.0, 1.0)
+                next_value = values[-1] * np.exp(-0.5 * sigma**2 + sigma * gaussian)
+                values.append(next_value)
+
+            path_values.extend(values)
+            path_names.extend([f"path{j+1}"] * dates)
+            tenors.extend(range(dates))
+
+        df = pd.DataFrame({
+            "tenors": tenors,
+            "pathNames": path_names,
+            "pathValues": path_values
+        })
+
+        return df
+
+    df = create_dataframe()
+    plot = ggplot(
+        df, aes("tenors", "pathValues", color = "pathNames")
+    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_line_With_color.png")
 
 
 def test_geom_line_with_linetype():
