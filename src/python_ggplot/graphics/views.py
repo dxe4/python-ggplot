@@ -94,6 +94,14 @@ class ViewPort:
     w_view: Optional[Quantity] = None
     h_view: Optional[Quantity] = None
 
+    def get_current_background_style(self) -> Style:
+        background_go: GraphicsObject = self.children[0].objects[0]  # type: ignore
+        if background_go.name != "background":
+            raise GGException(
+                f"Failed to get background style, first object is {background_go.name}"
+            )
+        return deepcopy(background_go.config.style)
+
     def get_child_by_name(self, view_name: Union[str, Set[str]]) -> "ViewPort":
         """
         base layout:
@@ -117,7 +125,8 @@ class ViewPort:
         raise GGException(f"View with name {view_name} not found")
 
     def get_view_structure(
-        self, filter_empty: bool = True, only_names_and_types: bool = False
+        self, filter_empty: bool = True,
+        only_names_and_types: bool = False,
     ) -> Dict[Any, Any]:
         children_coords = [
             i.get_view_structure(

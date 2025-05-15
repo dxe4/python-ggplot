@@ -1,6 +1,40 @@
 plots are still in progress, but some examples:
 
 ```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+
+df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+plot2 = (
+    ggplot(df, aes("class", "cyl", fill="meanHwy"))
+    + geom_tile()
+    + geom_text(aes(text="meanHwy"))
+    + scale_y_discrete()
+)
+
+plot3 = (
+    ggplot(mpg, aes(x="cty", fill="class"))
+    + geom_freqpoly(alpha=0.3)
+    + scale_x_continuous()
+)
+
+plot4 = ggplot(
+    mpg, aes(x="cty", fill="class")
+) + geom_histogram() + scale_x_continuous()
+
+mpg = mpg.copy(deep=True)
+mpg["cty"] = mpg["cty"].astype(float)
+plot5 = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_point()
+
+ggmulti(
+    [plot1, plot2, plot3, plot4, plot5],
+    plots_path / "gg_multi_pmg.png",
+)
+```
+<img src="plots/gg_multi_pmg.png?v=1" alt="gg_multi_pmg" width="800px">
+
+
+```python
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes("class")) + geom_bar()
     res = ggcreate(plot)

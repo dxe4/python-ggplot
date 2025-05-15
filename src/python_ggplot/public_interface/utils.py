@@ -6,6 +6,7 @@ import math
 from collections import OrderedDict
 from copy import deepcopy
 from itertools import product
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -55,7 +56,7 @@ from python_ggplot.core.objects import (
     TextAlignKind,
     UnitType,
 )
-from python_ggplot.core.units.objects import DataUnit, PointUnit, Quantity
+from python_ggplot.core.units.objects import DataUnit, PointUnit, Quantity, RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     GGValue,
@@ -1911,7 +1912,7 @@ def to_tex_options():
 
 def ggmulti(
     plts: List[GgPlot],
-    fname: str,
+    fname: Union[str, Path],
     width: int = 640,
     height: int = 480,
     widths: Optional[List[int]] = None,
@@ -1971,18 +1972,18 @@ def ggmulti(
             col_widths=widths_q,  # type: ignore
             row_heights=heights_q,  # type: ignore
         )
+        empty_views = (len(heights_q) * len(widths_q) ) - len(plts)
     else:
         cols, rows = calc_rows_columns(0, 0, len(plts))
         img = ViewPort.from_coords(
             CoordsInput(),
-            # TODO double check this logic, it goes as float in initViewport
-            # our logic is a bit different
             ViewPortInput(
                 w_img=PointUnit(width * cols),
                 h_img=PointUnit(height * rows),
             ),
         )
         layout(img, cols=cols, rows=rows)
+        empty_views = (rows * cols ) - len(plts)
 
     for i, plt in enumerate(plts):
         w_val = widths[i] if i < len(widths) else width
@@ -1990,5 +1991,22 @@ def ggmulti(
 
         pp = ggcreate(plt, width=w_val, height=h_val)
         view_embed_at(img, i, pp.view)
+
+    if empty_views > 0:
+        for i in range(0, empty_views):
+            w_val = widths[i] if i < len(widths) else width
+            h_val = heights[i] if i < len(heights) else height
+            empty_view = ViewPort.from_coords(
+                CoordsInput(),
+                ViewPortInput(
+                    w_img=PointUnit(width),
+                    h_img=PointUnit(height),
+                ),
+            )
+            background_style = img.get_current_background_style()
+
+            background(empty_view, background_style)
+            view_embed_at(img, i + len(plts), empty_view)
+
 
     draw_to_file(img, fname)

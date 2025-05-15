@@ -122,7 +122,7 @@ def view_embed_into(current_view: "ViewPort", into: "ViewPort") -> "ViewPort":
 
 def view_embed_at(current_view: "ViewPort", idx: int, view: "ViewPort") -> "ViewPort":
     child = current_view.children[idx]
-    view_embed_into(current_view, child)
+    view_embed_into(view, child)
     current_view.update_item_at(idx, view)
     current_view.update_size_new_root()
     return current_view
