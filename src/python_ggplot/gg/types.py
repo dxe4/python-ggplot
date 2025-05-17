@@ -350,9 +350,9 @@ class Theme:
 
     def rotate_for_axis(self, axis_kind: AxisKind):
         if axis_kind == AxisKind.X:
-            return self.x_ticks_rotate
+            return self.x_ticks_rotate or None
         elif axis_kind == AxisKind.Y:
-            return self.y_ticks_rotate
+            return self.y_ticks_rotate or None
         else:
             raise GGException("Axis has to be X or Y")
 
