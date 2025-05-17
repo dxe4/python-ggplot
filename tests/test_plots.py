@@ -90,11 +90,12 @@ def test_geom_point_and_text():
     """
     mpg = pd.read_csv(data_path / "mpg.csv")
 
+    mpg["cty"] = mpg["cty"].astype(float)
     mpg["mpgMean"] = (mpg["cty"] + mpg["hwy"]) / 2.0
     df_max = mpg.sort_values("mpgMean").tail(1)
 
     plot = (
-        ggplot(mpg, aes("hwy", "class"))
+        ggplot(mpg, aes("hwy", "displ"))
         + geom_point(aes(color="cty"))
         + geom_text(data=df_max, aes=aes(y="displ", text="model"))
         + geom_text(data=df_max, aes=aes(y="displ", text="mpgMean"))
