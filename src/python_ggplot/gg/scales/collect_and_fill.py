@@ -833,9 +833,9 @@ def fill_scale(
                     if scale.data is None:
                         raise GGException("expected data")
                     if scale.data.reversed:
-                        label_seq_opt = sorted(data.unique())  # type: ignore
-                    else:
                         label_seq_opt = sorted(data.unique(), reverse=True)  # type: ignore
+                    else:
+                        label_seq_opt = sorted(data.unique())  # type: ignore
                 else:
                     label_seq_opt = sorted(data.unique())  # type: ignore
             else:
@@ -998,7 +998,7 @@ def collect_scales(plot: GgPlot) -> FilledScales:
     result: Dict[Any, Any] = {}
 
     def fill_field(field_name: str, arg: List[GGScale]) -> None:
-        if len(arg) > 0 and arg[0].gg_data.ids == set(range(0, 65535)):  # type: ignore
+        if len(arg) > 0 and arg[0].gg_data.ids == set(range(0, 65536)):  # type: ignore
             result[field_name] = MainAddScales(main=arg[0], more=arg[1:])
         else:
             result[field_name] = MainAddScales(main=None, more=arg)
