@@ -135,7 +135,7 @@ def test_gg_multi_mpg_with_many_empty():
         empty_plots=[3, 5],
     )
 
-    # This onbe failed as we have picked 0 as one of the empty plots
+    # This one failed as we have picked 0 as one of the empty plots
     # and in `background_style = img.get_current_background_style()`
     # we get a """IndexError: list index out of range""" error
     # ggmulti(
