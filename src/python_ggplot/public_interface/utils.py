@@ -1917,6 +1917,7 @@ def ggmulti(
     height: int = 480,
     widths: Optional[List[int]] = None,
     heights: Optional[List[int]] = None,
+    empty_plots: Optional[Union[int, List[int]]] = None,   # Which plot(s) should be empty?
     use_tex: bool = False,
     only_tikz: bool = False,
     standalone: bool = False,
@@ -1985,28 +1986,73 @@ def ggmulti(
         layout(img, cols=cols, rows=rows)
         empty_views = (rows * cols ) - len(plts)
 
-    for i, plt in enumerate(plts):
-        w_val = widths[i] if i < len(widths) else width
-        h_val = heights[i] if i < len(heights) else height
+    
+    if empty_plots is not None:
+        if isinstance(empty_plots, int):
+            if empty_plots == 0:
+                raise ValueError("'empty_plots' value is set but there are no empty plots")
+            if empty_plots > rows*cols:
+                raise ValueError("'empty_plots' value is set higher than number of plots")
+        elif isinstance(empty_plots, list):
+            if len(empty_plots) > empty_views:
+                raise ValueError("'empty_plots' list length is too large")
+            if max(empty_plots) > rows*cols:
+                raise ValueError("Max 'empty_plots' value is set higher than number of plots")
+        else:
+            raise TypeError(f"Unexpected type for empty_plots: {type(empty_plots)} should be int or list of ints")
 
-        pp = ggcreate(plt, width=w_val, height=h_val)
-        view_embed_at(img, i, pp.view)
-
-    if empty_views > 0:
-        for i in range(0, empty_views):
+    if empty_plots is None:
+        for i, plt in enumerate(plts):
             w_val = widths[i] if i < len(widths) else width
             h_val = heights[i] if i < len(heights) else height
-            empty_view = ViewPort.from_coords(
-                CoordsInput(),
-                ViewPortInput(
-                    w_img=PointUnit(width),
-                    h_img=PointUnit(height),
-                ),
-            )
-            background_style = img.get_current_background_style()
 
-            background(empty_view, background_style)
-            view_embed_at(img, i + len(plts), empty_view)
+            pp = ggcreate(plt, width=w_val, height=h_val)
+            view_embed_at(img, i, pp.view)
+
+        if empty_views > 0:
+            for i in range(0, empty_views):
+                w_val = widths[i] if i < len(widths) else width
+                h_val = heights[i] if i < len(heights) else height
+                empty_view = ViewPort.from_coords(
+                    CoordsInput(),
+                    ViewPortInput(
+                        w_img=PointUnit(width),
+                        h_img=PointUnit(height),
+                    ),
+                )
+                background_style = img.get_current_background_style()
+
+                background(empty_view, background_style)
+                view_embed_at(img, i + len(plts), empty_view)
+    else:
+        # breakpoint()
+        # Loop over plots
+        add_empty = 0
+        for i in range(cols * rows):
+            # breakpoint()
+            i1 = i-add_empty
+            if (isinstance(empty_plots, int) and i == empty_plots) or \
+                (isinstance(empty_plots, list) and i in empty_plots):
+                    w_val = widths[i1] if i1 < len(widths) else width
+                    h_val = heights[i1] if i1 < len(heights) else height
+                    empty_view = ViewPort.from_coords(
+                        CoordsInput(),
+                        ViewPortInput(
+                            w_img=PointUnit(width),
+                            h_img=PointUnit(height),
+                        ),
+                    )
+                    background_style = img.get_current_background_style()
+
+                    background(empty_view, background_style)
+                    view_embed_at(img, i, empty_view)
+                    add_empty += 1
+            else:
+                w_val = widths[i1] if i1 < len(widths) else width
+                h_val = heights[i1] if i1 < len(heights) else height
+
+                pp = ggcreate(plts[i1], width=w_val, height=h_val)
+                view_embed_at(img, i, pp.view)
 
 
     draw_to_file(img, fname)
