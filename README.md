@@ -229,4 +229,39 @@ ggdraw_plot(res, plots_path / "geom_error_bar.png")
 ```
 <img src="plots/geom_text.png?v=1" alt="geom_text" width="400px">
 
+```python
+For `ggmulti` you can set where plots are empty using the 'empty_plots' variable. It can be either an int or list of ints. Note that the value is the index of the plot, starting from the top left and counting across. Also, as this is Python the indexes start at zero, so in a 2x3 grid, index no. 4 will be the bottom left had side.
+mpg = pd.read_csv(data_path / "mpg.csv")
+plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+
+df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+plot2 = (
+    ggplot(df, aes("class", "cyl", fill="meanHwy"))
+    + geom_tile()
+    + geom_text(aes(text="meanHwy"))
+    + scale_y_discrete()
+)
+
+plot3 = (
+    ggplot(mpg, aes(x="cty", fill="class"))
+    + geom_freqpoly(alpha=0.3)
+    + scale_x_continuous()
+)
+
+plot4 = ggplot(
+    mpg, aes(x="cty", fill="class")
+) + geom_histogram() + scale_x_continuous()
+
+mpg = mpg.copy(deep=True)
+mpg["cty"] = mpg["cty"].astype(float)
+plot5 = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_point()
+
+ggmulti(
+    [plot1, plot2, plot3, plot4, plot5],
+    plots_path / "gg_multi_pmg.png",
+    empty_plots=4
+)
+```
+<img src="plots/gg_multi_pmg_with_one_empty.png?v=1" alt="gg_multi_pmg_with_one_empty" width="800px">
+
 ![gg](plots/simple_test.png?v=1)
