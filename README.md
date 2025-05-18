@@ -229,8 +229,8 @@ ggdraw_plot(res, plots_path / "geom_error_bar.png")
 ```
 <img src="plots/geom_text.png?v=1" alt="geom_text" width="400px">
 
-```python
 For `ggmulti` you can set where plots are empty using the 'empty_plots' variable. It can be either an int or list of ints. Note that the value is the index of the plot, starting from the top left and counting across. Also, as this is Python the indexes start at zero, so in a 2x3 grid, index no. 4 will be the bottom left had side.
+```python
 mpg = pd.read_csv(data_path / "mpg.csv")
 plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
 
