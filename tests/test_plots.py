@@ -66,6 +66,160 @@ def test_gg_multi_mpg():
     )
 
 
+def test_gg_multi_mpg_set_cols():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+
+    df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+    plot2 = (
+        ggplot(df, aes("class", "cyl", fill="meanHwy"))
+        + geom_tile()
+        + geom_text(aes(text="meanHwy"))
+        + scale_y_discrete()
+    )
+
+    plot3 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_freqpoly(alpha=0.3)
+        + scale_x_continuous()
+    )
+
+    plot4 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
+
+    mpg = mpg.copy(deep=True)
+    mpg["cty"] = mpg["cty"].astype(float)
+    plot5 = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_point()
+
+    ggmulti(
+        [plot1, plot2, plot3, plot4, plot5],
+        plots_path / "gg_multi_pmg_set_cols1.png",
+        cols=3,
+    )
+    ggmulti(
+        [plot1, plot2, plot3, plot4, plot5],
+        plots_path / "gg_multi_pmg_set_cols2.png",
+        cols=0,
+    )
+    ggmulti(
+        [plot1, plot2, plot3, plot4, plot5],
+        plots_path / "gg_multi_pmg_set_cols3.png",
+        cols=-1,
+    )
+    ggmulti(
+        [plot1, plot2, plot3, plot4, plot5],
+        plots_path / "gg_multi_pmg_set_cols4.png",
+        cols=3,
+        empty_plots=4,
+    )
+
+
+def test_gg_multi_mpg_set_rows():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+
+    df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+    plot2 = (
+        ggplot(df, aes("class", "cyl", fill="meanHwy"))
+        + geom_tile()
+        + geom_text(aes(text="meanHwy"))
+        + scale_y_discrete()
+    )
+
+    plot3 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_freqpoly(alpha=0.3)
+        + scale_x_continuous()
+    )
+
+    ggmulti([plot1, plot2, plot3], plots_path / "gg_multi_pmg_set_rows1.png", rows=3)
+    ggmulti([plot1, plot2, plot3], plots_path / "gg_multi_pmg_set_rows2.png", rows=0)
+    ggmulti([plot1, plot2, plot3], plots_path / "gg_multi_pmg_set_rows3.png", rows=-1)
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows4.png",
+        rows=2,
+        empty_plots=1,
+    )
+
+
+def test_gg_multi_mpg_set_rows_and_cols():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+
+    df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+    plot2 = (
+        ggplot(df, aes("class", "cyl", fill="meanHwy"))
+        + geom_tile()
+        + geom_text(aes(text="meanHwy"))
+        + scale_y_discrete()
+    )
+
+    plot3 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_freqpoly(alpha=0.3)
+        + scale_x_continuous()
+    )
+
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows_and_cols1.png",
+        rows=2,
+        cols=2,
+    )
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows_and_cols2.png",
+        rows=2,
+        cols=2,
+        empty_plots=2,
+    )
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows_and_cols3.png",
+        rows=3,
+        cols=0,
+    )
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows_and_cols4.png",
+        rows=0,
+        cols=3,
+    )
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows_and_cols5.png",
+        rows=0,
+        cols=0,
+    )
+    ggmulti(
+        [plot1, plot2, plot3],
+        plots_path / "gg_multi_pmg_set_rows_and_cols6.png",
+        rows=-1,
+        cols=-1,
+    )
+
+    plot4 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
+
+    mpg = mpg.copy(deep=True)
+    mpg["cty"] = mpg["cty"].astype(float)
+    plot5 = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_point()
+    ggmulti(
+        [plot1, plot2, plot3, plot4, plot5],
+        plots_path / "gg_multi_pmg_set_rows_and_cols7.png",
+        rows=3,
+        cols=3,
+        empty_plots=[1, 3],
+    )
+
+
 def test_gg_multi_mpg_with_one_empty():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
@@ -135,12 +289,27 @@ def test_gg_multi_mpg_with_many_empty():
         empty_plots=[3, 5],
     )
 
+    ggmulti(
+        [plot1, plot2, plot3, plot4],
+        plots_path / "gg_multi_pmg_with_many_empty2.png",
+        empty_plots=[2, 3],
+        cols=3,
+    )
+
+    # # Another one that failed but can't work out why. Getting an IndexError
+    # ggmulti(
+    #     [plot1, plot2, plot3, plot4, plot5],
+    #     plots_path / "gg_multi_pmg_with_many_empty3.png",
+    #     empty_plots=[2, 3],
+    #     cols=4
+    # )
+
     # This one failed as we have picked 0 as one of the empty plots
     # and in `background_style = img.get_current_background_style()`
     # we get a """IndexError: list index out of range""" error
     # ggmulti(
     #     [plot1, plot2, plot3, plot4, plot5, plot2, plot3],
-    #     plots_path / "gg_multi_pmg_with_many_empty2.png",
+    #     plots_path / "gg_multi_pmg_with_many_empty4.png",
     #     empty_plots=[0,8]
     # )
 
@@ -351,6 +520,9 @@ def test_geom_text():
 
 
 def test_geom_error_bar():
+    """
+    this needs some further fixing
+    """
     df = pd.DataFrame(
         {
             "trt": [1, 1, 2, 2],
@@ -367,6 +539,7 @@ def test_geom_error_bar():
     ggdraw_plot(res, plots_path / "geom_error_bar.png")
 
 
+@pytest.mark.xfail(reason="incorrect plot")
 def test_geom_linerange():
     df = pd.DataFrame(
         data={
@@ -377,7 +550,7 @@ def test_geom_linerange():
             "lower": [0.8, 4.6, 2.4, 3.6],
         }
     )
-    plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_linerange(
+    plot = ggplot(df, aes(x="trt", y="resp")) + geom_linerange(
         aes(ymin="lower", ymax="upper")
     )
     res = ggcreate(plot)

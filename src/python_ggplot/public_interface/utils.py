@@ -1292,7 +1292,6 @@ def generate_plot(
         x_ticks, y_ticks = _generate_plot_ticks(
             view, filled_scales, plot, theme, hide_ticks
         )
-
         _generate_plot_update_scales(
             view,
             filled_scales,
