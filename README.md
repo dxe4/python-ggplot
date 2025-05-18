@@ -302,8 +302,8 @@ plot3 = (
     + scale_x_continuous()
 )
 
-    ggmulti([plot1, plot2, plot3], plots_path / "gg_multi_pmg_set_rows3.png", rows=-1)
+    ggmulti([plot1, plot2, plot3], plots_path / "gg_multi_pmg_set_rows1.png", rows=3)
 ```
-<img src="plots/gg_multi_pmg_set_rows3.png?v=1" alt="gg_multi_pmg_with_one_empty" width="800px">
+<img src="plots/gg_multi_pmg_set_rows1.png?v=1" alt="gg_multi_pmg_set_rows1" width="800px">
 
 ![gg](plots/simple_test.png?v=1)
