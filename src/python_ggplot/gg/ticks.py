@@ -814,7 +814,7 @@ def handle_ticks(
             TickLabelsInput(  # type: ignore use generics?
                 font=theme.tick_label_font,
                 margin=margin_opt,
-                rotate=theme.rotate_for_axis(ax_kind)
+                rotate=theme.rotate_for_axis(ax_kind),
             ),
         )
 

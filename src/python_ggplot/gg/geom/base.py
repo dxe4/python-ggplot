@@ -22,7 +22,7 @@ import pandas as pd
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
-from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VectorCol
+from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 from python_ggplot.gg.types import (
     COUNT_COL,
     SMOOTH_VALS_COL,
@@ -1133,7 +1133,7 @@ def create_filled_geom_from_geom(
 
 
 def excpand_scale(scale: Scale, is_continuous: bool):
-    '''
+    """
     an implementation of https://ggplot2.tidyverse.org/reference/expansion.html
     this needs to be configurable, but by default there's an expansion,
     so we add the default one
@@ -1142,7 +1142,7 @@ def excpand_scale(scale: Scale, is_continuous: bool):
     but for some cases it makes the plots a bit ugly
     maybe the ideal scenario is to expand only if there's elements that go out of the plot
     for example test_geom_linerange
-    '''
+    """
 
     if not is_continuous:
         return scale
@@ -1224,8 +1224,9 @@ class FilledStatGeom(ABC):
     ) -> "FilledGeom":
         pass
 
-
-    def _get_col_transformations(self, scale: Optional["GGScale"]) -> Optional[List[ColOperator]]:
+    def _get_col_transformations(
+        self, scale: Optional["GGScale"]
+    ) -> Optional[List[ColOperator]]:
         if scale is None:
             return None
         return scale.gg_data.col.get_transformations()
@@ -1250,7 +1251,7 @@ class FilledStatGeom(ABC):
             num_x=0,
             num_y=0,
             x_transformations=self._get_col_transformations(self.x),
-            y_transformations=self._get_col_transformations(self.y)
+            y_transformations=self._get_col_transformations(self.y),
         )
         fg = FilledGeom(gg_data=fg_data)
         fg, df = create_filled_geom(fg, filled_scales, self.geom.geom_type, self.df)

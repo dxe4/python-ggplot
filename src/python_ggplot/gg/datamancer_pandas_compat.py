@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 from enum import auto
-from typing import Any, Dict, Optional, OrderedDict, Union, TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, OrderedDict, Union
 
 import pandas as pd
 
 from python_ggplot.core.objects import GGEnum, GGException
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.types import ColOperator
-    from python_ggplot.gg.types import gg_col
+    from python_ggplot.gg.types import ColOperator, gg_col
 
 
 class ColumnType(GGEnum):
@@ -148,6 +147,7 @@ class VectorCol:
 
     def get_transformations(self) -> Optional[List["ColOperator"]]:
         from python_ggplot.gg.types import gg_col
+
         if isinstance(self.col_name, gg_col):
             return self.col_name.operators
         else:
@@ -155,6 +155,7 @@ class VectorCol:
 
     def __str__(self) -> str:
         from python_ggplot.gg.types import gg_col
+
         if isinstance(self.col_name, gg_col):
             return str(self.col_name)
         else:
@@ -162,8 +163,9 @@ class VectorCol:
 
     def evaluate(self, df: pd.DataFrame) -> Any:
         from python_ggplot.gg.types import gg_col
+
         if isinstance(self.col_name, gg_col):
-            return self.col_name.evaluate(df) # type: ignore
+            return self.col_name.evaluate(df)  # type: ignore
         else:
             return df[self.col_name]  # type: ignore
 

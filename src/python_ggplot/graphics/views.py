@@ -125,7 +125,8 @@ class ViewPort:
         raise GGException(f"View with name {view_name} not found")
 
     def get_view_structure(
-        self, filter_empty: bool = True,
+        self,
+        filter_empty: bool = True,
         only_names_and_types: bool = False,
     ) -> Dict[Any, Any]:
         children_coords = [

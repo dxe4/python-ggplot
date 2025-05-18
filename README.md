@@ -241,6 +241,27 @@ ggdraw_plot(res, plots_path / "geom_error_bar.png")
 
 
 ```python
+plots = _gg_multi_plots()
+ggmulti(
+    plots,
+    plots_path / "gg_multi_pmg_bottom_to_top.png",
+    vertical_orientation="bottom_to_top"
+)
+```
+<img src="plots/gg_multi_pmg_bottom_to_top.png?v=1" alt="gg_multi_pmg_bottom_to_top" width="400px">
+
+```python
+plots = _gg_multi_plots()
+ggmulti(
+    plots,
+    plots_path / "gg_multi_pmg_right_to_left.png",
+    horizontal_orientation="right_to_left"
+)
+```
+<img src="plots/gg_multi_pmg_right_to_left.png?v=1" alt="gg_multi_pmg_right_to_left" width="400px">
+
+
+```python
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
     res = ggcreate(plot)

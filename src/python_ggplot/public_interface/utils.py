@@ -22,6 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
+from numpy._core.numeric import empty
 
 from python_ggplot.common.enum_literals import (
     OUTSIDE_RANGE_KIND_VALUES,
@@ -1911,6 +1912,50 @@ def to_tex_options():
     raise GGException("unsupported")
 
 
+def fill_empty_spaces(
+    rows: int,
+    cols: int,
+    items: List[Optional[Any]],
+    horizontal_orientation: str,
+    vertical_orientation: str,
+) -> List[Optional[Any]]:
+    total_cells = rows * cols
+    items = items[:total_cells] + [None] * (total_cells - len(items))
+
+    if "top_to_bottom" == vertical_orientation:
+        row_order = list(range(rows))
+    else:
+        row_order = list(reversed(range(rows)))
+
+    if "left_to_right" == horizontal_orientation:
+        col_order = list(range(cols))
+    else:
+        col_order = list(reversed(range(cols)))
+
+    positions = [(r, c) for r in row_order for c in col_order]
+
+    grid = [None] * total_cells
+
+    for item, (r, c) in zip(items, positions):
+        grid[r * cols + c] = item
+
+    return grid
+
+
+def empty_view_for_gg_mmulti(img: ViewPort, h_val: float, w_val: float):
+    empty_view = ViewPort.from_coords(
+        CoordsInput(),
+        ViewPortInput(
+            w_img=PointUnit(h_val),
+            h_img=PointUnit(w_val),
+        ),
+    )
+    background_style = img.get_current_background_style()
+
+    background(empty_view, background_style)
+    return empty_view
+
+
 def ggmulti(
     plts: List[GgPlot],
     fname: Union[str, Path],
@@ -1925,6 +1970,8 @@ def ggmulti(
     caption: str = "",
     label: str = "",
     placement: str = "htbp",
+    horizontal_orientation: Literal["left_to_right", "right_to_left"] = "left_to_right",
+    vertical_orientation: Literal["top_to_bottom", "bottom_to_top"] = "top_to_bottom",
 ):
     """
     backend is fixated to cairo for now
@@ -1953,29 +2000,25 @@ def ggmulti(
         h_val = sum(heights) if heights else height
         img = ViewPort.from_coords(
             CoordsInput(),
-            # TODO double check this logic, it goes as float in initViewport
-            # our logic is a bit different
             ViewPortInput(w_img=PointUnit(w_val), h_img=PointUnit(h_val)),
         )
-
         widths_q: List[PointUnit] = (
             [PointUnit(float(w)) for w in widths] if widths else []
         )
         heights_q: List[PointUnit] = (
             [PointUnit(float(h)) for h in heights] if heights else []
         )
-
         layout(
             img,
             cols=max(len(widths), 1),
             rows=max(len(heights), 1),
-            # pyright being wrong here, but we should fix anyway
             col_widths=widths_q,  # type: ignore
             row_heights=heights_q,  # type: ignore
         )
-        empty_views = (len(heights_q) * len(widths_q) ) - len(plts)
+
+        rows, cols = len(heights_q), len(widths_q)
     else:
-        cols, rows = calc_rows_columns(0, 0, len(plts))
+        rows, cols = calc_rows_columns(0, 0, len(plts))
         img = ViewPort.from_coords(
             CoordsInput(),
             ViewPortInput(
@@ -1984,30 +2027,19 @@ def ggmulti(
             ),
         )
         layout(img, cols=cols, rows=rows)
-        empty_views = (rows * cols ) - len(plts)
 
-    for i, plt in enumerate(plts):
+    plts_filled = fill_empty_spaces(
+        rows, cols, plts, horizontal_orientation, vertical_orientation
+    )
+
+    for i, plt in enumerate(plts_filled):
         w_val = widths[i] if i < len(widths) else width
         h_val = heights[i] if i < len(heights) else height
-
-        pp = ggcreate(plt, width=w_val, height=h_val)
-        view_embed_at(img, i, pp.view)
-
-    if empty_views > 0:
-        for i in range(0, empty_views):
-            w_val = widths[i] if i < len(widths) else width
-            h_val = heights[i] if i < len(heights) else height
-            empty_view = ViewPort.from_coords(
-                CoordsInput(),
-                ViewPortInput(
-                    w_img=PointUnit(width),
-                    h_img=PointUnit(height),
-                ),
-            )
-            background_style = img.get_current_background_style()
-
-            background(empty_view, background_style)
-            view_embed_at(img, i + len(plts), empty_view)
-
+        if plt is None:
+            new_view = empty_view_for_gg_mmulti(img, h_val, w_val)
+        else:
+            pp = ggcreate(plt, width=w_val, height=h_val)
+            new_view = pp.view
+        view_embed_at(img, i, new_view)
 
     draw_to_file(img, fname)

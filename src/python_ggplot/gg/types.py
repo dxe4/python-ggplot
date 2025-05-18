@@ -532,13 +532,13 @@ class VegaTex:
     tex_options: TexOptions
 
 
-
 @dataclass
 class ColOperator:
     value: Union[int, float]
 
-    def __call__(self, series: pd.Series) -> pd.Series: # type: ignore
-        return series + self.value # type: ignore
+    def __call__(self, series: pd.Series) -> pd.Series:  # type: ignore
+        return series + self.value  # type: ignore
+
 
 @dataclass
 class gg_col:

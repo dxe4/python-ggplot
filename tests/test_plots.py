@@ -32,7 +32,7 @@ from python_ggplot.public_interface.utils import ggcreate, ggmulti, plot_layout
 from tests import data_path, plots_path
 
 
-def test_gg_multi_mpg():
+def _gg_multi_plots():
     mpg = pd.read_csv(data_path / "mpg.csv")
     plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
 
@@ -50,17 +50,41 @@ def test_gg_multi_mpg():
         + scale_x_continuous()
     )
 
-    plot4 = ggplot(
-        mpg, aes(x="cty", fill="class")
-    ) + geom_histogram() + scale_x_continuous()
+    plot4 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
 
     mpg = mpg.copy(deep=True)
     mpg["cty"] = mpg["cty"].astype(float)
     plot5 = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_point()
+    return [plot1, plot2, plot3, plot4, plot5]
 
+
+def test_gg_multi_mpg():
+    plots = _gg_multi_plots()
     ggmulti(
-        [plot1, plot2, plot3, plot4, plot5],
+        plots,
         plots_path / "gg_multi_pmg.png",
+    )
+
+
+def test_gg_multi_mpg_rl():
+    plots = _gg_multi_plots()
+    ggmulti(
+        plots,
+        plots_path / "gg_multi_pmg_right_to_left.png",
+        horizontal_orientation="right_to_left",
+    )
+
+
+def test_gg_multi_mpg_bt():
+    plots = _gg_multi_plots()
+    ggmulti(
+        plots,
+        plots_path / "gg_multi_pmg_bottom_to_top.png",
+        vertical_orientation="bottom_to_top",
     )
 
 
@@ -228,18 +252,18 @@ def test_geom_line_With_color():
             path_names.extend([f"path{j+1}"] * dates)
             tenors.extend(range(dates))
 
-        df = pd.DataFrame({
-            "tenors": tenors,
-            "pathNames": path_names,
-            "pathValues": path_values
-        })
+        df = pd.DataFrame(
+            {"tenors": tenors, "pathNames": path_names, "pathValues": path_values}
+        )
 
         return df
 
     df = create_dataframe()
-    plot = ggplot(
-        df, aes("tenors", "pathValues", color = "pathNames")
-    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
+    plot = (
+        ggplot(df, aes("tenors", "pathValues", color="pathNames"))
+        + geom_line()
+        + xlab(rotate=-90, tick_margin=3)
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_line_With_color.png")
 
@@ -305,15 +329,11 @@ def test_geom_linerange():
 
 def test_geom_freqpoly_diamonds():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
-    plot = ggplot(
-        diamonds, aes("price", color="cut")
-    ) + geom_freqpoly(
-    ) + ylab(
-        label="custom label",
-        rotate=-45
-    ) + xlab(
-        rotate=45,
-        tick_margin=2.5
+    plot = (
+        ggplot(diamonds, aes("price", color="cut"))
+        + geom_freqpoly()
+        + ylab(label="custom label", rotate=-45)
+        + xlab(rotate=45, tick_margin=2.5)
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_freqpoly.png")
