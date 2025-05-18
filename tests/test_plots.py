@@ -270,9 +270,6 @@ def test_geom_text():
 
 
 def test_geom_error_bar():
-    """
-    this needs some further fixing
-    """
     df = pd.DataFrame(
         {
             "trt": [1, 1, 2, 2],
