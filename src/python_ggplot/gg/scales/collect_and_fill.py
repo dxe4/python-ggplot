@@ -779,7 +779,7 @@ def fill_scale(
     ax_kind_opt = None
 
     for scale in scales:
-        data = pd.concat([data, df[str(scale.gg_data.col)]])  # type: ignore
+        data = pd.concat([data, scale.gg_data.col.evaluate(df)])  # type: ignore
 
     data_scale_opt = None
     label_seq_opt = None

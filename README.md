@@ -184,6 +184,26 @@ ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
 <img src="plots/geom_point_with_continuous_color_and_size.png?v=1" alt="geom_point_with_continuous_color_and_size" width="400px">
 
 
+
+```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+
+mpg["cty"] = mpg["cty"].astype(float)
+mpg["mpgMean"] = (mpg["cty"] + mpg["hwy"]) / 2.0
+df_max = mpg.sort_values("mpgMean").tail(1)
+
+plot = (
+    ggplot(mpg, aes("hwy", "displ"))
+    + geom_point(aes(color="cty"))
+    + geom_text(data=df_max, aes=aes(y=gg_col("displ") + 0.2, text="model"))
+    + geom_text(data=df_max, aes=aes(y=gg_col("displ") - 0.2, text="mpgMean"))
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_point_and_text.png")
+```
+<img src="plots/geom_point_and_text.png?v=1" alt="geom_point_and_text" width="400px">
+
+
 ```python
 df = pd.DataFrame({
     'trt': [1, 1, 2, 2],

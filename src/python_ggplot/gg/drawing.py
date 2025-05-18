@@ -819,6 +819,18 @@ def draw_sub_df(
         x_tensor = df[fg.gg_data.x_col]  # type: ignore
         y_tensor = df[fg.gg_data.y_col]  # type: ignore
 
+        # TODO this needs to be cleaned up a bit
+        # it allows test_geom_point_and_text to do
+        # y=gg_col("displ") + 0.2 and y=gg_col("displ") - 0.2
+        # which is really convienient
+        if fg.gg_data.x_transformations:
+            for operator in fg.gg_data.x_transformations:
+                x_tensor = operator(x_tensor)  # type: ignore
+
+        if fg.gg_data.y_transformations:
+            for operator in fg.gg_data.y_transformations:
+                y_tensor = operator(y_tensor)  # type: ignore
+
         last_element: int = len(df) - 1
         if fg.gg_data.geom.gg_data.bin_position == BinPositionType.NONE:
             last_element = len(df)

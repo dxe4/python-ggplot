@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from python_ggplot.gg.types import gg_col
 from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import (
     draw_layout,
@@ -81,13 +82,7 @@ def test_geom_bar_fill():
     ggdraw_plot(res, plots_path / "geom_bar_fill.png")
 
 
-@pytest.mark.xfail(reason="fix")
 def test_geom_point_and_text():
-    """
-    There's a few issues with this
-    1) python_ggplot/gg/drawing.GetXY.calculate doesn't deal with y str
-    2) multiple aes y cols conflict (the original here would have been a formula node)
-    """
     mpg = pd.read_csv(data_path / "mpg.csv")
 
     mpg["cty"] = mpg["cty"].astype(float)
@@ -97,8 +92,8 @@ def test_geom_point_and_text():
     plot = (
         ggplot(mpg, aes("hwy", "displ"))
         + geom_point(aes(color="cty"))
-        + geom_text(data=df_max, aes=aes(y="displ", text="model"))
-        + geom_text(data=df_max, aes=aes(y="displ", text="mpgMean"))
+        + geom_text(data=df_max, aes=aes(y=gg_col("displ") + 0.2, text="model"))
+        + geom_text(data=df_max, aes=aes(y=gg_col("displ") - 0.2, text="mpgMean"))
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_point_and_text.png")

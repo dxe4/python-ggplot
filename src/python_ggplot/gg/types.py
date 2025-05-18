@@ -530,3 +530,34 @@ class VegaTex:
     width: Optional[float]
     height: Optional[float]
     tex_options: TexOptions
+
+
+
+@dataclass
+class ColOperator:
+    value: Union[int, float]
+
+    def __call__(self, series: pd.Series) -> pd.Series: # type: ignore
+        return series + self.value # type: ignore
+
+@dataclass
+class gg_col:
+    col: str
+    operators: List[ColOperator] = field(default_factory=list)
+
+    def __add__(self, val: float):
+        self.operators.append(ColOperator(val))
+        return self
+
+    def __sub__(self, val: float):
+        self.operators.append(ColOperator(-val))
+        return self
+
+    def evaluate(self, df: pd.DataFrame) -> pd.Series:  # type: ignore
+        series = df[self.col]  # type: ignore
+        for operator in self.operators:
+            series = operator(series)  # type: ignore
+        return series  # type: ignore
+
+    def __str__(self):
+        return self.col

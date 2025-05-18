@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 from enum import auto
-from typing import Any, Dict, Optional, OrderedDict
+from typing import Any, Dict, Optional, OrderedDict, Union, TYPE_CHECKING, List
 
 import pandas as pd
 
 from python_ggplot.core.objects import GGEnum, GGException
+
+if TYPE_CHECKING:
+    from python_ggplot.gg.types import ColOperator
+    from python_ggplot.gg.types import gg_col
 
 
 class ColumnType(GGEnum):
@@ -138,15 +142,30 @@ def python_type_to_gg_value(value: Any) -> GGValue:
 
 @dataclass
 class VectorCol:
-    col_name: str
+    col_name: Union[str, "gg_col"]
     res_type: Optional[Any] = None
     series: Optional[pd.Series] = None  # type: ignore
 
+    def get_transformations(self) -> Optional[List["ColOperator"]]:
+        from python_ggplot.gg.types import gg_col
+        if isinstance(self.col_name, gg_col):
+            return self.col_name.operators
+        else:
+            return None
+
     def __str__(self) -> str:
-        return self.col_name
+        from python_ggplot.gg.types import gg_col
+        if isinstance(self.col_name, gg_col):
+            return str(self.col_name)
+        else:
+            return self.col_name
 
     def evaluate(self, df: pd.DataFrame) -> Any:
-        return df[self.col_name]  # type: ignore
+        from python_ggplot.gg.types import gg_col
+        if isinstance(self.col_name, gg_col):
+            return self.col_name.evaluate(df) # type: ignore
+        else:
+            return df[self.col_name]  # type: ignore
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         # TODO handle_continuous_ticks

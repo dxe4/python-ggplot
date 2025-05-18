@@ -22,13 +22,14 @@ import pandas as pd
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
-from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull
+from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VectorCol
 from python_ggplot.gg.types import (
     COUNT_COL,
     SMOOTH_VALS_COL,
     Aesthetics,
     BinByType,
     BinPositionType,
+    ColOperator,
     DiscreteKind,
     DiscreteType,
     GgPlot,
@@ -157,6 +158,9 @@ class FilledGeomData:
     num_y: int
     x_discrete_kind: Optional["FilledGeomDiscreteKind"]
     y_discrete_kind: Optional["FilledGeomDiscreteKind"]
+
+    x_transformations: Optional[List[ColOperator]] = None
+    y_transformations: Optional[List[ColOperator]] = None
 
 
 @dataclass
@@ -1173,6 +1177,12 @@ class FilledStatGeom(ABC):
     ) -> "FilledGeom":
         pass
 
+
+    def _get_col_transformations(self, scale: Optional["GGScale"]) -> Optional[List[ColOperator]]:
+        if scale is None:
+            return None
+        return scale.gg_data.col.get_transformations()
+
     def create_filled_geom(
         self, filled_scales: "FilledScales"
     ) -> Tuple[FilledGeom, pd.DataFrame, "GGStyle"]:
@@ -1192,6 +1202,8 @@ class FilledStatGeom(ABC):
             y_discrete_kind=self.get_y_discrete_kind(),
             num_x=0,
             num_y=0,
+            x_transformations=self._get_col_transformations(self.x),
+            y_transformations=self._get_col_transformations(self.y)
         )
         fg = FilledGeom(gg_data=fg_data)
         fg, df = create_filled_geom(fg, filled_scales, self.geom.geom_type, self.df)

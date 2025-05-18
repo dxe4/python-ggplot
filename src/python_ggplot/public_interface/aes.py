@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 from python_ggplot.core.objects import AxisKind, GGException
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
@@ -12,6 +12,7 @@ from python_ggplot.gg.scales.base import (
     scale_type_to_cls,
 )
 from python_ggplot.gg.types import Aesthetics
+from tests.test_plots import gg_col
 
 _AES_PARAM_TO_SCALE_ARGS: Dict[str, Tuple[ScaleType, Optional[AxisKind]]] = {
     "x": (ScaleType.LINEAR_DATA, AxisKind.X),
@@ -80,8 +81,8 @@ def _init_aes(data: Dict[str, Optional[str]]) -> Aesthetics:
 
 
 def aes(
-    x: Optional[str] = None,
-    y: Optional[str] = None,
+    x: Optional[Union[str, gg_col]] = None,
+    y: Optional[Union[str, gg_col]] = None,
     color: Optional[str] = None,
     fill: Optional[str] = None,
     shape: Optional[str] = None,
