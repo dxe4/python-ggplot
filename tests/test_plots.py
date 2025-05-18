@@ -50,9 +50,11 @@ def test_gg_multi_mpg():
         + scale_x_continuous()
     )
 
-    plot4 = ggplot(
-        mpg, aes(x="cty", fill="class")
-    ) + geom_histogram() + scale_x_continuous()
+    plot4 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
 
     mpg = mpg.copy(deep=True)
     mpg["cty"] = mpg["cty"].astype(float)
@@ -82,9 +84,11 @@ def test_gg_multi_mpg_with_one_empty():
         + scale_x_continuous()
     )
 
-    plot4 = ggplot(
-        mpg, aes(x="cty", fill="class")
-    ) + geom_histogram() + scale_x_continuous()
+    plot4 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
 
     mpg = mpg.copy(deep=True)
     mpg["cty"] = mpg["cty"].astype(float)
@@ -93,7 +97,7 @@ def test_gg_multi_mpg_with_one_empty():
     ggmulti(
         [plot1, plot2, plot3, plot4, plot5],
         plots_path / "gg_multi_pmg_with_one_empty.png",
-        empty_plots=4
+        empty_plots=4,
     )
 
 
@@ -115,9 +119,11 @@ def test_gg_multi_mpg_with_many_empty():
         + scale_x_continuous()
     )
 
-    plot4 = ggplot(
-        mpg, aes(x="cty", fill="class")
-    ) + geom_histogram() + scale_x_continuous()
+    plot4 = (
+        ggplot(mpg, aes(x="cty", fill="class"))
+        + geom_histogram()
+        + scale_x_continuous()
+    )
 
     mpg = mpg.copy(deep=True)
     mpg["cty"] = mpg["cty"].astype(float)
@@ -126,7 +132,7 @@ def test_gg_multi_mpg_with_many_empty():
     ggmulti(
         [plot1, plot2, plot3, plot4, plot5, plot2, plot3],
         plots_path / "gg_multi_pmg_with_many_empty1.png",
-        empty_plots=[3,5]
+        empty_plots=[3, 5],
     )
 
     # This onbe failed as we have picked 0 as one of the empty plots
@@ -303,18 +309,18 @@ def test_geom_line_With_color():
             path_names.extend([f"path{j+1}"] * dates)
             tenors.extend(range(dates))
 
-        df = pd.DataFrame({
-            "tenors": tenors,
-            "pathNames": path_names,
-            "pathValues": path_values
-        })
+        df = pd.DataFrame(
+            {"tenors": tenors, "pathNames": path_names, "pathValues": path_values}
+        )
 
         return df
 
     df = create_dataframe()
-    plot = ggplot(
-        df, aes("tenors", "pathValues", color = "pathNames")
-    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
+    plot = (
+        ggplot(df, aes("tenors", "pathValues", color="pathNames"))
+        + geom_line()
+        + xlab(rotate=-90, tick_margin=3)
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_line_With_color.png")
 
@@ -384,15 +390,11 @@ def test_geom_linerange():
 
 def test_geom_freqpoly_diamonds():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
-    plot = ggplot(
-        diamonds, aes("price", color="cut")
-    ) + geom_freqpoly(
-    ) + ylab(
-        label="custom label",
-        rotate=-45
-    ) + xlab(
-        rotate=45,
-        tick_margin=2.5
+    plot = (
+        ggplot(diamonds, aes("price", color="cut"))
+        + geom_freqpoly()
+        + ylab(label="custom label", rotate=-45)
+        + xlab(rotate=45, tick_margin=2.5)
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_freqpoly.png")
