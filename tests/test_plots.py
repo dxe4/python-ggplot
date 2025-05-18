@@ -351,9 +351,6 @@ def test_geom_text():
 
 
 def test_geom_error_bar():
-    """
-    this needs some further fixing
-    """
     df = pd.DataFrame(
         {
             "trt": [1, 1, 2, 2],
@@ -370,7 +367,6 @@ def test_geom_error_bar():
     ggdraw_plot(res, plots_path / "geom_error_bar.png")
 
 
-@pytest.mark.xfail(reason="incorrect plot")
 def test_geom_linerange():
     df = pd.DataFrame(
         data={
@@ -381,7 +377,7 @@ def test_geom_linerange():
             "lower": [0.8, 4.6, 2.4, 3.6],
         }
     )
-    plot = ggplot(df, aes(x="trt", y="resp")) + geom_linerange(
+    plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_linerange(
         aes(ymin="lower", ymax="upper")
     )
     res = ggcreate(plot)

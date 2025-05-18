@@ -155,6 +155,25 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 ```python
+df = pd.DataFrame(
+    data={
+        "trt": pd.Categorical([1, 1, 2, 2]),
+        "resp": [1, 5, 3, 4],
+        "group": pd.Categorical([1, 2, 1, 2]),
+        "upper": [1.1, 5.3, 3.3, 4.2],
+        "lower": [0.8, 4.6, 2.4, 3.6],
+    }
+)
+plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_linerange(
+    aes(ymin="lower", ymax="upper")
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_linerange.png")
+```
+<img src="plots/geom_linerange.png?v=1" alt="geom_linerange" width="400px">
+
+
+```python
     df = pd.DataFrame(
         data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
     )

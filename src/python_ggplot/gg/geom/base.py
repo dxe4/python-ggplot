@@ -162,6 +162,18 @@ class FilledGeomData:
     x_transformations: Optional[List[ColOperator]] = None
     y_transformations: Optional[List[ColOperator]] = None
 
+    def is_x_discrete(self):
+        return isinstance(self.x_discrete_kind, FilledGeomDiscrete)
+
+    def is_y_discrete(self):
+        return isinstance(self.y_discrete_kind, FilledGeomDiscrete)
+
+    def is_x_continuous(self):
+        return isinstance(self.x_discrete_kind, FilledGeomContinuous)
+
+    def is_y_continuous(self):
+        return isinstance(self.y_discrete_kind, FilledGeomContinuous)
+
 
 @dataclass
 class FilledGeom:
@@ -1120,6 +1132,32 @@ def create_filled_geom_from_geom(
     return filled_geom
 
 
+def excpand_scale(scale: Scale, is_continuous: bool):
+    '''
+    an implementation of https://ggplot2.tidyverse.org/reference/expansion.html
+    this needs to be configurable, but by default there's an expansion,
+    so we add the default one
+    need to check how the original ggplot does this
+    what is implemented is "fine/good enough for now"
+    but for some cases it makes the plots a bit ugly
+    maybe the ideal scenario is to expand only if there's elements that go out of the plot
+    for example test_geom_linerange
+    '''
+
+    if not is_continuous:
+        return scale
+
+    if scale.low == 0.0:
+        return scale
+
+    diff = scale.high - scale.low
+    space = diff * 0.1
+    scale.low = scale.low - space
+    scale.high = scale.high + space
+
+    return scale
+
+
 def create_filled_geoms_for_filled_scales(
     filled_scales: "FilledScales", plot: "GgPlot"
 ):
@@ -1128,6 +1166,9 @@ def create_filled_geoms_for_filled_scales(
     x_scale: Optional[Scale] = None
     y_scale: Optional[Scale] = None
 
+    x_continuous = False
+    y_continuous = False
+
     for geom in plot.geoms:
         if geom.gg_data.data is not None:
             df = geom.gg_data.data
@@ -1135,6 +1176,9 @@ def create_filled_geoms_for_filled_scales(
             df = plot.data.copy(deep=False)
 
         filled_geom = create_filled_geom_from_geom(df, geom, filled_scales)
+
+        x_continuous = x_continuous or filled_geom.gg_data.is_x_continuous()
+        y_continuous = y_continuous or filled_geom.gg_data.is_y_continuous()
 
         if (
             x_scale is not None
@@ -1155,6 +1199,9 @@ def create_filled_geoms_for_filled_scales(
 
     final_x_scale, _, _ = calc_tick_locations(x_scale, get_x_ticks(filled_scales))
     final_y_scale, _, _ = calc_tick_locations(y_scale, get_y_ticks(filled_scales))
+
+    final_x_scale = excpand_scale(final_x_scale, x_continuous)
+    final_y_scale = excpand_scale(final_y_scale, y_continuous)
 
     filled_scales.x_scale = final_x_scale
     filled_scales.y_scale = final_y_scale
