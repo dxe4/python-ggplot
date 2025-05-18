@@ -1920,6 +1920,8 @@ def ggmulti(
     empty_plots: Optional[
         Union[int, List[int]]
     ] = None,  # Which plot(s) should be empty?
+    rows: Optional[int] = None,
+    cols: Optional[int] = None,
     use_tex: bool = False,
     only_tikz: bool = False,
     standalone: bool = False,
@@ -1938,6 +1940,12 @@ def ggmulti(
         heights = []
     width = widths[0] if len(widths) == 1 else width
     height = heights[0] if len(heights) == 1 else height
+
+    if rows is not None and cols is not None:
+        if rows <= 0 and cols <= 0:
+            print("Warning: Existing values of rows and cols will be overwritten.")
+        elif max(1, rows) * max(1, cols) < len(plts):
+            raise ValueError("Not enough rows and cols set to display all plots ")
 
     def raise_if_not_matching(arg: Any, arg_name: Any):
         if len(arg) > 1 and len(arg) != len(plts):
@@ -1969,15 +1977,19 @@ def ggmulti(
 
         layout(
             img,
-            cols=max(len(widths), 1),
-            rows=max(len(heights), 1),
+            cols=cols if cols is not None else max(len(widths), 1),
+            rows=rows if rows is not None else max(len(heights), 1),
             # pyright being wrong here, but we should fix anyway
             col_widths=widths_q,  # type: ignore
             row_heights=heights_q,  # type: ignore
         )
         empty_views = (len(heights_q) * len(widths_q)) - len(plts)
     else:
-        cols, rows = calc_rows_columns(0, 0, len(plts))
+        rows, cols = calc_rows_columns(
+            rows if rows is not None else -1,
+            cols if cols is not None else -1,
+            len(plts),
+        )
         img = ViewPort.from_coords(
             CoordsInput(),
             ViewPortInput(
@@ -2035,9 +2047,28 @@ def ggmulti(
                 view_embed_at(img, i + len(plts), empty_view)
     else:
         add_empty = 0
-        for i in range(cols * rows):
+        if isinstance(empty_plots, int):
+            total_plots = len(plts) + 1
+        else:
+            total_plots = len(plts) + len(empty_plots)
+        for i in range(rows * cols):
             i1 = i - add_empty
-            if (isinstance(empty_plots, int) and i == empty_plots) or (
+            if i >= total_plots:
+                w_val = widths[0] if len(widths) == 1 else width
+                h_val = heights[0] if len(heights) == 1 else height
+                empty_view = ViewPort.from_coords(
+                    CoordsInput(),
+                    ViewPortInput(
+                        w_img=PointUnit(width),
+                        h_img=PointUnit(height),
+                    ),
+                )
+                background_style = img.get_current_background_style()
+
+                background(empty_view, background_style)
+                view_embed_at(img, i, empty_view)
+
+            elif (isinstance(empty_plots, int) and i == empty_plots) or (
                 isinstance(empty_plots, list) and i in empty_plots
             ):
                 w_val = widths[i1] if i1 < len(widths) else width
