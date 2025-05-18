@@ -277,10 +277,33 @@ plot5 = ggplot(mpg, aes(x="cty", y="displ", size="cyl", color="cty")) + geom_poi
 
 ggmulti(
     [plot1, plot2, plot3, plot4, plot5],
-    plots_path / "gg_multi_pmg.png",
+    plots_path / "gg_multi_pmg_with_one_empty.png",
     empty_plots=4
 )
 ```
 <img src="plots/gg_multi_pmg_with_one_empty.png?v=1" alt="gg_multi_pmg_with_one_empty" width="800px">
+
+You can also set the `rows` or `cols` 
+```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+
+df = mpg.groupby(["class", "cyl"], as_index=False).agg(meanHwy=("hwy", "mean"))
+plot2 = (
+    ggplot(df, aes("class", "cyl", fill="meanHwy"))
+    + geom_tile()
+    + geom_text(aes(text="meanHwy"))
+    + scale_y_discrete()
+)
+
+plot3 = (
+    ggplot(mpg, aes(x="cty", fill="class"))
+    + geom_freqpoly(alpha=0.3)
+    + scale_x_continuous()
+)
+
+    ggmulti([plot1, plot2, plot3], plots_path / "gg_multi_pmg_set_rows3.png", rows=-1)
+```
+<img src="plots/gg_multi_pmg_set_rows3.png?v=1" alt="gg_multi_pmg_with_one_empty" width="800px">
 
 ![gg](plots/simple_test.png?v=1)
