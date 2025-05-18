@@ -959,14 +959,16 @@ def add_facets(filled_scales: FilledScales, plot: GgPlot):
 
         # TODO CRITICAL
         # this needs re-visiting very soon
-        scale_ = AbstractGGScale(
+        scale_ = LinearDataScale(
             gg_data=GGScaleData(
                 ids=set(range(65536)),
-                col=fc,
+                col=VectorCol(fc),
                 name=fc,
                 has_discreteness=True,
+                value_kind=VTODO(),
                 discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
-            )
+            ),
+            data=LinearAndTransformScaleData()
         )
         fill_scale_data = _FillScaleData(scale=scale_, df=None)
 

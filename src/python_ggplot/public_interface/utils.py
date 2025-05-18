@@ -1320,9 +1320,7 @@ def determine_existing_combinations(fs: FilledScales, facet: Facet) -> Set[GGVal
     # here the facets have to be on discrete scales
     # we can assume that but would be good to structure it better
     if len(facet.columns) > 1:
-        combinations: List[List[GGValue]] = list(
-            product([f.gg_data.discrete_kind.label_seq for f in facets])  # type: ignore
-        )
+        combinations = list(product(*(facet.gg_data.discrete_kind.label_seq for facet in facets)))
     else:
         combinations: List[List[GGValue]] = [[label] for label in facets[0].gg_data.discrete_kind.label_seq]  # type: ignore
 
@@ -1339,10 +1337,12 @@ def determine_existing_combinations(fs: FilledScales, facet: Facet) -> Set[GGVal
     for fg in fs.geoms:
         for xk in fg.gg_data.yield_data.keys():
             for _, cb in comb_labels:
-                if cb == xk:
+                if cb in xk:
                     result.add(cb)
 
-    assert len(result) <= len(combinations)
+    if len(result) > len(combinations):
+        raise GGException("result should be less than combinations")
+
     return result
 
 
@@ -1449,7 +1449,7 @@ def generate_facet_plots(
 
     view_map = calc_facet_view_map(exist_comb)
 
-    if facet.sf_kind in {
+    if facet.scale_free_kind in {
         ScaleFreeKind.FREE_X,
         ScaleFreeKind.FREE_Y,
         ScaleFreeKind.FREE,
@@ -1499,13 +1499,13 @@ def generate_facet_plots(
         cur_col = idx % cols
 
         hide_x_labels = not (
-            facet.sf_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE}
+            facet.scale_free_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE}
             or cur_row == rows - 1
             or (cur_row == rows - 2 and cur_col >= last_col and last_col > 0)
         )
 
         hide_y_labels = not (
-            facet.sf_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE} or cur_col == 0
+            facet.scale_free_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE} or cur_col == 0
         )
 
         plot_view.name = "facet_plot"
@@ -1556,9 +1556,9 @@ def generate_facet_plots(
         view_label.x_scale = plot_view.x_scale
         view_label.y_scale = plot_view.y_scale
 
-        if not view.x_scale or not view.y_scale:
+        # if not view.x_scale or not view.y_scale:
             # TODO check this
-            raise GGException("expected x and y scale")
+            # raise GGException("expected x and y scale")
 
         if not filled_scales.discrete_x and filled_scales.reversed_x:
             view_label.x_scale = Scale(high=view.x_scale.low, low=view.x_scale.high)

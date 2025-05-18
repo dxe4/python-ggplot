@@ -6,6 +6,7 @@ from python_ggplot.gg.types import gg_col
 from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import (
     draw_layout,
+    facet_wrap,
     ggdraw,
     ggdraw_plot,
     ggtitle,
@@ -359,3 +360,16 @@ def test_geom_freqpoly_cty_class_fill():
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "freqpoly_cty_class_fill.png")
+
+
+def test_facet_mpg():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(
+        mpg, aes(x="displ", y="cty")
+    ) + geom_point(
+        aes(color = "manufacturer")
+    ) + facet_wrap(
+        ["drv", "cyl"]
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "facet_mpg.png")
