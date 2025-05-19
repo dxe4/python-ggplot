@@ -1325,25 +1325,40 @@ def determine_existing_combinations(fs: FilledScales, facet: Facet) -> Set[GGVal
         combinations: List[List[GGValue]] = [[label] for label in facets[0].gg_data.discrete_kind.label_seq]  # type: ignore
 
     comb_labels: Set[Tuple[str, GGValue]] = set()
-    for combination in combinations:
-        comb = [(str(fc.gg_data.col), val) for fc, val in zip(facets, combination)]
-        for i in comb:
-            comb_labels.add(i)
+
+    for c in combinations:
+        comb = []
+        for i, fc in enumerate(facet.columns):
+            if isinstance(c[i], np.generic):
+                item = c[i].item()
+            else:
+                item = c[i]
+            comb.append((fc, item))
+        comb = tuple(comb)
+        comb_labels.add(comb)
 
     result: Set[GGValue] = set()
 
-    # TODO critical, this logic is probably a bit off
-    # need to get facets working and write unit tests
+    # This logic is a bit funny
+    # for drv. cyl in cars we get combos in terms of:
+    # (6, r), (5, f)
+    # yield_data.keys() in case of aes(color = "manufacturer")
+    # will return data in the form of (audio, 6, r)
+    # we should probably just take all the combos from the df in yield data
+    # something like df[facet.columns].drop_duplicates()
+    # this should be enough, and more simple than current impl
     for fg in fs.geoms:
-        for xk in fg.gg_data.yield_data.keys():
-            for _, cb in comb_labels:
-                if cb in xk:
+        for cb in comb_labels:
+            for xk in fg.gg_data.yield_data.keys():
+                left = {i[1] for i in cb}
+
+                if left.issubset(set(xk)):
                     result.add(cb)
 
     if len(result) > len(combinations):
         raise GGException("result should be less than combinations")
 
-    return result
+    return sorted(result)
 
 
 def calc_facet_view_map(comb_labels: Set[GGValue]) -> Dict[GGValue, int]:
@@ -1550,7 +1565,8 @@ def generate_facet_plots(
             p_child = plot_view.add_viewport_from_coords(
                 CoordsInput(), ViewPortInput(name="data")
             )
-            create_gobj_from_geom(p_child, geom, theme, label_val=label)
+            label_ = {i[1] for i in label}
+            create_gobj_from_geom(p_child, geom, theme, label_val=label_)
             plot_view.children.append(p_child)
 
         view_label.x_scale = plot_view.x_scale

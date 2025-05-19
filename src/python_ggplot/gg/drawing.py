@@ -942,7 +942,15 @@ def create_gobj_from_geom(
     view_map = calc_view_map(fg)
 
     for lab, _, styles, sub_df in fg.enumerate_data():
-        if label_val is not None and label_val not in lab:
+        # TODO critical
+        #  for geom_point(aes(color = "manufacturer")) + facet_wrap(["drv", "cyl"])
+        # the lab will be in the form of ('audi', '4', 8)
+        # but the label will only be ('4', 8)
+        # the color is taken into account
+        # so we only need to check a subset
+        # this whole logic is a bit funny, will need some cleaning up
+        # this can result to incorrect plots, we need to match both the col and the val
+        if label_val is not None and not label_val.issubset(set(lab)):
             # skip this label
             continue
         draw_sub_df(view, fg, view_map, sub_df, styles, theme)
