@@ -285,6 +285,14 @@ class FilledGeom:
         # this is only needed for FilledGeomErrorBar as of now
         return df
 
+    def has_bars(self) -> bool:
+        if self.geom_type == GeomType.BAR:
+            return True
+        elif self.geom_type == GeomType.HISTOGRAM:
+            return self.get_histogram_draw_style() == HistogramDrawingStyle.BARS
+        else:
+            return False
+
 
 class GeomPoint(Geom):
 

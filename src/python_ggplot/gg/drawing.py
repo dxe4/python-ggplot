@@ -359,19 +359,65 @@ def get_draw_pos_impl(
             return get_discrete_histogram(1.0, ax_kind)
 
     elif discrete_type == DiscreteType.CONTINUOUS:
-        if fg_geom_type in {
-            GeomType.POINT,
-            GeomType.ERROR_BAR,
-            GeomType.LINE,
-            GeomType.FREQ_POLY,
-            GeomType.HISTOGRAM,
-            GeomType.BAR,
-            GeomType.TILE,
-            GeomType.RASTER,
-            GeomType.TEXT,
-        }:
-            return get_continuous(view, fg, val, ax_kind)
-    raise GGException("could not get point")
+        return get_continuous(view, fg, val, ax_kind)
+
+    raise GGException(f"could not get point for geom: {fg_geom_type}")
+
+
+@dataclass
+class _DrawPos:
+    x_val: float
+    x_width: float
+    y_val: float
+    y_width: float
+
+
+def get_draw_pos_val_width(
+    fg: FilledGeom,
+    point: Tuple[float, float],
+    bin_widths: Tuple[float, float],
+    df: pd.DataFrame,
+    idx: int,
+    # todo this needs to be passed in
+    coords_fliped: bool = False,
+) -> _DrawPos:
+    position = fg.gg_data.geom.gg_data.position
+    if position == PositionType.IDENTITY:
+        point_clone = deepcopy(list(point))
+        if fg.has_bars():
+            if not coords_fliped:
+                point_clone[1] = 0.0
+            else:
+                point_clone[0] = 0.0
+
+        return _DrawPos(
+            x_val=point_clone[0],
+            x_width=bin_widths[0],
+            y_val=point_clone[1],
+            y_width=bin_widths[1],
+        )
+    elif position == PositionType.STACK:
+        if not fg.has_bars():
+            cur_stack = point[1]
+        else:
+            cur_stack = float(df[PREV_VALS_COL].iloc[idx])  # type: ignore
+
+        if not coords_fliped:
+            return _DrawPos(
+                x_val=point[0],
+                x_width=bin_widths[0],
+                y_val=cur_stack,
+                y_width=bin_widths[1],
+            )
+        else:
+            return _DrawPos(
+                x_val=cur_stack,
+                x_width=bin_widths[0],
+                y_val=point[1],
+                y_width=bin_widths[1],
+            )
+    else:
+        raise GGException("not implemented yet")
 
 
 def get_draw_pos(
@@ -383,95 +429,30 @@ def get_draw_pos(
     df: pd.DataFrame,
     idx: int,
 ) -> Coord:
-
-    coords_flipped = False
-
-    geom_type = fg.geom_type
-    position = fg.gg_data.geom.gg_data.position
-
-    # TODO sanity check if we need more types than hist
-    histogram_drawing_style = getattr(fg, "histogram_drawing_style", None)
-
-    if position == PositionType.IDENTITY:
-        mp = deepcopy(list(point))
-        if geom_type == GeomType.BAR or (
-            geom_type == GeomType.HISTOGRAM
-            and histogram_drawing_style == HistogramDrawingStyle.BARS
-        ):
-            if not coords_flipped:
-                mp[1] = 0.0
-            else:
-                mp[0] = 0.0
-
-        result_x: Coord1D = get_draw_pos_impl(
-            view,
-            fg,
-            mp[0],
-            bin_widths[0],
-            fg.gg_data.x_discrete_kind.discrete_type,
-            AxisKind.X,
-        )
-        result_y: Coord1D = get_draw_pos_impl(
-            view,
-            fg,
-            mp[1],
-            bin_widths[1],
-            fg.gg_data.y_discrete_kind.discrete_type,
-            AxisKind.Y,
-        )
-        return Coord(x=result_x, y=result_y)
-
-    elif position == PositionType.STACK:
-        if not (
-            (
-                fg.gg_data.geom.geom_type == GeomType.HISTOGRAM
-                and histogram_drawing_style == HistogramDrawingStyle.BARS
-            )
-            or fg.gg_data.geom.geom_type == GeomType.BAR
-        ):
-            cur_stack = point[1]
-        else:
-            cur_stack = float(df[PREV_VALS_COL].iloc[idx])  # type: ignore
-
-        if not coords_flipped:
-            result_x = get_draw_pos_impl(
-                view,
-                fg,
-                point[0],
-                bin_widths[0],
-                fg.gg_data.x_discrete_kind.discrete_type,
-                AxisKind.X,
-            )
-            result_y = get_draw_pos_impl(
-                view,
-                fg,
-                cur_stack,
-                bin_widths[1],
-                fg.gg_data.y_discrete_kind.discrete_type,
-                AxisKind.Y,
-            )
-
-            return Coord(x=result_x, y=result_y)
-        else:
-            result_x = get_draw_pos_impl(
-                view,
-                fg,
-                cur_stack,
-                bin_widths[0],
-                fg.gg_data.x_discrete_kind.discrete_type,
-                AxisKind.X,
-            )
-            result_y = get_draw_pos_impl(
-                view,
-                fg,
-                point[1],
-                bin_widths[1],
-                fg.gg_data.y_discrete_kind.discrete_type,
-                AxisKind.Y,
-            )
-            return Coord(x=result_x, y=result_y)
-    else:
-        raise GGException("not implemented yet")
+    draw_pos = get_draw_pos_val_width(
+        fg,
+        point,
+        bin_widths,
+        df,
+        idx,
+    )
+    result_x: Coord1D = get_draw_pos_impl(
+        view,
+        fg,
+        draw_pos.x_val,
+        draw_pos.x_width,
+        fg.gg_data.x_discrete_kind.discrete_type,
+        AxisKind.X,
+    )
+    result_y: Coord1D = get_draw_pos_impl(
+        view,
+        fg,
+        draw_pos.y_val,
+        draw_pos.y_width,
+        fg.gg_data.y_discrete_kind.discrete_type,
+        AxisKind.Y,
+    )
+    return Coord(x=result_x, y=result_y)
 
 
 def draw_error_bar(
