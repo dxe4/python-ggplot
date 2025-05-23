@@ -23,6 +23,16 @@ from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
+from python_ggplot.gg.styles.config import (
+    BAR_DEFAULT_STYLE,
+    HISTO_DEFAULT_STYLE,
+    LINE_DEFAULT_STYLE,
+    POINT_DEFAULT_STYLE,
+    RIDGE_DEFAULT_STYLE,
+    SMOOTH_DEFAULT_STYLE,
+    TEXT_DEFAULT_STYLE,
+    TILE_DEFAULT_STYLE
+)
 from python_ggplot.gg.types import (
     COUNT_COL,
     SMOOTH_VALS_COL,
@@ -74,6 +84,7 @@ class GeomType(GGEnum):
     ERROR_BAR = auto()
     TEXT = auto()
     RASTER = auto()
+    RIDGE = auto()
 
 
 @dataclass
@@ -87,6 +98,13 @@ class GeomData:
     bin_position: Optional[BinPositionType] = None
     # used for geom_type histogram
     histogram_drawing_style: Optional[HistogramDrawingStyle] = None
+
+
+def default_line_style(stat_type: StatType):
+    if stat_type == StatType.SMOOTH:
+        return deepcopy(SMOOTH_DEFAULT_STYLE)
+    else:
+        return deepcopy(LINE_DEFAULT_STYLE)
 
 
 @dataclass
@@ -140,6 +158,10 @@ class Geom(ABC):
     @property
     @abstractmethod
     def allowed_stat_types(self) -> List["StatType"]:
+        pass
+
+    @abstractmethod
+    def default_style(self) -> Style:
         pass
 
 
@@ -276,6 +298,9 @@ class GeomPoint(Geom):
             StatType.DENSITY,
         ]
 
+    def default_style(self) -> Style:
+        return deepcopy(POINT_DEFAULT_STYLE)
+
     @property
     def geom_type(self) -> GeomType:
         return GeomType.POINT
@@ -356,6 +381,9 @@ class GeomBarMixin(GeomRectDrawMixin):
 
 class GeomBar(GeomRectDrawMixin, Geom):
 
+    def default_style(self) -> Style:
+        return deepcopy(BAR_DEFAULT_STYLE)
+
     @property
     def allowed_stat_types(self) -> List["StatType"]:
         return [StatType.IDENTITY, StatType.COUNT]
@@ -368,6 +396,9 @@ class GeomBar(GeomRectDrawMixin, Geom):
 @dataclass
 class GeomHistogram(GeomHistogramMixin, Geom):
     histogram_drawing_style: HistogramDrawingStyle
+
+    def default_style(self) -> Style:
+        return deepcopy(HISTO_DEFAULT_STYLE)
 
     @property
     def allowed_stat_types(self) -> List["StatType"]:
@@ -387,6 +418,9 @@ class GeomFreqPoly(Geom):
     @property
     def geom_type(self) -> GeomType:
         return GeomType.FREQ_POLY
+
+    def default_style(self):
+        return default_line_style(self.stat_type)
 
     def draw_geom(
         self,
@@ -426,6 +460,9 @@ class GeomErrorBarMixin:
 
 
 class GeomErrorBar(GeomErrorBarMixin, Geom):
+
+    def default_style(self):
+        return default_line_style(self.stat_type)
 
     @property
     def allowed_stat_types(self) -> List["StatType"]:
@@ -475,6 +512,10 @@ class GeomTextMixin:
 
 
 class GeomText(GeomTextMixin, Geom):
+
+    def default_style(self) -> Style:
+        return deepcopy(TEXT_DEFAULT_STYLE)
+
     @property
     def allowed_stat_types(self) -> List["StatType"]:
         return [
@@ -506,6 +547,10 @@ class GeomRasterMixin:
 
 
 class GeomRaster(GeomRasterMixin, Geom):
+
+    def default_style(self) -> Style:
+        raise GGException("Rraster does not have default style")
+
     @property
     def allowed_stat_types(self) -> List["StatType"]:
         return [
@@ -544,6 +589,10 @@ class GeomTileMixin:
 
 
 class GeomTile(GeomTileMixin, Geom):
+
+    def default_style(self) -> Style:
+        return deepcopy(TILE_DEFAULT_STYLE)
+
     @property
     def allowed_stat_types(self) -> List["StatType"]:
         return [
@@ -566,6 +615,9 @@ class GeomLine(Geom):
             StatType.DENSITY,
         ]
 
+    def default_style(self):
+        return default_line_style(self.stat_type)
+
     @property
     def geom_type(self) -> GeomType:
         return GeomType.LINE
@@ -583,6 +635,36 @@ class GeomLine(Geom):
     ):
         raise GGException("Already handled in `draw_sub_df`!")
 
+class GeomRidge(Geom):
+    overlap = 1.3
+    label_order = None
+    show_ticks = False
+
+    def default_style(self) -> Style:
+        return deepcopy(RIDGE_DEFAULT_STYLE)
+
+    @property
+    def geom_type(self) -> GeomType:
+        return GeomType.RIDGE
+
+    @property
+    def allowed_stat_types(self) -> List["StatType"]:
+        return [
+            StatType.IDENTITY,
+        ]
+
+    def draw_geom(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
+    ):
+        raise GGException("implement")
 
 class FilledGeomDiscreteKind(ABC, DiscreteKind):
 

@@ -950,6 +950,9 @@ def create_gobj_from_geom(
         # so we only need to check a subset
         # this whole logic is a bit funny, will need some cleaning up
         # this can result to incorrect plots, we need to match both the col and the val
+        if isinstance(label_val, Dict):
+            label_val = {label_val["val"]}
+
         if label_val is not None and not label_val.issubset(set(lab)):
             # skip this label
             continue

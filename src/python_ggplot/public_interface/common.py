@@ -67,7 +67,6 @@ from python_ggplot.public_interface.utils import (
     scale_color_or_fill_manual,
     scale_reverse,
 )
-from tests.test_view import RelativeCoordType
 
 
 def ggridges(

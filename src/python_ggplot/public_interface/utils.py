@@ -1117,16 +1117,7 @@ def generate_ridge(
     hide_labels: bool = False,
     hide_ticks: bool = False,
 ):
-    # TODO CRITICAL, Medium complexity
-    # this calls getYRidgesScale which does not exist
-    # if i remember correctly this comes from the macro that does the main/more logic
-    # MainAddScales = Tuple[Optional[GGScale], List[GGScale]]
-    # main is scale and more is list scale
-    # this is very high priority in fixing
-    y_ridge_scale = filled_scales.y_ridges[0]
-    if y_ridge_scale is None:
-        # remove this once the main/more logic is done
-        raise GGException("currently only supporting main scale")
+    y_ridge_scale = filled_scales.y_ridges.main
 
     if not isinstance(y_ridge_scale.gg_data.discrete_kind, GGScaleDiscrete):
         raise GGException("expected discrete scale")
@@ -1888,8 +1879,8 @@ def _generate_plot(
 
 
 def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
-    if len(plot.geoms) == 0:
-        raise GGException("Please use at least one `geom`!")
+    if len(plot.geoms) == 0 and not plot.ridges:
+        raise GGException("Please use at least one `geom` or ridges")
 
     filled_scales: FilledScales = _collect_scales(plot)
     post_process_scales(filled_scales, plot)

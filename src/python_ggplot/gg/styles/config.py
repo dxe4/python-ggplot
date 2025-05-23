@@ -39,6 +39,15 @@ SMOOTH_DEFAULT_STYLE: Style = Style(
     fill_color=TRANSPARENT,
 )
 
+# TODO CRITICAL+ fix this
+RIDGE_DEFAULT_STYLE: Style = Style(
+    line_width=2.0,
+    line_type=LineType.SOLID,
+    size=5.0,
+    color=STAT_SMOOTH_COLOR,
+    fill_color=TRANSPARENT,
+)
+
 BAR_DEFAULT_STYLE: Style = Style(
     line_width=1.0, line_type=LineType.SOLID, color=GREY20, fill_color=GREY20
 )
@@ -50,6 +59,7 @@ HISTO_DEFAULT_STYLE: Style = Style(
 TILE_DEFAULT_STYLE: Style = Style(
     line_width=0.05, line_type=LineType.SOLID, color=GREY20, fill_color=GREY20
 )
+
 
 TEXT_DEFAULT_STYLE: Style = Style(
     # TODO, there is a macro for font in ggplot, we may have to pick the defualt values from there

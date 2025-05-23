@@ -9,6 +9,7 @@ from python_ggplot.public_interface.common import (
     facet_wrap,
     ggdraw,
     ggdraw_plot,
+    ggridges,
     ggtitle,
     scale_x_continuous,
     scale_x_discrete,
@@ -25,6 +26,7 @@ from python_ggplot.public_interface.geom import (
     geom_line,
     geom_linerange,
     geom_point,
+    geom_ridge,
     geom_text,
     geom_tile,
     ggplot,
@@ -373,3 +375,21 @@ def test_facet_mpg():
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "facet_mpg.png")
+
+
+def test_ridges_diamonds():
+    diamonds = pd.read_csv(data_path / "diamonds.csv")
+    plot = ggplot(
+        diamonds, aes(x = "price", y = "cut", fill = "cut")
+    ) + ggridges("cut")
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "ridgets_diamonds.png")
+
+
+def test_geom_ridges_diamonds():
+    diamonds = pd.read_csv(data_path / "diamonds.csv")
+    plot = ggplot(
+        diamonds, aes(x = "price", y = "cut", fill = "cut")
+    ) + geom_ridge()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "ridgets_diamonds.png")

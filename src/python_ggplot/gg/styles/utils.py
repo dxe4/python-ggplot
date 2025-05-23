@@ -1,11 +1,10 @@
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, List, Optional, Tuple, cast
 
 import pandas as pd
 
 from python_ggplot.core.objects import Font, GGException, Style
-from python_ggplot.gg.datamancer_pandas_compat import GGValue, VNull, VString
-from python_ggplot.gg.geom.base import FilledGeom, GeomType
+from python_ggplot.gg.datamancer_pandas_compat import VNull, VString
+from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType
 from python_ggplot.gg.scales.base import (
     ColorScale,
     GGScale,
@@ -13,41 +12,7 @@ from python_ggplot.gg.scales.base import (
     ScaleType,
     ScaleValue,
 )
-from python_ggplot.gg.styles.config import (
-    BAR_DEFAULT_STYLE,
-    HISTO_DEFAULT_STYLE,
-    LINE_DEFAULT_STYLE,
-    POINT_DEFAULT_STYLE,
-    SMOOTH_DEFAULT_STYLE,
-    TEXT_DEFAULT_STYLE,
-    TILE_DEFAULT_STYLE,
-)
-from python_ggplot.gg.types import GGStyle, StatType
-
-_style_lookup: Dict[GeomType, Style] = {
-    GeomType.POINT: POINT_DEFAULT_STYLE,
-    GeomType.BAR: BAR_DEFAULT_STYLE,
-    GeomType.HISTOGRAM: HISTO_DEFAULT_STYLE,
-    GeomType.TILE: TILE_DEFAULT_STYLE,
-    GeomType.TEXT: TEXT_DEFAULT_STYLE,
-}
-
-
-def default_style(geom_type: GeomType, stat_type: StatType) -> Style:
-    if geom_type == GeomType.RASTER:
-        raise GGException("Warning raster does not have default style")
-
-    if geom_type in [
-        GeomType.LINE,
-        GeomType.FREQ_POLY,
-        GeomType.ERROR_BAR,
-    ]:
-        if stat_type == StatType.SMOOTH:
-            return deepcopy(SMOOTH_DEFAULT_STYLE)
-        else:
-            return deepcopy(LINE_DEFAULT_STYLE)
-
-    return deepcopy(_style_lookup[geom_type])
+from python_ggplot.gg.types import GGStyle
 
 
 def use_or_default(c: Optional[ColorScale]) -> ColorScale:
@@ -61,8 +26,7 @@ def _get_field_for_user_style_merge(
     user_style: GGStyle,
     style: GGStyle,
     field_name: str,
-    geom_type: GeomType,
-    stat_type: StatType,
+    geom: Geom
 ):
     user_field = getattr(user_style, field_name, None)
     style_field = getattr(style, field_name, None)
@@ -71,19 +35,15 @@ def _get_field_for_user_style_merge(
     elif style_field:
         return style_field
     else:
-        default_style_ = default_style(geom_type, stat_type)
+
+        default_style_ = geom.default_style()
         return getattr(default_style_, field_name, None)
 
 
 def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
 
     geom_type: GeomType = fg.geom_type
-    stat_type = fg.gg_data.geom.gg_data.stat_kind.stat_type
-
-    result = default_style(
-        geom_type,
-        stat_type,
-    )
+    result = fg.gg_data.geom.default_style()
 
     if fg.gg_data.geom.gg_data.user_style is None:
         # TODO double check this logic but i think its correct
@@ -102,7 +62,7 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
         "font",
     ]:
         value = _get_field_for_user_style_merge(
-            user_style, style, field, geom_type, stat_type
+            user_style, style, field, fg.gg_data.geom
         )
         if value is not None:
             setattr(result, field, value)
@@ -133,8 +93,8 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
     if result.color != result.fill_color:
         result.font.color = result.color  # type: ignore
 
-    def_size = default_style(geom_type, stat_type).size
-    if result.size != def_size:
+    default_size = fg.gg_data.geom.default_style().size
+    if result.size != default_size:
         result.font.size = result.size * 2.5  # type: ignore
 
     return result

@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import field
-from typing import Any, Callable, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import pandas as pd
 
@@ -16,6 +16,7 @@ from python_ggplot.common.enum_literals import (
 )
 from python_ggplot.core.objects import ErrorBarKind, LineType
 from python_ggplot.core.units.objects import Quantity
+from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.geom.base import (
     Geom,
     GeomBar,
@@ -26,6 +27,7 @@ from python_ggplot.gg.geom.base import (
     GeomLine,
     GeomPoint,
     GeomRaster,
+    GeomRidge,
     GeomText,
     GeomTile,
     HistogramDrawingStyle,
@@ -40,6 +42,7 @@ from python_ggplot.gg.types import (
     PossibleFloat,
     PossibleMarker,
     SmoothMethodType,
+    StatIdentity,
     StatKind,
     StatSmooth,
     StatType,
@@ -142,6 +145,35 @@ def geom_point(
     result = GeomPoint(gg_data=gg_data)
 
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
+
+
+def geom_ridge(
+    aes: Optional[Aesthetics] = None,
+    overlap: float = 1.3,
+    show_ticks: bool = False,
+    label_order: Optional[Dict[GGValue, int]] = None,
+    data: Optional[pd.DataFrame] = None,
+):
+    if aes is None:
+        aes = Aesthetics()
+
+    if data is None:
+        data = pd.DataFrame()
+
+    style = assign_identity_scales_get_style(aes=aes)
+
+    df_opt = data if len(data) > 0 else None
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        stat_kind=StatIdentity(),
+        position=PositionType.IDENTITY,
+    )
+    result = GeomRidge(gg_data=gg_data)
     return result
 
 
