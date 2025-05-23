@@ -384,7 +384,7 @@ def get_draw_pos_val_width(
     position = fg.gg_data.geom.gg_data.position
     if position == PositionType.IDENTITY:
         point_clone = deepcopy(list(point))
-        if fg.has_bars():
+        if fg.gg_data.geom.has_bars():
             if not coords_fliped:
                 point_clone[1] = 0.0
             else:
@@ -397,7 +397,7 @@ def get_draw_pos_val_width(
             y_width=bin_widths[1],
         )
     elif position == PositionType.STACK:
-        if not fg.has_bars():
+        if not fg.gg_data.geom.has_bars():
             cur_stack = point[1]
         else:
             cur_stack = float(df[PREV_VALS_COL].iloc[idx])  # type: ignore

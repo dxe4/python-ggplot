@@ -164,6 +164,9 @@ class Geom(ABC):
     def default_style(self) -> Style:
         pass
 
+    def has_bars(self) -> bool:
+        # can be true for for geom_bar and geom_histogram
+        return False
 
 @dataclass
 class FilledGeomData:
@@ -285,14 +288,6 @@ class FilledGeom:
         # this is only needed for FilledGeomErrorBar as of now
         return df
 
-    def has_bars(self) -> bool:
-        if self.geom_type == GeomType.BAR:
-            return True
-        elif self.geom_type == GeomType.HISTOGRAM:
-            return self.get_histogram_draw_style() == HistogramDrawingStyle.BARS
-        else:
-            return False
-
 
 class GeomPoint(Geom):
 
@@ -389,6 +384,9 @@ class GeomBarMixin(GeomRectDrawMixin):
 
 class GeomBar(GeomRectDrawMixin, Geom):
 
+    def has_bars(self) -> bool:
+        return True
+
     def default_style(self) -> Style:
         return deepcopy(BAR_DEFAULT_STYLE)
 
@@ -404,6 +402,9 @@ class GeomBar(GeomRectDrawMixin, Geom):
 @dataclass
 class GeomHistogram(GeomHistogramMixin, Geom):
     histogram_drawing_style: HistogramDrawingStyle
+
+    def has_bars(self) -> bool:
+        return self.histogram_drawing_style == HistogramDrawingStyle.BARS
 
     def default_style(self) -> Style:
         return deepcopy(HISTO_DEFAULT_STYLE)
