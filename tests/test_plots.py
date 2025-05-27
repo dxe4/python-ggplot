@@ -405,9 +405,9 @@ def test_ridges_weather():
     label_order = {i:cnt for cnt, i in enumerate(weather['Month'].unique().sort_values())}
 
     plot = ggplot(
-        weather, aes(x="Mean Temperature [F]", y="Mean Wind Speed[MPH]")
+        weather, aes(x="Mean Temperature [F]", y="Mean Wind Speed[MPH]", fill="Mean Temperature [F]")
     ) + ggridges("Month", label_order=label_order, overlap=1.5) + geom_freqpoly(
-        aes(color="Mean Temperature [F]"),
+        # aes(fill="Mean Temperature [F]"),
     )
 
     res = ggcreate(plot)
@@ -417,10 +417,7 @@ def test_ridges_weather():
 def test_freq_poly_weather():
     weather = pd.read_csv(data_path / "lincoln-weather.csv")
     plot = ggplot(
-        weather, aes(x="Mean Temperature [F]", y="Month", color="Mean Temperature [F]")
-    ) + geom_freqpoly(
-        # aes(color="Mean Temperature [F]")
-    )
-    # + scale_fill_gradient(ColorScale.viridis())
+        weather, aes(x="Mean Temperature [F]", y="Month", fill="Mean Temperature [F]")
+    ) + geom_freqpoly()
     res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "test_freq_poly_weather.png")
+    ggdraw_plot(res, plots_path / "freq_poly_weather.png")

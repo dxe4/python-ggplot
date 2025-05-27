@@ -600,7 +600,7 @@ def init_poly_line(
 
 def init_poly_line_from_points(
     view: ViewPort,
-    pos: List[Point[float]],
+    point_positions: List[Point[float]],
     style: Optional[Style] = None,
     name: Optional[str] = None,
 ) -> GraphicsObject:
@@ -609,10 +609,10 @@ def init_poly_line_from_points(
 
     positions: List[Coord] = [
         Coord(
-            x=Coord1D.create_data(p.x, view.x_scale, AxisKind.X),
-            y=Coord1D.create_data(p.y, view.y_scale, AxisKind.Y),
+            x=Coord1D.create_data(position.x, view.x_scale, AxisKind.X),
+            y=Coord1D.create_data(position.y, view.y_scale, AxisKind.Y),
         )
-        for p in pos
+        for position in point_positions
     ]
 
     return init_poly_line(positions, style, name)

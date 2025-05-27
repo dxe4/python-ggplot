@@ -155,6 +155,17 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 ```python
+    weather = pd.read_csv(data_path / "lincoln-weather.csv")
+    plot = ggplot(
+        weather, aes(x="Mean Temperature [F]", y="Month", fill="Mean Temperature [F]")
+    ) + geom_freqpoly()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "freq_poly_weather.png")
+```
+<img src="plots/freq_poly_weather.png?v=1" alt="freq_poly_weather" width="400px">
+
+
+```python
 df = pd.DataFrame(
     data={
         "trt": pd.Categorical([1, 1, 2, 2]),

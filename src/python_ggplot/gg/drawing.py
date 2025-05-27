@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
-from python_ggplot.core.objects import AxisKind, GGException, Style
+from python_ggplot.core.objects import AxisKind, GGException, Point, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, UnitType
 from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom.base import (
@@ -878,8 +878,8 @@ def draw_sub_df(
 
     if geom_type in {GeomType.LINE, GeomType.FREQ_POLY, GeomType.HISTOGRAM}:
         if len(styles) == 1:
-            style = merge_user_style(deepcopy(styles[0]), fg)
-            if style.fill_color is None:
+            current_style = merge_user_style(deepcopy(styles[0]), fg)
+            if current_style.fill_color is None:
                 raise GGException("expected fill color")
 
             # TODO CRITICAL+ easy fix
@@ -890,7 +890,7 @@ def draw_sub_df(
                 line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
 
             poly_line = init_poly_line_from_points(
-                view, [i.point() for i in line_points], deepcopy(style)
+                view, [i.point() for i in line_points], deepcopy(current_style)
             )
             view.add_obj(poly_line)
         else:
@@ -901,14 +901,62 @@ def draw_sub_df(
                 raise GGException("expected fill color")
             if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
                 line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+
             for i in range(len(styles) - 1):
-                style = merge_user_style(styles[i], fg)
+                current_style = merge_user_style(styles[i], fg)
                 poly_line = init_poly_line_from_points(
                     view,
                     [line_points[i].point(), line_points[i + 1].point()],
-                    deepcopy(style),
+                    deepcopy(current_style),
                 )
                 view.add_obj(poly_line)
+
+                # TODO this needs to move out of here to its own function
+                # and it needs to trigger only conditionally
+                # this is needed for ridges
+                # if you draw freq poly, you draw multiple lines of 2 points
+                # this colors the area underneath,
+                # from the bottom of the chart to the top 2 points
+                # see freq_poly_weather
+                a = deepcopy(line_points[i])
+                b = deepcopy(line_points[i + 1])
+                a_point = a.point()
+                b_point = b.point()
+                x1, y1 = (a_point.x, a_point.y)
+                x2, y2 = (b_point.x, b_point.y)
+                scale_low = a.y.data.scale.low
+
+                fill_points = [
+                    Point[float](
+                        x=min([x1, x2]),
+                        y=scale_low
+                    ),
+                    Point[float](
+                        x=max([x1, x2]),
+                        y=scale_low
+                    ),
+                    Point[float](
+                        x=max([x1, x2]),
+                        y=y2,
+                    ),
+                    Point[float](
+                        x=min([x1, x2]),
+                        y=y1,
+                    ),
+                ]
+                new_style = deepcopy(current_style)
+                # new_style.fill_color.a = 0.3
+                # new_style.color.a = 0.3
+                print(new_style)
+                # a.y.pos = a.y.data.scale.low
+                # b.y.pos = b.y.data.scale.high
+                poly_line = init_poly_line_from_points(
+                    view,
+                    fill_points,
+                    deepcopy(new_style),
+                )
+                view.add_obj(poly_line)
+
     elif geom_type == GeomType.RASTER:
         draw_raster(view, cast(FilledGeomRaster, fg), df)
 
