@@ -406,15 +406,15 @@ def test_ridges_weather():
         "November",
         "December",
     ]
-    label_order = {i: cnt for cnt, i in enumerate(month_order)}
+    weather['Month'] = pd.Categorical(weather['Month'], categories=month_order, ordered=True)
 
     plot = (
         ggplot(
             weather,
             aes(x="Mean Temperature [F]", fill="Month"),
         )
-        + ggridges("Month", label_order=label_order, overlap=1.7)
-        + geom_area(stat="bin", alpha=0.7)
+        + ggridges("Month", overlap=1.5)
+        + geom_area(stat="bin", alpha=0.8)
         + ylab(rotate=-30)
     )
 

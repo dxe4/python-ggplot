@@ -835,11 +835,11 @@ def fill_scale(
                     if scale.data is None:
                         raise GGException("expected data")
                     if scale.data.reversed:
-                        label_seq_opt = sorted(data.unique(), reverse=True)  # type: ignore
+                        label_seq_opt = list(data.unique().sort_values(ascending=False))  # type: ignore
                     else:
-                        label_seq_opt = sorted(data.unique())  # type: ignore
+                        label_seq_opt = list(data.unique().sort_values())  # type: ignore
                 else:
-                    label_seq_opt = sorted(data.unique())  # type: ignore
+                    label_seq_opt = list(data.unique().sort_values())  # type: ignore
             else:
                 label_seq_opt = discrete_kind.label_seq
 
