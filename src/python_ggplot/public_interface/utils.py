@@ -1157,7 +1157,12 @@ def generate_ridge(
     view_map, y_label_seq = calc_ridge_view_map(ridge, y_label_seq)
     create_ridge_layout(view, theme, num_labels)
 
-    for label, idx in view_map.items():
+    view_map_items = view_map.items()
+    # for ridges we have to draw in reverse
+    # so that the item that overlaps is drawn above
+    # i think this logic is correct, need to double check
+    view_map_items = sorted(view_map_items, key=lambda x: -x[1])
+    for label, idx in view_map_items:
         view_label = view.children[idx]
         for cnt, fg in enumerate(filled_scales.geoms):
             p_child = view_label.add_viewport_from_coords(
