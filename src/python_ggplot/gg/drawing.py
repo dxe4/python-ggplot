@@ -41,6 +41,7 @@ from python_ggplot.graphics.initialize import (
 )
 from python_ggplot.graphics.objects import GOComposite, GraphicsObject
 from python_ggplot.graphics.views import ViewPort
+from tests.test_view import DataCoordType
 
 
 class GetXYContinueException(GGException):
@@ -348,7 +349,7 @@ def get_draw_pos_impl(
     if discrete_type == DiscreteType.DISCRETE:
         if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT}:
             return get_discrete_point()
-        elif fg_geom_type in (GeomType.LINE, GeomType.FREQ_POLY):
+        elif fg_geom_type in (GeomType.LINE, GeomType.FREQ_POLY, GeomType.GEOM_AREA):
             return get_discrete_line(view, ax_kind)
         elif fg_geom_type in (GeomType.HISTOGRAM, GeomType.BAR):
             return get_discrete_histogram(width, ax_kind)
@@ -773,7 +774,7 @@ def _needs_bin_width(geom_type: GeomType, bin_position: Optional[BinPositionType
     return False
 
 
-def _fill_gradient(
+def _fill_area(
     view: ViewPort,
     point_a: Coord,
     point_b: Coord,
@@ -792,7 +793,10 @@ def _fill_gradient(
     b_point = b.point()
     x1, y1 = (a_point.x, a_point.y)
     x2, y2 = (b_point.x, b_point.y)
-    scale_low = a.y.data.scale.low
+    if isinstance(a.y, DataCoordType):
+        scale_low = a.y.data.scale.low
+    else:
+        scale_low = 0.0
 
     fill_points = [
         Point[float](
@@ -893,6 +897,7 @@ def draw_sub_df(
                 bin_widths = (0.0, 0.0)
 
             pos = get_draw_pos(loc_view, view_idx, fg, point, bin_widths, df, i)
+
             if fg.gg_data.geom.gg_data.position in {
                 PositionType.IDENTITY,
                 PositionType.STACK,
@@ -901,6 +906,7 @@ def draw_sub_df(
                     GeomType.LINE,
                     GeomType.FREQ_POLY,
                     GeomType.RASTER,
+                    GeomType.GEOM_AREA,
                 }:
                     line_points.append(pos)
                 elif geom_type == GeomType.HISTOGRAM:
@@ -923,7 +929,7 @@ def draw_sub_df(
     elif geom_type == GeomType.HISTOGRAM:
         line_points = convert_points_to_histogram(df, fg, line_points)
 
-    if geom_type in {GeomType.LINE, GeomType.FREQ_POLY, GeomType.HISTOGRAM}:
+    if geom_type in {GeomType.LINE, GeomType.FREQ_POLY, GeomType.HISTOGRAM, GeomType.GEOM_AREA}:
         if len(styles) == 1:
             current_style = merge_user_style(deepcopy(styles[0]), fg)
             if current_style.fill_color is None:
@@ -935,11 +941,21 @@ def draw_sub_df(
             # if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
             if geom_type == GeomType.FREQ_POLY:
                 line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
-
-            poly_line = init_poly_line_from_points(
-                view, [i.point() for i in line_points], deepcopy(current_style)
-            )
-            view.add_obj(poly_line)
+            if geom_type != GeomType.GEOM_AREA:
+                poly_line = init_poly_line_from_points(
+                    view, [i.point() for i in line_points], deepcopy(current_style)
+                )
+                view.add_obj(poly_line)
+            else:
+                line_points = sorted(line_points, key=lambda item: (item.x.pos))
+                print(current_style)
+                for line_point_idx in range(0, len(line_points) - 1):
+                    gradient_poly_line = _fill_area(
+                        view, line_points[line_point_idx],
+                        line_points[line_point_idx + 1],
+                        current_style
+                    )
+                    view.add_obj(gradient_poly_line)
         else:
             # Since we don't support gradients on lines, we just draw from
             # (x1/y1) to (x2/y2) with the style of (x1/x2)
@@ -948,7 +964,7 @@ def draw_sub_df(
                 raise GGException("expected fill color")
             if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
                 line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
-
+            line_points = sorted(line_points, key=lambda item: (item.x.pos, item.y.pos))
             for i in range(len(styles) - 1):
                 current_style = merge_user_style(styles[i], fg)
                 poly_line = init_poly_line_from_points(
@@ -957,10 +973,13 @@ def draw_sub_df(
                     deepcopy(current_style),
                 )
                 view.add_obj(poly_line)
-                gradient_poly_line = _fill_gradient(
-                    view, line_points[i], line_points[i + 1], current_style
-                )
-                view.add_obj(gradient_poly_line)
+                if geom_type == GeomType.GEOM_AREA:
+                    gradient_poly_line = _fill_area(
+                        view, line_points[i],
+                        line_points[i + 1],
+                        current_style
+                    )
+                    view.add_obj(gradient_poly_line)
 
     elif geom_type == GeomType.RASTER:
         draw_raster(view, cast(FilledGeomRaster, fg), df)

@@ -24,11 +24,11 @@ from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 from python_ggplot.gg.styles.config import (
+    AREA_DEFAULT_STYLE,
     BAR_DEFAULT_STYLE,
     HISTO_DEFAULT_STYLE,
     LINE_DEFAULT_STYLE,
     POINT_DEFAULT_STYLE,
-    RIDGE_DEFAULT_STYLE,
     SMOOTH_DEFAULT_STYLE,
     TEXT_DEFAULT_STYLE,
     TILE_DEFAULT_STYLE
@@ -84,7 +84,7 @@ class GeomType(GGEnum):
     ERROR_BAR = auto()
     TEXT = auto()
     RASTER = auto()
-    RIDGE = auto()
+    GEOM_AREA = auto()
 
 
 @dataclass
@@ -612,6 +612,35 @@ class GeomTile(GeomTileMixin, Geom):
             StatType.DENSITY,
         ]
 
+
+class GeomArea(Geom):
+    @property
+    def allowed_stat_types(self) -> List["StatType"]:
+        return [
+            StatType.IDENTITY,
+            StatType.COUNT,
+            StatType.BIN,
+        ]
+
+    def default_style(self):
+        return deepcopy(AREA_DEFAULT_STYLE)
+
+    @property
+    def geom_type(self) -> GeomType:
+        return GeomType.GEOM_AREA
+
+    def draw_geom(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
+    ):
+        raise GGException("Already handled in `draw_sub_df`!")
 
 class GeomLine(Geom):
     @property

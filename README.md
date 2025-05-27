@@ -155,14 +155,43 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 ```python
+    df = pd.DataFrame({
+        'g': ['a', 'a', 'a', 'b', 'b', 'b'],
+        'x': [1, 3, 5, 2, 4, 6],
+        'y': [2, 5, 1, 3, 6, 7]
+    })
+    plot = ggplot(
+        df, aes(x="x", y="y", fill="g")
+    ) + geom_area(alpha=0.3) + geom_point(size=5)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_stat_identity.png")
+```
+<img src="plots/geom_area_stat_identity.png?v=1" alt="geom_area_stat_identity" width="400px">
+
+
+```python
     weather = pd.read_csv(data_path / "lincoln-weather.csv")
     plot = ggplot(
         weather, aes(x="Mean Temperature [F]", y="Month", fill="Mean Temperature [F]")
-    ) + geom_freqpoly()
+    ) + geom_area(stat="bin", bins=50)
     res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "freq_poly_weather.png")
+    ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
 ```
-<img src="plots/freq_poly_weather.png?v=1" alt="freq_poly_weather" width="400px">
+<img src="plots/geom_area_stat_bin.png?v=1" alt="geom_area_stat_bin" width="400px">
+
+
+```python
+    df = pd.DataFrame({
+        'x': [1, 3, 5, 2, 4, 6],
+        'y': [2, 5, 1, 3, 6, 7]
+    })
+    plot = ggplot(
+        df, aes(x="x", y="y")
+    ) + geom_area(alpha=0.3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_simple.png")
+```
+<img src="plots/geom_area_simple.png?v=1" alt="geom_area_simple" width="400px">
 
 
 ```python

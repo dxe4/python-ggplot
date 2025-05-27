@@ -31,6 +31,14 @@ LINE_DEFAULT_STYLE: Style = Style(
     fill_color=TRANSPARENT,
 )
 
+AREA_DEFAULT_STYLE: Style = Style(
+    line_width=0.0,
+    line_type=LineType.NONE_TYPE,
+    size=5.0,
+    color=GREY20,
+    fill_color=GREY20,
+)
+
 SMOOTH_DEFAULT_STYLE: Style = Style(
     line_width=2.0,
     line_type=LineType.SOLID,
@@ -39,14 +47,6 @@ SMOOTH_DEFAULT_STYLE: Style = Style(
     fill_color=TRANSPARENT,
 )
 
-# TODO CRITICAL+ fix this
-RIDGE_DEFAULT_STYLE: Style = Style(
-    line_width=2.0,
-    line_type=LineType.SOLID,
-    size=5.0,
-    color=STAT_SMOOTH_COLOR,
-    fill_color=TRANSPARENT,
-)
 
 BAR_DEFAULT_STYLE: Style = Style(
     line_width=1.0, line_type=LineType.SOLID, color=GREY20, fill_color=GREY20

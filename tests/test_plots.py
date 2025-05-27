@@ -22,6 +22,7 @@ from python_ggplot.public_interface.common import (
     ylab,
 )
 from python_ggplot.public_interface.geom import (
+    geom_area,
     geom_bar,
     geom_error_bar,
     geom_freqpoly,
@@ -421,3 +422,37 @@ def test_freq_poly_weather():
     ) + geom_freqpoly()
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "freq_poly_weather.png")
+
+
+def test_geom_area_stat_bin():
+    weather = pd.read_csv(data_path / "lincoln-weather.csv")
+    plot = ggplot(
+        weather, aes(x="Mean Temperature [F]", y="Month", fill="Mean Temperature [F]")
+    ) + geom_area(stat="bin", bins=50)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
+
+
+def test_geom_area_stat_identity():
+    df = pd.DataFrame({
+        'g': ['a', 'a', 'a', 'b', 'b', 'b'],
+        'x': [1, 3, 5, 2, 4, 6],
+        'y': [2, 5, 1, 3, 6, 7]
+    })
+    plot = ggplot(
+        df, aes(x="x", y="y", fill="g")
+    ) + geom_area(alpha=0.3) + geom_point(size=5)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_stat_identity.png")
+
+
+def test_geom_area_simple():
+    df = pd.DataFrame({
+        'x': [1, 3, 5, 2, 4, 6],
+        'y': [2, 5, 1, 3, 6, 7]
+    })
+    plot = ggplot(
+        df, aes(x="x", y="y")
+    ) + geom_area(alpha=0.3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_simple.png")

@@ -19,6 +19,7 @@ from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.geom.base import (
     Geom,
+    GeomArea,
     GeomBar,
     GeomData,
     GeomErrorBar,
@@ -354,6 +355,63 @@ def geom_line(
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
     return result
 
+
+def geom_area(
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "none_type",
+    fill_color: PossibleColor = None,
+    stat: STAT_TYPE_VALUES = "identity",
+    bin_width: float = 0.0,
+    bins: int = -1,
+    breaks: Optional[List[float]] = None,
+    bin_position: BIN_POSITION_VALUES = "none",
+    position: POSITION_VALUES = "identity",
+    bin_by: BIN_BY_VALUES = "full",
+    density: bool = False,
+    alpha: Optional[float] = None,
+) -> "Geom":
+    if breaks is None:
+        breaks = []
+    if data is None:
+        data = pd.DataFrame()
+    if aes is None:
+        aes = Aesthetics()
+
+    df_opt = data if len(data) > 0 else None
+    bin_position_ = BinPositionType.eitem(bin_position)
+    stat_ = StatType.eitem(stat)
+    bin_position_ = BinPositionType.eitem(bin_position)
+    position_ = PositionType.eitem(position)
+    bin_by_ = BinByType.eitem(bin_by)
+    line_type_ = LineType.eitem(line_type)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=size,
+        p_alpha=alpha,
+        p_fill_color=fill_color,
+        p_line_type=line_type_,
+        p_line_width=size,
+    )
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=bin_position_,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomArea(gg_data=gg_data)
+
+    Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
+    return result
 
 def geom_smooth(
     aes: Optional[Aesthetics] = None,
