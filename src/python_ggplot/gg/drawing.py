@@ -932,6 +932,7 @@ def draw_sub_df(
     if geom_type in {GeomType.LINE, GeomType.FREQ_POLY, GeomType.HISTOGRAM, GeomType.GEOM_AREA}:
         if len(styles) == 1:
             current_style = merge_user_style(deepcopy(styles[0]), fg)
+
             if current_style.fill_color is None:
                 raise GGException("expected fill color")
 
@@ -941,6 +942,7 @@ def draw_sub_df(
             # if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
             if geom_type == GeomType.FREQ_POLY:
                 line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
+
             if geom_type != GeomType.GEOM_AREA:
                 poly_line = init_poly_line_from_points(
                     view, [i.point() for i in line_points], deepcopy(current_style)
@@ -948,7 +950,7 @@ def draw_sub_df(
                 view.add_obj(poly_line)
             else:
                 line_points = sorted(line_points, key=lambda item: (item.x.pos))
-                print(current_style)
+
                 for line_point_idx in range(0, len(line_points) - 1):
                     gradient_poly_line = _fill_area(
                         view, line_points[line_point_idx],

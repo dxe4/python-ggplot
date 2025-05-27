@@ -365,7 +365,7 @@ def geom_area(
     fill_color: PossibleColor = None,
     stat: STAT_TYPE_VALUES = "identity",
     bin_width: float = 0.0,
-    bins: int = -1,
+    bins: int = 30,
     breaks: Optional[List[float]] = None,
     bin_position: BIN_POSITION_VALUES = "none",
     position: POSITION_VALUES = "identity",

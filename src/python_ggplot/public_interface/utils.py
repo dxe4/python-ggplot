@@ -2,6 +2,7 @@
 TODO this whole file needs cleaning up
 """
 
+from dataclasses import dataclass
 import math
 from collections import OrderedDict
 from copy import deepcopy
@@ -145,14 +146,28 @@ BASE_TO_LOG = {
 }
 
 
+@dataclass
+class _LogTrans:
+    base: int
+
+    def __call__(self, val: Any) -> Any:
+        if math.isclose(val, 0.0):
+            return 0.0
+        return BASE_TO_LOG[self.base](val)
+
+@dataclass
+class _LogInverseTrans:
+    base: int
+
+    def __call__(self, val: Any) -> Any:
+        if math.isclose(val, 0.0):
+            return 0.0
+        return math.pow(self.base, val)
+
+
 def scale_axis_log(
     axis_kind: AxisKind, base: int, breaks: Optional[Union[int, List[float]]] = None
 ) -> GGScale:
-    def trans(v: float) -> float:
-        return BASE_TO_LOG[base](v)
-
-    def inv_trans(v: float) -> float:
-        return math.pow(base, v)
 
     # TODO this leaves room for errors
     gg_data = GGScaleData(
@@ -162,9 +177,12 @@ def scale_axis_log(
     )
     scale = TransformedDataScale(
         gg_data=gg_data,
-        data=LinearAndTransformScaleData(axis_kind=axis_kind),
-        transform=trans,
-        inverse_transform=inv_trans,
+        data=LinearAndTransformScaleData(
+            axis_kind=axis_kind,
+            transform=_LogTrans(10),
+        ),
+        transform=_LogTrans(10),
+        inverse_transform=_LogInverseTrans(10),
     )
     scale.assign_breaks(breaks or [])
     return scale

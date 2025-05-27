@@ -132,9 +132,11 @@ def tick_pos_transformed(
     if not breaks:
         exp = int(math.floor(bound_scale.low))
         while float(exp) < bound_scale.high:
+            if exp >= 308:
+                break
+
             cur = inv_trans(float(exp))
             num_to_add = round(inv_trans(1.0))
-
             minors = linspace(cur, inv_trans(float(exp + 1)) - cur, int(num_to_add) - 1)
             lab_pos.extend([trans(x) for x in minors])
 
@@ -292,6 +294,9 @@ def handle_continuous_ticks(
 
         if trans is None:
             raise GGException("expected trans")
+
+        data_scale.low = trans(data_scale.low)
+        data_scale.high = trans(data_scale.high)
 
         scale = apply_scale_trans(data_scale, sec_axis_trans)
         min_val = smallest_pow(inv_trans, inv_trans(data_scale.low))

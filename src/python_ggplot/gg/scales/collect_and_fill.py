@@ -410,6 +410,8 @@ def fill_continuous_transformed_scale(
             reversed=False,
             transform=trans,
         ),
+        transform=trans,
+        inverse_transform=inv_trans,
     )
     return result
 

@@ -415,20 +415,21 @@ def test_ridges_weather():
     ggdraw_plot(res, plots_path / "ridgets_weather.png")
 
 
-def test_freq_poly_weather():
-    weather = pd.read_csv(data_path / "lincoln-weather.csv")
-    plot = ggplot(
-        weather, aes(x="Mean Temperature [F]", y="Month", fill="Mean Temperature [F]")
-    ) + geom_freqpoly()
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "freq_poly_weather.png")
-
-
 def test_geom_area_stat_bin():
-    weather = pd.read_csv(data_path / "lincoln-weather.csv")
-    plot = ggplot(
-        weather, aes(x="Mean Temperature [F]", y="Month", fill="Mean Temperature [F]")
-    ) + geom_area(stat="bin", bins=50)
+    np.random.seed(1234)
+
+    sex = np.repeat(['F', 'M'], repeats=200)
+    weight = np.round(np.concatenate([
+        np.random.normal(loc=55, scale=5, size=200),
+        np.random.normal(loc=65, scale=5, size=200)
+    ]))
+
+    df = pd.DataFrame({
+        'sex': pd.Categorical(sex),
+        'weight': weight
+    })
+
+    plot = ggplot(df, aes(x="weight", fill="sex")) + geom_area(stat ="bin", alpha=1)
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
 
