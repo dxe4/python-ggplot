@@ -451,7 +451,7 @@ def scale_fill_gradient(
         has_discreteness=True,
         discrete_kind=GGScaleContinuous(),
     )
-    scale = ColorScaleKind(
+    scale = FillColorScale(
         gg_data=gg_data,
         color_scale=color_scale_,
     )

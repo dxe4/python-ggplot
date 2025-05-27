@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
+from collections.abc import Iterable
 from typing import Any, Dict, List, Optional, Tuple, Union, cast, no_type_check
 
 import numpy as np
@@ -298,15 +299,12 @@ def calc_view_map(fg: FilledGeom) -> Dict[Any, Any]:
 def get_discrete_histogram(width: float, ax_kind: AxisKind) -> Coord1D:
     if ax_kind == AxisKind.X:
         left = (1.0 - width) / 2.0
-
         return init_coord_1d(left, AxisKind.X, UnitType.RELATIVE)
-    else:
-        # TODO CRITICAL easy task
-        # double check this.
-        # templace c1 in ginger has default AxisKind.X which is used in this case
-        # changed to the sensible Y but it still needs double chcking
+    elif ax_kind == AxisKind.Y:
         top = 1.0
         return init_coord_1d(top, AxisKind.Y, UnitType.RELATIVE)
+    else:
+        raise GGException("expected x or y axis")
 
 
 def get_discrete_point() -> Coord1D:
@@ -315,21 +313,22 @@ def get_discrete_point() -> Coord1D:
 
 def get_discrete_line(view: ViewPort, axis_kind: AxisKind) -> Coord1D:
     center_x, center_y = view.get_center()
-    lookup = {
-        AxisKind.X: init_coord_1d(center_x, AxisKind.X, UnitType.RELATIVE),
-        # TODO sanity check this, original code is using AxisKind.X (inferred as default)
-        # is this correct?
-        # changed to the sensible Y but it still needs double chcking
-        AxisKind.Y: init_coord_1d(center_y, AxisKind.Y, UnitType.RELATIVE),
-    }
-    return lookup[axis_kind]
+    if axis_kind == AxisKind.X:
+        return init_coord_1d(center_x, AxisKind.X, UnitType.RELATIVE)
+    elif axis_kind == AxisKind.Y:
+        return init_coord_1d(center_y, AxisKind.Y, UnitType.RELATIVE)
+    else:
+        raise GGException("expected axis x or y")
 
 
-def get_continuous(
-    view: ViewPort, fg: FilledGeom, val: float, ax_kind: AxisKind
-) -> Coord1D:
-    scale_lookup = {AxisKind.X: view.x_scale, AxisKind.Y: view.y_scale}
-    scale = scale_lookup[ax_kind]
+def get_continuous(view: ViewPort, val: float, ax_kind: AxisKind) -> Coord1D:
+    if ax_kind == AxisKind.X:
+        scale = view.x_scale
+    elif ax_kind == AxisKind.Y:
+        scale = view.y_scale
+    else:
+        raise GGException("expected axis kind X or Y")
+
     if scale is None:
         raise GGException("expected a scale")
     return Coord1D.create_data(val, scale, ax_kind)
@@ -347,7 +346,7 @@ def get_draw_pos_impl(
 
     fg_geom_type = fg.geom_type
     if discrete_type == DiscreteType.DISCRETE:
-        if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT}:
+        if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT, GeomType.RIDGE}:
             return get_discrete_point()
         elif fg_geom_type in (GeomType.LINE, GeomType.FREQ_POLY):
             return get_discrete_line(view, ax_kind)
@@ -359,7 +358,7 @@ def get_draw_pos_impl(
             return get_discrete_histogram(1.0, ax_kind)
 
     elif discrete_type == DiscreteType.CONTINUOUS:
-        return get_continuous(view, fg, val, ax_kind)
+        return get_continuous(view, val, ax_kind)
 
     raise GGException(f"could not get point for geom: {fg_geom_type}")
 
@@ -855,6 +854,7 @@ def draw_sub_df(
                     GeomType.LINE,
                     GeomType.FREQ_POLY,
                     GeomType.RASTER,
+                    GeomType.RIDGE,
                 }:
                     line_points.append(pos)
                 elif geom_type == GeomType.HISTOGRAM:
@@ -900,7 +900,6 @@ def draw_sub_df(
             print("WARNING: using non-gradient drawing of line with multiple colors!")
             if style.fill_color is None:
                 raise GGException("expected fill color")
-
             if style.fill_color.a == 0.0 or geom_type == GeomType.FREQ_POLY:
                 line_points = extend_line_to_axis(line_points, AxisKind.X, df, fg)
             for i in range(len(styles) - 1):
@@ -934,7 +933,13 @@ def create_gobj_from_geom(
         if isinstance(label_val, Dict):
             label_val = {label_val["val"]}
 
-        if label_val is not None and not label_val.issubset(set(lab)):
+
+        if isinstance(lab, Iterable):
+            lab_to_compare = set(lab)
+        else:
+            lab_to_compare = {lab}
+
+        if label_val is not None and not label_val.issubset(lab_to_compare):
             # skip this label
             continue
         draw_sub_df(view, fg, view_map, sub_df, styles, theme)

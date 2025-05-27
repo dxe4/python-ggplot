@@ -66,7 +66,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType, post_process_scales
+from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomRidge, GeomType, post_process_scales
 from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.scales.base import (
     ColorScale,
@@ -791,13 +791,18 @@ def apply_theme(plt_theme: Theme, theme: Theme) -> None:
 def apply_scale(aes: Aesthetics, scale: GGScale):
     result = deepcopy(aes)
 
-    def assign_copy_scale(field: str):
-        if hasattr(aes, field) and getattr(aes, field) is not None:
+    def assign_copy_scale(aes_: Aesthetics, field: str):
+
+        if hasattr(aes_, field) and getattr(aes, field) is not None:
             new_scale = deepcopy(scale)
             field_value = getattr(aes, field)
+
             new_scale.gg_data.col = field_value.gg_data.col
             new_scale.gg_data.ids = field_value.gg_data.ids
-            setattr(result, field, new_scale)
+
+            setattr(aes_, field, new_scale)
+
+        return aes_
 
     SCALE_TYPE_TO_FIELD = {
         ScaleType.COLOR: "color",
@@ -816,11 +821,11 @@ def apply_scale(aes: Aesthetics, scale: GGScale):
     if isinstance(scale, (LinearDataScale, TransformedDataScale)):
         if scale.data is not None:
             for field_ in AXIS_KIND_FIELDS.get(scale.data.axis_kind, []):
-                assign_copy_scale(field_)
+                result = assign_copy_scale(result, field_)
     else:
         field = SCALE_TYPE_TO_FIELD.get(scale.scale_type)
         if field is not None:
-            assign_copy_scale(field)
+            result = assign_copy_scale(result, field)
 
     return result
 
@@ -1062,7 +1067,9 @@ def handle_labels(view: ViewPort, theme: Theme):
         view.add_obj(lab_sec)
 
 
-def calc_ridge_view_map(ridge: Ridges, label_seq: List[GGValue]) -> Dict[GGValue, int]:
+def calc_ridge_view_map(
+    ridge: Ridges, label_seq: List[GGValue]
+) -> Tuple[Dict[GGValue, int], List[GGValue]]:
     num_labels = len(label_seq)
     result: Dict[GGValue, int] = {}
 
@@ -1086,15 +1093,14 @@ def calc_ridge_view_map(ridge: Ridges, label_seq: List[GGValue]) -> Dict[GGValue
             result[label] = idx + 1
             label_seq.append(label)
 
-    return result
+    return result, label_seq
 
 
 def create_ridge_layout(view: ViewPort, theme: Theme, num_labels: int):
-    discr_margin_opt = theme.discrete_scale_margin
-    discr_margin = Quantity.relative(0.0)
-
-    if discr_margin_opt is not None:
-        discr_margin = discr_margin_opt
+    if theme.discrete_scale_margin is not None:
+        discrete_margin = theme.discrete_scale_margin
+    else:
+        discrete_margin = Quantity.relative(0.0)
 
     ind_heights = [Quantity.relative(0.0) for _ in range(num_labels)]
 
@@ -1102,7 +1108,7 @@ def create_ridge_layout(view: ViewPort, theme: Theme, num_labels: int):
         view,
         cols=1,
         rows=num_labels + 2,
-        row_heights=[discr_margin] + ind_heights + [discr_margin],
+        row_heights=[discrete_margin] + ind_heights + [discrete_margin],
         ignore_overflow=True,
     )
 
@@ -1129,12 +1135,11 @@ def generate_ridge(
     y_scale = Scale(low=y_scale.low, high=y_scale.high / ridge.overlap)  # type: ignore
     view.y_scale = y_scale
 
-    view_map = calc_ridge_view_map(ridge, y_label_seq)
+    view_map, y_label_seq = calc_ridge_view_map(ridge, y_label_seq)
     create_ridge_layout(view, theme, num_labels)
 
     for label, idx in view_map.items():
         view_label = view.children[idx]
-
         for cnt, fg in enumerate(filled_scales.geoms):
             p_child = view_label.add_viewport_from_coords(
                 CoordsInput(), ViewPortInput(name=f"data_{cnt}")
@@ -1203,12 +1208,9 @@ def generate_ridge(
 
 
 def _generate_plot_geoms(view: ViewPort, filled_scales: FilledScales, theme: Theme):
-    # TODO this needs to be moved out of public interface eventually
-    for geom in filled_scales.geoms:
+    for cnt, geom in enumerate(filled_scales.geoms):
         coords_input = CoordsInput()
-        # TODO would be good to have unique names for all views
-        # maybe enumerate with f"data_{count}" ?
-        viewport_input = ViewPortInput(name="data")
+        viewport_input = ViewPortInput(name=f"data_{cnt}")
         p_child = view.add_viewport_from_coords(coords_input, viewport_input)
 
         create_gobj_from_geom(p_child, geom, theme)
@@ -1842,9 +1844,10 @@ def _draw_title(img: ViewPort, theme: Theme, plot: GgPlot):
 
 
 def _collect_scales(plot: GgPlot) -> FilledScales:
-    # todo move out of this file eventually
     filled_scales: FilledScales
-    if plot.ridges is not None:
+    # TODO remove plot.ridges eventually
+    has_ridges = len([i for i in plot.geoms if isinstance(i, GeomRidge)]) > 0
+    if plot.ridges is not None or has_ridges:
         filled_scales = collect_scales(plot.update_aes_ridges())
     else:
         filled_scales = collect_scales(plot)

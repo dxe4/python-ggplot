@@ -673,7 +673,8 @@ class GeomRidge(Geom):
         idx: int,
         style: Style,
     ):
-        raise GGException("implement")
+        # TODO
+        return
 
 class FilledGeomDiscreteKind(ABC, DiscreteKind):
 

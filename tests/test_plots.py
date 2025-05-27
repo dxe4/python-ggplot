@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from python_ggplot.colormaps.color_maps import VIRIDIS_RAW
+from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import gg_col
 from python_ggplot.public_interface.aes import aes
 from python_ggplot.public_interface.common import (
@@ -11,6 +13,7 @@ from python_ggplot.public_interface.common import (
     ggdraw_plot,
     ggridges,
     ggtitle,
+    scale_fill_gradient,
     scale_x_continuous,
     scale_x_discrete,
     scale_y_continuous,
@@ -380,16 +383,45 @@ def test_facet_mpg():
 def test_ridges_diamonds():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
     plot = ggplot(
-        diamonds, aes(x = "price", y = "cut", fill = "cut")
-    ) + ggridges("cut")
+        diamonds, aes(x = "price", y = "cut", fill = "clarity")
+    ) + ggridges("cut") + geom_freqpoly(
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "ridgets_diamonds.png")
 
+def test_ridges_weather():
+    weather = pd.read_csv(data_path / "lincoln-weather.csv")
 
-def test_geom_ridges_diamonds():
-    diamonds = pd.read_csv(data_path / "diamonds.csv")
+    month_order = [
+        'January', 'February', 'March',
+        'April', 'May', 'June', 'July',
+        'August', 'September',
+        'October', 'November', 'December'
+    ]
+
+    weather['Month'] = pd.Categorical(
+        weather['Month'],
+        categories=month_order, ordered=True
+    )
+    label_order = {i:cnt for cnt, i in enumerate(weather['Month'].unique().sort_values())}
+
     plot = ggplot(
-        diamonds, aes(x = "price", y = "cut", fill = "cut")
-    ) + geom_ridge()
+        weather, aes(x="Mean Temperature [F]", y="Mean Wind Speed[MPH]")
+    ) + ggridges("Month", label_order=label_order, overlap=1.5) + geom_freqpoly(
+        aes(color="Mean Temperature [F]"),
+    )
+
     res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "ridgets_diamonds.png")
+    ggdraw_plot(res, plots_path / "ridgets_weather.png")
+
+
+def test_freq_poly_weather():
+    weather = pd.read_csv(data_path / "lincoln-weather.csv")
+    plot = ggplot(
+        weather, aes(x="Mean Temperature [F]", y="Month", color="Mean Temperature [F]")
+    ) + geom_freqpoly(
+        # aes(color="Mean Temperature [F]")
+    )
+    # + scale_fill_gradient(ColorScale.viridis())
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "test_freq_poly_weather.png")

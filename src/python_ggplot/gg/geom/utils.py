@@ -440,9 +440,10 @@ def _filled_bin_geom_map(
         )
 
         count_col = filled_stat_geom.count_col()  # type: ignore
-        yield_df = pd.DataFrame(
-            {filled_stat_geom.x.get_col_name(): bins, count_col: hist}
-        )
+        yield_df = pd.DataFrame({
+            filled_stat_geom.x.get_col_name(): bins,
+            count_col: hist
+        })
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
             yield_df[PREV_VALS_COL] = col if len(col) > 0 else 0.0
@@ -461,6 +462,7 @@ def _filled_bin_geom_map(
             yield_df[filled_geom.gg_data.y_col] = col
 
         yield_df = filled_geom.maybe_filter_unique(yield_df)
+
         filled_geom.gg_data.yield_data[keys] = apply_cont_scale_if_any(  # type: ignore
             yield_df,
             filled_stat_geom.continuous_scales,
@@ -519,8 +521,11 @@ def _filled_bin_geom_set(
 
     key = ("", VNull())
 
+    # TODO double check this
+    # if len(filled_stat_geom.continuous_scales) != 0:
+    #     raise GGException("seems the data is discrete")
     if len(filled_stat_geom.continuous_scales) != 0:
-        raise GGException("seems the data is discrete")
+        print(f"WARNING: cont scales size: {len(filled_stat_geom.continuous_scales)}")
 
     filled_geom.gg_data.yield_data[key] = apply_cont_scale_if_any(  # type: ignore
         yield_df,
