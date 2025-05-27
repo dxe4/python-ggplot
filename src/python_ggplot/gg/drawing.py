@@ -39,7 +39,7 @@ from python_ggplot.graphics.initialize import (
     init_poly_line_from_points,
     init_raster,
 )
-from python_ggplot.graphics.objects import GOComposite
+from python_ggplot.graphics.objects import GOComposite, GraphicsObject
 from python_ggplot.graphics.views import ViewPort
 
 
@@ -773,6 +773,53 @@ def _needs_bin_width(geom_type: GeomType, bin_position: Optional[BinPositionType
     return False
 
 
+def _fill_gradient(
+    view: ViewPort,
+    point_a: Coord,
+    point_b: Coord,
+    current_style: Style
+) -> GraphicsObject:
+    # TODO this needs to move out of here
+    # and it needs to trigger only conditionally
+    # this is needed for ridges
+    # if you draw freq poly, you draw multiple lines of 2 points
+    # this colors the area underneath,
+    # from the bottom of the chart to the top 2 points
+    # see freq_poly_weather
+    a = deepcopy(point_a)
+    b = deepcopy(point_b)
+    a_point = a.point()
+    b_point = b.point()
+    x1, y1 = (a_point.x, a_point.y)
+    x2, y2 = (b_point.x, b_point.y)
+    scale_low = a.y.data.scale.low
+
+    fill_points = [
+        Point[float](
+            x=min([x1, x2]),
+            y=scale_low
+        ),
+        Point[float](
+            x=max([x1, x2]),
+            y=scale_low
+        ),
+        Point[float](
+            x=max([x1, x2]),
+            y=y2,
+        ),
+        Point[float](
+            x=min([x1, x2]),
+            y=y1,
+        ),
+    ]
+    new_style = deepcopy(current_style)
+    poly_line = init_poly_line_from_points(
+        view,
+        fill_points,
+        deepcopy(new_style),
+    )
+    return poly_line
+
 def draw_sub_df(
     view: ViewPort,
     fg: FilledGeom,
@@ -910,52 +957,10 @@ def draw_sub_df(
                     deepcopy(current_style),
                 )
                 view.add_obj(poly_line)
-
-                # TODO this needs to move out of here to its own function
-                # and it needs to trigger only conditionally
-                # this is needed for ridges
-                # if you draw freq poly, you draw multiple lines of 2 points
-                # this colors the area underneath,
-                # from the bottom of the chart to the top 2 points
-                # see freq_poly_weather
-                a = deepcopy(line_points[i])
-                b = deepcopy(line_points[i + 1])
-                a_point = a.point()
-                b_point = b.point()
-                x1, y1 = (a_point.x, a_point.y)
-                x2, y2 = (b_point.x, b_point.y)
-                scale_low = a.y.data.scale.low
-
-                fill_points = [
-                    Point[float](
-                        x=min([x1, x2]),
-                        y=scale_low
-                    ),
-                    Point[float](
-                        x=max([x1, x2]),
-                        y=scale_low
-                    ),
-                    Point[float](
-                        x=max([x1, x2]),
-                        y=y2,
-                    ),
-                    Point[float](
-                        x=min([x1, x2]),
-                        y=y1,
-                    ),
-                ]
-                new_style = deepcopy(current_style)
-                # new_style.fill_color.a = 0.3
-                # new_style.color.a = 0.3
-                print(new_style)
-                # a.y.pos = a.y.data.scale.low
-                # b.y.pos = b.y.data.scale.high
-                poly_line = init_poly_line_from_points(
-                    view,
-                    fill_points,
-                    deepcopy(new_style),
+                gradient_poly_line = _fill_gradient(
+                    view, line_points[i], line_points[i + 1], current_style
                 )
-                view.add_obj(poly_line)
+                view.add_obj(gradient_poly_line)
 
     elif geom_type == GeomType.RASTER:
         draw_raster(view, cast(FilledGeomRaster, fg), df)
