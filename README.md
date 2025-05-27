@@ -143,16 +143,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 ```
 <img src="plots/geom_histogram_fill.png?v=1" alt="geom_histogram" width="400px">
 
-```python
-    df = create_dataframe()
-    plot = ggplot(
-        df, aes("tenors", "pathValues", color = "pathNames")
-    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_line_With_color.png")
-```
-<img src="plots/geom_line_With_color.png?v=1" alt="geom_line_With_color" width="400px">
-
 
 ```python
     df = pd.DataFrame({
@@ -224,16 +214,6 @@ ggdraw_plot(res, plots_path / "geom_linerange.png")
 
 
 ```python
-    df = pd.DataFrame(
-        data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
-    )
-    plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()
-    res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
-```
-<img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
-
-```python
 mpg = pd.read_csv(data_path / "mpg.csv")
 mpg["cty"] = mpg["cty"].astype(float)
 plot = ggplot(mpg, aes(x="displ", y="hwy", color="cty")) + geom_point()
@@ -241,17 +221,6 @@ res = ggcreate(plot)
 ggdraw_plot(res, plots_path / "geom_point_with_continuous_color.png")
 ```
 <img src="plots/geom_point_with_continuous_color.png?v=1" alt="geom_point_with_continuous_color" width="400px">
-
-
-```python
-mpg = pd.read_csv(data_path / "mpg.csv")
-mpg["cty"] = mpg["cty"].astype(float)
-plot = ggplot(mpg, aes(x="cty", y="displ", size = "cyl", color="cty")) + geom_point()
-res = ggcreate(plot)
-ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
-```
-<img src="plots/geom_point_with_continuous_color_and_size.png?v=1" alt="geom_point_with_continuous_color_and_size" width="400px">
-
 
 
 ```python
@@ -291,6 +260,16 @@ ggdraw_plot(res, plots_path / "geom_error_bar.png")
 
 
 ```python
+mpg = pd.read_csv(data_path / "mpg.csv")
+mpg["cty"] = mpg["cty"].astype(float)
+plot = ggplot(mpg, aes(x="cty", y="displ", size = "cyl", color="cty")) + geom_point()
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
+```
+<img src="plots/geom_point_with_continuous_color_and_size.png?v=1" alt="geom_point_with_continuous_color_and_size" width="400px">
+
+
+```python
 plots = _gg_multi_plots()
 ggmulti(
     plots,
@@ -299,6 +278,29 @@ ggmulti(
 )
 ```
 <img src="plots/gg_multi_pmg_bottom_to_top.png?v=1" alt="gg_multi_pmg_bottom_to_top" width="400px">
+
+
+```python
+    df = pd.DataFrame(
+        data={"dose": ["D0.5", "D1", "D2"], "bbb": [4.2, 10, 29.5]}
+    )
+    plot = ggplot(df, aes(x="dose", y="bbb")) + geom_line() + geom_point()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_line_and_point_with_linetype.png")
+```
+<img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
+
+
+```python
+    df = create_dataframe()
+    plot = ggplot(
+        df, aes("tenors", "pathValues", color = "pathNames")
+    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_line_With_color.png")
+```
+<img src="plots/geom_line_With_color.png?v=1" alt="geom_line_With_color" width="400px">
+
 
 ```python
 plots = _gg_multi_plots()
