@@ -23,10 +23,7 @@ def use_or_default(c: Optional[ColorScale]) -> ColorScale:
 
 
 def _get_field_for_user_style_merge(
-    user_style: GGStyle,
-    style: GGStyle,
-    field_name: str,
-    geom: Geom
+    user_style: GGStyle, style: GGStyle, field_name: str, geom: Geom
 ):
     user_field = getattr(user_style, field_name, None)
     style_field = getattr(style, field_name, None)

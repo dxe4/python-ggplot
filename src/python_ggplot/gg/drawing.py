@@ -1,6 +1,6 @@
+from collections.abc import Iterable
 from copy import deepcopy
 from dataclasses import dataclass
-from collections.abc import Iterable
 from typing import Any, Dict, List, Optional, Tuple, Union, cast, no_type_check
 
 import numpy as np
@@ -775,10 +775,7 @@ def _needs_bin_width(geom_type: GeomType, bin_position: Optional[BinPositionType
 
 
 def _fill_area(
-    view: ViewPort,
-    point_a: Coord,
-    point_b: Coord,
-    current_style: Style
+    view: ViewPort, point_a: Coord, point_b: Coord, current_style: Style
 ) -> GraphicsObject:
     # TODO this needs to move out of here
     # and it needs to trigger only conditionally
@@ -799,14 +796,8 @@ def _fill_area(
         scale_low = 0.0
 
     fill_points = [
-        Point[float](
-            x=min([x1, x2]),
-            y=scale_low
-        ),
-        Point[float](
-            x=max([x1, x2]),
-            y=scale_low
-        ),
+        Point[float](x=min([x1, x2]), y=scale_low),
+        Point[float](x=max([x1, x2]), y=scale_low),
         Point[float](
             x=max([x1, x2]),
             y=y2,
@@ -823,6 +814,7 @@ def _fill_area(
         deepcopy(new_style),
     )
     return poly_line
+
 
 def draw_sub_df(
     view: ViewPort,
@@ -929,7 +921,12 @@ def draw_sub_df(
     elif geom_type == GeomType.HISTOGRAM:
         line_points = convert_points_to_histogram(df, fg, line_points)
 
-    if geom_type in {GeomType.LINE, GeomType.FREQ_POLY, GeomType.HISTOGRAM, GeomType.GEOM_AREA}:
+    if geom_type in {
+        GeomType.LINE,
+        GeomType.FREQ_POLY,
+        GeomType.HISTOGRAM,
+        GeomType.GEOM_AREA,
+    }:
         if len(styles) == 1:
             current_style = merge_user_style(deepcopy(styles[0]), fg)
 
@@ -953,9 +950,10 @@ def draw_sub_df(
 
                 for line_point_idx in range(0, len(line_points) - 1):
                     gradient_poly_line = _fill_area(
-                        view, line_points[line_point_idx],
+                        view,
+                        line_points[line_point_idx],
                         line_points[line_point_idx + 1],
-                        current_style
+                        current_style,
                     )
                     view.add_obj(gradient_poly_line)
         else:
@@ -977,9 +975,7 @@ def draw_sub_df(
                 view.add_obj(poly_line)
                 if geom_type == GeomType.GEOM_AREA:
                     gradient_poly_line = _fill_area(
-                        view, line_points[i],
-                        line_points[i + 1],
-                        current_style
+                        view, line_points[i], line_points[i + 1], current_style
                     )
                     view.add_obj(gradient_poly_line)
 
@@ -1005,7 +1001,6 @@ def create_gobj_from_geom(
         # this can result to incorrect plots, we need to match both the col and the val
         if isinstance(label_val, Dict):
             label_val = {label_val["val"]}
-
 
         if isinstance(lab, Iterable):
             lab_to_compare = set(lab)

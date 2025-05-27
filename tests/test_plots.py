@@ -369,12 +369,10 @@ def test_geom_freqpoly_cty_class_fill():
 
 def test_facet_mpg():
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(
-        mpg, aes(x="displ", y="cty")
-    ) + geom_point(
-        aes(color = "manufacturer")
-    ) + facet_wrap(
-        ["drv", "cyl"]
+    plot = (
+        ggplot(mpg, aes(x="displ", y="cty"))
+        + geom_point(aes(color="manufacturer"))
+        + facet_wrap(["drv", "cyl"])
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "facet_mpg.png")
@@ -382,33 +380,53 @@ def test_facet_mpg():
 
 def test_ridges_diamonds():
     diamonds = pd.read_csv(data_path / "diamonds.csv")
-    plot = ggplot(
-        diamonds, aes(x = "price", y = "cut", fill = "clarity")
-    ) + ggridges("cut") + geom_freqpoly(
+    plot = (
+        ggplot(diamonds, aes(x="price", y="cut", fill="clarity"))
+        + ggridges("cut")
+        + geom_freqpoly()
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "ridgets_diamonds.png")
+
 
 def test_ridges_weather():
     weather = pd.read_csv(data_path / "lincoln-weather.csv")
 
     month_order = [
-        'January', 'February', 'March',
-        'April', 'May', 'June', 'July',
-        'August', 'September',
-        'October', 'November', 'December'
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
     ]
 
-    weather['Month'] = pd.Categorical(
-        weather['Month'],
-        categories=month_order, ordered=True
+    weather["Month"] = pd.Categorical(
+        weather["Month"], categories=month_order, ordered=True
     )
-    label_order = {i:cnt for cnt, i in enumerate(weather['Month'].unique().sort_values())}
+    label_order = {
+        i: cnt for cnt, i in enumerate(weather["Month"].unique().sort_values())
+    }
 
-    plot = ggplot(
-        weather, aes(x="Mean Temperature [F]", y="Mean Wind Speed[MPH]", fill="Mean Temperature [F]")
-    ) + ggridges("Month", label_order=label_order, overlap=1.5) + geom_freqpoly(
-        # aes(fill="Mean Temperature [F]"),
+    plot = (
+        ggplot(
+            weather,
+            aes(
+                x="Mean Temperature [F]",
+                y="Mean Wind Speed[MPH]",
+                fill="Mean Temperature [F]",
+            ),
+        )
+        + ggridges("Month", label_order=label_order, overlap=1.5)
+        + geom_freqpoly(
+            # aes(fill="Mean Temperature [F]"),
+        )
     )
 
     res = ggcreate(plot)
@@ -418,42 +436,42 @@ def test_ridges_weather():
 def test_geom_area_stat_bin():
     np.random.seed(1234)
 
-    sex = np.repeat(['F', 'M'], repeats=200)
-    weight = np.round(np.concatenate([
-        np.random.normal(loc=55, scale=5, size=200),
-        np.random.normal(loc=65, scale=5, size=200)
-    ]))
+    sex = np.repeat(["F", "M"], repeats=200)
+    weight = np.round(
+        np.concatenate(
+            [
+                np.random.normal(loc=55, scale=5, size=200),
+                np.random.normal(loc=65, scale=5, size=200),
+            ]
+        )
+    )
 
-    df = pd.DataFrame({
-        'sex': pd.Categorical(sex),
-        'weight': weight
-    })
+    df = pd.DataFrame({"sex": pd.Categorical(sex), "weight": weight})
 
-    plot = ggplot(df, aes(x="weight", fill="sex")) + geom_area(stat ="bin", alpha=1)
+    plot = ggplot(df, aes(x="weight", fill="sex")) + geom_area(stat="bin", alpha=1)
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
 
 
 def test_geom_area_stat_identity():
-    df = pd.DataFrame({
-        'g': ['a', 'a', 'a', 'b', 'b', 'b'],
-        'x': [1, 3, 5, 2, 4, 6],
-        'y': [2, 5, 1, 3, 6, 7]
-    })
-    plot = ggplot(
-        df, aes(x="x", y="y", fill="g")
-    ) + geom_area(alpha=0.3) + geom_point(size=5)
+    df = pd.DataFrame(
+        {
+            "g": ["a", "a", "a", "b", "b", "b"],
+            "x": [1, 3, 5, 2, 4, 6],
+            "y": [2, 5, 1, 3, 6, 7],
+        }
+    )
+    plot = (
+        ggplot(df, aes(x="x", y="y", fill="g"))
+        + geom_area(alpha=0.3)
+        + geom_point(size=5)
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_identity.png")
 
 
 def test_geom_area_simple():
-    df = pd.DataFrame({
-        'x': [1, 3, 5, 2, 4, 6],
-        'y': [2, 5, 1, 3, 6, 7]
-    })
-    plot = ggplot(
-        df, aes(x="x", y="y")
-    ) + geom_area(alpha=0.3)
+    df = pd.DataFrame({"x": [1, 3, 5, 2, 4, 6], "y": [2, 5, 1, 3, 6, 7]})
+    plot = ggplot(df, aes(x="x", y="y")) + geom_area(alpha=0.3)
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_simple.png")

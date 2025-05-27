@@ -31,7 +31,7 @@ from python_ggplot.gg.styles.config import (
     POINT_DEFAULT_STYLE,
     SMOOTH_DEFAULT_STYLE,
     TEXT_DEFAULT_STYLE,
-    TILE_DEFAULT_STYLE
+    TILE_DEFAULT_STYLE,
 )
 from python_ggplot.gg.types import (
     COUNT_COL,
@@ -167,6 +167,7 @@ class Geom(ABC):
     def has_bars(self) -> bool:
         # can be true for for geom_bar and geom_histogram
         return False
+
 
 @dataclass
 class FilledGeomData:
@@ -641,6 +642,7 @@ class GeomArea(Geom):
         style: Style,
     ):
         raise GGException("Already handled in `draw_sub_df`!")
+
 
 class GeomLine(Geom):
     @property

@@ -970,7 +970,7 @@ def add_facets(filled_scales: FilledScales, plot: GgPlot):
                 value_kind=VTODO(),
                 discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
             ),
-            data=LinearAndTransformScaleData()
+            data=LinearAndTransformScaleData(),
         )
         fill_scale_data = _FillScaleData(scale=scale_, df=None)
 

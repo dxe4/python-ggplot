@@ -2,10 +2,10 @@
 TODO this whole file needs cleaning up
 """
 
-from dataclasses import dataclass
 import math
 from collections import OrderedDict
 from copy import deepcopy
+from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
 from typing import (
@@ -154,6 +154,7 @@ class _LogTrans:
         if math.isclose(val, 0.0):
             return 0.0
         return BASE_TO_LOG[self.base](val)
+
 
 @dataclass
 class _LogInverseTrans:
@@ -1331,7 +1332,9 @@ def determine_existing_combinations(fs: FilledScales, facet: Facet) -> Set[GGVal
     # here the facets have to be on discrete scales
     # we can assume that but would be good to structure it better
     if len(facet.columns) > 1:
-        combinations = list(product(*(facet.gg_data.discrete_kind.label_seq for facet in facets)))
+        combinations = list(
+            product(*(facet.gg_data.discrete_kind.label_seq for facet in facets))
+        )
     else:
         combinations: List[List[GGValue]] = [[label] for label in facets[0].gg_data.discrete_kind.label_seq]  # type: ignore
 
@@ -1531,7 +1534,8 @@ def generate_facet_plots(
         )
 
         hide_y_labels = not (
-            facet.scale_free_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE} or cur_col == 0
+            facet.scale_free_kind in {ScaleFreeKind.FREE_X, ScaleFreeKind.FREE}
+            or cur_col == 0
         )
 
         plot_view.name = "facet_plot"
@@ -1584,8 +1588,8 @@ def generate_facet_plots(
         view_label.y_scale = plot_view.y_scale
 
         # if not view.x_scale or not view.y_scale:
-            # TODO check this
-            # raise GGException("expected x and y scale")
+        # TODO check this
+        # raise GGException("expected x and y scale")
 
         if not filled_scales.discrete_x and filled_scales.reversed_x:
             view_label.x_scale = Scale(high=view.x_scale.low, low=view.x_scale.high)

@@ -413,6 +413,7 @@ def geom_area(
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
     return result
 
+
 def geom_smooth(
     aes: Optional[Aesthetics] = None,
     data: Optional[pd.DataFrame] = None,

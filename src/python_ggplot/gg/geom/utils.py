@@ -440,10 +440,9 @@ def _filled_bin_geom_map(
         )
 
         count_col = filled_stat_geom.count_col()  # type: ignore
-        yield_df = pd.DataFrame({
-            filled_stat_geom.x.get_col_name(): bins,
-            count_col: hist
-        })
+        yield_df = pd.DataFrame(
+            {filled_stat_geom.x.get_col_name(): bins, count_col: hist}
+        )
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
             yield_df[PREV_VALS_COL] = col if len(col) > 0 else 0.0
