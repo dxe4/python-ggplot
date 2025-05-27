@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from python_ggplot.colormaps.color_maps import VIRIDIS_RAW
-from python_ggplot.core.objects import Color
+from python_ggplot.core.objects import Color, Font
 from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import gg_col
 from python_ggplot.public_interface.aes import aes
@@ -417,7 +417,7 @@ def test_ridges_weather():
         + ggridges("Month", overlap=1.5)
         + geom_area(stat="bin", alpha=0.8)
         + geom_point(aes(y=gg_col("Month").zero() + 2), color="black")
-        + ylab(rotate=-30)
+        + ylab(rotate=-30, tick_font=Font(size=15))
     )
 
     res = ggcreate(plot, width=1200, height=1200)
