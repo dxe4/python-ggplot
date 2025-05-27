@@ -530,12 +530,39 @@ class VegaTex:
     tex_options: TexOptions
 
 
+class Transformation(ABC):
+    pass
+
+
+class AddTransformation(Transformation):
+
+    def __call__(self, a, b):
+        return a + b
+
+
+class MulTransformation(Transformation):
+
+    def __call__(self, a, b):
+        return a * b
+
+
+class ZeroTransformation(Transformation):
+    '''
+    This is a bit of a hack, we should allowe gg_col(0),
+    but this will break a few things for now
+    '''
+
+    def __call__(self, a, b):
+        return pd.Series(np.zeros(len(a)))
+
+
 @dataclass
 class ColOperator:
     value: Union[int, float]
+    transformation: Transformation
 
     def __call__(self, series: pd.Series) -> pd.Series:  # type: ignore
-        return series + self.value  # type: ignore
+        return self.transformation(series, self.value)
 
 
 @dataclass
@@ -544,12 +571,21 @@ class gg_col:
     operators: List[ColOperator] = field(default_factory=list)
 
     def __add__(self, val: float):
-        self.operators.append(ColOperator(val))
+        self.operators.append(ColOperator(val, transformation=AddTransformation()))
         return self
 
     def __sub__(self, val: float):
-        self.operators.append(ColOperator(-val))
+        self.operators.append(ColOperator(-val, transformation=AddTransformation()))
         return self
+
+    def __mul__(self, val: float):
+        self.operators.append(ColOperator(val, transformation=MulTransformation()))
+        return self
+
+    def zero(self):
+        self.operators.append(ColOperator(0, transformation=ZeroTransformation()))
+        return self
+
 
     def evaluate(self, df: pd.DataFrame) -> pd.Series:  # type: ignore
         series = df[self.col]  # type: ignore
