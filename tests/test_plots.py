@@ -411,7 +411,7 @@ def test_ridges_weather():
     plot = (
         ggplot(
             weather,
-            aes(x="Mean Temperature [F]", y="Month", fill="Month"),
+            aes(x="Mean Temperature [F]", fill="Month"),
         )
         + ggridges("Month", label_order=label_order, overlap=1.7)
         + geom_area(stat="bin", alpha=0.7)

@@ -1002,12 +1002,14 @@ def create_gobj_from_geom(
         if isinstance(label_val, Dict):
             label_val = {label_val["val"]}
 
-        if isinstance(lab, Iterable):
-            lab_to_compare = set(lab)
-        else:
+        # fix this...
+        if not isinstance(lab, Iterable) or isinstance(lab, str):
             lab_to_compare = {lab}
+        else:
+            lab_to_compare = set(lab)
 
         if label_val is not None and not label_val.issubset(lab_to_compare):
             # skip this label
             continue
+
         draw_sub_df(view, fg, view_map, sub_df, styles, theme)

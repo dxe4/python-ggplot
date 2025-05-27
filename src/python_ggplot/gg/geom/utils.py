@@ -428,9 +428,11 @@ def _filled_bin_geom_map(
     for keys in sorted_keys:  # type: ignore
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
+
         current_style = apply_style(
             deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
         )  # type: ignore
+
         hist, bins, _ = call_histogram(
             filled_stat_geom.geom,
             sub_df,  # type: ignore
