@@ -27,7 +27,6 @@ from python_ggplot.gg.geom.base import (
     GeomLine,
     GeomPoint,
     GeomRaster,
-    GeomRidge,
     GeomText,
     GeomTile,
     HistogramDrawingStyle,
@@ -145,35 +144,6 @@ def geom_point(
     result = GeomPoint(gg_data=gg_data)
 
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
-    return result
-
-
-def geom_ridge(
-    aes: Optional[Aesthetics] = None,
-    overlap: float = 1.3,
-    show_ticks: bool = False,
-    label_order: Optional[Dict[GGValue, int]] = None,
-    data: Optional[pd.DataFrame] = None,
-):
-    if aes is None:
-        aes = Aesthetics()
-
-    if data is None:
-        data = pd.DataFrame()
-
-    style = assign_identity_scales_get_style(aes=aes)
-
-    df_opt = data if len(data) > 0 else None
-    gid = get_gid()
-    gg_data = GeomData(
-        gid=gid,
-        data=df_opt,
-        user_style=style,
-        aes=fill_ids(aes, {gid}),
-        stat_kind=StatIdentity(),
-        position=PositionType.IDENTITY,
-    )
-    result = GeomRidge(gg_data=gg_data)
     return result
 
 

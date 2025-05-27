@@ -346,7 +346,7 @@ def get_draw_pos_impl(
 
     fg_geom_type = fg.geom_type
     if discrete_type == DiscreteType.DISCRETE:
-        if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT, GeomType.RIDGE}:
+        if fg_geom_type in {GeomType.POINT, GeomType.ERROR_BAR, GeomType.TEXT}:
             return get_discrete_point()
         elif fg_geom_type in (GeomType.LINE, GeomType.FREQ_POLY):
             return get_discrete_line(view, ax_kind)
@@ -854,7 +854,6 @@ def draw_sub_df(
                     GeomType.LINE,
                     GeomType.FREQ_POLY,
                     GeomType.RASTER,
-                    GeomType.RIDGE,
                 }:
                     line_points.append(pos)
                 elif geom_type == GeomType.HISTOGRAM:

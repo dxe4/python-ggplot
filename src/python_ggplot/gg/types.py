@@ -410,44 +410,36 @@ class GgPlot:
         raise GGException(f"cant add plot to {other.__class__}")
 
     def update_aes_ridges(self: "GgPlot") -> "GgPlot":
-        from python_ggplot.gg.geom.base import GeomRidge
         from python_ggplot.gg.scales.base import (
             GGScaleData,
             GGScaleDiscrete,
             LinearAndTransformScaleData,
             LinearDataScale,
         )
-        geom_ridges = [i for i in self.geoms if isinstance(i, GeomRidge)]
 
-        if self.ridges is None and len(geom_ridges) == 0:
-            # TODO remove plot.ridges
+        if self.ridges is None:
             raise GGException("expected ridges")
 
-        if geom_ridges:
-            # todo for now only 1 ridge allowed
-            ridge = geom_ridges[0]
-            self.aes.y_ridges = self.aes.y
-        else:
-            ridge = self.ridges
+        ridge = self.ridges
 
-            data = LinearAndTransformScaleData(
-                axis_kind=AxisKind.Y,
-                reversed=False,
-                transform=lambda x: x,
-            )
-            gg_data = GGScaleData(
-                col=ridge.col,
-                has_discreteness=True,
-                discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
-                ids=set(range(65536)),
-                data_type=DataType.NULL,
-                value_kind=VNull(),
-            )
-            scale = LinearDataScale(
-                gg_data=gg_data,
-                data=data,
-            )
-            self.aes.y_ridges = scale
+        data = LinearAndTransformScaleData(
+            axis_kind=AxisKind.Y,
+            reversed=False,
+            transform=lambda x: x,
+        )
+        gg_data = GGScaleData(
+            col=ridge.col,
+            has_discreteness=True,
+            discrete_kind=GGScaleDiscrete(value_map={}, label_seq=[]),  # type: ignore
+            ids=set(range(65536)),
+            data_type=DataType.NULL,
+            value_kind=VNull(),
+        )
+        scale = LinearDataScale(
+            gg_data=gg_data,
+            data=data,
+        )
+        self.aes.y_ridges = scale
 
         return self
 

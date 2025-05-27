@@ -29,7 +29,6 @@ from python_ggplot.public_interface.geom import (
     geom_line,
     geom_linerange,
     geom_point,
-    geom_ridge,
     geom_text,
     geom_tile,
     ggplot,

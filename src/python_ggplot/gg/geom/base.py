@@ -644,37 +644,6 @@ class GeomLine(Geom):
     ):
         raise GGException("Already handled in `draw_sub_df`!")
 
-class GeomRidge(Geom):
-    overlap = 1.3
-    label_order = None
-    show_ticks = False
-
-    def default_style(self) -> Style:
-        return deepcopy(RIDGE_DEFAULT_STYLE)
-
-    @property
-    def geom_type(self) -> GeomType:
-        return GeomType.RIDGE
-
-    @property
-    def allowed_stat_types(self) -> List["StatType"]:
-        return [
-            StatType.IDENTITY,
-        ]
-
-    def draw_geom(
-        self,
-        view: ViewPort,
-        fg: "FilledGeom",
-        pos: Coord,
-        y: Any,
-        bin_widths: Tuple[float, float],
-        df: pd.DataFrame,
-        idx: int,
-        style: Style,
-    ):
-        # TODO
-        return
 
 class FilledGeomDiscreteKind(ABC, DiscreteKind):
 

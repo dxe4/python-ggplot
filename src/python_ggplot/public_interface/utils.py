@@ -66,7 +66,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomRidge, GeomType, post_process_scales
+from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType, post_process_scales
 from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.scales.base import (
     ColorScale,
@@ -1845,9 +1845,7 @@ def _draw_title(img: ViewPort, theme: Theme, plot: GgPlot):
 
 def _collect_scales(plot: GgPlot) -> FilledScales:
     filled_scales: FilledScales
-    # TODO remove plot.ridges eventually
-    has_ridges = len([i for i in plot.geoms if isinstance(i, GeomRidge)]) > 0
-    if plot.ridges is not None or has_ridges:
+    if plot.ridges is not None:
         filled_scales = collect_scales(plot.update_aes_ridges())
     else:
         filled_scales = collect_scales(plot)
@@ -1882,7 +1880,7 @@ def _generate_plot(
 
 
 def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotView:
-    if len(plot.geoms) == 0 and not plot.ridges:
+    if len(plot.geoms) == 0:
         raise GGException("Please use at least one `geom` or ridges")
 
     filled_scales: FilledScales = _collect_scales(plot)
