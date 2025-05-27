@@ -181,6 +181,41 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 ```python
+    weather = pd.read_csv(data_path / "lincoln-weather.csv")
+
+    month_order = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+    label_order = {i: cnt for cnt, i in enumerate(month_order)}
+
+    plot = (
+        ggplot(
+            weather,
+            aes(x="Mean Temperature [F]", y="Month", fill="Month"),
+        )
+        + ggridges("Month", label_order=label_order, overlap=1.7)
+        + geom_area(stat="bin", alpha=0.7)
+        + ylab(rotate=-30)
+    )
+
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "ridgets_weather.png")
+```
+<img src="plots/ridgets_weather.png?v=1" alt="ridgets_weather" width="400px">
+
+
+```python
     df = pd.DataFrame({
         'x': [1, 3, 5, 2, 4, 6],
         'y': [2, 5, 1, 3, 6, 7]

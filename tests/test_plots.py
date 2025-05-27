@@ -406,27 +406,16 @@ def test_ridges_weather():
         "November",
         "December",
     ]
-
-    weather["Month"] = pd.Categorical(
-        weather["Month"], categories=month_order, ordered=True
-    )
-    label_order = {
-        i: cnt for cnt, i in enumerate(weather["Month"].unique().sort_values())
-    }
+    label_order = {i: cnt for cnt, i in enumerate(month_order)}
 
     plot = (
         ggplot(
             weather,
-            aes(
-                x="Mean Temperature [F]",
-                y="Mean Wind Speed[MPH]",
-                fill="Mean Temperature [F]",
-            ),
+            aes(x="Mean Temperature [F]", y="Month", fill="Month"),
         )
-        + ggridges("Month", label_order=label_order, overlap=1.5)
-        + geom_freqpoly(
-            # aes(fill="Mean Temperature [F]"),
-        )
+        + ggridges("Month", label_order=label_order, overlap=1.7)
+        + geom_area(stat="bin", alpha=0.7)
+        + ylab(rotate=-30)
     )
 
     res = ggcreate(plot)
