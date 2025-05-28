@@ -300,11 +300,11 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
     def update_filled_geom_x_attributes(
         self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
     ):
+        if not fg.gg_data.is_x_discrete():
+            raise GGException("expected discrete x")
+
         fg.gg_data.num_x = max(fg.gg_data.num_x, df[scale_col].nunique())
         fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
-        # and assign the label sequence
-        # TODO this assumes fg.gg_data.x_discrete_kind = Discrete
-        # we have to double check this or it can cause bugs
         fg.gg_data.x_discrete_kind.label_seq = self.label_seq  # type: ignore
 
     def get_low_level_scale(self) -> Scale:
