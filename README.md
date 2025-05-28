@@ -162,18 +162,27 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 ```python
     np.random.seed(1234)
 
-    sex = np.repeat(['F', 'M'], repeats=200)
-    weight = np.round(np.concatenate([
-        np.random.normal(loc=55, scale=5, size=200),
-        np.random.normal(loc=65, scale=5, size=200)
-    ]))
+    sex = np.repeat(["F", "M"], repeats=200)
+    weight = np.round(
+        np.concatenate(
+            [
+                np.random.normal(loc=55, scale=5, size=200),
+                np.random.normal(loc=65, scale=5, size=200),
+            ]
+        )
+    )
 
-    df = pd.DataFrame({
-        'sex': pd.Categorical(sex),
-        'weight': weight
-    })
-
-    plot = ggplot(df, aes(x="weight", fill="sex")) + geom_area(stat ="bin", alpha=1)
+    df = pd.DataFrame({"sex": pd.Categorical(sex), "weight": weight})
+    quantiles = list(df["weight"].quantile([0.25, 0.75]))
+    plot = ggplot(
+        df, aes(x="weight", fill="sex")
+    ) + geom_area(
+        stat="bin", alpha=1
+    ) + geom_vline(
+        xintercept=quantiles[0]
+    ) + geom_vline(
+        xintercept=quantiles[1]
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
 ```

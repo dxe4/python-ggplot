@@ -33,6 +33,7 @@ from python_ggplot.public_interface.geom import (
     geom_point,
     geom_text,
     geom_tile,
+    geom_vline,
     ggplot,
 )
 from python_ggplot.public_interface.utils import ggcreate, ggmulti, plot_layout
@@ -407,7 +408,9 @@ def test_ridges_weather():
         "November",
         "December",
     ]
-    weather['Month'] = pd.Categorical(weather['Month'], categories=month_order, ordered=True)
+    weather["Month"] = pd.Categorical(
+        weather["Month"], categories=month_order, ordered=True
+    )
 
     plot = (
         ggplot(
@@ -438,8 +441,13 @@ def test_geom_area_stat_bin():
     )
 
     df = pd.DataFrame({"sex": pd.Categorical(sex), "weight": weight})
-
-    plot = ggplot(df, aes(x="weight", fill="sex")) + geom_area(stat="bin", alpha=1)
+    quantiles = list(df["weight"].quantile([0.25, 0.75]))
+    plot = (
+        ggplot(df, aes(x="weight", fill="sex"))
+        + geom_area(stat="bin", alpha=1)
+        + geom_vline(xintercept=quantiles[0])
+        + geom_vline(xintercept=quantiles[1])
+    )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
 

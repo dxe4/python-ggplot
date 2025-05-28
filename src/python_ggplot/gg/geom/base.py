@@ -8,6 +8,7 @@ from typing import (
     Any,
     Dict,
     Generator,
+    Iterable,
     List,
     Optional,
     OrderedDict,
@@ -20,7 +21,7 @@ from typing import (
 import pandas as pd
 
 from python_ggplot.core.coord.objects import Coord
-from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
+from python_ggplot.core.objects import BLACK, GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 from python_ggplot.gg.styles.config import (
@@ -50,15 +51,17 @@ from python_ggplot.gg.types import (
     StatType,
 )
 from python_ggplot.graphics.initialize import (
+    InitLineInput,
     InitRectInput,
     InitTextInput,
     calc_tick_locations,
+    init_line,
     init_point,
     init_rect,
     init_text,
 )
 from python_ggplot.graphics.views import ViewPort
-from tests.test_view import AxisKind
+from tests.test_view import AxisKind, RelativeCoordType
 
 if TYPE_CHECKING:
     from python_ggplot.gg.scales.base import (
@@ -85,6 +88,7 @@ class GeomType(GGEnum):
     TEXT = auto()
     RASTER = auto()
     GEOM_AREA = auto()
+    GEOM_VLINE = auto()
 
 
 @dataclass
@@ -612,6 +616,67 @@ class GeomTile(GeomTileMixin, Geom):
             StatType.BIN,
             StatType.DENSITY,
         ]
+
+
+@dataclass
+class GeomVLine(Geom):
+    xintercept: Union[Union[float, int], Iterable[Union[float, int]]]
+
+    @property
+    def allowed_stat_types(self) -> List["StatType"]:
+        return [
+            StatType.NONE,
+            StatType.IDENTITY,
+        ]
+
+    def default_style(self):
+        return default_line_style(self.stat_type)
+
+    @property
+    def geom_type(self) -> GeomType:
+        return GeomType.GEOM_VLINE
+
+    def draw_detached_geom(self, view: ViewPort, filled_geom: FilledGeom):
+        val = self.xintercept
+        scale = filled_geom.gg_data.x_scale
+
+        if scale is None:
+            # we should allow doing it relatively eg 20%
+            raise GGException("expected x_scale for vline")
+
+        rel_pos = (float(val) - scale.low) / (scale.high - scale.low)
+        x = RelativeCoordType(rel_pos)
+        y1 = RelativeCoordType(0.0)
+        y2 = RelativeCoordType(1.0)
+        start = Coord(x=x, y=y1)
+        end = Coord(x=x, y=y2)
+        line = init_line(
+            start,
+            end,
+            InitLineInput(
+                style=Style(
+                    color=deepcopy(BLACK),
+                    fill_color=deepcopy(BLACK),
+                    line_width=3.0,
+                    size=5.0,
+                )
+            ),
+        )
+
+        view.children[0].objects.append(line)
+
+    def draw_geom(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
+    ):
+        raise GGException("Already handled in `draw_sub_df`!")
 
 
 class GeomArea(Geom):
@@ -1181,6 +1246,7 @@ def stat_kind_fg_class(stat_type: StatType) -> Type["FilledStatGeom"]:
         StatType.SMOOTH: FilledSmoothGeom,
         StatType.BIN: FilledBinGeom,
         StatType.DENSITY: FilledBinGeom,
+        StatType.NONE: FilledNoneGeom,
     }
     if stat_type not in lookup:
         raise GGException(f"unsuppoerted stat type {stat_type}")
@@ -1272,17 +1338,20 @@ def create_filled_geoms_for_filled_scales(
         x_continuous = x_continuous or filled_geom.gg_data.is_x_continuous()
         y_continuous = y_continuous or filled_geom.gg_data.is_y_continuous()
 
-        if (
-            x_scale is not None
-            and not x_scale.is_empty()
-            and y_scale is not None
-            and not y_scale.is_empty()
-        ):
-            x_scale = x_scale.merge(filled_geom.gg_data.x_scale)
-            y_scale = y_scale.merge(filled_geom.gg_data.y_scale)
-        else:
-            x_scale = filled_geom.gg_data.x_scale
-            y_scale = filled_geom.gg_data.y_scale
+        fg_x_scale = filled_geom.gg_data.x_scale
+        fg_y_scale = filled_geom.gg_data.x_scale
+        if fg_x_scale or fg_y_scale:
+            if (
+                x_scale is not None
+                and not x_scale.is_empty()
+                and y_scale is not None
+                and not y_scale.is_empty()
+            ):
+                x_scale = x_scale.merge(filled_geom.gg_data.x_scale)
+                y_scale = y_scale.merge(filled_geom.gg_data.y_scale)
+            else:
+                x_scale = filled_geom.gg_data.x_scale
+                y_scale = filled_geom.gg_data.y_scale
 
         filled_scales.geoms.append(filled_geom)
 
@@ -1389,6 +1458,61 @@ class FilledStatGeom(ABC):
         pass
 
     @abstractmethod
+    def get_y_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
+        pass
+
+
+class FilledNoneGeom(FilledStatGeom):
+    def fill_crated_geom(
+        self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
+    ) -> "FilledGeom":
+        # TODO clean this up
+
+        x_scale = filled_scales.get_x_scale(filled_geom.gg_data.geom, optional=True)
+        y_scale = filled_scales.get_y_scale(filled_geom.gg_data.geom, optional=True)
+        if x_scale:
+            filled_geom.gg_data.x_scale = (
+                x_scale.gg_data.discrete_kind.get_low_level_scale()
+            )
+            filled_geom.gg_data.x_discrete_kind = (
+                x_scale.gg_data.discrete_kind.to_filled_geom_kind()
+            )
+        else:
+            filled_geom.gg_data.x_scale = Scale(low=0.0, high=0.0)
+
+        if y_scale:
+            filled_geom.gg_data.y_scale = (
+                y_scale.gg_data.discrete_kind.get_low_level_scale()
+            )
+            filled_geom.gg_data.y_discrete_kind = (
+                y_scale.gg_data.discrete_kind.to_filled_geom_kind()
+            )
+        else:
+            filled_geom.gg_data.y_scale = Scale(low=0.0, high=0.0)
+
+        return filled_geom
+
+    def post_process(self, fg: FilledGeom, df: pd.DataFrame):
+        pass
+
+    def validate(self):
+        pass
+
+    def get_x_col(self) -> Optional[str]:
+        pass
+
+    def get_y_col(self) -> Optional[str]:
+        pass
+
+    def get_x_scale(self) -> Optional["Scale"]:
+        pass
+
+    def get_y_scale(self) -> Optional["Scale"]:
+        pass
+
+    def get_x_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
+        pass
+
     def get_y_discrete_kind(self) -> Optional["FilledGeomDiscreteKind"]:
         pass
 

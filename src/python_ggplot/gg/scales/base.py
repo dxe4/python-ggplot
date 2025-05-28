@@ -272,6 +272,10 @@ class LinearAndTransformScaleData:
 class GGScaleDiscreteKind(DiscreteKind, ABC):
 
     @abstractmethod
+    def get_low_level_scale(self) -> Scale:
+        pass
+
+    @abstractmethod
     def update_filled_geom_x_attributes(
         self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
     ):
@@ -303,6 +307,9 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
         # we have to double check this or it can cause bugs
         fg.gg_data.x_discrete_kind.label_seq = self.label_seq  # type: ignore
 
+    def get_low_level_scale(self) -> Scale:
+        return Scale(low=0.0, high=1.0)
+
     def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
         return FilledGeomDiscrete(label_seq=self.label_seq)
 
@@ -321,6 +328,9 @@ class GGScaleContinuous(GGScaleDiscreteKind):
     ):
         if fg.geom_type != GeomType.RASTER:
             fg.gg_data.num_x = max(fg.gg_data.num_x, len(df))
+
+    def get_low_level_scale(self) -> Scale:
+        return deepcopy(self.data_scale)
 
     def to_filled_geom_kind(self) -> FilledGeomDiscreteKind:
         return FilledGeomContinuous()

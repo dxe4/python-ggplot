@@ -62,6 +62,7 @@ class StatType(GGEnum):
     BIN = auto()
     SMOOTH = auto()
     DENSITY = auto()
+    NONE = auto()
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,7 @@ class StatKind(ABC):
             StatType.IDENTITY: StatIdentity,
             StatType.COUNT: StatCount,
             StatType.SMOOTH: StatSmooth,
+            StatType.NONE: StatNone,
         }
         if stat_type == StatType.DENSITY:
             raise GGException("not supported yet")
@@ -112,6 +114,13 @@ class StatBin(StatKind):
     @property
     def stat_type(self) -> StatType:
         return StatType.BIN
+
+
+class StatNone(StatKind):
+
+    @property
+    def stat_type(self) -> StatType:
+        return StatType.NONE
 
 
 @dataclass(frozen=True)
@@ -547,10 +556,10 @@ class MulTransformation(Transformation):
 
 
 class ZeroTransformation(Transformation):
-    '''
+    """
     This is a bit of a hack, we should allowe gg_col(0),
     but this will break a few things for now
-    '''
+    """
 
     def __call__(self, a, b):
         return pd.Series(np.zeros(len(a)))
@@ -585,7 +594,6 @@ class gg_col:
     def zero(self):
         self.operators.append(ColOperator(0, transformation=ZeroTransformation()))
         return self
-
 
     def evaluate(self, df: pd.DataFrame) -> pd.Series:  # type: ignore
         series = df[self.col]  # type: ignore

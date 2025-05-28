@@ -28,7 +28,13 @@ if TYPE_CHECKING:
 
 
 def coord1d_to_abs_image(coord: Coord1D, img: "Image", axis_kind: AxisKind):
-    length_val = img.height if axis_kind == AxisKind.Y else img.width
+    if axis_kind == AxisKind.Y:
+        length_val = img.height
+    elif axis_kind == AxisKind.X:
+        length_val = img.width
+    else:
+        raise GGException("expect x or y axis")
+
     abs_length = Quantity.points(length_val)
 
     return coord.to_via_points(UnitType.POINT, abs_length=abs_length)

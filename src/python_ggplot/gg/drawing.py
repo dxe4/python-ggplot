@@ -224,6 +224,9 @@ def read_text(df: pd.DataFrame, idx: int, fg: FilledGeom) -> str:
 def get_cols_and_rows(fg: FilledGeom) -> Tuple[int, int]:
     cols, rows = 1, 1
 
+    if fg.gg_data.x_discrete_kind is None or fg.gg_data.y_discrete_kind is None:
+        return cols, rows
+
     if fg.is_discrete_x():
         f_geom_ = cast(FilledGeomDiscrete, fg.gg_data.x_discrete_kind)
         cols = len(f_geom_.label_seq)
@@ -1013,3 +1016,6 @@ def create_gobj_from_geom(
             continue
 
         draw_sub_df(view, fg, view_map, sub_df, styles, theme)
+
+    if fg.geom_type in {GeomType.GEOM_VLINE}:
+        fg.gg_data.geom.draw_detached_geom(view, fg)

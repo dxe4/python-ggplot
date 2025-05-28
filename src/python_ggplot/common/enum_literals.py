@@ -14,7 +14,7 @@ especially over multiple variables
 
 from typing import Literal
 
-STAT_TYPE_VALUES = Literal["identity", "count", "bin", "smooth", "density"]
+STAT_TYPE_VALUES = Literal["identity", "count", "bin", "smooth", "density", "none"]
 BIN_POSITION_VALUES = Literal["none", "center", "left", "right"]
 POSITION_VALUES = Literal["identity", "stack", "dodge", "fill"]
 BIN_BY_VALUES = Literal["full", "subset"]
