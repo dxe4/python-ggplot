@@ -65,23 +65,24 @@ def merge_user_style(style: GGStyle, fg: FilledGeom) -> Style:
             setattr(result, field, value)
 
     if user_style.alpha is not None:
-        result.fill_color.a = user_style.alpha  # type: ignore
+        result.fill_color = result.fill_color.update_with_copy(a=user_style.alpha)
+
         if geom_type in {
             GeomType.POINT,
             GeomType.LINE,
             GeomType.ERROR_BAR,
             GeomType.TEXT,
         }:
-            result.color.a = user_style.alpha
+            result.color = result.color.update_with_copy(a=user_style.alpha)
     elif style.alpha is not None:
-        result.fill_color.a = style.alpha  # type: ignore
+        result.fill_color = result.fill_color.update_with_copy(a=style.alpha)
         if geom_type in {
             GeomType.POINT,
             GeomType.LINE,
             GeomType.ERROR_BAR,
             GeomType.TEXT,
         }:
-            result.color.a = user_style.alpha  # type: ignore
+            result.color = result.color.update_with_copy(a=style.alpha)
 
     # TODO check why this is None? Should it be None or WTF?
     if result.font is None:

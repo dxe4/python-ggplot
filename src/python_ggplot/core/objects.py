@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from typing import Any, Generic, List, Literal, Optional, Type, TypeVar, Union
 
+from python_ggplot.common.objects import Freezable
 from python_ggplot.core.common import linspace
 from python_ggplot.graphics.cairo_backend import CairoBackend
 
@@ -157,11 +158,14 @@ class CFontSlant(GGEnum):
 
 # TODO Move all color logic in chroma
 @dataclass
-class Color:
+class Color(Freezable):
     r: float
     g: float
     b: float
     a: float = 1.0
+
+    def new_color_with_alpha(self, alpha: float):
+        return Color(r=self.r, g=self.g, b=self.b, a=alpha)
 
     def __eq__(self, o: Any) -> bool:
         return self.r == o.r and self.g == o.g and self.b == o.b and self.a == o.a
@@ -171,12 +175,12 @@ class Color:
             r=int(self.r * 255),
             b=int(self.b * 255),
             g=int(self.g * 255),
-            a=int(self.a),
+            a=self.a,
         )
 
 
 @dataclass
-class ColorRGBA:
+class ColorRGBA(Freezable):
     r: int
     g: int
     b: int
