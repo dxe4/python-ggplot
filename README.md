@@ -184,9 +184,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
         + geom_area(stat="bin", alpha=1)
         + geom_vline(
             data=vline_gender_quantiles,
-            # TODO this doesnt need to take X
-            # we need to change the logic in stat idenitiy geom
-            # to use xintercept as x
             aes=aes(xintercept="weight", x="weight"),
             size=2,
             line_type="dashed",
