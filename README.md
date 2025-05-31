@@ -173,15 +173,29 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
     )
 
     df = pd.DataFrame({"sex": pd.Categorical(sex), "weight": weight})
-    quantiles = list(df["weight"].quantile([0.25, 0.75]))
-    plot = ggplot(
-        df, aes(x="weight", fill="sex")
-    ) + geom_area(
-        stat="bin", alpha=1
-    ) + geom_vline(
-        xintercept=quantiles[0]
-    ) + geom_vline(
-        xintercept=quantiles[1]
+
+    vline_gender_quantiles = (
+        df.groupby("sex")["weight"].quantile([0.05, 0.95]).reset_index()
+    )
+    global_quantiles: List[float] = list(df["weight"].quantile([0.05, 0.95]))
+
+    plot = (
+        ggplot(df, aes(x="weight", fill="sex"))
+        + geom_area(stat="bin", alpha=1)
+        + geom_vline(
+            data=vline_gender_quantiles,
+            # TODO this doesnt need to take X
+            # we need to change the logic in stat idenitiy geom
+            # to use xintercept as x
+            aes=aes(xintercept="weight", x="weight"),
+            size=2,
+            line_type="dashed",
+            inhert_aes=True,
+            alpha=0.7,
+        )
+        + geom_vline(
+            xintercept=global_quantiles, size=2.5, line_type="solid", color="blue"
+        )
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
