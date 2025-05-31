@@ -34,6 +34,8 @@ from python_ggplot.gg.styles.config import (
     TEXT_DEFAULT_STYLE,
     TILE_DEFAULT_STYLE,
 )
+
+# from python_ggplot.gg.styles.utils import apply_style
 from python_ggplot.gg.types import (
     COUNT_COL,
     SMOOTH_VALS_COL,
@@ -60,6 +62,7 @@ from python_ggplot.graphics.initialize import (
     init_rect,
     init_text,
 )
+from python_ggplot.graphics.objects import GraphicsObject
 from python_ggplot.graphics.views import ViewPort
 from tests.test_view import AxisKind, RelativeCoordType
 
@@ -171,6 +174,9 @@ class Geom(ABC):
     def has_bars(self) -> bool:
         # can be true for for geom_bar and geom_histogram
         return False
+
+    def inherit_aes(self) -> bool:
+        return True
 
 
 @dataclass
@@ -621,6 +627,10 @@ class GeomTile(GeomTileMixin, Geom):
 @dataclass
 class GeomVLine(Geom):
     xintercept: Union[Union[float, int], Iterable[Union[float, int]]]
+    inhert_aes: bool = False
+
+    def inherit_aes(self) -> bool:
+        return self.inhert_aes
 
     @property
     def allowed_stat_types(self) -> List["StatType"]:
@@ -636,14 +646,7 @@ class GeomVLine(Geom):
     def geom_type(self) -> GeomType:
         return GeomType.GEOM_VLINE
 
-    def draw_detached_geom(self, view: ViewPort, filled_geom: FilledGeom):
-        val = self.xintercept
-        scale = filled_geom.gg_data.x_scale
-
-        if scale is None:
-            # we should allow doing it relatively eg 20%
-            raise GGException("expected x_scale for vline")
-
+    def _draw_vline(self, val: float, scale: Scale, style: Style) -> GraphicsObject:
         rel_pos = (float(val) - scale.low) / (scale.high - scale.low)
         x = RelativeCoordType(rel_pos)
         y1 = RelativeCoordType(0.0)
@@ -653,17 +656,34 @@ class GeomVLine(Geom):
         line = init_line(
             start,
             end,
-            InitLineInput(
-                style=Style(
-                    color=deepcopy(BLACK),
-                    fill_color=deepcopy(BLACK),
-                    line_width=3.0,
-                    size=5.0,
-                )
-            ),
+            InitLineInput(style=style),
         )
+        return line
 
-        view.children[0].objects.append(line)
+    def draw_detached_geom(
+        self,
+        view: ViewPort,
+        filled_geom: FilledGeom,
+        style: Style,
+        x_series: Optional[pd.Series],
+    ):
+        lines: List[GraphicsObject] = []
+        scale = filled_geom.gg_data.x_scale
+        if scale is None:
+            raise GGException("take from view..")
+
+        if x_series is not None:
+            x_values = list(x_series)
+            scale = view.x_scale
+            # TODO fix the FG calculation so the scale is correct
+        elif isinstance(self.xintercept, Iterable):
+            x_values = self.xintercept
+        else:
+            x_values = [self.xintercept]
+
+        for i in x_values:
+            line = self._draw_vline(i, scale, style)
+            view.children[0].objects.append(line)
 
     def draw_geom(
         self,
@@ -1100,7 +1120,7 @@ def get_scales(
             raise GGException("found more than 1 scale matching gid")
         if len(more_scale) == 1:
             return more_scale[0]
-        elif field.main is not None:
+        elif field.main is not None and geom.inherit_aes():
             return field.main
         else:
             return None
@@ -1285,7 +1305,7 @@ def create_filled_geom_from_geom(
         )
 
     filled_scale_stat_geom = create_fillsed_scale_stat_geom(df, geom, filled_scales)
-    filled_geom, df, stlye = filled_scale_stat_geom.create_filled_geom(filled_scales)
+    filled_geom, df, style = filled_scale_stat_geom.create_filled_geom(filled_scales)
     filled_scale_stat_geom.post_process(filled_geom, df)
     return filled_geom
 
@@ -1348,7 +1368,8 @@ def create_filled_geoms_for_filled_scales(
                 and not y_scale.is_empty()
             ):
                 x_scale = x_scale.merge(filled_geom.gg_data.x_scale)
-                y_scale = y_scale.merge(filled_geom.gg_data.y_scale)
+                if filled_geom.gg_data.y_scale is not None:
+                    y_scale = y_scale.merge(filled_geom.gg_data.y_scale)
             else:
                 x_scale = filled_geom.gg_data.x_scale
                 y_scale = filled_geom.gg_data.y_scale
@@ -1466,8 +1487,9 @@ class FilledNoneGeom(FilledStatGeom):
     def fill_crated_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
-        # TODO clean this up
+        from python_ggplot.gg.geom.utils import apply_cont_scale_if_any
 
+        # TODO clean this up
         x_scale = filled_scales.get_x_scale(filled_geom.gg_data.geom, optional=True)
         y_scale = filled_scales.get_y_scale(filled_geom.gg_data.geom, optional=True)
         if x_scale:
@@ -1490,6 +1512,8 @@ class FilledNoneGeom(FilledStatGeom):
         else:
             filled_geom.gg_data.y_scale = Scale(low=0.0, high=0.0)
 
+        copied_style = deepcopy(style)
+        filled_geom.gg_data.yield_data["no_lab_data"] = (copied_style, [copied_style], self.df)
         return filled_geom
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):

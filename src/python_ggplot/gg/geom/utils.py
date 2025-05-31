@@ -249,9 +249,13 @@ def _filled_identity_geom_map(
     for keys in sorted_keys:  # type: ignore
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-        current_style = apply_style(
-            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-        )  # type: ignore
+
+        if filled_geom.gg_data.geom.inherit_aes():
+            current_style = apply_style(
+                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+            )  # type: ignore
+        else:
+            current_style = deepcopy(style)
 
         yield_df: pd.DataFrame = sub_df.copy()  # type: ignore
         filled_stat_geom.x.set_x_attributes(filled_geom, yield_df)
@@ -259,11 +263,12 @@ def _filled_identity_geom_map(
         if geom.gg_data.position == PositionType.STACK:
             yield_df[PREV_VALS_COL] = 0.0 if len(col) == 0 else col.copy()  # type: ignore
 
-        col = add_counts_by_position(
-            yield_df[filled_geom.gg_data.y_col],  # type: ignore
-            col,  # type: ignore
-            geom.gg_data.position,
-        )
+        if geom.gg_data.position == PositionType.STACK:
+            col = add_counts_by_position(
+                yield_df[filled_geom.gg_data.y_col],  # type: ignore
+                col,  # type: ignore
+                geom.gg_data.position,
+            )
 
         if _modify_for_stacking(geom):
             yield_df[filled_geom.gg_data.y_col] = col
@@ -339,9 +344,12 @@ def _filled_count_geom_map(
     for keys in sorted_keys:  # type: ignore
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-        current_style = apply_style(
-            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-        )  # type: ignore
+        if filled_geom.gg_data.geom.inherit_aes():
+            current_style = apply_style(
+                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+            )  # type: ignore
+        else:
+            current_style = deepcopy(style)
 
         weight_scale = filled_scales.get_weight_scale(
             filled_stat_geom.geom, optional=True
@@ -429,9 +437,12 @@ def _filled_bin_geom_map(
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
 
-        current_style = apply_style(
-            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-        )  # type: ignore
+        if filled_geom.gg_data.geom.inherit_aes():
+            current_style = apply_style(
+                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+            )  # type: ignore
+        else:
+            current_style = deepcopy(style)
 
         hist, bins, _ = call_histogram(
             filled_stat_geom.geom,
@@ -561,9 +572,12 @@ def _filled_smooth_geom_map(
     for keys in sorted_keys:  # type: ignore
         sub_df = grouped.get_group(keys)  # type: ignore
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-        current_style = apply_style(
-            deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-        )  # type: ignore
+        if filled_geom.gg_data.geom.inherit_aes():
+            current_style = apply_style(
+                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
+            )  # type: ignore
+        else:
+            current_style = deepcopy(style)
 
         yield_df = sub_df.copy()  # type: ignore
 

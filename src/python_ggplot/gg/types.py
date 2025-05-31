@@ -177,9 +177,11 @@ class Aesthetics:
     x: Optional["GGScale"] = None
     x_min: Optional["GGScale"] = None
     x_max: Optional["GGScale"] = None
+    xintercept: Optional["GGScale"] = None
     y: Optional["GGScale"] = None
     y_min: Optional["GGScale"] = None
     y_max: Optional["GGScale"] = None
+    yintercept: Optional["GGScale"] = None
     fill: Optional["GGScale"] = None
     color: Optional["GGScale"] = None
     alpha: Optional["GGScale"] = None

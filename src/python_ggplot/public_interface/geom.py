@@ -358,7 +358,8 @@ def geom_line(
 
 
 def geom_vline(
-    xintercept: Union[Union[float, int], Iterable[Union[float, int]]],
+    xintercept: Optional[Union[Union[float, int], Iterable[Union[float, int]]]] = None,
+    data: Optional[pd.DataFrame] = None,
     aes: Optional[Aesthetics] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
@@ -366,12 +367,19 @@ def geom_vline(
     fill_color: PossibleColor = None,
     position: POSITION_VALUES = "identity",
     alpha: Optional[float] = None,
+    inhert_aes: bool = False,
 ) -> "Geom":
 
     if aes is None:
         aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
 
-    stat_ = StatType.eitem("none")
+    if xintercept:
+        stat_ = StatType.eitem("none")
+    else:
+        stat_ = StatType.eitem("identity")
+
     position_ = PositionType.eitem(position)
     line_type_ = LineType.eitem(line_type)
 
@@ -388,14 +396,14 @@ def geom_vline(
     gid = get_gid()
     gg_data = GeomData(
         gid=gid,
-        data=None,
+        data=data,
         user_style=style,
         aes=fill_ids(aes, {gid}),
         bin_position=None,
         stat_kind=StatKind.create_from_enum(stat_),
         position=position_,
     )
-    result = GeomVLine(gg_data=gg_data, xintercept=xintercept)
+    result = GeomVLine(gg_data=gg_data, xintercept=xintercept, inhert_aes=inhert_aes)
 
     return result
 

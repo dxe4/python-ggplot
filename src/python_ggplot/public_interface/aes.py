@@ -17,6 +17,8 @@ from tests.test_plots import gg_col
 _AES_PARAM_TO_SCALE_ARGS: Dict[str, Tuple[ScaleType, Optional[AxisKind]]] = {
     "x": (ScaleType.LINEAR_DATA, AxisKind.X),
     "y": (ScaleType.LINEAR_DATA, AxisKind.Y),
+    "xintercept": (ScaleType.LINEAR_DATA, AxisKind.X),
+    "yintercept": (ScaleType.LINEAR_DATA, AxisKind.Y),
     "color": (ScaleType.COLOR, None),
     "fill": (ScaleType.COLOR, None),
     "shape": (ScaleType.SHAPE, None),
@@ -83,6 +85,8 @@ def _init_aes(data: Dict[str, Optional[str]]) -> Aesthetics:
 def aes(
     x: Optional[Union[str, gg_col]] = None,
     y: Optional[Union[str, gg_col]] = None,
+    xintercept: Optional[Union[str, gg_col]] = None,
+    yintercept: Optional[Union[str, gg_col]] = None,
     color: Optional[str] = None,
     fill: Optional[str] = None,
     shape: Optional[str] = None,
@@ -109,6 +113,8 @@ def aes(
     data: Dict[str, Optional[str]] = {
         "x": x,
         "y": y,
+        "xintercept": xintercept,
+        "yintercept": yintercept,
         "color": color,
         "fill": fill,
         "shape": shape,

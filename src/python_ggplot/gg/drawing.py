@@ -841,6 +841,17 @@ def draw_sub_df(
     need_bin_width = _needs_bin_width(geom_type, fg.gg_data.geom.gg_data.bin_position)
 
     line_points: List[Coord] = []
+    if geom_type == GeomType.GEOM_VLINE:
+        for i in range(len(df)):
+            if len(styles) > 1:
+                style = merge_user_style(styles[i], fg)
+
+        if fg.gg_data.x_col:
+            fg.gg_data.geom.draw_detached_geom(view, fg, style, df[fg.gg_data.x_col])
+        else:
+            fg.gg_data.geom.draw_detached_geom(view, fg, style, None)
+        return
+
     if geom_type != GeomType.RASTER:
         x_tensor = df[fg.gg_data.x_col]  # type: ignore
         y_tensor = df[fg.gg_data.y_col]  # type: ignore
@@ -1016,6 +1027,3 @@ def create_gobj_from_geom(
             continue
 
         draw_sub_df(view, fg, view_map, sub_df, styles, theme)
-
-    if fg.geom_type in {GeomType.GEOM_VLINE}:
-        fg.gg_data.geom.draw_detached_geom(view, fg)
