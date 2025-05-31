@@ -299,6 +299,22 @@ ggdraw_plot(res, plots_path / "geom_point_and_text.png")
 
 
 ```python
+    mt_cars = pd.read_csv(data_path / "mtcars_r.csv")
+
+    plot = (
+        ggplot(mt_cars, aes(x="wt", y="mpg"))
+        + geom_point()
+        + geom_abline(intercept=37, slope=-5, size=3.2)
+        + geom_vline(xintercept=3, color="blue")
+        + geom_hline(yintercept=22, line_type="dashed")
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_abline_vline_hline.png")
+```
+<img src="plots/geom_error_bar.png?v=1" alt="geom_error_bar" width="400px">
+
+
+```python
 df = pd.DataFrame({
     'trt': [1, 1, 2, 2],
     'resp': [1, 5, 3, 4],

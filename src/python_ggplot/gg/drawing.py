@@ -841,7 +841,7 @@ def draw_sub_df(
     need_bin_width = _needs_bin_width(geom_type, fg.gg_data.geom.gg_data.bin_position)
 
     line_points: List[Coord] = []
-    if geom_type in {GeomType.GEOM_VLINE, GeomType.GEOM_HLINE}:
+    if geom_type in {GeomType.GEOM_VLINE, GeomType.GEOM_HLINE, GeomType.GEOM_ABLINE}:
         for i in range(len(df)):
             if len(styles) > 1:
                 style = merge_user_style(styles[i], fg)

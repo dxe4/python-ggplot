@@ -19,6 +19,7 @@ from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.geom.base import (
     Geom,
+    GeomABLine,
     GeomArea,
     GeomBar,
     GeomData,
@@ -456,6 +457,57 @@ def geom_hline(
         position=position_,
     )
     result = GeomHLine(gg_data=gg_data, yintercept=yintercept, inhert_aes=inhert_aes)
+
+    return result
+
+
+def geom_abline(
+    intercept: Union[int, float],
+    slope: Union[int, float],
+    aes: Optional[Aesthetics] = None,
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "none_type",
+    fill_color: PossibleColor = None,
+    position: POSITION_VALUES = "identity",
+    alpha: Optional[float] = None,
+    inhert_aes: bool = False,
+) -> "Geom":
+
+    if aes is None:
+        aes = Aesthetics()
+
+    stat_ = StatType.eitem("none")
+
+    position_ = PositionType.eitem(position)
+    line_type_ = LineType.eitem(line_type)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=size,
+        p_alpha=alpha,
+        p_fill_color=fill_color,
+        p_line_type=line_type_,
+        p_line_width=size,
+    )
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=None,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=None,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomABLine(
+        gg_data=gg_data,
+        intercept=intercept,
+        slope=slope,
+        inhert_aes=inhert_aes,
+    )
 
     return result
 

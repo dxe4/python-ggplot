@@ -25,6 +25,7 @@ from python_ggplot.public_interface.common import (
     ylab,
 )
 from python_ggplot.public_interface.geom import (
+    geom_abline,
     geom_area,
     geom_bar,
     geom_error_bar,
@@ -492,3 +493,17 @@ def test_geom_area_simple():
     plot = ggplot(df, aes(x="x", y="y")) + geom_area(alpha=0.3)
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_simple.png")
+
+
+def test_lines():
+    mt_cars = pd.read_csv(data_path / "mtcars_r.csv")
+
+    plot = (
+        ggplot(mt_cars, aes(x="wt", y="mpg"))
+        + geom_point()
+        + geom_abline(intercept=37, slope=-5, size=3.2)
+        + geom_vline(xintercept=3, color="blue")
+        + geom_hline(yintercept=22, line_type="dashed")
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_abline_vline_hline.png")

@@ -93,6 +93,7 @@ class GeomType(GGEnum):
     GEOM_AREA = auto()
     GEOM_VLINE = auto()
     GEOM_HLINE = auto()
+    GEOM_ABLINE = auto()
 
 
 @dataclass
@@ -785,6 +786,106 @@ class GeomVLine(StaticLine, Geom):
     @property
     def geom_type(self) -> GeomType:
         return GeomType.GEOM_VLINE
+
+
+def _ab_line(intercept: float, slope: float, x_scale: Scale, y_scale: Scale):
+    intersections: List[Tuple[float, float]] = []
+
+    if slope == 0:  # Horizontal line
+        intersections.append((x_scale.low, intercept))
+        intersections.append((x_scale.high, intercept))
+    elif abs(slope) > 1e10:  # Nearly vertical line
+        x_pos = intercept
+        intersections.append((x_pos, y_scale.low))
+        intersections.append((x_pos, y_scale.high))
+    else:
+        y_left = slope * x_scale.low + intercept
+        if y_scale.low <= y_left <= y_scale.high:
+            intersections.append((x_scale.low, y_left))
+
+        y_right = slope * x_scale.high + intercept
+        if y_scale.low <= y_right <= y_scale.high:
+            intersections.append((x_scale.high, y_right))
+
+        x_bottom = (y_scale.low - intercept) / slope
+        if x_scale.low <= x_bottom <= x_scale.high:
+            intersections.append((x_bottom, y_scale.low))
+
+        x_top = (y_scale.high - intercept) / slope
+        if x_scale.low <= x_top <= x_scale.high:
+            intersections.append((x_top, y_scale.high))
+
+    p1, p2 = intersections[:2]
+
+    x_start = (p1[0] - x_scale.low) / (x_scale.high - x_scale.low)
+    y_start = 1.0 - ((p1[1] - y_scale.low) / (y_scale.high - y_scale.low))
+
+    x_end = (p2[0] - x_scale.low) / (x_scale.high - x_scale.low)
+    y_end = 1.0 - ((p2[1] - y_scale.low) / (y_scale.high - y_scale.low))
+
+    return x_start, y_start, x_end, y_end
+
+
+@dataclass
+class GeomABLine(Geom):
+    intercept: Union[int, float]
+    slope: Union[int, float]
+    inhert_aes: bool = False
+
+    def draw_detached_geom(
+        self,
+        view: ViewPort,
+        filled_geom: FilledGeom,
+        style: Style,
+        series: Optional[pd.Series] = None,
+    ):
+        y_scale = view.y_scale
+        x_scale = view.x_scale
+
+        if y_scale is None or x_scale is None:
+            raise GGException("expected a scale to draw static line")
+
+        x_start, y_start, x_end, y_end = _ab_line(
+            self.intercept, self.slope, x_scale, y_scale
+        )
+
+        start = Coord(x=RelativeCoordType(x_start), y=RelativeCoordType(y_start))
+        end = Coord(x=RelativeCoordType(x_end), y=RelativeCoordType(y_end))
+        line = init_line(
+            start,
+            end,
+            InitLineInput(style=style),
+        )
+        view.children[0].objects.append(line)
+
+    def inherit_aes(self) -> bool:
+        return self.inhert_aes
+
+    @property
+    def allowed_stat_types(self) -> List["StatType"]:
+        return [
+            StatType.NONE,
+        ]
+
+    def default_style(self):
+        return default_line_style(self.stat_type)
+
+    @property
+    def geom_type(self) -> GeomType:
+        return GeomType.GEOM_ABLINE
+
+    def draw_geom(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
+    ):
+        raise GGException("Already handled in `draw_sub_df`!")
 
 
 class GeomArea(Geom):
