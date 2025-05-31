@@ -311,7 +311,7 @@ ggdraw_plot(res, plots_path / "geom_point_and_text.png")
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_abline_vline_hline.png")
 ```
-<img src="plots/geom_error_bar.png?v=1" alt="geom_error_bar" width="400px">
+<img src="plots/geom_abline_vline_hline.png?v=1" alt="geom_abline_vline_hline" width="400px">
 
 
 ```python
