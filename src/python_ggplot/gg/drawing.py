@@ -841,7 +841,7 @@ def draw_sub_df(
     need_bin_width = _needs_bin_width(geom_type, fg.gg_data.geom.gg_data.bin_position)
 
     line_points: List[Coord] = []
-    if geom_type == GeomType.GEOM_VLINE:
+    if geom_type in {GeomType.GEOM_VLINE, GeomType.GEOM_HLINE}:
         for i in range(len(df)):
             if len(styles) > 1:
                 style = merge_user_style(styles[i], fg)
@@ -849,7 +849,8 @@ def draw_sub_df(
         if fg.gg_data.x_col:
             fg.gg_data.geom.draw_detached_geom(view, fg, style, df[fg.gg_data.x_col])
         else:
-            fg.gg_data.geom.draw_detached_geom(view, fg, style, None)
+            print(2)
+            fg.gg_data.geom.draw_detached_geom(view, fg, style)
         return
 
     if geom_type != GeomType.RASTER:

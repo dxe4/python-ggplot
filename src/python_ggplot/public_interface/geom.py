@@ -25,6 +25,7 @@ from python_ggplot.gg.geom.base import (
     GeomErrorBar,
     GeomFreqPoly,
     GeomHistogram,
+    GeomHLine,
     GeomLine,
     GeomPoint,
     GeomRaster,
@@ -404,6 +405,57 @@ def geom_vline(
         position=position_,
     )
     result = GeomVLine(gg_data=gg_data, xintercept=xintercept, inhert_aes=inhert_aes)
+
+    return result
+
+
+def geom_hline(
+    yintercept: Optional[Union[Union[float, int], Iterable[Union[float, int]]]] = None,
+    data: Optional[pd.DataFrame] = None,
+    aes: Optional[Aesthetics] = None,
+    color: PossibleColor = None,
+    size: PossibleFloat = None,
+    line_type: LINE_TYPE_VALUES = "none_type",
+    fill_color: PossibleColor = None,
+    position: POSITION_VALUES = "identity",
+    alpha: Optional[float] = None,
+    inhert_aes: bool = False,
+) -> "Geom":
+
+    if aes is None:
+        aes = Aesthetics()
+    if data is None:
+        data = pd.DataFrame()
+
+    if yintercept:
+        stat_ = StatType.eitem("none")
+    else:
+        stat_ = StatType.eitem("identity")
+
+    position_ = PositionType.eitem(position)
+    line_type_ = LineType.eitem(line_type)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=size,
+        p_alpha=alpha,
+        p_fill_color=fill_color,
+        p_line_type=line_type_,
+        p_line_width=size,
+    )
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=data,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=None,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomHLine(gg_data=gg_data, yintercept=yintercept, inhert_aes=inhert_aes)
 
     return result
 

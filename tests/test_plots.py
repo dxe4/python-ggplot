@@ -30,6 +30,7 @@ from python_ggplot.public_interface.geom import (
     geom_error_bar,
     geom_freqpoly,
     geom_histogram,
+    geom_hline,
     geom_line,
     geom_linerange,
     geom_point,
@@ -463,6 +464,7 @@ def test_geom_area_stat_bin():
         + geom_vline(
             xintercept=global_quantiles, size=2.5, line_type="solid", color="blue"
         )
+        + geom_hline(yintercept=10, size=1, alpha=0.7)
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")

@@ -92,6 +92,7 @@ class GeomType(GGEnum):
     RASTER = auto()
     GEOM_AREA = auto()
     GEOM_VLINE = auto()
+    GEOM_HLINE = auto()
 
 
 @dataclass
@@ -624,10 +625,149 @@ class GeomTile(GeomTileMixin, Geom):
         ]
 
 
+class StaticLine(ABC):
+
+    @abstractmethod
+    def axis_kind(self) -> AxisKind:
+        pass
+
+    @abstractmethod
+    def intercept_field(
+        self,
+    ) -> Optional[Union[Union[float, int], Iterable[Union[float, int]]]]:
+        pass
+
+    @abstractmethod
+    def get_scale(
+        self, view: ViewPort, fg: FilledGeom, series: Optional[pd.Series] = None
+    ) -> Optional[Scale]:
+        pass
+
+    def values_to_use(
+        self,
+        series: Optional[pd.Series] = None,
+    ) -> List[float]:
+        intercept_field = self.intercept_field()
+        if intercept_field is not None:
+            if isinstance(intercept_field, Iterable):
+                # str is iterable and if that happens it will cause issue
+                return list(intercept_field)
+            else:
+                return [intercept_field]
+        elif series is not None:
+            return list(series)
+        else:
+            # this shouldn't happen but making sure we have an error in case is needed
+            raise GGException("expected either an intercept value or a column")
+
+    def _draw_static_line(
+        self, val: float, scale: Scale, style: Style, axis_kind: AxisKind
+    ) -> GraphicsObject:
+        rel_pos = (float(val) - scale.low) / (scale.high - scale.low)
+        if axis_kind == AxisKind.X:
+            x = RelativeCoordType(rel_pos)
+            y1 = RelativeCoordType(0.0)
+            y2 = RelativeCoordType(1.0)
+            start = Coord(x=x, y=y1)
+            end = Coord(x=x, y=y2)
+        elif axis_kind == AxisKind.Y:
+            y = RelativeCoordType(1 - rel_pos)
+            x1 = RelativeCoordType(0.0)
+            x2 = RelativeCoordType(1.0)
+            start = Coord(x=x1, y=y)
+            end = Coord(x=x2, y=y)
+        else:
+            raise GGException("Unepected axis")
+
+        line = init_line(
+            start,
+            end,
+            InitLineInput(style=style),
+        )
+        return line
+
+    def draw_detached_geom(
+        self,
+        view: ViewPort,
+        filled_geom: FilledGeom,
+        style: Style,
+        series: Optional[pd.Series] = None,
+    ):
+        scale = self.get_scale(view, filled_geom, series)
+        if scale is None:
+            raise GGException("expected a scale to draw static line")
+
+        for position in self.values_to_use(series):
+            line = self._draw_static_line(position, scale, style, self.axis_kind())
+            view.children[0].objects.append(line)
+
+    def draw_geom(
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        pos: Coord,
+        y: Any,
+        bin_widths: Tuple[float, float],
+        df: pd.DataFrame,
+        idx: int,
+        style: Style,
+    ):
+        raise GGException("Already handled in `draw_sub_df`!")
+
+
 @dataclass
-class GeomVLine(Geom):
-    xintercept: Union[Union[float, int], Iterable[Union[float, int]]]
+class GeomHLine(StaticLine, Geom):
+    yintercept: Optional[Union[Union[float, int], Iterable[Union[float, int]]]]
     inhert_aes: bool = False
+
+    def axis_kind(self) -> AxisKind:
+        return AxisKind.Y
+
+    def intercept_field(
+        self,
+    ) -> Optional[Union[Union[float, int], Iterable[Union[float, int]]]]:
+        return self.yintercept
+
+    def get_scale(
+        self, view: ViewPort, fg: FilledGeom, series: Optional[pd.Series] = None
+    ) -> Optional[Scale]:
+        return view.y_scale
+
+    def inherit_aes(self) -> bool:
+        return self.inhert_aes
+
+    @property
+    def allowed_stat_types(self) -> List["StatType"]:
+        return [
+            StatType.NONE,
+            StatType.IDENTITY,
+        ]
+
+    def default_style(self):
+        return default_line_style(self.stat_type)
+
+    @property
+    def geom_type(self) -> GeomType:
+        return GeomType.GEOM_HLINE
+
+
+@dataclass
+class GeomVLine(StaticLine, Geom):
+    xintercept: Optional[Union[Union[float, int], Iterable[Union[float, int]]]]
+    inhert_aes: bool = False
+
+    def axis_kind(self) -> AxisKind:
+        return AxisKind.X
+
+    def get_scale(
+        self, view: ViewPort, fg: FilledGeom, series: Optional[pd.Series] = None
+    ) -> Optional[Scale]:
+        return view.x_scale
+
+    def intercept_field(
+        self,
+    ) -> Optional[Union[Union[float, int], Iterable[Union[float, int]]]]:
+        return self.xintercept
 
     def inherit_aes(self) -> bool:
         return self.inhert_aes
@@ -645,58 +785,6 @@ class GeomVLine(Geom):
     @property
     def geom_type(self) -> GeomType:
         return GeomType.GEOM_VLINE
-
-    def _draw_vline(self, val: float, scale: Scale, style: Style) -> GraphicsObject:
-        rel_pos = (float(val) - scale.low) / (scale.high - scale.low)
-        x = RelativeCoordType(rel_pos)
-        y1 = RelativeCoordType(0.0)
-        y2 = RelativeCoordType(1.0)
-        start = Coord(x=x, y=y1)
-        end = Coord(x=x, y=y2)
-        line = init_line(
-            start,
-            end,
-            InitLineInput(style=style),
-        )
-        return line
-
-    def draw_detached_geom(
-        self,
-        view: ViewPort,
-        filled_geom: FilledGeom,
-        style: Style,
-        x_series: Optional[pd.Series],
-    ):
-        lines: List[GraphicsObject] = []
-        scale = filled_geom.gg_data.x_scale
-        if scale is None:
-            raise GGException("take from view..")
-
-        if x_series is not None:
-            x_values = list(x_series)
-            scale = view.x_scale
-            # TODO fix the FG calculation so the scale is correct
-        elif isinstance(self.xintercept, Iterable):
-            x_values = self.xintercept
-        else:
-            x_values = [self.xintercept]
-
-        for i in x_values:
-            line = self._draw_vline(i, scale, style)
-            view.children[0].objects.append(line)
-
-    def draw_geom(
-        self,
-        view: ViewPort,
-        fg: "FilledGeom",
-        pos: Coord,
-        y: Any,
-        bin_widths: Tuple[float, float],
-        df: pd.DataFrame,
-        idx: int,
-        style: Style,
-    ):
-        raise GGException("Already handled in `draw_sub_df`!")
 
 
 class GeomArea(Geom):
@@ -1513,7 +1601,11 @@ class FilledNoneGeom(FilledStatGeom):
             filled_geom.gg_data.y_scale = Scale(low=0.0, high=0.0)
 
         copied_style = deepcopy(style)
-        filled_geom.gg_data.yield_data["no_lab_data"] = (copied_style, [copied_style], self.df)
+        filled_geom.gg_data.yield_data["no_lab_data"] = (
+            copied_style,
+            [copied_style],
+            self.df,
+        )
         return filled_geom
 
     def post_process(self, fg: FilledGeom, df: pd.DataFrame):
