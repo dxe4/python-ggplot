@@ -184,7 +184,7 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
         + geom_area(stat="bin", alpha=1)
         + geom_vline(
             data=vline_gender_quantiles,
-            aes=aes(xintercept="weight", x="weight"),
+            aes=aes(xintercept="weight"),
             size=2,
             line_type="dashed",
             inhert_aes=True,

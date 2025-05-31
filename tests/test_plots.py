@@ -454,10 +454,7 @@ def test_geom_area_stat_bin():
         + geom_area(stat="bin", alpha=1)
         + geom_vline(
             data=vline_gender_quantiles,
-            # TODO this doesnt need to take X
-            # we need to change the logic in stat idenitiy geom
-            # to use xintercept as x
-            aes=aes(xintercept="weight", x="weight"),
+            aes=aes(xintercept="weight"),
             size=2,
             line_type="dashed",
             inhert_aes=True,
