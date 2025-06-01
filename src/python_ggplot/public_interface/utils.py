@@ -770,6 +770,7 @@ def annotate(
     x: Optional[float] = None,
     y: Optional[float] = None,
     size: int = 12,
+    emoji: bool= False,
     rotate: float = 0.0,
     background_color: str = "white",
 ) -> Annotation:
@@ -779,6 +780,10 @@ def annotate(
         # TODO: implement hex (str) -> Color
         raise GGException(f"coulnd not convert {background_color} to color")
 
+    if emoji:
+        font_family = "Segoe UI Emoji"
+    else:
+        font_family = "sans-serif"
     result = Annotation(
         left=left,
         bottom=bottom,
@@ -787,7 +792,7 @@ def annotate(
         x=x,
         y=y,
         text=text,
-        font=Font(size=size),
+        font=Font(size=size, family=font_family),
         rotate=rotate,
         background_color=bg_color,
     )
