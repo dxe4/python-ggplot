@@ -29,7 +29,7 @@ from python_ggplot.common.enum_literals import (
     OUTSIDE_RANGE_KIND_VALUES,
     UNIT_TYPE_VALUES,
 )
-from python_ggplot.core.chroma import int_to_color
+from python_ggplot.core.chroma import int_to_color, to_opt_color
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
     Coord,
@@ -770,14 +770,10 @@ def annotate(
     background_color: str = "white",
 ) -> Annotation:
 
-    if background_color == "white":
-        bg_color = WHITE
-    else:
-        # TODO CRITICAL EASY TASK
-        # there is a function for str -> color in chroma
-        # this is pending to be ported and it has its own TODO
-        # that work blocks this code here, but dont want to sidetrack for now
-        raise GGException("needs to be implemented")
+    bg_color = to_opt_color(background_color)
+    if bg_color is None:
+        # TODO: implement hex (str) -> Color
+        raise GGException(f"coulnd not convert {background_color} to color")
 
     result = Annotation(
         left=left,

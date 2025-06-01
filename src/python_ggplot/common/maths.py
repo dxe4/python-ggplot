@@ -4,7 +4,7 @@ from typing import Any, no_type_check
 import numpy as np
 from numpy.typing import NDArray
 
-from python_ggplot.core.objects import GGException
+from python_ggplot.core.objects import GGException, Point
 
 
 @no_type_check
@@ -138,3 +138,33 @@ def histogram(
     hist = np.bincount(indices, minlength=bins)
 
     return hist, bin_edges
+
+
+import numpy as np
+
+
+def create_curve(
+    x: Union[float, int],
+    y: Union[float, int],
+    xend: Union[float, int],
+    yend: Union[float, int],
+    curvature: Union[float, int] = 0.3,
+) -> List[Point[float]]:
+    p0 = np.array([x, y])
+    p2 = np.array([xend, yend])
+
+    direction = p2 - p0
+    length = np.linalg.norm(direction)
+
+    normal = np.array([-direction[1], direction[0]]) / (length if length != 0 else 1)
+
+    p1 = (p0 + p2) / 2 + normal * curvature * length
+
+    t = np.linspace(0, 1, 100)
+    curve = (
+        ((1 - t) ** 2)[:, None] * p0
+        + 2 * (1 - t)[:, None] * t[:, None] * p1
+        + (t**2)[:, None] * p2
+    )
+    points = [Point(x=pt[0], y=pt[1]) for pt in curve]
+    return points

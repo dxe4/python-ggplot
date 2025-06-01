@@ -1,11 +1,24 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
+from python_ggplot.common.maths import create_curve
 from python_ggplot.core.common import REPR_CONFIG
-from python_ggplot.core.coord.objects import Coord, Coord1D
+from python_ggplot.core.coord.objects import Coord, Coord1D, DataCoord, DataCoordType
 from python_ggplot.core.objects import (
+    BLACK,
+    TRANSPARENT,
     AxisKind,
     Color,
     CompositeKind,
@@ -13,6 +26,7 @@ from python_ggplot.core.objects import (
     GGEnum,
     GGException,
     Image,
+    LineType,
     MarkerKind,
     Point,
     Scale,
@@ -515,6 +529,55 @@ class GOPolyLine(GraphicsObject):
 
     def get_pos(self) -> "Coord":
         raise GGException("not implemented")
+
+
+class GOCurve(GOPolyLine):
+
+    def create(
+        self,
+        x: Union[float, int],
+        y: Union[float, int],
+        xend: Union[float, int],
+        yend: Union[float, int],
+        curvature: Union[float, int],
+        x_scale: Scale,
+        y_scale: Scale,
+        name: Optional[str] = None,
+        style: Optional[Style] = None,
+    ):
+
+        curve_points = create_curve(x, y, xend, yend, curvature)
+        curve_positions = [
+            Coord(
+                x=DataCoordType(
+                    pos=curve_point.x,
+                    data=DataCoord(
+                        axis_kind=AxisKind.X,
+                        scale=x_scale,
+                    ),
+                ),
+                y=DataCoordType(
+                    pos=curve_point.y,
+                    data=DataCoord(
+                        axis_kind=AxisKind.Y,
+                        scale=y_scale,
+                    ),
+                ),
+            )
+            for curve_point in curve_points
+        ]
+        style = style or Style(
+            line_width=2.0,
+            line_type=LineType.SOLID,
+            color=BLACK,
+            fill_color=TRANSPARENT,
+        )
+
+        return GOPolyLine(
+            name=name or "curve",
+            config=GraphicsObjectConfig(style=style),
+            pos=curve_positions,
+        )
 
 
 @dataclass

@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from python_ggplot.colormaps.color_maps import VIRIDIS_RAW
+from python_ggplot.common.maths import create_curve
 from python_ggplot.core.objects import Color, Font
 from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import gg_col
