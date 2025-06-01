@@ -9,8 +9,18 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from python_ggplot.common.maths import poly_fit, savitzky_golay
-from python_ggplot.core.coord.objects import Coord
+from python_ggplot.core.coord.objects import (
+    Coord,
+    Coord1D,
+    DataCoord,
+    DataCoordType,
+    PointCoordType,
+    StrHeightCoordType,
+    StrWidthCoordType,
+    TextCoordData,
+)
 from python_ggplot.core.objects import (
+    TRANSPARENT,
     AxisKind,
     Color,
     ErrorBarKind,
@@ -20,11 +30,19 @@ from python_ggplot.core.objects import (
     LineType,
     MarkerKind,
     Scale,
+    Style,
     TexOptions,
     TextAlignKind,
 )
-from python_ggplot.core.units.objects import Quantity
+from python_ggplot.core.units.objects import DataUnit, PointUnit, Quantity
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
+from python_ggplot.graphics.initialize import (
+    InitMultiLineInput,
+    InitRectInput,
+    init_multi_line_text,
+    init_rect,
+)
+from python_ggplot.graphics.objects import GOType, GraphicsObject
 
 # TODO CRITICAL, medium difficulty
 # once the codebase reaches a certain point
@@ -455,8 +473,44 @@ class GgPlot:
         return self
 
 
+def get_str_width(text: str, font: Font) -> PointUnit:
+    return PointUnit(
+        StrWidthCoordType(
+            pos=1.0,
+            data=TextCoordData(text=text, font=font),
+        )
+        .to_points()
+        .pos
+    )
+
+
+def str_width(val: float, font: Font) -> StrWidthCoordType:
+    return StrWidthCoordType(
+        pos=val,
+        data=TextCoordData(text="W", font=font),
+    )
+
+
+def str_height(text: str, font: Font) -> Quantity:
+    num_lines = len(text.split("\n"))
+    return DataUnit(
+        val=StrHeightCoordType(num_lines * 1.5, data=TextCoordData(text="", font=font))
+        .to_points()
+        .pos
+    )
+
+
+class Annotation(ABC):
+
+    @abstractmethod
+    def get_graphics_objects(
+        self, view: "ViewPort", plot: "GgPlot"
+    ) -> List[GraphicsObject]:
+        pass
+
+
 @dataclass
-class Annotation:
+class TextAnnotation(Annotation):
     left: Optional[float]
     bottom: Optional[float]
     right: Optional[float]
@@ -467,6 +521,136 @@ class Annotation:
     font: "Font"
     rotate: Optional[float]
     background_color: "Color"
+
+    def get_left_bottom(
+        self,
+        view: "ViewPort",
+        total_height: PointUnit,
+        max_width: PointUnit,
+    ) -> Tuple[float, float]:
+        # TODO refactor
+        result_left = 0.0
+        result_bottom = 0.0
+
+        if self.left is not None:
+            result_left = (
+                Quantity.relative(self.left).to_points(length=view.point_width()).val
+            )
+        elif self.right is not None:
+            result_left = (
+                Quantity.relative(self.right)
+                .to_points(length=view.point_width())
+                .subtract(max_width)
+                .val
+            )
+        else:
+            if self.x is None or view.x_scale is None:
+                raise GGException("expected annotation.x and view.x_scale")
+
+            result_left = (
+                DataCoordType(
+                    pos=self.x,
+                    data=DataCoord(axis_kind=AxisKind.X, scale=view.x_scale),
+                )
+                .to_points(length=view.point_width())
+                .pos
+            )
+
+        if self.bottom is not None:
+            result_bottom = (
+                Quantity.relative(self.bottom).to_points(length=view.point_height()).val
+            )
+        elif self.top is not None:
+            result_bottom = (
+                Quantity.relative(self.top)
+                .to_points(length=view.point_height())
+                .subtract(total_height)
+                .val
+            )
+        else:
+            if self.y is None or view.y_scale is None:
+                raise GGException("expected x and view.x_scale")
+
+            result_bottom = (
+                DataCoordType(
+                    pos=self.y,
+                    data=DataCoord(axis_kind=AxisKind.Y, scale=view.y_scale),
+                )
+                .to_points(length=view.point_height())
+                .pos
+            )
+
+        return (result_left, result_bottom)
+
+    def get_graphics_objects(
+        self, view: "ViewPort", plot: "GgPlot"
+    ) -> List[GraphicsObject]:
+        ANNOT_RECT_MARGIN = 0.5
+        rect_style = Style(
+            fill_color=self.background_color, color=self.background_color
+        )
+
+        margin_h = StrHeightCoordType(
+            pos=ANNOT_RECT_MARGIN,
+            data=TextCoordData(text="W", font=self.font),
+        ).to_points()
+
+        margin_w = StrHeightCoordType(
+            pos=ANNOT_RECT_MARGIN,
+            data=TextCoordData(text="W", font=self.font),
+        ).to_points()
+
+        total_height: PointUnit = Quantity.points(
+            str_height(self.text, self.font).val + (margin_h.pos * 2.0),
+        )  # type: ignore
+
+        font = self.font
+        max_line = list(
+            sorted(
+                self.text.split("\n"),
+                key=lambda x: get_str_width(x, font).val,
+            )
+        )[-1]
+        max_width = get_str_width(max_line, font)
+
+        rect_width = Quantity.points(
+            max_width.val + margin_w.pos * 2.0,
+        )
+        left, bottom = self.get_left_bottom(view, total_height, max_width)
+
+        rect_x = left - margin_w.pos
+        rect_y = bottom - total_height.val + margin_h.pos
+
+        graphics_objects = init_multi_line_text(
+            view,
+            origin=Coord(
+                x=Coord1D.create_point(left, view.point_width()),
+                y=Coord1D.create_point(bottom, view.point_height()),
+            ),
+            text=self.text,
+            text_kind=GOType.TEXT,
+            align_kind=TextAlignKind.LEFT,
+            init_multi_line_input=InitMultiLineInput(
+                rotate=self.rotate,
+                font=self.font,
+            ),
+        )
+        if self.background_color != TRANSPARENT:
+            annot_rect = init_rect(
+                view,
+                origin=Coord(
+                    x=PointCoordType(pos=rect_x), y=PointCoordType(pos=rect_y)
+                ),
+                width=rect_width,
+                height=total_height,
+                init_rect_input=InitRectInput(
+                    style=rect_style, rotate=self.rotate, name="annotationBackground"
+                ),
+            )
+            # background has to be drown first otherwise its drawn above the text
+            graphics_objects.insert(0, annot_rect)
+
+        return graphics_objects
 
 
 @dataclass

@@ -101,7 +101,6 @@ from python_ggplot.gg.theme import (
 from python_ggplot.gg.ticks import handle_discrete_ticks, handle_ticks
 from python_ggplot.gg.types import (
     Aesthetics,
-    Annotation,
     DiscreteFormat,
     DiscreteType,
     Facet,
@@ -111,8 +110,10 @@ from python_ggplot.gg.types import (
     PossibleColor,
     Ridges,
     SecondaryAxis,
+    TextAnnotation,
     Theme,
     ThemeMarginLayout,
+    get_str_width,
 )
 from python_ggplot.gg.utils import calc_rows_columns, to_opt_sec_axis
 from python_ggplot.graphics.draw import background, draw_line, draw_to_file, layout
@@ -761,7 +762,7 @@ def facet_margin(
     return Theme(facet_margin=margin)
 
 
-def annotate(
+def annotate_text(
     text: str,
     left: Optional[float] = None,
     bottom: Optional[float] = None,
@@ -770,10 +771,10 @@ def annotate(
     x: Optional[float] = None,
     y: Optional[float] = None,
     size: int = 12,
-    emoji: bool= False,
+    emoji: bool = False,
     rotate: float = 0.0,
     background_color: str = "white",
-) -> Annotation:
+) -> TextAnnotation:
 
     bg_color = to_opt_color(background_color)
     if bg_color is None:
@@ -784,7 +785,7 @@ def annotate(
         font_family = "Segoe UI Emoji"
     else:
         font_family = "sans-serif"
-    result = Annotation(
+    result = TextAnnotation(
         left=left,
         bottom=bottom,
         right=right,
@@ -1617,167 +1618,12 @@ def generate_facet_plots(
         handle_labels(view, theme)
 
 
-def get_left_bottom(
-    view: ViewPort,
-    annotation: Annotation,
-    total_height: PointUnit,
-    max_width: PointUnit,
-) -> Tuple[float, float]:
-    result_left = 0.0
-    result_bottom = 0.0
-
-    if annotation.left is not None:
-        result_left = (
-            Quantity.relative(annotation.left).to_points(length=view.point_width()).val
-        )
-    elif annotation.right is not None:
-        result_left = (
-            Quantity.relative(annotation.right)
-            .to_points(length=view.point_width())
-            .subtract(max_width)
-            .val
-        )
-    else:
-        if annotation.x is None or view.x_scale is None:
-            raise GGException("expected annotation.x and view.x_scale")
-
-        result_left = (
-            DataCoordType(
-                pos=annotation.x,
-                data=DataCoord(axis_kind=AxisKind.X, scale=view.x_scale),
-            )
-            .to_points(length=view.point_width())
-            .pos
-        )
-
-    if annotation.bottom is not None:
-        result_bottom = (
-            Quantity.relative(annotation.bottom)
-            .to_points(length=view.point_height())
-            .val
-        )
-    elif annotation.top is not None:
-        result_bottom = (
-            Quantity.relative(annotation.top)
-            .to_points(length=view.point_height())
-            .subtract(total_height)
-            .val
-        )
-    else:
-        if annotation.y is None or view.y_scale is None:
-            raise GGException("expected annotation.x and view.x_scale")
-        result_bottom = (
-            DataCoordType(
-                pos=annotation.y,
-                data=DataCoord(axis_kind=AxisKind.Y, scale=view.y_scale),
-            )
-            .to_points(length=view.point_height())
-            .pos
-        )
-
-    return (result_left, result_bottom)
-
-
-def get_str_width(text: str, font: Font) -> PointUnit:
-    return PointUnit(
-        StrWidthCoordType(
-            pos=1.0,
-            data=TextCoordData(text=text, font=font),
-        )
-        .to_points()
-        .pos
-    )
-
-
-def str_width(val: float, font: Font) -> StrWidthCoordType:
-    return StrWidthCoordType(
-        pos=val,
-        data=TextCoordData(text="W", font=font),
-    )
-
-
-def str_height(text: str, font: Font) -> Quantity:
-    num_lines = len(text.split("\n"))
-    return DataUnit(
-        val=StrHeightCoordType(num_lines * 1.5, data=TextCoordData(text="", font=font))
-        .to_points()
-        .pos
-    )
-
-
 def draw_annotations(view: ViewPort, plot: GgPlot) -> None:
-    ANNOT_RECT_MARGIN = 0.5
+    for annotation in plot.annotations:
+        graphics_objects = annotation.get_graphics_objects(view, plot)
 
-    for annot in plot.annotations:
-        rect_style = Style(
-            fill_color=annot.background_color, color=annot.background_color
-        )
-
-        margin_h = StrHeightCoordType(
-            pos=ANNOT_RECT_MARGIN,
-            data=TextCoordData(text="W", font=annot.font),
-        ).to_points()
-
-        margin_w = StrHeightCoordType(
-            pos=ANNOT_RECT_MARGIN,
-            data=TextCoordData(text="W", font=annot.font),
-        ).to_points()
-
-        total_height: PointUnit = Quantity.points(
-            str_height(annot.text, annot.font).val + (margin_h.pos * 2.0),
-        )  # type: ignore
-
-        font = annot.font
-        max_line = list(
-            sorted(
-                annot.text.split("\n"),
-                key=lambda x: get_str_width(x, font).val,
-            )
-        )[-1]
-        max_width = get_str_width(max_line, font)
-
-        rect_width = Quantity.points(
-            max_width.val + margin_w.pos * 2.0,
-        )
-        left, bottom = get_left_bottom(view, annot, total_height, max_width)
-
-        rect_x = left - margin_w.pos
-        rect_y = bottom - total_height.val + margin_h.pos
-
-        annot_rect = None
-        if annot.background_color != TRANSPARENT:
-            annot_rect = init_rect(
-                view,
-                origin=Coord(
-                    x=PointCoordType(pos=rect_x), y=PointCoordType(pos=rect_y)
-                ),
-                width=rect_width,
-                height=total_height,
-                init_rect_input=InitRectInput(
-                    style=rect_style, rotate=annot.rotate, name="annotationBackground"
-                ),
-            )
-
-        annot_text = init_multi_line_text(
-            view,
-            origin=Coord(
-                x=Coord1D.create_point(left, view.point_width()),
-                y=Coord1D.create_point(bottom, view.point_height()),
-            ),
-            text=annot.text,
-            text_kind=GOType.TEXT,
-            align_kind=TextAlignKind.LEFT,
-            init_multi_line_input=InitMultiLineInput(
-                rotate=annot.rotate,
-                font=annot.font,
-            ),
-        )
-
-        if annot_rect is not None:
-            view.add_obj(annot_rect)
-
-        for text in annot_text:
-            view.add_obj(text)
+        for go in graphics_objects:
+            view.add_obj(go)
 
 
 def draw_title(view: ViewPort, title: str, theme: Theme, width: Quantity):
