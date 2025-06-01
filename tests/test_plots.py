@@ -508,3 +508,8 @@ def test_lines():
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_abline_vline_hline.png")
+
+
+def test_geom_curve():
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()

@@ -531,38 +531,41 @@ class GOPolyLine(GraphicsObject):
         raise GGException("not implemented")
 
 
-class GOCurve(GOPolyLine):
+@dataclass
+class Curve:
+    x: Union[float, int]
+    y: Union[float, int]
+    xend: Union[float, int]
+    yend: Union[float, int]
+    curvature: Union[float, int]
+
+    def points(self) -> List[Point[float]]:
+        return create_curve(
+            self.x,
+            self.y,
+            self.xend,
+            self.yend,
+            self.curvature,
+        )
+
+
+class GOCurve:
 
     def create(
         self,
-        x: Union[float, int],
-        y: Union[float, int],
-        xend: Union[float, int],
-        yend: Union[float, int],
-        curvature: Union[float, int],
+        curve: Curve,
         x_scale: Scale,
         y_scale: Scale,
         name: Optional[str] = None,
         style: Optional[Style] = None,
     ):
 
-        curve_points = create_curve(x, y, xend, yend, curvature)
+        curve_points = curve.points()
+
         curve_positions = [
             Coord(
-                x=DataCoordType(
-                    pos=curve_point.x,
-                    data=DataCoord(
-                        axis_kind=AxisKind.X,
-                        scale=x_scale,
-                    ),
-                ),
-                y=DataCoordType(
-                    pos=curve_point.y,
-                    data=DataCoord(
-                        axis_kind=AxisKind.Y,
-                        scale=y_scale,
-                    ),
-                ),
+                x=Coord1D.create_data(curve_point.x, x_scale, AxisKind.X),
+                y=Coord1D.create_data(curve_point.y, y_scale, AxisKind.Y),
             )
             for curve_point in curve_points
         ]
