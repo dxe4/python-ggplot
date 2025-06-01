@@ -522,63 +522,67 @@ class TextAnnotation(Annotation):
     rotate: Optional[float]
     background_color: "Color"
 
+    def calculate_position(
+        self,
+        start_pos: Optional[float],
+        end_pos: Optional[float],
+        data_pos: Optional[float],
+        axis_kind: AxisKind,
+        scale: Optional[Scale],
+        view_length: Quantity,
+        size: PointUnit,
+        error_msg: str,
+    ) -> float:
+        if start_pos is not None:
+            return Quantity.relative(start_pos).to_points(length=view_length).val
+        elif end_pos is not None:
+            return (
+                Quantity.relative(end_pos)
+                .to_points(length=view_length)
+                .subtract(size)
+                .val
+            )
+        else:
+            if data_pos is None or scale is None:
+                raise GGException(error_msg)
+
+            return (
+                DataCoordType(
+                    pos=data_pos,
+                    data=DataCoord(axis_kind=axis_kind, scale=scale),
+                )
+                .to_points(length=view_length)
+                .pos
+            )
+
     def get_left_bottom(
         self,
         view: "ViewPort",
         total_height: PointUnit,
         max_width: PointUnit,
     ) -> Tuple[float, float]:
-        # TODO refactor
-        result_left = 0.0
-        result_bottom = 0.0
 
-        if self.left is not None:
-            result_left = (
-                Quantity.relative(self.left).to_points(length=view.point_width()).val
-            )
-        elif self.right is not None:
-            result_left = (
-                Quantity.relative(self.right)
-                .to_points(length=view.point_width())
-                .subtract(max_width)
-                .val
-            )
-        else:
-            if self.x is None or view.x_scale is None:
-                raise GGException("expected annotation.x and view.x_scale")
+        result_left = self.calculate_position(
+            start_pos=self.left,
+            end_pos=self.right,
+            data_pos=self.x,
+            axis_kind=AxisKind.X,
+            scale=view.x_scale,
+            view_length=view.point_width(),
+            size=max_width,
+            error_msg="expected annotation.x and view.x_scale",
+        )
 
-            result_left = (
-                DataCoordType(
-                    pos=self.x,
-                    data=DataCoord(axis_kind=AxisKind.X, scale=view.x_scale),
-                )
-                .to_points(length=view.point_width())
-                .pos
-            )
-
-        if self.bottom is not None:
-            result_bottom = (
-                Quantity.relative(self.bottom).to_points(length=view.point_height()).val
-            )
-        elif self.top is not None:
-            result_bottom = (
-                Quantity.relative(self.top)
-                .to_points(length=view.point_height())
-                .subtract(total_height)
-                .val
-            )
-        else:
-            if self.y is None or view.y_scale is None:
-                raise GGException("expected x and view.x_scale")
-
-            result_bottom = (
-                DataCoordType(
-                    pos=self.y,
-                    data=DataCoord(axis_kind=AxisKind.Y, scale=view.y_scale),
-                )
-                .to_points(length=view.point_height())
-                .pos
-            )
+        result_bottom = self.calculate_position(
+            start_pos=self.bottom,
+            end_pos=self.top,
+            data_pos=self.y,
+            axis_kind=AxisKind.Y,
+            scale=view.y_scale,
+            view_length=view.point_height(),
+            size=total_height,
+            error_msg="expected annotation.y and view.y_scale",
+        )
 
         return (result_left, result_bottom)
 
