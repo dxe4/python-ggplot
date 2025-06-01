@@ -41,7 +41,12 @@ from python_ggplot.public_interface.geom import (
     geom_vline,
     ggplot,
 )
-from python_ggplot.public_interface.utils import ggcreate, ggmulti, plot_layout
+from python_ggplot.public_interface.utils import (
+    annotate,
+    ggcreate,
+    ggmulti,
+    plot_layout,
+)
 from tests import data_path, plots_path
 
 
@@ -505,6 +510,7 @@ def test_lines():
         + geom_abline(intercept=37, slope=-5, size=3.2)
         + geom_vline(xintercept=3, color="blue")
         + geom_hline(yintercept=22, line_type="dashed")
+        + annotate("Annotated text", x=5, y=30, size=11)
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_abline_vline_hline.png")

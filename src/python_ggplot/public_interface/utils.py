@@ -33,10 +33,12 @@ from python_ggplot.core.chroma import int_to_color, to_opt_color
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
     Coord,
+    Coord1D,
     CoordsInput,
     DataCoord,
     DataCoordType,
     LengthCoord,
+    PointCoordType,
     RelativeCoordType,
     StrHeightCoordType,
     StrWidthCoordType,
@@ -763,9 +765,11 @@ def annotate(
     text: str,
     left: Optional[float] = None,
     bottom: Optional[float] = None,
+    right: Optional[float] = None,
+    top: Optional[float] = None,
     x: Optional[float] = None,
     y: Optional[float] = None,
-    font: Font = Font(size=12.0),
+    size: int = 12,
     rotate: float = 0.0,
     background_color: str = "white",
 ) -> Annotation:
@@ -778,10 +782,12 @@ def annotate(
     result = Annotation(
         left=left,
         bottom=bottom,
+        right=right,
+        top=top,
         x=x,
         y=y,
         text=text,
-        font=font,
+        font=Font(size=size),
         rotate=rotate,
         background_color=bg_color,
     )
@@ -1606,12 +1612,26 @@ def generate_facet_plots(
         handle_labels(view, theme)
 
 
-def get_left_bottom(view: ViewPort, annotation: Annotation) -> Tuple[float, float]:
+def get_left_bottom(
+    view: ViewPort,
+    annotation: Annotation,
+    total_height: PointUnit,
+    max_width: PointUnit,
+) -> Tuple[float, float]:
     result_left = 0.0
     result_bottom = 0.0
 
     if annotation.left is not None:
-        result_left = annotation.left
+        result_left = (
+            Quantity.relative(annotation.left).to_points(length=view.point_width()).val
+        )
+    elif annotation.right is not None:
+        result_left = (
+            Quantity.relative(annotation.right)
+            .to_points(length=view.point_width())
+            .subtract(max_width)
+            .val
+        )
     else:
         if annotation.x is None or view.x_scale is None:
             raise GGException("expected annotation.x and view.x_scale")
@@ -1621,21 +1641,32 @@ def get_left_bottom(view: ViewPort, annotation: Annotation) -> Tuple[float, floa
                 pos=annotation.x,
                 data=DataCoord(axis_kind=AxisKind.X, scale=view.x_scale),
             )
-            .to_relative()
+            .to_points(length=view.point_width())
             .pos
         )
 
     if annotation.bottom is not None:
-        result_bottom = annotation.bottom
+        result_bottom = (
+            Quantity.relative(annotation.bottom)
+            .to_points(length=view.point_height())
+            .val
+        )
+    elif annotation.top is not None:
+        result_bottom = (
+            Quantity.relative(annotation.top)
+            .to_points(length=view.point_height())
+            .subtract(total_height)
+            .val
+        )
     else:
         if annotation.y is None or view.y_scale is None:
             raise GGException("expected annotation.x and view.x_scale")
-        result_left = (
+        result_bottom = (
             DataCoordType(
                 pos=annotation.y,
-                data=DataCoord(axis_kind=AxisKind.X, scale=view.y_scale),
+                data=DataCoord(axis_kind=AxisKind.Y, scale=view.y_scale),
             )
-            .to_relative()
+            .to_points(length=view.point_height())
             .pos
         )
 
@@ -1676,24 +1707,20 @@ def draw_annotations(view: ViewPort, plot: GgPlot) -> None:
         rect_style = Style(
             fill_color=annot.background_color, color=annot.background_color
         )
-        left, bottom = get_left_bottom(view, annot)
 
         margin_h = StrHeightCoordType(
             pos=ANNOT_RECT_MARGIN,
             data=TextCoordData(text="W", font=annot.font),
-        ).to_relative(length=view.point_height())
+        ).to_points()
 
         margin_w = StrHeightCoordType(
             pos=ANNOT_RECT_MARGIN,
             data=TextCoordData(text="W", font=annot.font),
-        ).to_relative(length=view.point_width())
+        ).to_points()
 
-        total_height = Quantity.relative(
-            str_height(annot.text, annot.font)
-            .to_relative(length=view.point_height())
-            .val
-            + margin_h.pos * 2.0,
-        )
+        total_height: PointUnit = Quantity.points(
+            str_height(annot.text, annot.font).val + (margin_h.pos * 2.0),
+        )  # type: ignore
 
         font = annot.font
         max_line = list(
@@ -1704,23 +1731,20 @@ def draw_annotations(view: ViewPort, plot: GgPlot) -> None:
         )[-1]
         max_width = get_str_width(max_line, font)
 
-        rect_width = Quantity.relative(
-            max_width.to_relative(length=view.point_width()).val + margin_w.pos * 2.0,
+        rect_width = Quantity.points(
+            max_width.val + margin_w.pos * 2.0,
         )
+        left, bottom = get_left_bottom(view, annot, total_height, max_width)
 
         rect_x = left - margin_w.pos
-        rect_y = (
-            bottom
-            - total_height.to_relative(length=view.point_height()).val
-            + margin_h.pos
-        )
+        rect_y = bottom - total_height.val + margin_h.pos
 
         annot_rect = None
         if annot.background_color != TRANSPARENT:
             annot_rect = init_rect(
                 view,
                 origin=Coord(
-                    x=RelativeCoordType(pos=rect_x), y=RelativeCoordType(pos=rect_y)
+                    x=PointCoordType(pos=rect_x), y=PointCoordType(pos=rect_y)
                 ),
                 width=rect_width,
                 height=total_height,
@@ -1729,11 +1753,12 @@ def draw_annotations(view: ViewPort, plot: GgPlot) -> None:
                 ),
             )
 
-        # TODO CRITICAL, easy task
-        # double check this logic, make sure its correct
         annot_text = init_multi_line_text(
             view,
-            origin=Coord(x=RelativeCoordType(left), y=RelativeCoordType(bottom)),
+            origin=Coord(
+                x=Coord1D.create_point(left, view.point_width()),
+                y=Coord1D.create_point(bottom, view.point_height()),
+            ),
             text=annot.text,
             text_kind=GOType.TEXT,
             align_kind=TextAlignKind.LEFT,
@@ -1927,8 +1952,6 @@ def ggcreate(plot: GgPlot, width: float = 640.0, height: float = 480.0) -> PlotV
     _generate_plot(plt_base, theme, plot, filled_scales)
 
     img.x_scale = plt_base.x_scale
-    # TODO this is overriden, fine for now
-    img.y_scale = plt_base.y_scale
     img.y_scale = plt_base.y_scale
 
     _draw_legends(img, filled_scales, theme, plot)

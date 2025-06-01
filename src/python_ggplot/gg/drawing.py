@@ -849,7 +849,6 @@ def draw_sub_df(
         if fg.gg_data.x_col:
             fg.gg_data.geom.draw_detached_geom(view, fg, style, df[fg.gg_data.x_col])
         else:
-            print(2)
             fg.gg_data.geom.draw_detached_geom(view, fg, style)
         return
 

@@ -459,6 +459,8 @@ class GgPlot:
 class Annotation:
     left: Optional[float]
     bottom: Optional[float]
+    right: Optional[float]
+    top: Optional[float]
     x: Optional[float]
     y: Optional[float]
     text: str

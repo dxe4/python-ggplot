@@ -354,7 +354,6 @@ def init_multi_line_text(
 ) -> List[GraphicsObject]:
     if text_kind not in (GOType.TEXT, GOType.LABEL, GOType.TICK_LABEL):
         raise GGException("unexpected graphic object kind")
-
     font = init_multi_line_input.font or Font()
     lines = text.split("\n")
     lines_len = len(lines)
@@ -378,7 +377,6 @@ def init_multi_line_text(
         func = init_text_lookup[text_kind]
         res = func(view, new_origin, init_text_data)
         result.append(res)
-        view.objects.append(res)
 
     return result
 
