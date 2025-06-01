@@ -510,7 +510,9 @@ def test_lines():
         + geom_abline(intercept=37, slope=-5, size=3.2)
         + geom_vline(xintercept=3, color="blue")
         + geom_hline(yintercept=22, line_type="dashed")
-        + annotate_text("Annotated text", x=4, y=30, size=15)
+        + annotate_text(
+            "Annotated text", x=4, y=30, size=15, background_color="transparent"
+        )
         + annotate_text("🥸", x=3, y=22, size=40, emoji=True)
     )
     res = ggcreate(plot)
