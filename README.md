@@ -237,39 +237,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 ```python
-    df = pd.DataFrame({
-        'x': [1, 3, 5, 2, 4, 6],
-        'y': [2, 5, 1, 3, 6, 7]
-    })
-    plot = ggplot(
-        df, aes(x="x", y="y")
-    ) + geom_area(alpha=0.3)
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_area_simple.png")
-```
-<img src="plots/geom_area_simple.png?v=1" alt="geom_area_simple" width="400px">
-
-
-```python
-df = pd.DataFrame(
-    data={
-        "trt": pd.Categorical([1, 1, 2, 2]),
-        "resp": [1, 5, 3, 4],
-        "group": pd.Categorical([1, 2, 1, 2]),
-        "upper": [1.1, 5.3, 3.3, 4.2],
-        "lower": [0.8, 4.6, 2.4, 3.6],
-    }
-)
-plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_linerange(
-    aes(ymin="lower", ymax="upper")
-)
-res = ggcreate(plot)
-ggdraw_plot(res, plots_path / "geom_linerange.png")
-```
-<img src="plots/geom_linerange.png?v=1" alt="geom_linerange" width="400px">
-
-
-```python
 mpg = pd.read_csv(data_path / "mpg.csv")
 mpg["cty"] = mpg["cty"].astype(float)
 plot = ggplot(mpg, aes(x="displ", y="hwy", color="cty")) + geom_point()
@@ -364,14 +331,41 @@ ggdraw_plot(res, plots_path / "geom_point_with_continuous_color_and_size.png")
 
 
 ```python
-plots = _gg_multi_plots()
-ggmulti(
-    plots,
-    plots_path / "gg_multi_pmg_bottom_to_top.png",
-    vertical_orientation="bottom_to_top"
-)
+    df = create_dataframe()
+    plot = ggplot(
+        df, aes("tenors", "pathValues", color = "pathNames")
+    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_line_With_color.png")
 ```
-<img src="plots/gg_multi_pmg_bottom_to_top.png?v=1" alt="gg_multi_pmg_bottom_to_top" width="400px">
+<img src="plots/geom_line_With_color.png?v=1" alt="geom_line_With_color" width="400px">
+
+
+```python
+df = pd.DataFrame(
+    data={
+        "trt": pd.Categorical([1, 1, 2, 2]),
+        "resp": [1, 5, 3, 4],
+        "group": pd.Categorical([1, 2, 1, 2]),
+        "upper": [1.1, 5.3, 3.3, 4.2],
+        "lower": [0.8, 4.6, 2.4, 3.6],
+    }
+)
+plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_linerange(
+    aes(ymin="lower", ymax="upper")
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_linerange.png")
+```
+<img src="plots/geom_linerange.png?v=1" alt="geom_linerange" width="400px">
+
+```python
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_text.png")
+```
+<img src="plots/geom_text.png?v=1" alt="geom_text" width="400px">
 
 
 ```python
@@ -384,17 +378,28 @@ ggmulti(
 ```
 <img src="plots/geom_line_and_point_with_linetype.png?v=1" alt="geom_line_and_point" width="400px">
 
+```python
+    df = pd.DataFrame({
+        'x': [1, 3, 5, 2, 4, 6],
+        'y': [2, 5, 1, 3, 6, 7]
+    })
+    plot = ggplot(
+        df, aes(x="x", y="y")
+    ) + geom_area(alpha=0.3)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_simple.png")
+```
+<img src="plots/geom_area_simple.png?v=1" alt="geom_area_simple" width="400px">
 
 ```python
-    df = create_dataframe()
-    plot = ggplot(
-        df, aes("tenors", "pathValues", color = "pathNames")
-    ) + geom_line() + xlab(rotate=-90, tick_margin=3)
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_line_With_color.png")
+plots = _gg_multi_plots()
+ggmulti(
+    plots,
+    plots_path / "gg_multi_pmg_bottom_to_top.png",
+    vertical_orientation="bottom_to_top"
+)
 ```
-<img src="plots/geom_line_With_color.png?v=1" alt="geom_line_With_color" width="400px">
-
+<img src="plots/gg_multi_pmg_bottom_to_top.png?v=1" alt="gg_multi_pmg_bottom_to_top" width="400px">
 
 ```python
 plots = _gg_multi_plots()
@@ -405,14 +410,5 @@ ggmulti(
 )
 ```
 <img src="plots/gg_multi_pmg_right_to_left.png?v=1" alt="gg_multi_pmg_right_to_left" width="400px">
-
-
-```python
-    mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes(x = 'displ', y = "cty", text = 'manufacturer')) + geom_text()
-    res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_text.png")
-```
-<img src="plots/geom_text.png?v=1" alt="geom_text" width="400px">
 
 ![gg](plots/simple_test.png?v=1)
