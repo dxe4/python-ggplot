@@ -4,7 +4,8 @@ from typing import Any
 from python_ggplot.core.objects import AxisKind
 from python_ggplot.gg.geom.base import Geom
 from python_ggplot.gg.scales.base import DateScale, GGScale
-from python_ggplot.gg.types import Aesthetics, Annotation, Facet, GgPlot, Ridges, Theme
+from python_ggplot.gg.types import Aesthetics, Facet, GgPlot, Ridges, Theme
+from python_ggplot.public_interface.annotate import Annotation
 from python_ggplot.public_interface.utils import apply_scale, apply_theme
 
 

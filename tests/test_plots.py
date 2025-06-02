@@ -5,11 +5,11 @@ import pandas as pd
 import pytest
 
 from python_ggplot.colormaps.color_maps import VIRIDIS_RAW
-from python_ggplot.common.maths import create_curve
 from python_ggplot.core.objects import Color, Font
 from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import gg_col
 from python_ggplot.public_interface.aes import aes
+from python_ggplot.public_interface.annotate import annotate_curve, annotate_text
 from python_ggplot.public_interface.common import (
     draw_layout,
     facet_wrap,
@@ -41,13 +41,7 @@ from python_ggplot.public_interface.geom import (
     geom_vline,
     ggplot,
 )
-from python_ggplot.public_interface.utils import (
-    annotate_curve,
-    annotate_text,
-    ggcreate,
-    ggmulti,
-    plot_layout,
-)
+from python_ggplot.public_interface.utils import ggcreate, ggmulti, plot_layout
 from tests import data_path, plots_path
 
 
