@@ -319,10 +319,16 @@ ggdraw_plot(res, plots_path / "geom_point_and_text.png")
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
     mpg["hwy"] = mpg["hwy"].astype(float)
-    plot = ggplot(
-        mpg, aes("displ", "hwy")
-    ) + geom_point() + annotate_curve(
-        x = 5, y = 38, xend = 3, yend = 30, curvature=-0.3
+    plot = (
+        ggplot(mpg, aes("displ", "hwy"))
+        + geom_point(
+            data=mpg.loc[mpg["manufacturer"] == "subaru"], color="orange", size = 3
+        )
+        + geom_point(size=1.5)
+        + annotate_curve(x=5, y=38, xend=3, yend=30, curvature=-0.3, arrow=True)
+        + annotate_text(
+            text="subaru", x = 5, y = 37, background_color="transparent"
+        )
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "annotate_curve.png")

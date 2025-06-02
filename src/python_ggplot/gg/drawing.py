@@ -56,8 +56,8 @@ class GetXYContinueException(GGException):
 
 @dataclass
 class GetXY:
-    x_series: 'pd.Series[Any]'
-    y_series: 'pd.Series[Any]'
+    x_series: "pd.Series[Any]"
+    y_series: "pd.Series[Any]"
     x_outside_range: OutsideRangeKind
     y_outside_range: OutsideRangeKind
     filled_geom: FilledGeom
