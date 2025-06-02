@@ -304,23 +304,6 @@ ggdraw_plot(res, plots_path / "geom_point_and_text.png")
 
 
 ```python
-df = pd.DataFrame({
-    'trt': [1, 1, 2, 2],
-    'resp': [1, 5, 3, 4],
-    'group': pd.Categorical([1, 2, 1, 2]),
-    'upper': [1.5, 5.0, 3.3, 4.2],
-    'lower': [1, 4.0, 2.4, 3.6]
-})
-plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_error_bar(
-    aes(ymin="lower", ymax="upper"), size=20
-)
-res = ggcreate(plot)
-ggdraw_plot(res, plots_path / "geom_error_bar.png")
-```
-<img src="plots/geom_error_bar.png?v=1" alt="geom_error_bar" width="400px">
-
-
-```python
 mpg = pd.read_csv(data_path / "mpg.csv")
 mpg["cty"] = mpg["cty"].astype(float)
 plot = ggplot(mpg, aes(x="cty", y="displ", size = "cyl", color="cty")) + geom_point()
@@ -410,5 +393,22 @@ ggmulti(
 )
 ```
 <img src="plots/gg_multi_pmg_right_to_left.png?v=1" alt="gg_multi_pmg_right_to_left" width="400px">
+
+
+```python
+df = pd.DataFrame({
+    'trt': [1, 1, 2, 2],
+    'resp': [1, 5, 3, 4],
+    'group': pd.Categorical([1, 2, 1, 2]),
+    'upper': [1.5, 5.0, 3.3, 4.2],
+    'lower': [1, 4.0, 2.4, 3.6]
+})
+plot = ggplot(df, aes(x="trt", y="resp", color="group")) + geom_error_bar(
+    aes(ymin="lower", ymax="upper"), size=20
+)
+res = ggcreate(plot)
+ggdraw_plot(res, plots_path / "geom_error_bar.png")
+```
+<img src="plots/geom_error_bar.png?v=1" alt="geom_error_bar" width="400px">
 
 ![gg](plots/simple_test.png?v=1)
