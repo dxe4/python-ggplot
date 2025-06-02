@@ -1,5 +1,5 @@
 {
-  "venvPath": "./.venv/bin/activate",
+  "venvPath": ".",
   "venv": ".venv",
   "include": ["src"],
   "pythonVersion": "3.12.7",
