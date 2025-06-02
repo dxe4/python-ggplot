@@ -538,6 +538,7 @@ class Curve:
     xend: Union[float, int]
     yend: Union[float, int]
     curvature: Union[float, int]
+    height_scale: Union[float, int]
 
     def points(self) -> List[Point[float]]:
         return create_curve(
@@ -545,20 +546,20 @@ class Curve:
             self.y,
             self.xend,
             self.yend,
-            self.curvature,
+            # self.curvature,
         )
 
 
 class GOCurve:
 
+    @staticmethod
     def create(
-        self,
         curve: Curve,
         x_scale: Scale,
         y_scale: Scale,
         name: Optional[str] = None,
         style: Optional[Style] = None,
-    ):
+    ) -> GOPolyLine:
 
         curve_points = curve.points()
 

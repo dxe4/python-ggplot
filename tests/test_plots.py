@@ -42,6 +42,7 @@ from python_ggplot.public_interface.geom import (
     ggplot,
 )
 from python_ggplot.public_interface.utils import (
+    annotate_curve,
     annotate_text,
     ggcreate,
     ggmulti,
@@ -519,6 +520,13 @@ def test_lines():
     ggdraw_plot(res, plots_path / "geom_abline_vline_hline.png")
 
 
-def test_geom_curve():
+def test_annotate_curve():
     mpg = pd.read_csv(data_path / "mpg.csv")
-    plot1 = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+    mpg["hwy"] = mpg["hwy"].astype(float)
+    plot = ggplot(
+        mpg, aes("displ", "hwy")
+    ) + geom_point() + annotate_curve(
+        x = 4, y = 35, xend = 2.65, yend = 27, curvature=0.8
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "annotate_curve.png")

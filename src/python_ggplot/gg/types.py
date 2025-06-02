@@ -42,7 +42,7 @@ from python_ggplot.graphics.initialize import (
     init_multi_line_text,
     init_rect,
 )
-from python_ggplot.graphics.objects import GOType, GraphicsObject
+from python_ggplot.graphics.objects import Curve, GOCurve, GOType, GraphicsObject
 
 # TODO CRITICAL, medium difficulty
 # once the codebase reaches a certain point
@@ -508,6 +508,26 @@ class Annotation(ABC):
     ) -> List[GraphicsObject]:
         pass
 
+
+@dataclass
+class CurveAnnotation(Annotation):
+    curve: Curve
+    style: Style
+
+    def get_graphics_objects(
+        self, view: "ViewPort", plot: "GgPlot"
+    ) -> List[GraphicsObject]:
+        if view.x_scale is None or view.y_scale is None:
+            raise GGException("expected x and y scale on view to draw a curve")
+
+        go_poly_line = GOCurve.create(
+            self.curve,
+            view.x_scale,
+            view.y_scale,
+            name="curve_annotation",
+            style=self.style,
+        )
+        return [go_poly_line]
 
 @dataclass
 class TextAnnotation(Annotation):

@@ -1,4 +1,5 @@
 from math import factorial
+
 from typing import Any, no_type_check
 
 import numpy as np
@@ -138,9 +139,6 @@ def histogram(
     hist = np.bincount(indices, minlength=bins)
 
     return hist, bin_edges
-
-
-import numpy as np
 
 
 def create_curve(

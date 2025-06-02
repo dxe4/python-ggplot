@@ -26,10 +26,11 @@ import pandas as pd
 from numpy._core.numeric import empty
 
 from python_ggplot.common.enum_literals import (
+    LINE_TYPE_VALUES,
     OUTSIDE_RANGE_KIND_VALUES,
     UNIT_TYPE_VALUES,
 )
-from python_ggplot.core.chroma import int_to_color, to_opt_color
+from python_ggplot.core.chroma import int_to_color, str_to_color, to_opt_color
 from python_ggplot.core.coord.objects import (
     CentimeterCoordType,
     Coord,
@@ -101,6 +102,7 @@ from python_ggplot.gg.theme import (
 from python_ggplot.gg.ticks import handle_discrete_ticks, handle_ticks
 from python_ggplot.gg.types import (
     Aesthetics,
+    CurveAnnotation,
     DiscreteFormat,
     DiscreteType,
     Facet,
@@ -134,6 +136,7 @@ from python_ggplot.graphics.initialize import (
     ylabel,
 )
 from python_ggplot.graphics.objects import (
+    Curve,
     GOLabel,
     GOPoint,
     GOText,
@@ -760,6 +763,49 @@ def facet_margin(
         margin = Quantity.from_type(unit_type, float(margin))
 
     return Theme(facet_margin=margin)
+
+
+def annotate_curve(
+    x: Union[float, int],
+    y: Union[float, int],
+    xend: Union[float, int],
+    yend: Union[float, int],
+    curvature: Union[float, int] = 0.5,
+    height_scale: Union[float, int] = 0.5,
+    background_color: str = "black",
+    size: Union[float, int] = 2.0,
+    line_type: LINE_TYPE_VALUES = "solid",
+    color: str = "black",
+    alpha: float = 1.0,
+):
+    color_ = str_to_color(color)
+    if color_ is None:
+        raise GGException(f"color: {color} not found")
+
+    if not math.isclose(0.0, color_.a) and not math.isclose(alpha, color_.a):
+        # if color="transparent" or color = Color(1,1,1,0)
+        # do we override with alpha?
+        # certainly not if alpha was teh default 1.0
+        color_ = color_.update_with_copy(a=alpha)
+
+    style = Style(
+        line_width=size,
+        line_type=LineType.eitem(line_type),
+        # TODO allow both Color and str
+        color=color_,
+        fill_color=TRANSPARENT,
+    )
+    curve = Curve(
+        x= x,
+        y= y,
+        xend= xend,
+        yend= yend,
+        curvature= curvature,
+        height_scale=height_scale,
+    )
+    curve_annotation = CurveAnnotation(curve=curve, style=style)
+    return curve_annotation
+
 
 
 def annotate_text(
