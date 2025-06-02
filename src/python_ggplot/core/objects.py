@@ -1,11 +1,24 @@
 import math
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-from typing import Any, Generic, List, Literal, Optional, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from python_ggplot.common.objects import Freezable
 from python_ggplot.core.common import linspace
 from python_ggplot.graphics.cairo_backend import CairoBackend
+
+if TYPE_CHECKING:
+    from python_ggplot.core.objects import Scale
 
 Z = TypeVar("Z", bound="GGEnum")
 
@@ -253,6 +266,10 @@ class Point(Generic[T]):
     x: T
     y: T
 
+    def relative_to_scale(self, scale_x: "Scale", scale_y: "Scale") -> "Point[T]":
+        point: Point[T] = Point(x=self.x * scale_x.high, y=self.y * scale_y.high)
+        return point
+
 
 @dataclass
 class Style:
@@ -325,7 +342,7 @@ class Scale:
     def __eq__(self, o) -> bool:  # type: ignore
         return math.isclose(self.low, o.low) and math.isclose(self.high, o.high)  # type: ignore
 
-    def normalise_pos(self, val: float, reverse: bool=False) -> float:
+    def normalise_pos(self, val: float, reverse: bool = False) -> float:
         rel_pos = (float(val) - self.low) / (self.high - self.low)
         if reverse:
             return 1 - rel_pos

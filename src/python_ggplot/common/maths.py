@@ -1,5 +1,5 @@
+import math
 from math import factorial
-
 from typing import Any, no_type_check
 
 import numpy as np
@@ -166,3 +166,33 @@ def create_curve(
     )
     points = [Point(x=pt[0], y=pt[1]) for pt in curve]
     return points
+
+
+def create_arrow(
+    curve_points: List[Point[float]],
+    arrow_angle: float = 25,
+    arrow_size_percent: float = 8,
+):
+    if len(curve_points) < 2:
+        raise GGException("Need at least two points to compute arrowhead.")
+
+    p1 = curve_points[-2]
+    p2 = curve_points[-1]
+
+    angle = math.atan2(p2.y - p1.y, p2.x - p1.x)
+
+    angle_offset = math.radians(arrow_angle)
+
+    left_angle = angle + angle_offset
+    right_angle = angle - angle_offset
+
+    length = arrow_size_percent / 100
+
+    left_point = Point(
+        x=p2.x - length * math.cos(left_angle), y=p2.y - length * math.sin(left_angle)
+    )
+    right_point = Point(
+        x=p2.x - length * math.cos(right_angle), y=p2.y - length * math.sin(right_angle)
+    )
+
+    return [left_point, Point(p2.x, p2.y), right_point]

@@ -529,6 +529,7 @@ class CurveAnnotation(Annotation):
         )
         return [go_poly_line]
 
+
 @dataclass
 class TextAnnotation(Annotation):
     left: Optional[float]

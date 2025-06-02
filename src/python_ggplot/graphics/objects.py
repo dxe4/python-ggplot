@@ -13,7 +13,7 @@ from typing import (
     Union,
 )
 
-from python_ggplot.common.maths import create_curve
+from python_ggplot.common.maths import create_arrow, create_curve
 from python_ggplot.core.common import REPR_CONFIG
 from python_ggplot.core.coord.objects import Coord, Coord1D, DataCoord, DataCoordType
 from python_ggplot.core.objects import (
@@ -538,7 +538,9 @@ class Curve:
     xend: Union[float, int]
     yend: Union[float, int]
     curvature: Union[float, int]
-    height_scale: Union[float, int]
+    arrow: bool = False
+    arrow_size_percent: int = (8,)
+    arrow_angle: int = 25
 
     def points(self, x_scale: Scale, y_scale: Scale) -> List[Point[float]]:
         x = x_scale.normalise_pos(self.x)
@@ -546,16 +548,23 @@ class Curve:
         y = y_scale.normalise_pos(self.y)
         yend = y_scale.normalise_pos(self.yend)
 
-        points =  create_curve(
+        points = create_curve(
             x,
             y,
             xend,
             yend,
             self.curvature,
         )
-        for point in points:
-            point.x = point.x * x_scale.high
-            point.y = point.y * y_scale.high
+
+        if self.arrow:
+            arrow_lines = create_arrow(
+                points,
+                arrow_angle=self.arrow_angle,
+                arrow_size_percent=self.arrow_size_percent,
+            )
+            points = points + arrow_lines
+
+        points = [i.relative_to_scale(x_scale, y_scale) for i in points]
         return points
 
 

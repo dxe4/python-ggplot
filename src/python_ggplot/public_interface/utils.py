@@ -777,6 +777,9 @@ def annotate_curve(
     line_type: LINE_TYPE_VALUES = "solid",
     color: str = "black",
     alpha: float = 1.0,
+    arrow: bool = False,
+    arrow_size_percent: int = 8,
+    arrow_angle: int = 25,
 ):
     color_ = str_to_color(color)
     if color_ is None:
@@ -796,16 +799,17 @@ def annotate_curve(
         fill_color=TRANSPARENT,
     )
     curve = Curve(
-        x= x,
-        y= y,
-        xend= xend,
-        yend= yend,
-        curvature= curvature,
-        height_scale=height_scale,
+        x=x,
+        y=y,
+        xend=xend,
+        yend=yend,
+        curvature=curvature,
+        arrow=arrow,
+        arrow_size_percent=arrow_size_percent,
+        arrow_angle=arrow_angle,
     )
     curve_annotation = CurveAnnotation(curve=curve, style=style)
     return curve_annotation
-
 
 
 def annotate_text(
