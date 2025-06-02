@@ -4,6 +4,7 @@
   "include": ["src"],
   "pythonVersion": "3.12.7",
   "typeCheckingMode": "strict",
+  "reportUnnecessaryIsInstance": false,
   "exclude": [
     "venv",
     ".venv",

@@ -45,7 +45,7 @@ PANDAS_TYPES: Dict[str, ColumnType] = {
 }
 
 
-def pandas_series_to_column(series: pd.Series) -> ColumnType:
+def pandas_series_to_column(series: "pd.Series[Any]") -> ColumnType:
     """
     TODO this is incomplete impl
     but this will allow to port the other logic
@@ -176,7 +176,7 @@ class VectorCol:
         )
 
 
-def series_is_int(series: pd.Series) -> bool:
+def series_is_int(series: "pd.Series[Any]") -> bool:
     return str(series.dtype) in [
         "int8",
         "int16",
@@ -189,7 +189,7 @@ def series_is_int(series: pd.Series) -> bool:
     ]
 
 
-def series_is_float(series: pd.Series) -> bool:
+def series_is_float(series: "pd.Series[Any]") -> bool:
     return str(series.dtype) in [
         "float16",
         "float32",
@@ -197,19 +197,19 @@ def series_is_float(series: pd.Series) -> bool:
     ]
 
 
-def series_is_bool(series: pd.Series) -> bool:
+def series_is_bool(series: "pd.Series[Any]") -> bool:
     return str(series.dtype) == "bool"
 
 
-def series_is_str(series: pd.Series) -> bool:
+def series_is_str(series: "pd.Series[Any]") -> bool:
     return str(series.dtype) == "string"
 
 
-def series_is_obj(series: pd.Series) -> bool:
+def series_is_obj(series: "pd.Series[Any]") -> bool:
     return str(series.dtype) == "object"  # type: ignore
 
 
-def series_value_type(series: pd.Series) -> str:
+def series_value_type(series: "pd.Series[Any]") -> str:
     dtype = str(series.dtype)
     if dtype in [
         "int8",

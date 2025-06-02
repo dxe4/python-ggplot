@@ -434,14 +434,13 @@ class GOTick(GraphicsObject):
     def get_pos(self) -> "Coord":
         return self.pos
 
-    def scale_for_axis(self, axis: AxisKind) -> Scale:
-        # TODO low priority, easy fix
-        # fix the type here, its not critical and it will work fine
+    def scale_for_axis(self, axis: AxisKind) -> Optional[Scale]:
         if axis == AxisKind.X:
-            return self.pos.x.get_scale()  # type: ignore
-        if axis == AxisKind.Y:
-            return self.pos.y.get_scale()  # type: ignore
-        raise GGException("unexpected")
+            return self.pos.x.get_scale()
+        elif axis == AxisKind.Y:
+            return self.pos.y.get_scale()
+        else:
+            raise GGException("Expected X or Y axis")
 
     @property
     def go_type(self) -> GOType:

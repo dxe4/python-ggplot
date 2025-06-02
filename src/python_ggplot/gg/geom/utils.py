@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 def add_zero_keys(
-    df: pd.DataFrame, keys: pd.Series, x_col: Any, count_col: str
+    df: pd.DataFrame, keys: "pd.Series[Any]", x_col: Any, count_col: str
 ) -> pd.DataFrame:
     exist_keys = df[x_col].unique()  # type: ignore
     df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore
@@ -169,7 +169,7 @@ def apply_cont_scale_if_any(
     base_style: GGStyle,
     geom_type: GeomType,
     to_clone: bool = False,
-):
+) -> Tuple[GGStyle, List[GGStyle], pd.DataFrame]:
     from python_ggplot.gg.scales.base import ScaleType
     from python_ggplot.gg.styles.utils import change_style
 
@@ -199,10 +199,10 @@ def apply_cont_scale_if_any(
 
 
 def add_counts_by_position(
-    col_sum: pd.Series,  # type: ignore
-    col: pd.Series,  # type: ignore
+    col_sum: "pd.Series[Any]",
+    col: "pd.Series[Any]",
     pos: Optional[PositionType],
-) -> pd.Series:
+) -> "pd.Series[Any]":
     # TODO use is_numeric_dtype in other places of the code base
     if pd.api.types.is_numeric_dtype(col):  # type: ignore
         if pos == PositionType.STACK:

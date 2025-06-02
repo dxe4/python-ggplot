@@ -1128,8 +1128,8 @@ def init_ticks(
     update_scale: bool = True,
     is_secondary: bool = False,
     bound_scale: Optional[Scale] = None,
-) -> List[GraphicsObject]:
-    result: List[GraphicsObject] = []
+) -> List[GOTick]:
+    result: List[GOTick] = []
     num_ticks = num_ticks or 0
     tick_kind = tick_kind or TickKind.ONE_SIDE
 
@@ -1204,7 +1204,7 @@ def xticks(
     update_scale: bool = True,
     is_secondary: bool = False,
     bound_scale: Optional[Scale] = None,
-) -> List[GraphicsObject]:
+) -> List[GOTick]:
     return init_ticks(
         view,
         AxisKind.X,
@@ -1228,7 +1228,7 @@ def yticks(
     update_scale: bool = True,
     is_secondary: bool = False,
     bound_scale: Optional[Scale] = None,
-) -> List[GraphicsObject]:
+) -> List[GOTick]:
     return init_ticks(
         view,
         AxisKind.Y,

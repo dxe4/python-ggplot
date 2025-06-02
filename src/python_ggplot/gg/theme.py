@@ -114,8 +114,6 @@ def build_theme(filled_scales: FilledScales, plot: GgPlot) -> "Theme":
 
     x_scale = theme.x_range or filled_scales.x_scale
     y_scale = theme.y_range or filled_scales.y_scale
-    if x_scale is None or y_scale is None:
-        raise GGException("require x scale and y scale")
 
     theme.x_margin_range = calculate_margin_range(theme, x_scale, AxisKind.X)
     theme.y_margin_range = calculate_margin_range(theme, y_scale, AxisKind.Y)

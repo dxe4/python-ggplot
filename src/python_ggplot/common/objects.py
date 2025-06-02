@@ -15,10 +15,10 @@ class Freezable:
             raise AttributeError(f"Cannot modify '{key}' - instance is frozen.")
         super().__setattr__(key, value)  # type: ignore
 
-    def update_with_copy(self, **kwargs):
+    def update_with_copy(self, **kwargs):  # type: ignore
         new_obj = deepcopy(self)
         new_obj._frozen = False
-        for key, value in kwargs.items():
+        for key, value in kwargs.items():  # type: ignore
             setattr(new_obj, key, value)
         new_obj._frozen = True
         return new_obj

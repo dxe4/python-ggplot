@@ -136,7 +136,7 @@ class StatSmooth(StatKind):
     method_type: "SmoothMethodType"
 
     def polynomial_smooth(
-        self, x: pd.Series, y: pd.Series
+        self, x: "pd.Series[Any]", y: "pd.Series[Any]"
     ) -> NDArray[np.floating[Any]]:
         return poly_fit(
             x.to_numpy(),  # type: ignore
@@ -144,7 +144,7 @@ class StatSmooth(StatKind):
             self.poly_order,
         )
 
-    def svg_smooth(self, data: pd.Series) -> NDArray[np.floating[Any]]:
+    def svg_smooth(self, data: "pd.Series[Any]") -> NDArray[np.floating[Any]]:
         window_size = round(data.size * self.span)
         if window_size % 2 == 0:
             window_size += 1
@@ -594,7 +594,7 @@ class ColOperator:
     value: Union[int, float]
     transformation: Transformation
 
-    def __call__(self, series: pd.Series) -> pd.Series:  # type: ignore
+    def __call__(self, series: "pd.Series[Any]") -> "pd.Series[Any]":
         return self.transformation(series, self.value)
 
 
@@ -619,11 +619,11 @@ class gg_col:
         self.operators.append(ColOperator(0, transformation=ZeroTransformation()))
         return self
 
-    def evaluate(self, df: pd.DataFrame) -> pd.Series:  # type: ignore
-        series = df[self.col]  # type: ignore
+    def evaluate(self, df: pd.DataFrame) -> "pd.Series[Any]":
+        series: "pd.Series[Any]" = df[self.col]  # type: ignore
         for operator in self.operators:
-            series = operator(series)  # type: ignore
-        return series  # type: ignore
+            series = operator(series)
+        return series
 
     def __str__(self):
         return self.col

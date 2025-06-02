@@ -640,13 +640,13 @@ class StaticLine(ABC):
 
     @abstractmethod
     def get_scale(
-        self, view: ViewPort, fg: FilledGeom, series: Optional[pd.Series] = None
+        self, view: ViewPort, fg: FilledGeom, series: Optional["pd.Series[Any]"] = None
     ) -> Optional[Scale]:
         pass
 
     def values_to_use(
         self,
-        series: Optional[pd.Series] = None,
+        series: Optional["pd.Series[Any]"] = None,
     ) -> List[float]:
         intercept_field = self.intercept_field()
         if intercept_field is not None:
@@ -692,7 +692,7 @@ class StaticLine(ABC):
         view: ViewPort,
         filled_geom: FilledGeom,
         style: Style,
-        series: Optional[pd.Series] = None,
+        series: Optional["pd.Series[Any]"] = None,
     ):
         scale = self.get_scale(view, filled_geom, series)
         if scale is None:
@@ -730,7 +730,7 @@ class GeomHLine(StaticLine, Geom):
         return self.yintercept
 
     def get_scale(
-        self, view: ViewPort, fg: FilledGeom, series: Optional[pd.Series] = None
+        self, view: ViewPort, fg: FilledGeom, series: Optional["pd.Series[Any]"] = None
     ) -> Optional[Scale]:
         return view.y_scale
 
@@ -761,7 +761,7 @@ class GeomVLine(StaticLine, Geom):
         return AxisKind.X
 
     def get_scale(
-        self, view: ViewPort, fg: FilledGeom, series: Optional[pd.Series] = None
+        self, view: ViewPort, fg: FilledGeom, series: Optional["pd.Series[Any]"] = None
     ) -> Optional[Scale]:
         return view.x_scale
 
@@ -837,7 +837,7 @@ class GeomABLine(Geom):
         view: ViewPort,
         filled_geom: FilledGeom,
         style: Style,
-        series: Optional[pd.Series] = None,
+        series: Optional["pd.Series[Any]"] = None,
     ):
         y_scale = view.y_scale
         x_scale = view.x_scale
@@ -1676,8 +1676,6 @@ class FilledNoneGeom(FilledStatGeom):
     def fill_crated_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
-        from python_ggplot.gg.geom.utils import apply_cont_scale_if_any
-
         # TODO clean this up
         x_scale = filled_scales.get_x_scale(filled_geom.gg_data.geom, optional=True)
         y_scale = filled_scales.get_y_scale(filled_geom.gg_data.geom, optional=True)

@@ -39,7 +39,7 @@ from python_ggplot.graphics.initialize import (
     tick_labels,
     tick_labels_from_coord,
 )
-from python_ggplot.graphics.objects import GraphicsObject, format_tick_value
+from python_ggplot.graphics.objects import GOTick, GraphicsObject, format_tick_value
 from python_ggplot.graphics.views import ViewPort
 
 
@@ -241,7 +241,7 @@ def handle_continuous_ticks(
     is_secondary: bool = False,
     hide_tick_labels: bool = False,
     margin: Optional[Coord1D] = None,
-) -> List[GraphicsObject]:
+) -> List[GOTick]:
     """todo refactor / clean / reuse medium priority"""
     breaks = breaks or []
 

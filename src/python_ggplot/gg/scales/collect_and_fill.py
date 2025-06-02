@@ -79,7 +79,7 @@ def draw_sample_idx(s_high: int, num: int = 100, seed: int = 42) -> NDArray[Any]
 
 
 def is_discrete_data(
-    col: pd.Series,  # type: ignore
+    col: "pd.Series[Any]",
     scale: GGScale,
     draw_samples: bool = True,
     discrete_threshold: float = 0.125,

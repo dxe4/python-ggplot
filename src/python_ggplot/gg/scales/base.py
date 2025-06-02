@@ -44,6 +44,7 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
     GGValue,
     VectorCol,
+    pandas_series_to_column,
 )
 from python_ggplot.gg.geom.base import (
     FilledGeom,
@@ -911,7 +912,7 @@ class FilledScales:
 
 
 def scale_from_data(
-    column: pd.Series, scale: GGScale, ignore_inf: bool = True
+    column: "pd.Series[Any]", scale: GGScale, ignore_inf: bool = True
 ) -> Scale:
     if column.len == 0:
         return Scale(low=0.0, high=0.0)

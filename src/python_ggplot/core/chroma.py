@@ -393,7 +393,7 @@ def to_opt_color(x: Union[Color, int, str, None]) -> Optional[Color]:
     """
     TODO fix types here fine for now
     """
-    color_handlers: Dict[Any, Callable[..., Color]] = {
+    color_handlers: Dict[Any, Callable[..., Color]] = {  # type: ignore
         NoneType: lambda _: None,  # type: ignore
         Color: lambda c: c,  # type: ignore
         int: lambda c: int_to_color(c),  # type: ignore

@@ -267,7 +267,7 @@ class Point(Generic[T]):
     y: T
 
     def relative_to_scale(self, scale_x: "Scale", scale_y: "Scale") -> "Point[T]":
-        point: Point[T] = Point(x=self.x * scale_x.high, y=self.y * scale_y.high)
+        point: Point[T] = Point(x=self.x * scale_x.high, y=self.y * scale_y.high)  # type: ignore
         return point
 
 
