@@ -30,8 +30,6 @@ from python_ggplot.colormaps.color_maps import (
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import (
     BLACK,
-    GREY20,
-    TRANSPARENT,
     AxisKind,
     Color,
     GGEnum,
@@ -39,7 +37,6 @@ from python_ggplot.core.objects import (
     LineType,
     MarkerKind,
     Scale,
-    Style,
 )
 from python_ggplot.core.units.objects import RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import (

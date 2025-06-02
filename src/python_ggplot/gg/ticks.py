@@ -21,7 +21,6 @@ from python_ggplot.core.coord.objects import (
     TextCoordData,
 )
 from python_ggplot.core.objects import AxisKind, Font, GGException, Scale, TextAlignKind
-from python_ggplot.gg.datamancer_pandas_compat import VectorCol
 from python_ggplot.gg.scales.base import (
     FilledScales,
     GGScale,

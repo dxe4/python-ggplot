@@ -15,7 +15,7 @@ from typing import (
 
 from python_ggplot.common.maths import create_arrow, create_curve
 from python_ggplot.core.common import REPR_CONFIG
-from python_ggplot.core.coord.objects import Coord, Coord1D, DataCoord, DataCoordType
+from python_ggplot.core.coord.objects import Coord, Coord1D
 from python_ggplot.core.objects import (
     BLACK,
     TRANSPARENT,

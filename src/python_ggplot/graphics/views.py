@@ -19,7 +19,6 @@ from python_ggplot.core.objects import (
     Color,
     Font,
     GGException,
-    Point,
     Scale,
     Style,
     UnitType,

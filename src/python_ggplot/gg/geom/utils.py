@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
-from python_ggplot.gg.datamancer_pandas_compat import VNull, VString
+from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
 from python_ggplot.gg.types import (
     COUNT_COL,

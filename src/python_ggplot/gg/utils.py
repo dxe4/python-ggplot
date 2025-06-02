@@ -1,6 +1,6 @@
 from math import ceil, sqrt
 from types import NoneType
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from python_ggplot.core.chroma import to_opt_color
 from python_ggplot.core.objects import (

@@ -1,6 +1,5 @@
 from copy import deepcopy
-from dataclasses import field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Callable, Iterable, List, Optional, Set, Union
 
 import pandas as pd
 
@@ -16,7 +15,6 @@ from python_ggplot.common.enum_literals import (
 )
 from python_ggplot.core.objects import ErrorBarKind, LineType
 from python_ggplot.core.units.objects import Quantity
-from python_ggplot.gg.datamancer_pandas_compat import GGValue
 from python_ggplot.gg.geom.base import (
     Geom,
     GeomABLine,
@@ -45,7 +43,6 @@ from python_ggplot.gg.types import (
     PossibleFloat,
     PossibleMarker,
     SmoothMethodType,
-    StatIdentity,
     StatKind,
     StatSmooth,
     StatType,

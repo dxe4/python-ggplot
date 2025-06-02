@@ -38,7 +38,6 @@ from python_ggplot.gg.scales.base import (
     LinearDataScale,
     ScaleFreeKind,
     ScaleTransformFunc,
-    ScaleType,
     SizeScale,
     TransformedDataScale,
 )

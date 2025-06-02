@@ -17,8 +17,8 @@ from python_ggplot.core.coord.objects import (
     coord_type_from_unit_type,
     path_coord_view_port,
 )
-from python_ggplot.core.objects import BLACK  # GREY20,; GREY92,;
 from python_ggplot.core.objects import (
+    BLACK,
     TRANSPARENT,
     WHITE,
     AxisKind,

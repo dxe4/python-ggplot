@@ -37,7 +37,6 @@ from python_ggplot.gg.scales import (
     SizeScale,
 )
 from python_ggplot.gg.scales.base import (
-    AbstractGGScale,
     AlphaScaleValue,
     ColorScale,
     ColorScaleKind,
