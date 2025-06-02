@@ -11,7 +11,7 @@ from python_ggplot.gg.scales.base import (
     TransformedDataScale,
     scale_type_to_cls,
 )
-from python_ggplot.gg.types import Aesthetics
+from python_ggplot.gg.types import Aesthetics, gg_col_const
 from tests.test_plots import gg_col
 
 _AES_PARAM_TO_SCALE_ARGS: Dict[str, Tuple[ScaleType, Optional[AxisKind]]] = {
@@ -48,9 +48,14 @@ def _init_field(arg_: str, arg_value_: Optional[str]):
             raise GGException("expected axis type")
 
         data = LinearAndTransformScaleData(axis_kind=axis_kind)
+        if isinstance(arg_value_, (str, gg_col)):
+            col = VectorCol(col_name=arg_value_)
+        else:
+            col = VectorCol(col_name=gg_col_const(arg_value_))
+
         return scale_cls(
             gg_data=GGScaleData(
-                col=VectorCol(col_name=arg_value_),
+                col=col,
                 has_discreteness=has_discreteness,
                 value_kind=VNull(),  # TODO this will be fixed eventually
             ),

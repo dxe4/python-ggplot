@@ -67,6 +67,7 @@ from python_ggplot.gg.types import (
     DiscreteKind,
     DiscreteType,
     SecondaryAxis,
+    gg_col_const,
 )
 from python_ggplot.graphics.initialize import (
     InitLineInput,
@@ -355,7 +356,9 @@ class GGScaleData:
     breaks: Optional[List[float]] = None
     name: str = ""
 
-    def get_name(self) -> str:
+    def get_name(self) -> Optional[str]:
+        if isinstance(self.col.col_name, gg_col_const):
+            return None
         if self.name:
             return self.name
         else:
@@ -716,7 +719,7 @@ class MainAddScales:
     main: Optional["GGScale"] = None
     more: Optional[List["GGScale"]] = None
 
-    def get_name(self) -> str:
+    def get_name(self) -> Optional[str]:
         if self.main:
             return self.main.gg_data.get_name()
         elif self.more:
@@ -724,7 +727,7 @@ class MainAddScales:
                 name = scale.gg_data.get_name()
                 if name:
                     return name
-        raise GGException("No name found")
+        return None
 
 
 @dataclass
@@ -750,6 +753,8 @@ class FilledScales:
     x_max: Optional[MainAddScales] = None
     y_min: Optional[MainAddScales] = None
     y_max: Optional[MainAddScales] = None
+    xintercept: Optional[MainAddScales] = None
+    yintercept: Optional[MainAddScales] = None
     width: Optional[MainAddScales] = None
     height: Optional[MainAddScales] = None
     text: Optional[MainAddScales] = None

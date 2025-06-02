@@ -1015,6 +1015,14 @@ def collect_scales(plot: GgPlot) -> FilledScales:
     if any(x.is_discrete() for x in x_filled):
         result["discrete_x"] = True
 
+    xintercept = collect(plot, "xintercept")
+    xintercept_filled = call_fill_scale(plot.data, xintercept, ScaleType.LINEAR_DATA)
+    fill_field("xintercept", xintercept_filled)
+
+    yintercept = collect(plot, "yintercept")
+    yintercept_filled = call_fill_scale(plot.data, yintercept, ScaleType.LINEAR_DATA)
+    fill_field("yintercept", yintercept_filled)
+
     xs_min = collect(plot, "x_min")
     x_min_filled = call_fill_scale(plot.data, xs_min, ScaleType.LINEAR_DATA)
     fill_field("x_min", x_min_filled)

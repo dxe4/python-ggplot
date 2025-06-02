@@ -9,7 +9,7 @@ import pandas as pd
 from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core.objects import AxisKind, GGException, Point, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, UnitType
-from python_ggplot.gg.datamancer_pandas_compat import VNull
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import (
     FilledGeom,
     FilledGeomDiscrete,
@@ -86,7 +86,10 @@ class GetXY:
         defualt to -inf and +inf, raise exception, or do nothing?
         """
         x_is_str = isinstance(self.x_series.iloc[self.idx], str)  # type: ignore
-        if x_is_str:
+
+        if len(self.x_series) == 1:
+            x = self.x_series.iloc[0]
+        elif x_is_str:
             # TODO is this correct?
             x = 0.0
         else:
@@ -95,7 +98,9 @@ class GetXY:
             else:
                 x = float(self.x_series.iloc[self.idx])  # type: ignore
 
-        if pd.isna(self.y_series.iloc[self.idx]):  # type: ignore
+        if len(self.y_series) == 1:
+            y = float(self.y_series.iloc[0])
+        elif pd.isna(self.y_series.iloc[self.idx]):  # type: ignore
             y = 0.0
         else:
             temp = self.y_series.iloc[self.idx]
@@ -140,26 +145,29 @@ class GetXY:
 
 @no_type_check
 def _continuous_bin_width(
-    df: pd.DataFrame, idx: int, column: str, data_col: str
+    df: pd.DataFrame, idx: int, column: str, data_col: VectorCol
 ) -> float:
     if column in df.columns:
         if pd.isna(df.iloc[idx][column]):
             return 0.0
         return df.iloc[idx][column]
     elif idx < len(df) - 1:
-        high_val = float(df.iloc[idx + 1][data_col])
+        high_val = float(data_col.evaluate(df.iloc[idx + 1]))
+        # high_val = float(df.iloc[idx + 1][data_col])
         if pd.isna(high_val):
             if idx <= 0:
                 raise GGException("expected idx> 0")
-            return df.iloc[idx][data_col] - df.iloc[idx - 1][data_col]
+            return data_col.evaluate(df.iloc[idx]) - data_col.evaluate(df.iloc[idx - 1])
+            # return df.iloc[idx][data_col] - df.iloc[idx - 1][data_col]
         else:
-            return high_val - df.iloc[idx][data_col]
+            # return high_val - df.iloc[idx][data_col]
+            return high_val - data_col.evaluate(df.iloc[idx])
 
 
 def read_or_calc_bin_width(
     df: pd.DataFrame,
     idx: int,
-    data_col: str,
+    data_col: VectorCol,
     dc_kind: DiscreteType,
     col: str = "binWidths",
 ) -> float:
@@ -847,14 +855,17 @@ def draw_sub_df(
                 style = merge_user_style(styles[i], fg)
 
         if fg.gg_data.x_col:
-            fg.gg_data.geom.draw_detached_geom(view, fg, style, df[fg.gg_data.x_col])
+            fg.gg_data.geom.draw_detached_geom(
+                view, fg, style, fg.gg_data.x_col.evaluate(df)
+            )
         else:
             fg.gg_data.geom.draw_detached_geom(view, fg, style)
         return
 
     if geom_type != GeomType.RASTER:
-        x_tensor = df[fg.gg_data.x_col]  # type: ignore
-        y_tensor = df[fg.gg_data.y_col]  # type: ignore
+
+        x_tensor = fg.gg_data.x_col.evaluate(df)  # type: ignore
+        y_tensor = fg.gg_data.y_col.evaluate(df)  # type: ignore
 
         # TODO this needs to be cleaned up a bit
         # it allows test_geom_point_and_text to do

@@ -1017,9 +1017,10 @@ def handle_labels(view: ViewPort, theme: Theme):
     y_margin = get_margin(theme.y_label_margin, "y_tick_label", AxisKind.Y)
 
     y_lab_obj = create_label(ylabel, y_lab_txt, theme.y_label_margin, y_margin)
+    view.add_obj(y_lab_obj)
+
     x_lab_obj = create_label(xlabel, x_lab_txt, theme.x_label_margin, x_margin)
     view.add_obj(x_lab_obj)
-    view.add_obj(y_lab_obj)
 
     # Handle secondary axes if present
     if has_secondary(theme, AxisKind.X):

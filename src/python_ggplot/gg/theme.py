@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Optional, Set
 
 from python_ggplot.core.chroma import to_opt_color
 from python_ggplot.core.objects import (
@@ -74,16 +74,20 @@ def label_name(filled_scales: "FilledScales", p: "GgPlot", ax_kind: AxisKind) ->
     return label_lookup[ax_kind]()
 
 
-def _get_x_label(filled_scales: "FilledScales") -> str:
+def _get_x_label(filled_scales: "FilledScales") -> Optional[str]:
     return filled_scales.x.get_name()
 
 
-def _get_y_label(filled_scales: "FilledScales") -> str:
+def _get_y_label(filled_scales: "FilledScales") -> Optional[str]:
     """
     TODO CRITICAL, medium difficulty
     """
     y_scale = filled_scales.y
-    if y_scale is not None and (y_scale.main or y_scale.more):
+    if (
+        y_scale is not None
+        and (y_scale.main or y_scale.more)
+        and filled_scales.y.get_name()
+    ):
         return filled_scales.y.get_name()
     else:
         stat_types: Set[StatBin] = {

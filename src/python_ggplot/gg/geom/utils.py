@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
-from python_ggplot.gg.datamancer_pandas_compat import VNull
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
 from python_ggplot.gg.types import (
     COUNT_COL,
@@ -28,10 +28,13 @@ if TYPE_CHECKING:
 
 
 def add_zero_keys(
-    df: pd.DataFrame, keys: "pd.Series[Any]", x_col: Any, count_col: str
+    df: pd.DataFrame, keys: "pd.Series[Any]", x_col: VectorCol, count_col: str
 ) -> pd.DataFrame:
-    exist_keys = df[x_col].unique()  # type: ignore
-    df_zero = pd.DataFrame({x_col: keys[~keys.isin(exist_keys)]})  # type: ignore
+    if not isinstance(x_col.col_name, str):
+        raise GGException("Expected str column")
+
+    exist_keys = x_col.evaluate(df).unique()
+    df_zero = pd.DataFrame({x_col.col_name: keys[~keys.isin(exist_keys)]})  # type: ignore
     df_zero[count_col] = 0
     return pd.concat([df, df_zero], ignore_index=True)
 
@@ -146,13 +149,19 @@ def call_histogram(
 
 def count_(
     df: pd.DataFrame,  # type: ignore
-    x_col: str,
+    x_col_vec: VectorCol,
     name: str,
     weights: Optional["GGScale"] = None,
 ) -> pd.DataFrame:
     # TODO critical, medium complexity
     # we rename to counts_GGPLOTNIM_INTERNAL
     # need to make a choice here
+    #
+    if not isinstance(x_col_vec.col_name, str):
+        raise GGException("cannot use constant or gg_col for count")
+
+    x_col = x_col_vec.col_name
+
     if weights is None:
         result = df[x_col].value_counts().reset_index()
         result = result[[x_col, "count"]].rename({"count": name})
@@ -337,7 +346,7 @@ def _filled_count_geom_map(
     # TODO fix col type, issue with pandas index
     col = pd.Series(dtype=float)  # For stacking
 
-    all_classes = pd.Series(df[filled_stat_geom.get_x_col()].unique())  # type: ignore
+    all_classes = pd.Series(filled_stat_geom.get_x_col().evaluate(df).unique())  # type: ignore
     if len(filled_stat_geom.continuous_scales) > 0:
         raise GGException("continuous_scales > 0")
 
@@ -357,7 +366,7 @@ def _filled_count_geom_map(
         yield_df = count_(sub_df, filled_stat_geom.get_x_col(), "", weight_scale)  # type: ignore
 
         yield_df = add_zero_keys(yield_df, all_classes, filled_stat_geom.get_x_col(), "count")  # type: ignore
-        yield_df = yield_df.sort_values(filled_stat_geom.get_x_col())  # type: ignore
+        yield_df = yield_df.sort_values(filled_stat_geom.get_x_col().col_name)  # type: ignore
         yield_df = yield_df.reset_index(drop=True)
 
         if filled_stat_geom.geom.gg_data.position == PositionType.STACK:
@@ -691,7 +700,7 @@ def filled_count_geom(
     filled_scales: "FilledScales",
     style: "GGStyle",
 ) -> "FilledGeom":
-    all_classes = df[filled_stat_geom.get_x_col()].unique()  # type: ignore
+    all_classes = filled_stat_geom.get_x_col().evaluate(df).unique()  # type: ignore
 
     if len(filled_stat_geom.map_discrete_columns) > 0:
         filled_geom = _filled_count_geom_map(

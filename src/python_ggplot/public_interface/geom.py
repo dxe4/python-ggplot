@@ -357,9 +357,9 @@ def geom_line(
 
 
 def geom_vline(
-    xintercept: Optional[Union[Union[float, int], Iterable[Union[float, int]]]] = None,
-    data: Optional[pd.DataFrame] = None,
     aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
+    xintercept: Optional[Union[Union[float, int], Iterable[Union[float, int]]]] = None,
     color: PossibleColor = None,
     size: PossibleFloat = None,
     line_type: LINE_TYPE_VALUES = "none_type",
@@ -371,6 +371,7 @@ def geom_vline(
 
     if aes is None:
         aes = Aesthetics()
+
     if data is None:
         data = pd.DataFrame()
 

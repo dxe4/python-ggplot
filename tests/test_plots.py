@@ -22,6 +22,7 @@ from python_ggplot.public_interface.common import (
     ggridges,
     ggtitle,
     scale_fill_gradient,
+    scale_fill_manual,
     scale_x_continuous,
     scale_x_discrete,
     scale_y_continuous,
@@ -428,7 +429,7 @@ def test_ridges_weather():
         )
         + ggridges("Month", overlap=1.5)
         + geom_area(stat="bin", alpha=0.8)
-        + geom_point(aes(y=gg_col("Month").zero() + 2), color="black")
+        + geom_point(aes(y=2), color="black")
         + ylab(rotate=-30, tick_font=Font(size=15))
     )
 
@@ -535,3 +536,40 @@ def test_annotate_curve():
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "annotate_curve.png")
+
+
+def geom_rect(*args, **kwargs):
+    pass
+
+
+def test_economics():
+    economics = pd.read_csv(data_path / "economics.csv")
+    presidential = pd.read_csv(data_path / "presidential_truncated.csv")
+    # {"de": ["blue", "red"]}
+    plot = (
+        ggplot(economics)
+        # + geom_rect(
+        #     aes(xmin="start", xmax="end", fill="party"),
+        #     ymin=float("-inf"),
+        #     ymax=float("inf"),
+        #     alpha=0.2,
+        #     data=presidential,
+        # )
+        + geom_vline(
+            aes(xintercept="start"), data=presidential, color="gray50", alpha=0.5
+        )
+        + geom_text(
+            aes(x="start", y=2500, text="name"),
+            data=presidential,
+            size=3,
+            # vjust=0,
+            # hjust=0,
+            # nudge_x=50,
+        )
+        + geom_line(aes(x="date", y="unemploy"))
+        # + scale_fill_manual(values=c("blue", "red"))
+        + xlab("date")
+        + ylab("unemployment")
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "economics.png")

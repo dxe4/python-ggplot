@@ -51,6 +51,7 @@ from python_ggplot.gg.types import (
     StatBin,
     StatKind,
     StatType,
+    gg_col_const,
 )
 from python_ggplot.graphics.initialize import (
     InitLineInput,
@@ -184,8 +185,8 @@ class Geom(ABC):
 @dataclass
 class FilledGeomData:
     geom: Geom
-    x_col: Optional[str]
-    y_col: Optional[str]
+    x_col: Optional[VectorCol]
+    y_col: Optional[VectorCol]
     x_scale: Optional[Scale]
     y_scale: Optional[Scale]
     reversed_x: bool
@@ -662,9 +663,21 @@ class StaticLine(ABC):
             raise GGException("expected either an intercept value or a column")
 
     def _draw_static_line(
-        self, val: float, scale: Scale, style: Style, axis_kind: AxisKind
+        self,
+        val: Any,
+        scale: Scale,
+        style: Style,
+        axis_kind: AxisKind,
+        series: Optional["pd.Series[Any]"] = None,
     ) -> GraphicsObject:
-        rel_pos = (float(val) - scale.low) / (scale.high - scale.low)
+        if scale.low == 0.0 and scale.high == 1.0 and series is not None:
+            indices = series.loc[series == val].index.to_list()
+            if len(indices) > 1:
+                # known issue fine for now
+                raise GGException("TODO: support multiple indices for vline")
+            rel_pos = (indices[0]) / len(indices)
+        else:
+            rel_pos = (float(val) - scale.low) / (scale.high - scale.low)
         if axis_kind == AxisKind.X:
             x = RelativeCoordType(rel_pos)
             y1 = RelativeCoordType(0.0)
@@ -699,7 +712,9 @@ class StaticLine(ABC):
             raise GGException("expected a scale to draw static line")
 
         for position in self.values_to_use(series):
-            line = self._draw_static_line(position, scale, style, self.axis_kind())
+            line = self._draw_static_line(
+                position, scale, style, self.axis_kind(), series
+            )
             view.children[0].objects.append(line)
 
     def draw_geom(
@@ -1012,6 +1027,7 @@ class FilledGeomErrorBar(GeomErrorBarMixin, FilledGeom):
                 raise GGException("expected x_col")
             collect_cols.append(self.gg_data.x_col)
 
+        collect_cols = [str(i) for i in collect_cols]
         return df.drop_duplicates(subset=collect_cols)
 
     @classmethod
@@ -1317,6 +1333,12 @@ def get_scales(
     x_opt = get_scale(filled_scales.x)
     y_opt = get_scale(filled_scales.y)
 
+    if x_opt is None:
+        x_opt = get_scale(filled_scales.xintercept)
+
+    if y_opt is None:
+        y_opt = get_scale(filled_scales.yintercept)
+
     if y_is_none and y_opt is not None and x_opt is None:
         # TODO high priority
         # if only y is given, we flip the plot
@@ -1414,6 +1436,12 @@ def _get_scale_col_name(scale: Optional["GGScale"]) -> Optional[str]:
     return scale.get_col_name()
 
 
+def _get_scale_col(scale: Optional["GGScale"]) -> Optional[VectorCol]:
+    if scale is None:
+        return None
+    return scale.gg_data.col
+
+
 def _get_filled_geom_from_scale(scale: Optional["GGScale"]):
     # todo rename
     if scale is None:
@@ -1428,6 +1456,9 @@ def determine_data_scale(
 
     if scale is None:
         return None
+
+    if isinstance(scale.gg_data.col.col_name, gg_col_const):
+        return scale.gg_data.col.col_name.get_scale()
 
     if not str(scale.gg_data.col) in df.columns:
         # TODO, port this logic on formula node
@@ -1648,11 +1679,11 @@ class FilledStatGeom(ABC):
         pass
 
     @abstractmethod
-    def get_x_col(self) -> Optional[str]:
+    def get_x_col(self) -> Optional[VectorCol]:
         pass
 
     @abstractmethod
-    def get_y_col(self) -> Optional[str]:
+    def get_y_col(self) -> Optional[VectorCol]:
         pass
 
     @abstractmethod
@@ -1713,10 +1744,10 @@ class FilledNoneGeom(FilledStatGeom):
     def validate(self):
         pass
 
-    def get_x_col(self) -> Optional[str]:
+    def get_x_col(self) -> Optional[VectorCol]:
         pass
 
-    def get_y_col(self) -> Optional[str]:
+    def get_y_col(self) -> Optional[VectorCol]:
         pass
 
     def get_x_scale(self) -> Optional["Scale"]:
@@ -1754,11 +1785,11 @@ class FilledSmoothGeom(FilledStatGeom):
             # TODO i think this logic is wrong, double check
             raise GGException("y is none")
 
-    def get_x_col(self) -> Optional[str]:
-        return self.x.get_col_name()
+    def get_x_col(self) -> Optional[VectorCol]:
+        return self.x.gg_data.col
 
-    def get_y_col(self) -> Optional[str]:
-        return SMOOTH_VALS_COL
+    def get_y_col(self) -> Optional[VectorCol]:
+        return VectorCol(SMOOTH_VALS_COL)
 
     def get_x_scale(self) -> Optional["Scale"]:
         return determine_data_scale(self.x, self.continuous_scales, self.df)
@@ -1799,11 +1830,11 @@ class FilledBinGeom(FilledStatGeom):
         if self.x.is_discrete():
             raise GGException("For discrete data columns use `geom_bar` instead!")
 
-    def get_x_col(self) -> Optional[str]:
-        return self.x.get_col_name()
+    def get_x_col(self) -> Optional[VectorCol]:
+        return self.x.gg_data.col
 
-    def get_y_col(self) -> Optional[str]:
-        return self.count_col()
+    def get_y_col(self) -> Optional[VectorCol]:
+        return VectorCol(self.count_col())
 
     def get_x_scale(self) -> Optional["Scale"]:
         return encompassing_data_scale(self.continuous_scales, AxisKind.X)
@@ -1835,11 +1866,11 @@ class FilledCountGeom(FilledStatGeom):
                 "For continuous data columns use `geom_histogram` instead!"
             )
 
-    def get_x_col(self) -> Optional[str]:
-        return self.x.get_col_name()
+    def get_x_col(self) -> Optional[VectorCol]:
+        return self.x.gg_data.col
 
-    def get_y_col(self) -> Optional[str]:
-        return COUNT_COL
+    def get_y_col(self) -> Optional[VectorCol]:
+        return VectorCol(COUNT_COL)
 
     def get_x_scale(self) -> Optional["Scale"]:
         return determine_data_scale(self.x, self.continuous_scales, self.df)
@@ -1889,11 +1920,11 @@ class FilledIdentityGeom(FilledStatGeom):
     def validate(self):
         pass
 
-    def get_x_col(self) -> Optional[str]:
-        return _get_scale_col_name(self.x)
+    def get_x_col(self) -> Optional[VectorCol]:
+        return _get_scale_col(self.x)
 
-    def get_y_col(self) -> Optional[str]:
-        return _get_scale_col_name(self.y)
+    def get_y_col(self) -> Optional[VectorCol]:
+        return _get_scale_col(self.y)
 
     def get_x_scale(self) -> Optional["Scale"]:
         return determine_data_scale(self.x, self.continuous_scales, self.df)

@@ -627,3 +627,20 @@ class gg_col:
 
     def __str__(self):
         return self.col
+
+
+@dataclass
+class gg_col_const:
+    val: Any
+
+    def evaluate(self, df: pd.DataFrame) -> "pd.Series[Any]":
+        return pd.Series(self.val)
+
+    def __str__(self):
+        return self.val
+
+    def get_scale(self):
+        if isinstance(self.val, str):
+            return Scale(low=0.0, high=1.0)
+        else:
+            return Scale(low=float(self.val), high=float(self.val))

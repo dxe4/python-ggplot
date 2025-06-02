@@ -7,7 +7,7 @@ import pandas as pd
 from python_ggplot.core.objects import GGEnum, GGException
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.types import ColOperator, gg_col
+    from python_ggplot.gg.types import ColOperator, gg_col, gg_col_const
 
 
 class ColumnType(GGEnum):
@@ -141,7 +141,7 @@ def python_type_to_gg_value(value: Any) -> GGValue:
 
 @dataclass
 class VectorCol:
-    col_name: Union[str, "gg_col"]
+    col_name: Union[str, "gg_col", "gg_col_const"]
     res_type: Optional[Any] = None
     series: Optional[pd.Series] = None  # type: ignore
 
@@ -154,17 +154,17 @@ class VectorCol:
             return None
 
     def __str__(self) -> str:
-        from python_ggplot.gg.types import gg_col
+        from python_ggplot.gg.types import gg_col, gg_col_const
 
-        if isinstance(self.col_name, gg_col):
+        if isinstance(self.col_name, (gg_col, gg_col_const)):
             return str(self.col_name)
         else:
             return self.col_name
 
     def evaluate(self, df: pd.DataFrame) -> Any:
-        from python_ggplot.gg.types import gg_col
+        from python_ggplot.gg.types import gg_col, gg_col_const
 
-        if isinstance(self.col_name, gg_col):
+        if isinstance(self.col_name, (gg_col, gg_col_const)):
             return self.col_name.evaluate(df)  # type: ignore
         else:
             return df[self.col_name]  # type: ignore
