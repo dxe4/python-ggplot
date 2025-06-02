@@ -9,7 +9,11 @@ from python_ggplot.core.objects import Color, Font
 from python_ggplot.gg.scales.base import ColorScale
 from python_ggplot.gg.types import gg_col
 from python_ggplot.public_interface.aes import aes
-from python_ggplot.public_interface.annotate import annotate_curve, annotate_text
+from python_ggplot.public_interface.annotate import (
+    annotate_curve,
+    annotate_point,
+    annotate_text,
+)
 from python_ggplot.public_interface.common import (
     draw_layout,
     facet_wrap,
@@ -526,6 +530,8 @@ def test_annotate_curve():
         + geom_point(size=1.5)
         + annotate_curve(x=5, y=38, xend=3, yend=30, curvature=-0.3, arrow=True)
         + annotate_text(text="subaru", x=5, y=37, background_color="transparent")
+        + annotate_point(x=4.95, y=36.3, color="orange", size=3)
+        + annotate_point(x=4.95, y=36.3, color="black", size=1.5)
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "annotate_curve.png")

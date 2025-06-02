@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-from python_ggplot.common.enum_literals import LINE_TYPE_VALUES
+from python_ggplot.common.enum_literals import LINE_TYPE_VALUES, MARKER_KIND_VALUES
 from python_ggplot.core.chroma import str_to_color, to_opt_color
 from python_ggplot.core.coord.objects import (
     Coord,
@@ -21,19 +21,34 @@ from python_ggplot.core.objects import (
     Font,
     GGException,
     LineType,
+    MarkerKind,
     Scale,
     Style,
     TextAlignKind,
 )
 from python_ggplot.core.units.objects import PointUnit, Quantity
-from python_ggplot.gg.types import get_str_width, str_height
+from python_ggplot.gg.types import (
+    PossibleColor,
+    PossibleFloat,
+    PossibleMarker,
+    get_str_width,
+    str_height,
+)
 from python_ggplot.graphics.initialize import (
     InitMultiLineInput,
     InitRectInput,
     init_multi_line_text,
+    init_point,
     init_rect,
 )
-from python_ggplot.graphics.objects import Curve, GOCurve, GOType, GraphicsObject
+from python_ggplot.graphics.objects import (
+    Curve,
+    GOCurve,
+    GOPoint,
+    GOType,
+    GraphicsObject,
+    GraphicsObjectConfig,
+)
 
 if TYPE_CHECKING:
     from python_ggplot.gg.types import GgPlot
@@ -68,6 +83,33 @@ class CurveAnnotation(Annotation):
             style=self.style,
         )
         return [go_poly_line]
+
+
+@dataclass
+class PointAnnotate(Annotation):
+    x: float
+    y: float
+    style: Style
+
+    def get_graphics_objects(
+        self, view: "ViewPort", plot: "GgPlot"
+    ) -> List[GraphicsObject]:
+        if view.x_scale is None or view.y_scale is None:
+            raise GGException("expected x and y scale on view to draw a curve")
+
+        coord = Coord(
+            x=Coord1D.create_data(self.x, view.x_scale, AxisKind.X),
+            y=Coord1D.create_data(self.y, view.y_scale, AxisKind.Y),
+        )
+        go_point = GOPoint(
+            name="point_annotation",
+            config=GraphicsObjectConfig(style=self.style),
+            marker=self.style.marker,
+            size=self.style.size,
+            color=self.style.color,
+            pos=coord,
+        )
+        return [go_point]
 
 
 @dataclass
@@ -309,3 +351,24 @@ def annotate_text(
         )
 
     return result
+
+
+def annotate_point(
+    x: float | int,
+    y: float | int,
+    color: PossibleColor = "gray20",
+    size: PossibleFloat = 2,
+    marker: MARKER_KIND_VALUES = "circle",
+    alpha: Optional[float] = 1.0,
+) -> "PointAnnotate":
+
+    color = to_opt_color(color)
+    if alpha:
+        color = color.update_with_copy(a=alpha)
+
+    style = Style(
+        color=color,
+        size=size,
+        marker=MarkerKind.eitem(marker),
+    )
+    return PointAnnotate(x=x, y=y, style=style)
