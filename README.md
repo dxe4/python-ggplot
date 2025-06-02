@@ -34,22 +34,41 @@ ggmulti(
 <img src="plots/gg_multi_pmg.png?v=1" alt="gg_multi_pmg" width="800px">
 
 
-```python
-    mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes("class")) + geom_bar()
-    res = ggcreate(plot)
-    ggdraw_plot(res, data_path / "geom_bar.png")
-```
-<img src="plots/geom_bar.png?v=1" alt="geom_bar" width="400px">
-
 
 ```python
-    mpg = pd.read_csv(data_path / "mpg.csv")
-    plot = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+    weather = pd.read_csv(data_path / "lincoln-weather.csv")
+
+    month_order = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+    weather['Month'] = pd.Categorical(weather['Month'], categories=month_order, ordered=True)
+
+    plot = (
+        ggplot(
+            weather,
+            aes(x="Mean Temperature [F]", fill="Month"),
+        )
+        + ggridges("Month", overlap=1.7)
+        + geom_area(stat="bin", alpha=0.7)
+        + ylab(rotate=-30)
+    )
+
     res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_bar_fill.png")
+    ggdraw_plot(res, plots_path / "ridgets_weather.png")
 ```
-<img src="plots/geom_bar_fill.png?v=1" alt="gg_point" width="400px">
+<img src="plots/ridgets_weather.png?v=1" alt="ridgets_weather" width="400px">
+
 
 ```python
     rng = np.random.default_rng(42)
@@ -145,21 +164,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
 
 
 ```python
-    df = pd.DataFrame({
-        'g': ['a', 'a', 'a', 'b', 'b', 'b'],
-        'x': [1, 3, 5, 2, 4, 6],
-        'y': [2, 5, 1, 3, 6, 7]
-    })
-    plot = ggplot(
-        df, aes(x="x", y="y", fill="g")
-    ) + geom_area(alpha=0.3) + geom_point(size=5)
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "geom_area_stat_identity.png")
-```
-<img src="plots/geom_area_stat_identity.png?v=1" alt="geom_area_stat_identity" width="400px">
-
-
-```python
     np.random.seed(1234)
 
     sex = np.repeat(["F", "M"], repeats=200)
@@ -199,41 +203,6 @@ ggdraw_plot(res, plots_path / "geom_histogram_fill.png")
     ggdraw_plot(res, plots_path / "geom_area_stat_bin.png")
 ```
 <img src="plots/geom_area_stat_bin.png?v=1" alt="geom_area_stat_bin" width="400px">
-
-
-```python
-    weather = pd.read_csv(data_path / "lincoln-weather.csv")
-
-    month_order = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ]
-    weather['Month'] = pd.Categorical(weather['Month'], categories=month_order, ordered=True)
-
-    plot = (
-        ggplot(
-            weather,
-            aes(x="Mean Temperature [F]", fill="Month"),
-        )
-        + ggridges("Month", overlap=1.7)
-        + geom_area(stat="bin", alpha=0.7)
-        + ylab(rotate=-30)
-    )
-
-    res = ggcreate(plot)
-    ggdraw_plot(res, plots_path / "ridgets_weather.png")
-```
-<img src="plots/ridgets_weather.png?v=1" alt="ridgets_weather" width="400px">
 
 
 ```python
@@ -341,6 +310,38 @@ res = ggcreate(plot)
 ggdraw_plot(res, plots_path / "geom_linerange.png")
 ```
 <img src="plots/geom_linerange.png?v=1" alt="geom_linerange" width="400px">
+
+
+```python
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes("class")) + geom_bar()
+    res = ggcreate(plot)
+    ggdraw_plot(res, data_path / "geom_bar.png")
+```
+<img src="plots/geom_bar.png?v=1" alt="geom_bar" width="400px">
+
+```python
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    plot = ggplot(mpg, aes("class", fill="drv")) + geom_bar()
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_bar_fill.png")
+```
+<img src="plots/geom_bar_fill.png?v=1" alt="gg_point" width="400px">
+
+
+```python
+    df = pd.DataFrame({
+        'g': ['a', 'a', 'a', 'b', 'b', 'b'],
+        'x': [1, 3, 5, 2, 4, 6],
+        'y': [2, 5, 1, 3, 6, 7]
+    })
+    plot = ggplot(
+        df, aes(x="x", y="y", fill="g")
+    ) + geom_area(alpha=0.3) + geom_point(size=5)
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_area_stat_identity.png")
+```
+<img src="plots/geom_area_stat_identity.png?v=1" alt="geom_area_stat_identity" width="400px">
 
 ```python
     mpg = pd.read_csv(data_path / "mpg.csv")
