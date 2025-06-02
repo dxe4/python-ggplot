@@ -325,6 +325,13 @@ class Scale:
     def __eq__(self, o) -> bool:  # type: ignore
         return math.isclose(self.low, o.low) and math.isclose(self.high, o.high)  # type: ignore
 
+    def normalise_pos(self, val: float, reverse: bool=False) -> float:
+        rel_pos = (float(val) - self.low) / (self.high - self.low)
+        if reverse:
+            return 1 - rel_pos
+        else:
+            return rel_pos
+
 
 class GGException(Exception):
     pass

@@ -526,7 +526,7 @@ def test_annotate_curve():
     plot = ggplot(
         mpg, aes("displ", "hwy")
     ) + geom_point() + annotate_curve(
-        x = 4, y = 35, xend = 2.65, yend = 27, curvature=0.8
+        x = 5, y = 38, xend = 3, yend = 30, curvature=-0.3
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "annotate_curve.png")

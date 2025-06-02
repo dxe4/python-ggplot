@@ -540,14 +540,23 @@ class Curve:
     curvature: Union[float, int]
     height_scale: Union[float, int]
 
-    def points(self) -> List[Point[float]]:
-        return create_curve(
-            self.x,
-            self.y,
-            self.xend,
-            self.yend,
-            # self.curvature,
+    def points(self, x_scale: Scale, y_scale: Scale) -> List[Point[float]]:
+        x = x_scale.normalise_pos(self.x)
+        xend = x_scale.normalise_pos(self.xend)
+        y = y_scale.normalise_pos(self.y)
+        yend = y_scale.normalise_pos(self.yend)
+
+        points =  create_curve(
+            x,
+            y,
+            xend,
+            yend,
+            self.curvature,
         )
+        for point in points:
+            point.x = point.x * x_scale.high
+            point.y = point.y * y_scale.high
+        return points
 
 
 class GOCurve:
@@ -561,7 +570,7 @@ class GOCurve:
         style: Optional[Style] = None,
     ) -> GOPolyLine:
 
-        curve_points = curve.points()
+        curve_points = curve.points(x_scale, y_scale)
 
         curve_positions = [
             Coord(

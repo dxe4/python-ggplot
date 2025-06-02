@@ -317,6 +317,20 @@ ggdraw_plot(res, plots_path / "geom_point_and_text.png")
 
 
 ```python
+    mpg = pd.read_csv(data_path / "mpg.csv")
+    mpg["hwy"] = mpg["hwy"].astype(float)
+    plot = ggplot(
+        mpg, aes("displ", "hwy")
+    ) + geom_point() + annotate_curve(
+        x = 5, y = 38, xend = 3, yend = 30, curvature=-0.3
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "annotate_curve.png")
+```
+<img src="plots/annotate_curve.png?v=1" alt="annotate_curve" width="400px">
+
+
+```python
 df = pd.DataFrame({
     'trt': [1, 1, 2, 2],
     'resp': [1, 5, 3, 4],
