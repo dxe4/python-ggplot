@@ -4,6 +4,7 @@ from python_ggplot.core.chroma import parse_hex
 from python_ggplot.core.objects import (
     BLACK,
     GREY20,
+    GREY35,
     TRANSPARENT,
     Color,
     Font,
@@ -37,6 +38,14 @@ AREA_DEFAULT_STYLE: Style = Style(
     size=5.0,
     color=GREY20,
     fill_color=GREY20,
+)
+
+RECT_DEFAULT_STYLE: Style = Style(
+    line_width=0.5,
+    line_type=LineType.SOLID,
+    size=1.0,
+    color=GREY20,
+    fill_color=GREY35,
 )
 
 SMOOTH_DEFAULT_STYLE: Style = Style(

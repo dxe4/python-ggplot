@@ -13,7 +13,7 @@ from python_ggplot.common.enum_literals import (
     SMOOTH_METHOD_TYPE_VALUES,
     STAT_TYPE_VALUES,
 )
-from python_ggplot.core.objects import ErrorBarKind, LineType
+from python_ggplot.core.objects import ErrorBarKind, GGException, LineType
 from python_ggplot.core.units.objects import Quantity
 from python_ggplot.gg.geom.base import (
     Geom,
@@ -28,6 +28,7 @@ from python_ggplot.gg.geom.base import (
     GeomLine,
     GeomPoint,
     GeomRaster,
+    GeomRect,
     GeomText,
     GeomTile,
     GeomVLine,
@@ -506,6 +507,58 @@ def geom_abline(
         slope=slope,
         inhert_aes=inhert_aes,
     )
+
+    return result
+
+
+def geom_rect(
+    aes: Optional[Aesthetics] = None,
+    data: Optional[pd.DataFrame] = None,
+    color: PossibleColor = None,
+    line_type: LINE_TYPE_VALUES = "solid",
+    line_width: PossibleFloat = 0.5,
+    fill_color: PossibleColor = None,
+    stat: STAT_TYPE_VALUES = "identity",
+    position: POSITION_VALUES = "identity",
+    alpha: Optional[float] = 1.0,
+) -> "Geom":
+    if data is None:
+        data = pd.DataFrame()
+    if aes is None:
+        aes = Aesthetics()
+
+    df_opt = data if len(data) > 0 else None
+    stat_ = StatType.eitem(stat)
+    position_ = PositionType.eitem(position)
+    line_type_ = LineType.eitem(line_type)
+
+    style = assign_identity_scales_get_style(
+        aes=aes,
+        p_color=color,
+        p_size=line_width,
+        p_alpha=alpha,
+        p_fill_color=fill_color,
+        p_line_type=line_type_,
+        p_line_width=line_width,
+    )
+
+    #  TODO in R ggplot x_min is xmin ETC
+    required_attrs = [aes.x_min, aes.x_max, aes.y_min, aes.y_max]
+    if None in required_attrs:
+        raise GGException("Required all: 4 xmin, xmax, ymin, ymax")
+
+
+    gid = get_gid()
+    gg_data = GeomData(
+        gid=gid,
+        data=df_opt,
+        user_style=style,
+        aes=fill_ids(aes, {gid}),
+        bin_position=None,
+        stat_kind=StatKind.create_from_enum(stat_),
+        position=position_,
+    )
+    result = GeomRect(gg_data=gg_data)
 
     return result
 

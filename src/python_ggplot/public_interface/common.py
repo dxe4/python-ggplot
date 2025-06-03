@@ -570,6 +570,10 @@ def ggtitle(
     return theme
 
 
+def theme(**kwargs) -> Theme:
+    return Theme(**kwargs)
+
+
 def theme_opaque() -> Theme:
     return Theme(canvas_color=WHITE)
 

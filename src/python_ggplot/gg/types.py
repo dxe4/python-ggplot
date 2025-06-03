@@ -644,3 +644,23 @@ class gg_col_const:
             return Scale(low=0.0, high=1.0)
         else:
             return Scale(low=float(self.val), high=float(self.val))
+
+
+@dataclass
+class gg_col_anonymous:
+    val: Any
+
+    def evaluate(self, df: pd.DataFrame) -> "pd.Series[Any]":
+        return self.val
+
+    def __str__(self):
+        raise GGException(
+            "this col is anonymous, it only has data but not col_name"
+        )
+
+    def get_scale(self):
+        try:
+            return Scale(low=float(self.val.min()), high=float(self.val.max()))
+        except ValueError:
+            print("infering low/high 0-1")
+            return Scale(low=0.0, high=1.0)

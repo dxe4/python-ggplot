@@ -20,9 +20,9 @@ from typing import (
 
 import pandas as pd
 
-from python_ggplot.core.coord.objects import Coord
+from python_ggplot.core.coord.objects import Coord, Coord1D
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
-from python_ggplot.core.units.objects import DataUnit
+from python_ggplot.core.units.objects import DataUnit, RelativeUnit
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 from python_ggplot.gg.styles.config import (
     AREA_DEFAULT_STYLE,
@@ -30,6 +30,7 @@ from python_ggplot.gg.styles.config import (
     HISTO_DEFAULT_STYLE,
     LINE_DEFAULT_STYLE,
     POINT_DEFAULT_STYLE,
+    RECT_DEFAULT_STYLE,
     SMOOTH_DEFAULT_STYLE,
     TEXT_DEFAULT_STYLE,
     TILE_DEFAULT_STYLE,
@@ -51,6 +52,7 @@ from python_ggplot.gg.types import (
     StatBin,
     StatKind,
     StatType,
+    gg_col_anonymous,
     gg_col_const,
 )
 from python_ggplot.graphics.initialize import (
@@ -95,6 +97,7 @@ class GeomType(GGEnum):
     GEOM_VLINE = auto()
     GEOM_HLINE = auto()
     GEOM_ABLINE = auto()
+    GEOM_RECT = auto()
 
 
 @dataclass
@@ -359,6 +362,7 @@ class GeomRectDrawMixin:
         bin_width = read_or_calc_bin_width(
             df, idx, fg.gg_data.x_col, dc_kind=fg.gg_data.x_discrete_kind.discrete_type
         )
+
         if bin_width != bin_widths[0]:
             raise GGException("Invalid bin width generated")
 
@@ -903,6 +907,34 @@ class GeomABLine(Geom):
         raise GGException("Already handled in `draw_sub_df`!")
 
 
+class GeomRect(GeomRectDrawMixin, Geom):
+    @property
+    def allowed_stat_types(self) -> List["StatType"]:
+        return [
+            StatType.IDENTITY,
+        ]
+
+    def default_style(self):
+        return deepcopy(RECT_DEFAULT_STYLE)
+
+    @property
+    def geom_type(self) -> GeomType:
+        return GeomType.GEOM_RECT
+
+    # def draw_geom(
+    #     self,
+    #     view: ViewPort,
+    #     fg: "FilledGeom",
+    #     pos: Coord,
+    #     y: Any,
+    #     bin_widths: Tuple[float, float],
+    #     df: pd.DataFrame,
+    #     idx: int,
+    #     style: Style,
+    # ):
+    #     raise GGException("Already handled in `draw_sub_df`!")
+
+
 class GeomArea(Geom):
     @property
     def allowed_stat_types(self) -> List["StatType"]:
@@ -1310,34 +1342,33 @@ def split_discrete_set_map(
 
     return set_disc_cols, map_disc_cols
 
+def get_scale(geom: Geom, field: Optional["MainAddScales"]) -> Optional["GGScale"]:
+    gid = geom.gg_data.gid
+    if field is None:
+        # TODO is this exception correct?
+        raise GGException("attempted to get on empty scale")
+    more_scale = [s for s in field.more or [] if gid in s.gg_data.ids]
+    if len(more_scale) > 1:
+        raise GGException("found more than 1 scale matching gid")
+    if len(more_scale) == 1:
+        return more_scale[0]
+    elif field.main is not None and geom.inherit_aes():
+        return field.main
+    else:
+        return None
+
 
 def get_scales(
     geom: Geom, filled_scales: "FilledScales", y_is_none: bool = False
 ) -> Tuple[Optional["GGScale"], Optional["GGScale"], List["GGScale"]]:
-    gid = geom.gg_data.gid
-
-    def get_scale(field: Optional["MainAddScales"]) -> Optional["GGScale"]:
-        if field is None:
-            # TODO is this exception correct?
-            raise GGException("attempted to get on empty scale")
-        more_scale = [s for s in field.more or [] if gid in s.gg_data.ids]
-        if len(more_scale) > 1:
-            raise GGException("found more than 1 scale matching gid")
-        if len(more_scale) == 1:
-            return more_scale[0]
-        elif field.main is not None and geom.inherit_aes():
-            return field.main
-        else:
-            return None
-
-    x_opt = get_scale(filled_scales.x)
-    y_opt = get_scale(filled_scales.y)
+    x_opt = get_scale(geom, filled_scales.x)
+    y_opt = get_scale(geom, filled_scales.y)
 
     if x_opt is None:
-        x_opt = get_scale(filled_scales.xintercept)
+        x_opt = get_scale(geom, filled_scales.xintercept)
 
     if y_opt is None:
-        y_opt = get_scale(filled_scales.yintercept)
+        y_opt = get_scale(geom, filled_scales.yintercept)
 
     if y_is_none and y_opt is not None and x_opt is None:
         # TODO high priority
@@ -1367,7 +1398,7 @@ def get_scales(
     ]
 
     for attr_ in attrs_:
-        new_scale = get_scale(attr_)
+        new_scale = get_scale(geom, attr_)
         if new_scale is not None:
             other_scales.append(new_scale)
 
@@ -1382,7 +1413,7 @@ def separate_scales_apply_transofrmations(
     y_is_none: bool = False,
 ) -> Tuple[Optional["GGScale"], Optional["GGScale"], List["GGScale"], List["GGScale"]]:
     """
-    TODO test this
+    TODO critical Apply transformations
     """
     x, y, scales = get_scales(geom, filled_scales, y_is_none=y_is_none)
 
@@ -1457,7 +1488,7 @@ def determine_data_scale(
     if scale is None:
         return None
 
-    if isinstance(scale.gg_data.col.col_name, gg_col_const):
+    if isinstance(scale.gg_data.col.col_name, (gg_col_const, gg_col_anonymous)):
         return scale.gg_data.col.col_name.get_scale()
 
     if not str(scale.gg_data.col) in df.columns:
@@ -1503,11 +1534,23 @@ def create_fillsed_scale_stat_geom(
     set_disc_cols, map_disc_cols = split_discrete_set_map(df, discrete_scales)
     filled_stat_geom_cls = stat_kind_fg_class(geom.stat_type)
 
+    xmin = get_scale(geom, filled_scales.x_min)
+    xmax = get_scale(geom, filled_scales.x_max)
+    ymin = get_scale(geom, filled_scales.y_min)
+    ymax = get_scale(geom, filled_scales.y_max)
+    if x is None and y is None and None not in [ymax, ymin, xmax, xmin]:
+        x = xmin.merge(xmax)
+        y = ymin.merge(ymax)
+
     fsg = filled_stat_geom_cls(
         geom=geom,
         df=df,
         x=x,
         y=y,
+        xmin=xmin,
+        xmax=xmax,
+        ymin=ymin,
+        ymax=ymax,
         discrete_scales=discrete_scales,
         continuous_scales=continuous_scales,
         set_discrete_columns=set_disc_cols,
@@ -1599,14 +1642,19 @@ def create_filled_geoms_for_filled_scales(
     if x_scale is None or y_scale is None:
         raise GGException("x and y scale have not exist by this point")
 
-    final_x_scale, _, _ = calc_tick_locations(x_scale, get_x_ticks(filled_scales))
-    final_y_scale, _, _ = calc_tick_locations(y_scale, get_y_ticks(filled_scales))
+    if x_scale.high == x_scale.low:
+        print(f"WARNING scale low and high are the same: {x_scale}")
+    else:
+        final_x_scale, _, _ = calc_tick_locations(x_scale, get_x_ticks(filled_scales))
+        final_x_scale = excpand_scale(final_x_scale, x_continuous)
+        filled_scales.x_scale = final_x_scale
 
-    final_x_scale = excpand_scale(final_x_scale, x_continuous)
-    final_y_scale = excpand_scale(final_y_scale, y_continuous)
-
-    filled_scales.x_scale = final_x_scale
-    filled_scales.y_scale = final_y_scale
+    if y_scale.high == y_scale.low:
+        print(f"WARNING scale low and high are the same: {y_scale}")
+    else:
+        final_y_scale, _, _ = calc_tick_locations(y_scale, get_y_ticks(filled_scales))
+        final_y_scale = excpand_scale(final_y_scale, y_continuous)
+        filled_scales.y_scale = final_y_scale
 
 
 @dataclass
@@ -1615,6 +1663,10 @@ class FilledStatGeom(ABC):
     df: pd.DataFrame
     x: Optional["GGScale"]
     y: Optional["GGScale"]
+    xmin: Optional["GGScale"]
+    ymin: Optional["GGScale"]
+    xmax: Optional["GGScale"]
+    ymax: Optional["GGScale"]
     discrete_scales: List["GGScale"]
     continuous_scales: List["GGScale"]
     set_discrete_columns: List["str"]

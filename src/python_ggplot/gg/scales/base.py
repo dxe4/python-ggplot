@@ -67,6 +67,7 @@ from python_ggplot.gg.types import (
     DiscreteKind,
     DiscreteType,
     SecondaryAxis,
+    gg_col_anonymous,
     gg_col_const,
 )
 from python_ggplot.graphics.initialize import (
@@ -276,7 +277,7 @@ class GGScaleDiscreteKind(DiscreteKind, ABC):
 
     @abstractmethod
     def update_filled_geom_x_attributes(
-        self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
+        self, fg: FilledGeom, df: pd.DataFrame, scale_col: VectorCol
     ):
         pass
 
@@ -297,12 +298,12 @@ class GGScaleDiscrete(GGScaleDiscreteKind):
     format_discrete_label: Optional[DiscreteFormat] = None
 
     def update_filled_geom_x_attributes(
-        self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
+        self, fg: FilledGeom, df: pd.DataFrame, scale_col: VectorCol
     ):
         if not fg.gg_data.is_x_discrete():
             raise GGException("expected discrete x")
 
-        fg.gg_data.num_x = max(fg.gg_data.num_x, df[scale_col].nunique())
+        fg.gg_data.num_x = max(fg.gg_data.num_x, scale_col.evaluate(df).nunique())
         fg.gg_data.x_scale = Scale(low=0.0, high=1.0)
         fg.gg_data.x_discrete_kind.label_seq = self.label_seq  # type: ignore
 
@@ -323,7 +324,7 @@ class GGScaleContinuous(GGScaleDiscreteKind):
     format_continuous_label: Optional[ContinuousFormat] = None
 
     def update_filled_geom_x_attributes(
-        self, fg: FilledGeom, df: pd.DataFrame, scale_col: str
+        self, fg: FilledGeom, df: pd.DataFrame, scale_col: VectorCol
     ):
         if fg.geom_type != GeomType.RASTER:
             fg.gg_data.num_x = max(fg.gg_data.num_x, len(df))
@@ -391,9 +392,38 @@ class GGScale(ABC):
 
     gg_data: GGScaleData
 
+    def merge(self, other: 'GGScale') -> Optional["GGScale"]:
+        # TODO add validations
+        # this method is experimental
+        #
+
+        if self.is_continuous() and other.is_continuous():
+            self_ = isinstance(self.gg_data.col.col_name, gg_col_const)
+            other_ = isinstance(other.gg_data.col.col_name, gg_col_const)
+            if self and other:
+                result = deepcopy(self)
+                result.gg_data.discrete_kind.data_scale = result.gg_data.discrete_kind.data_scale.merge(
+                    other.gg_data.discrete_kind.data_scale
+                )
+                return result
+
+        if self.is_discrete() and other.is_discrete():
+            result = deepcopy(self)
+            label_seq_self = result.gg_data.discrete_kind.label_seq
+            label_seq_other = other.gg_data.discrete_kind.label_seq
+            # todo make this more efficient it may be needed
+            data = list(set(label_seq_self + label_seq_other))
+            result.gg_data.discrete_kind.label_seq = data
+            result.gg_data.col = VectorCol(
+                col_name=gg_col_anonymous(pd.Series(data))
+            )
+            return result
+
+        raise GGException("attempted to merge not compatible scales")
+
     def set_x_attributes(self, fg: FilledGeom, df: pd.DataFrame):
         self.gg_data.discrete_kind.update_filled_geom_x_attributes(
-            fg, df, str(self.gg_data.col)
+            fg, df, self.gg_data.col
         )
 
     def assign_breaks(self, breaks: Union[int, List[float]]) -> None:

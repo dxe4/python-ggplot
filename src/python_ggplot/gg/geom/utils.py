@@ -20,6 +20,8 @@ from python_ggplot.gg.types import (
     SmoothMethodType,
     StatBin,
     StatSmooth,
+    gg_col_anonymous,
+    gg_col_const,
 )
 
 if TYPE_CHECKING:
@@ -187,6 +189,10 @@ def apply_cont_scale_if_any(
     result_df = yield_df.copy() if to_clone else yield_df
 
     for scale in scales:
+        if isinstance(scale.gg_data.col.col_name, (gg_col_const, gg_col_anonymous)):
+            # this can be a different size than the df
+            continue
+
         # TODO col eval is a global issue, fine for now
         result_df[scale.get_col_name()] = scale.gg_data.col.evaluate(result_df)  # type: ignore
 

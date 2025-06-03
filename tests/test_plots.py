@@ -27,6 +27,7 @@ from python_ggplot.public_interface.common import (
     scale_x_discrete,
     scale_y_continuous,
     scale_y_discrete,
+    theme,
     xlab,
     ylab,
 )
@@ -41,6 +42,7 @@ from python_ggplot.public_interface.geom import (
     geom_line,
     geom_linerange,
     geom_point,
+    geom_rect,
     geom_text,
     geom_tile,
     geom_vline,
@@ -538,13 +540,10 @@ def test_annotate_curve():
     ggdraw_plot(res, plots_path / "annotate_curve.png")
 
 
-def geom_rect(*args, **kwargs):
-    pass
-
-
 def test_economics():
     economics = pd.read_csv(data_path / "economics.csv")
     presidential = pd.read_csv(data_path / "presidential_truncated.csv")
+    print(presidential)
     # {"de": ["blue", "red"]}
     plot = (
         ggplot(economics)
@@ -573,3 +572,25 @@ def test_economics():
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "economics.png")
+
+
+def test_economics_rect():
+    economics = pd.read_csv(data_path / "economics.csv")
+    presidential = pd.read_csv(data_path / "presidential_truncated.csv")
+    print(presidential)
+    # {"de": ["blue", "red"]}
+    plot = (
+        ggplot(economics) + geom_rect(
+            aes(
+                xmin="start",
+                xmax="end",
+                ymin=float("-inf"),
+                ymax=float("inf"),
+                fill="party"
+            ),
+            alpha=0.2,
+            data=presidential,
+        ) + theme(hide_ticks=True, hide_labels=True)
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "economics_rect.png")

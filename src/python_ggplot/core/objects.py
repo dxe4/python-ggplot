@@ -398,6 +398,7 @@ WHITE_DICT = {"r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0}
 TRANSPARENT_DICT = {"r": 0.0, "g": 0.0, "b": 0.0, "a": 0.0}
 GREY92 = Color(r=0.92, g=0.92, b=0.92, a=1.0)
 GREY20 = Color(r=0.20, g=0.20, b=0.20, a=1.0)
+GREY35 = Color(r=0.35, g=0.35, b=0.35, a=1.0)
 BLACK = Color(r=0.0, g=0.0, b=0.0, a=1.0)
 WHITE = Color(r=1.0, g=1.0, b=1.0, a=1.0)
 TRANSPARENT = Color(r=0.0, g=0.0, b=0.0, a=0.0)

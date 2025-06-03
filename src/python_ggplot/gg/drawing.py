@@ -362,7 +362,7 @@ def get_draw_pos_impl(
             return get_discrete_point()
         elif fg_geom_type in (GeomType.LINE, GeomType.FREQ_POLY, GeomType.GEOM_AREA):
             return get_discrete_line(view, ax_kind)
-        elif fg_geom_type in (GeomType.HISTOGRAM, GeomType.BAR):
+        elif fg_geom_type in (GeomType.HISTOGRAM, GeomType.BAR, GeomType.GEOM_RECT):
             return get_discrete_histogram(width, ax_kind)
         elif fg_geom_type == GeomType.TILE:
             return get_discrete_histogram(width, ax_kind)
@@ -883,6 +883,9 @@ def draw_sub_df(
         if fg.gg_data.geom.gg_data.bin_position == BinPositionType.NONE:
             last_element = len(df)
 
+        if len(df) == 1:
+            last_element = 1
+
         for i in range(last_element):
             if len(styles) > 1:
                 style = merge_user_style(styles[i], fg)
@@ -1016,6 +1019,7 @@ def create_gobj_from_geom(
     view_map = calc_view_map(fg)
 
     for lab, _, styles, sub_df in fg.enumerate_data():
+
         # TODO critical
         #  for geom_point(aes(color = "manufacturer")) + facet_wrap(["drv", "cyl"])
         # the lab will be in the form of ('audi', '4', 8)
