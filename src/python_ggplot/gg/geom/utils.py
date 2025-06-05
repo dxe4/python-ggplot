@@ -7,6 +7,7 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
+from python_ggplot.gg.contants import DISABLE_MODIFY_FOR_STACKING
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
 from python_ggplot.gg.geom.fill import enumerate_groups, maybe_inherit_aes
@@ -254,7 +255,6 @@ def _filled_identity_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    from python_ggplot.gg.styles.utils import apply_style
 
     geom = filled_stat_geom.geom
     col = pd.Series(dtype=float)  # type: ignore
@@ -339,7 +339,6 @@ def _filled_count_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    from python_ggplot.gg.styles.utils import apply_style
 
     # TODO fix col type, issue with pandas index
     col = pd.Series(dtype=float)  # For stacking
@@ -429,9 +428,6 @@ def _filled_bin_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    DISABLE_MODIFY_FOR_STACKING = True
-    from python_ggplot.gg.styles.utils import apply_style
-
     col = pd.Series(dtype=float)
 
     for keys, sub_df, key_values in enumerate_groups(
@@ -560,7 +556,6 @@ def _filled_smooth_geom_map(
     filled_geom: "FilledGeom",
     style: "GGStyle",
 ) -> "FilledGeom":
-    from python_ggplot.gg.styles.utils import apply_style
 
     col = pd.Series(dtype=float)  # type: ignore
 
