@@ -10,6 +10,7 @@ from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
+from python_ggplot.gg.geom.fill import enumerate_groups
 from python_ggplot.gg.types import (
     COUNT_COL,
     PREV_VALS_COL,
@@ -257,12 +258,9 @@ def _filled_identity_geom_map(
     from python_ggplot.gg.styles.utils import apply_style
 
     geom = filled_stat_geom.geom
-    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
-    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
 
-    for keys in sorted_keys:  # type: ignore
-        sub_df = grouped.get_group(keys)  # type: ignore
+    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
 
         if filled_geom.gg_data.geom.inherit_aes():
@@ -346,9 +344,6 @@ def _filled_count_geom_map(
 ) -> "FilledGeom":
     from python_ggplot.gg.styles.utils import apply_style
 
-    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=False)  # type: ignore
-    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
-
     # TODO fix col type, issue with pandas index
     col = pd.Series(dtype=float)  # For stacking
 
@@ -356,8 +351,7 @@ def _filled_count_geom_map(
     if len(filled_stat_geom.continuous_scales) > 0:
         raise GGException("continuous_scales > 0")
 
-    for keys in sorted_keys:  # type: ignore
-        sub_df = grouped.get_group(keys)  # type: ignore
+    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
         if filled_geom.gg_data.geom.inherit_aes():
             current_style = apply_style(
@@ -443,13 +437,9 @@ def _filled_bin_geom_map(
     DISABLE_MODIFY_FOR_STACKING = True
     from python_ggplot.gg.styles.utils import apply_style
 
-    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore TODO
-
-    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)
 
-    for keys in sorted_keys:  # type: ignore
-        sub_df = grouped.get_group(keys)  # type: ignore
+    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
 
         if filled_geom.gg_data.geom.inherit_aes():
@@ -580,12 +570,9 @@ def _filled_smooth_geom_map(
 ) -> "FilledGeom":
     from python_ggplot.gg.styles.utils import apply_style
 
-    grouped = df.groupby(filled_stat_geom.map_discrete_columns, sort=True)  # type: ignore
-    sorted_keys = sorted(grouped.groups.keys(), reverse=True)  # type: ignore
     col = pd.Series(dtype=float)  # type: ignore
 
-    for keys in sorted_keys:  # type: ignore
-        sub_df = grouped.get_group(keys)  # type: ignore
+    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
         key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
         if filled_geom.gg_data.geom.inherit_aes():
             current_style = apply_style(
