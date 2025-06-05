@@ -1,5 +1,4 @@
 from copy import deepcopy
-from itertools import product
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 import numpy as np
@@ -10,7 +9,7 @@ from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
-from python_ggplot.gg.geom.fill import enumerate_groups
+from python_ggplot.gg.geom.fill import enumerate_groups, maybe_inherit_aes
 from python_ggplot.gg.types import (
     COUNT_COL,
     PREV_VALS_COL,
@@ -260,15 +259,13 @@ def _filled_identity_geom_map(
     geom = filled_stat_geom.geom
     col = pd.Series(dtype=float)  # type: ignore
 
-    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
-        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
+    for keys, sub_df, key_values in enumerate_groups(
+        df, filled_stat_geom.map_discrete_columns
+    ):
 
-        if filled_geom.gg_data.geom.inherit_aes():
-            current_style = apply_style(
-                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-            )  # type: ignore
-        else:
-            current_style = deepcopy(style)
+        current_style = maybe_inherit_aes(
+            sub_df, filled_stat_geom, filled_geom, style, key_values
+        )
 
         yield_df: pd.DataFrame = sub_df.copy()  # type: ignore
         filled_stat_geom.x.set_x_attributes(filled_geom, yield_df)
@@ -351,14 +348,12 @@ def _filled_count_geom_map(
     if len(filled_stat_geom.continuous_scales) > 0:
         raise GGException("continuous_scales > 0")
 
-    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
-        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-        if filled_geom.gg_data.geom.inherit_aes():
-            current_style = apply_style(
-                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-            )  # type: ignore
-        else:
-            current_style = deepcopy(style)
+    for keys, sub_df, key_values in enumerate_groups(
+        df, filled_stat_geom.map_discrete_columns
+    ):
+        current_style = maybe_inherit_aes(
+            sub_df, filled_stat_geom, filled_geom, style, key_values
+        )
 
         weight_scale = filled_scales.get_weight_scale(
             filled_stat_geom.geom, optional=True
@@ -439,15 +434,12 @@ def _filled_bin_geom_map(
 
     col = pd.Series(dtype=float)
 
-    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
-        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-
-        if filled_geom.gg_data.geom.inherit_aes():
-            current_style = apply_style(
-                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-            )  # type: ignore
-        else:
-            current_style = deepcopy(style)
+    for keys, sub_df, key_values in enumerate_groups(
+        df, filled_stat_geom.map_discrete_columns
+    ):
+        current_style = maybe_inherit_aes(
+            sub_df, filled_stat_geom, filled_geom, style, key_values
+        )
 
         hist, bins, _ = call_histogram(
             filled_stat_geom.geom,
@@ -572,14 +564,12 @@ def _filled_smooth_geom_map(
 
     col = pd.Series(dtype=float)  # type: ignore
 
-    for keys, sub_df in enumerate_groups(df, filled_stat_geom.map_discrete_columns):
-        key_values = list(product(filled_stat_geom.map_discrete_columns, [keys]))  # type: ignore
-        if filled_geom.gg_data.geom.inherit_aes():
-            current_style = apply_style(
-                deepcopy(style), sub_df, filled_stat_geom.discrete_scales, key_values
-            )  # type: ignore
-        else:
-            current_style = deepcopy(style)
+    for keys, sub_df, key_values in enumerate_groups(
+        df, filled_stat_geom.map_discrete_columns
+    ):
+        current_style = maybe_inherit_aes(
+            sub_df, filled_stat_geom, filled_geom, style, key_values
+        )
 
         yield_df = sub_df.copy()  # type: ignore
 
