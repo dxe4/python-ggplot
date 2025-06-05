@@ -20,18 +20,17 @@ from typing import (
 
 import pandas as pd
 
-from python_ggplot.core.coord.objects import Coord, Coord1D
+from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
-from python_ggplot.core.units.objects import DataUnit, RelativeUnit
+from python_ggplot.core.units.objects import DataUnit
+from python_ggplot.gg.constants import USE_Y_X_MINMAX_AS_X_VALUES
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol, VNull
 from python_ggplot.gg.styles.config import (
     AREA_DEFAULT_STYLE,
     BAR_DEFAULT_STYLE,
     HISTO_DEFAULT_STYLE,
-    LINE_DEFAULT_STYLE,
     POINT_DEFAULT_STYLE,
     RECT_DEFAULT_STYLE,
-    SMOOTH_DEFAULT_STYLE,
     TEXT_DEFAULT_STYLE,
     TILE_DEFAULT_STYLE,
     default_line_style,
@@ -1534,7 +1533,7 @@ def create_fillsed_scale_stat_geom(
     xmax = get_scale(geom, filled_scales.x_max)
     ymin = get_scale(geom, filled_scales.y_min)
     ymax = get_scale(geom, filled_scales.y_max)
-    if x is None and y is None and None not in [ymax, ymin, xmax, xmin]:
+    if (x is None and y is None and None not in [ymax, ymin, xmax, xmin]) and USE_Y_X_MINMAX_AS_X_VALUES:
         x = xmin.merge(xmax)
         y = ymin.merge(ymax)
 

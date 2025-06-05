@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 
 from python_ggplot.common.maths import histogram
 from python_ggplot.core.objects import GGException, Scale
-from python_ggplot.gg.contants import DISABLE_MODIFY_FOR_STACKING
+from python_ggplot.gg.constants import DISABLE_MODIFY_FOR_STACKING
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
 from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
 from python_ggplot.gg.geom.fill import enumerate_groups, maybe_inherit_aes
