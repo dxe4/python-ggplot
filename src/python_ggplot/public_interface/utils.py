@@ -82,7 +82,7 @@ from python_ggplot.gg.scales.base import (
     SizeScale,
     TransformedDataScale,
 )
-from python_ggplot.gg.scales.collect_and_fill import collect_scales
+from python_ggplot.gg.scales.collect import collect_scales
 from python_ggplot.gg.theme import (
     build_theme,
     calculate_margin_range,

@@ -7,7 +7,12 @@ import pandas as pd
 from python_ggplot.core.objects import GGEnum, GGException
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.types import ColOperator, gg_col, gg_col_const, gg_col_anonymous
+    from python_ggplot.gg.types import (
+        ColOperator,
+        gg_col,
+        gg_col_anonymous,
+        gg_col_const,
+    )
 
 
 class ColumnType(GGEnum):
@@ -162,7 +167,7 @@ class VectorCol:
             return self.col_name
 
     def evaluate(self, df: pd.DataFrame) -> Any:
-        from python_ggplot.gg.types import gg_col, gg_col_const, gg_col_anonymous
+        from python_ggplot.gg.types import gg_col, gg_col_anonymous, gg_col_const
 
         if isinstance(self.col_name, (gg_col, gg_col_const, gg_col_anonymous)):
             return self.col_name.evaluate(df)  # type: ignore

@@ -654,9 +654,7 @@ class gg_col_anonymous:
         return self.val
 
     def __str__(self):
-        raise GGException(
-            "this col is anonymous, it only has data but not col_name"
-        )
+        raise GGException("this col is anonymous, it only has data but not col_name")
 
     def get_scale(self):
         try:

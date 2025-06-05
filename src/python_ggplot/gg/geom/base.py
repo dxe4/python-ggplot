@@ -1342,6 +1342,7 @@ def split_discrete_set_map(
 
     return set_disc_cols, map_disc_cols
 
+
 def get_scale(geom: Geom, field: Optional["MainAddScales"]) -> Optional["GGScale"]:
     gid = geom.gg_data.gid
     if field is None:

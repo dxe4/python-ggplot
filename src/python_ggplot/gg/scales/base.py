@@ -392,7 +392,7 @@ class GGScale(ABC):
 
     gg_data: GGScaleData
 
-    def merge(self, other: 'GGScale') -> Optional["GGScale"]:
+    def merge(self, other: "GGScale") -> Optional["GGScale"]:
         # TODO add validations
         # this method is experimental
         #
@@ -400,10 +400,12 @@ class GGScale(ABC):
         if self.is_continuous() and other.is_continuous():
             self_ = isinstance(self.gg_data.col.col_name, gg_col_const)
             other_ = isinstance(other.gg_data.col.col_name, gg_col_const)
-            if self and other:
+            if self_ and other_:
                 result = deepcopy(self)
-                result.gg_data.discrete_kind.data_scale = result.gg_data.discrete_kind.data_scale.merge(
-                    other.gg_data.discrete_kind.data_scale
+                result.gg_data.discrete_kind.data_scale = (
+                    result.gg_data.discrete_kind.data_scale.merge(
+                        other.gg_data.discrete_kind.data_scale
+                    )
                 )
                 return result
 
@@ -414,9 +416,7 @@ class GGScale(ABC):
             # todo make this more efficient it may be needed
             data = list(set(label_seq_self + label_seq_other))
             result.gg_data.discrete_kind.label_seq = data
-            result.gg_data.col = VectorCol(
-                col_name=gg_col_anonymous(pd.Series(data))
-            )
+            result.gg_data.col = VectorCol(col_name=gg_col_anonymous(pd.Series(data)))
             return result
 
         raise GGException("attempted to merge not compatible scales")
@@ -1009,3 +1009,17 @@ def scale_type_to_cls(scale_type: ScaleType) -> Type[GGScale]:
         ScaleType.TEXT: TextScale,
     }
     return data[scale_type]
+
+
+class AbstractScalePair(ABC):
+    pass
+
+
+class HybridScalePair(AbstractScalePair):
+    primary: List[GGScale]
+    seconday: List[GGScale]
+
+
+class ScalePair(AbstractScalePair):
+    primary: Optional[GGScale]
+    seconday: Optional[GGScale]

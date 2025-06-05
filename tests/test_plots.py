@@ -580,17 +580,19 @@ def test_economics_rect():
     print(presidential)
     # {"de": ["blue", "red"]}
     plot = (
-        ggplot(economics) + geom_rect(
+        ggplot(economics)
+        + geom_rect(
             aes(
                 xmin="start",
                 xmax="end",
                 ymin=float("-inf"),
                 ymax=float("inf"),
-                fill="party"
+                fill="party",
             ),
             alpha=0.2,
             data=presidential,
-        ) + theme(hide_ticks=True, hide_labels=True)
+        )
+        + theme(hide_ticks=True, hide_labels=True)
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "economics_rect.png")

@@ -547,7 +547,6 @@ def geom_rect(
     if None in required_attrs:
         raise GGException("Required all: 4 xmin, xmax, ymin, ymax")
 
-
     gid = get_gid()
     gg_data = GeomData(
         gid=gid,
