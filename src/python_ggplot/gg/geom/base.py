@@ -34,6 +34,7 @@ from python_ggplot.gg.styles.config import (
     SMOOTH_DEFAULT_STYLE,
     TEXT_DEFAULT_STYLE,
     TILE_DEFAULT_STYLE,
+    default_line_style,
 )
 
 # from python_ggplot.gg.styles.utils import apply_style
@@ -112,12 +113,6 @@ class GeomData:
     # used for geom_type histogram
     histogram_drawing_style: Optional[HistogramDrawingStyle] = None
 
-
-def default_line_style(stat_type: StatType):
-    if stat_type == StatType.SMOOTH:
-        return deepcopy(SMOOTH_DEFAULT_STYLE)
-    else:
-        return deepcopy(LINE_DEFAULT_STYLE)
 
 
 @dataclass
