@@ -1,21 +1,33 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, List, Optional, OrderedDict, Tuple, TYPE_CHECKING, Type, Union, cast
-from typing_extensions import Generator
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    Optional,
+    OrderedDict,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import pandas as pd
+from typing_extensions import Generator
 
+from python_ggplot.core.objects import AxisKind, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol
 from python_ggplot.gg.geom.base import Geom, GeomType, HistogramDrawingStyle
-from python_ggplot.core.objects import AxisKind, GGException, Scale
-from python_ggplot.gg.types import ColOperator, DiscreteKind, DiscreteType, GGStyle, StatType
+from python_ggplot.gg.types import (
+    ColOperator,
+    DiscreteKind,
+    DiscreteType,
+    GGStyle,
+    StatType,
+)
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales.base import (
-        ColorScale,
-        FilledScales,
-        GGScale,
-    )
+    from python_ggplot.gg.scales.base import ColorScale, FilledScales, GGScale
 
 
 def _optional_scale_col(scale: Optional["GGScale"]) -> Optional[str]:
@@ -271,6 +283,7 @@ class TitleRasterData:
 
         return width, height, df
 
+
 def create_filled_geom_tile_and_raster(
     cls: Union[Type["FilledGeomTitle"], Type["FilledGeomRaster"]],
     geom: Geom,
@@ -360,6 +373,7 @@ class FilledGeomHistogram(FilledGeom):
             histogram_drawing_style=geom.histogram_drawing_style,  # type: ignore
         )
         return new_fg, df
+
 
 @dataclass
 class FilledGeomErrorBar(FilledGeom):

@@ -31,7 +31,6 @@ from python_ggplot.gg.styles.config import (
     TILE_DEFAULT_STYLE,
     default_line_style,
 )
-
 from python_ggplot.gg.types import (
     Aesthetics,
     BinByType,
@@ -56,10 +55,8 @@ from python_ggplot.graphics.views import ViewPort
 from tests.test_view import AxisKind, RelativeCoordType
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales.base import (
-        GGScale,
-    )
     from python_ggplot.gg.geom.filled_geom import FilledGeom
+    from python_ggplot.gg.scales.base import GGScale
 
 
 class HistogramDrawingStyle(GGEnum):
@@ -95,7 +92,6 @@ class GeomData:
     bin_position: Optional[BinPositionType] = None
     # used for geom_type histogram
     histogram_drawing_style: Optional[HistogramDrawingStyle] = None
-
 
 
 @dataclass
@@ -503,7 +499,10 @@ class StaticLine(ABC):
 
     @abstractmethod
     def get_scale(
-        self, view: ViewPort, fg: "FilledGeom", series: Optional["pd.Series[Any]"] = None
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        series: Optional["pd.Series[Any]"] = None,
     ) -> Optional[Scale]:
         pass
 
@@ -607,7 +606,10 @@ class GeomHLine(StaticLine, Geom):
         return self.yintercept
 
     def get_scale(
-        self, view: ViewPort, fg: "FilledGeom", series: Optional["pd.Series[Any]"] = None
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        series: Optional["pd.Series[Any]"] = None,
     ) -> Optional[Scale]:
         return view.y_scale
 
@@ -638,7 +640,10 @@ class GeomVLine(StaticLine, Geom):
         return AxisKind.X
 
     def get_scale(
-        self, view: ViewPort, fg: "FilledGeom", series: Optional["pd.Series[Any]"] = None
+        self,
+        view: ViewPort,
+        fg: "FilledGeom",
+        series: Optional["pd.Series[Any]"] = None,
     ) -> Optional[Scale]:
         return view.x_scale
 

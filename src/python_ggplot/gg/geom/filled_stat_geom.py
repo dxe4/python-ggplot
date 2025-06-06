@@ -1,22 +1,32 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import pandas as pd
 
-from python_ggplot.gg.datamancer_pandas_compat import VNull, VectorCol
-from python_ggplot.gg.geom.base import Geom, GeomType
 from python_ggplot.core.objects import AxisKind, GGException, Scale
-from python_ggplot.gg.geom.filled_geom import FilledGeomContinuous, FilledGeomData, FilledGeom, FilledGeomDiscrete, FilledGeomDiscreteKind, create_filled_geom
-from python_ggplot.gg.types import COUNT_COL, SMOOTH_VALS_COL, ColOperator, GGStyle, gg_col_anonymous, gg_col_const
-
+from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
+from python_ggplot.gg.geom.base import Geom, GeomType
+from python_ggplot.gg.geom.filled_geom import (
+    FilledGeom,
+    FilledGeomContinuous,
+    FilledGeomData,
+    FilledGeomDiscrete,
+    FilledGeomDiscreteKind,
+    create_filled_geom,
+)
+from python_ggplot.gg.types import (
+    COUNT_COL,
+    SMOOTH_VALS_COL,
+    ColOperator,
+    GGStyle,
+    gg_col_anonymous,
+    gg_col_const,
+)
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales.base import (
-        FilledScales,
-        GGScale,
-    )
+    from python_ggplot.gg.scales.base import FilledScales, GGScale
 
 
 def encompassing_data_scale(
@@ -84,7 +94,9 @@ def _get_scale_col(scale: Optional["GGScale"]) -> Optional[VectorCol]:
     return scale.gg_data.col
 
 
-def _get_filled_geom_from_scale(scale: Optional["GGScale"]) -> Optional[FilledGeomDiscreteKind]:
+def _get_filled_geom_from_scale(
+    scale: Optional["GGScale"],
+) -> Optional[FilledGeomDiscreteKind]:
     # todo rename
     if scale is None:
         return None

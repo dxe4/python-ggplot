@@ -10,10 +10,7 @@ from python_ggplot.core.coord.objects import Coord, Coord1D, RelativeCoordType
 from python_ggplot.core.objects import AxisKind, GGException, Point, Style
 from python_ggplot.core.units.objects import DataUnit, Quantity, UnitType
 from python_ggplot.gg.datamancer_pandas_compat import VectorCol, VNull
-from python_ggplot.gg.geom.base import (
-    GeomType,
-    HistogramDrawingStyle,
-)
+from python_ggplot.gg.geom.base import GeomType, HistogramDrawingStyle
 from python_ggplot.gg.geom.filled_geom import (
     FilledGeom,
     FilledGeomDiscrete,

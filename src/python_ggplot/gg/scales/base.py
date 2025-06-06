@@ -46,11 +46,13 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VectorCol,
     pandas_series_to_column,
 )
-from python_ggplot.gg.geom.base import (
-    Geom,
-    GeomType,
+from python_ggplot.gg.geom.base import Geom, GeomType
+from python_ggplot.gg.geom.filled_geom import (
+    FilledGeom,
+    FilledGeomContinuous,
+    FilledGeomDiscrete,
+    FilledGeomDiscreteKind,
 )
-from python_ggplot.gg.geom.filled_geom import FilledGeom, FilledGeomContinuous, FilledGeomDiscrete, FilledGeomDiscreteKind
 from python_ggplot.gg.styles.config import (
     DEFAULT_ALPHA_RANGE_TUPLE,
     HISTO_DEFAULT_STYLE,

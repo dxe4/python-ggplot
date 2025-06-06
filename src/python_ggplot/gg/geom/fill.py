@@ -1,26 +1,31 @@
 from copy import deepcopy
 from itertools import product
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Tuple, Type
-from typing_extensions import Optional
 
 import pandas as pd
+from typing_extensions import Optional
 
 from python_ggplot.core.objects import GGException, Scale
-from python_ggplot.gg.constants import SKIP_APPLY_TRANSOFRMATIONS, USE_Y_X_MINMAX_AS_X_VALUES
+from python_ggplot.gg.constants import (
+    SKIP_APPLY_TRANSOFRMATIONS,
+    USE_Y_X_MINMAX_AS_X_VALUES,
+)
 from python_ggplot.gg.geom.base import Geom
 from python_ggplot.gg.geom.filled_geom import FilledGeom
-from python_ggplot.gg.geom.filled_stat_geom import FilledBinGeom, FilledCountGeom, FilledIdentityGeom, FilledNoneGeom, FilledSmoothGeom, FilledStatGeom
+from python_ggplot.gg.geom.filled_stat_geom import (
+    FilledBinGeom,
+    FilledCountGeom,
+    FilledIdentityGeom,
+    FilledNoneGeom,
+    FilledSmoothGeom,
+    FilledStatGeom,
+)
 from python_ggplot.gg.types import GGStyle, StatType
 from python_ggplot.graphics.initialize import calc_tick_locations
 
-
 if TYPE_CHECKING:
+    from python_ggplot.gg.scales.base import FilledScales, GGScale, MainAddScales
     from python_ggplot.gg.types import GgPlot
-    from python_ggplot.gg.scales.base import (
-        FilledScales,
-        GGScale,
-        MainAddScales,
-    )
 
 
 def enumerate_groups(
@@ -52,6 +57,7 @@ def maybe_inherit_aes(
     else:
         return style
 
+
 def get_scale(geom: Geom, field: Optional["MainAddScales"]) -> Optional["GGScale"]:
     gid = geom.gg_data.gid
     if field is None:
@@ -66,6 +72,7 @@ def get_scale(geom: Geom, field: Optional["MainAddScales"]) -> Optional["GGScale
         return field.main
     else:
         return None
+
 
 def get_scales(
     geom: Geom, filled_scales: "FilledScales", y_is_none: bool = False
@@ -177,7 +184,7 @@ def separate_scales_apply_transofrmations(
         if not y_is_none:
             apply_transformations(df, [x, y] + scales)  # type: ignore
         else:
-            apply_transformations(df, [x] + scales) # type: ignore
+            apply_transformations(df, [x] + scales)  # type: ignore
 
     return (x, y, discretes, cont)
 
@@ -227,7 +234,9 @@ def create_fillsed_scale_stat_geom(
     xmax = get_scale(geom, filled_scales.x_max)
     ymin = get_scale(geom, filled_scales.y_min)
     ymax = get_scale(geom, filled_scales.y_max)
-    if (x is None and y is None and None not in [ymax, ymin, xmax, xmin]) and USE_Y_X_MINMAX_AS_X_VALUES:
+    if (
+        x is None and y is None and None not in [ymax, ymin, xmax, xmin]
+    ) and USE_Y_X_MINMAX_AS_X_VALUES:
         x = xmin.merge(xmax)
         y = ymin.merge(ymax)
 
@@ -265,7 +274,6 @@ def create_filled_geom_from_geom(
 def post_process_scales(filled_scales: "FilledScales", plot: "GgPlot"):
     # keeping as is for backwards compatibility for now
     create_filled_geoms_for_filled_scales(filled_scales, plot)
-
 
 
 def excpand_scale(scale: Scale, is_continuous: bool):
