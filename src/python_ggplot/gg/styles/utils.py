@@ -4,7 +4,8 @@ import pandas as pd
 
 from python_ggplot.core.objects import Font, GGException, Style
 from python_ggplot.gg.datamancer_pandas_compat import VNull, VString
-from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType
+from python_ggplot.gg.geom.base import Geom, GeomType
+from python_ggplot.gg.geom.filled_geom import FilledGeom
 from python_ggplot.gg.scales.base import (
     ColorScale,
     GGScale,

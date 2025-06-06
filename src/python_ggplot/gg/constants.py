@@ -8,3 +8,7 @@ DISABLE_MODIFY_FOR_STACKING = True
 # some temporary work arounds are in place but they cause more fundamental issues
 # need to provide an abstract way of dealing this, some work is already planned
 USE_Y_X_MINMAX_AS_X_VALUES = True
+
+# this has to be fixed before making an alpha release
+# managed to get away with this so far
+SKIP_APPLY_TRANSOFRMATIONS = True

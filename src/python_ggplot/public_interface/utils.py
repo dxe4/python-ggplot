@@ -63,7 +63,9 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     VLinearData,
 )
 from python_ggplot.gg.drawing import create_gobj_from_geom
-from python_ggplot.gg.geom.base import FilledGeom, Geom, GeomType, post_process_scales
+from python_ggplot.gg.geom.base import Geom, GeomType
+from python_ggplot.gg.geom.filled_geom import FilledGeom
+from python_ggplot.gg.geom.fill import post_process_scales
 from python_ggplot.gg.scales import FillColorScaleValue, ScaleValue
 from python_ggplot.gg.scales.base import (
     ColorScale,

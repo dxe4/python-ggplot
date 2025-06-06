@@ -26,7 +26,9 @@ from python_ggplot.gg.types import (
 )
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.geom.base import FilledGeom, FilledStatGeom, Geom
+    from python_ggplot.gg.geom.base import Geom
+    from python_ggplot.gg.geom.filled_geom import FilledGeom
+    from python_ggplot.gg.geom.filled_stat_geom import FilledStatGeom
     from python_ggplot.gg.scales.base import FilledScales, GGScale
 
 
