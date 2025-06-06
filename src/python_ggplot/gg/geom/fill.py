@@ -7,6 +7,7 @@ from typing_extensions import Optional
 
 from python_ggplot.core.objects import GGException, Scale
 from python_ggplot.gg.constants import (
+    FLIP_COLUMNS_IF_NEEDED,
     SKIP_APPLY_TRANSOFRMATIONS,
     USE_Y_X_MINMAX_AS_X_VALUES,
 )
@@ -86,7 +87,7 @@ def get_scales(
     if y_opt is None:
         y_opt = get_scale(geom, filled_scales.yintercept)
 
-    if y_is_none and y_opt is not None and x_opt is None:
+    if (y_is_none and y_opt is not None and x_opt is None) and FLIP_COLUMNS_IF_NEEDED:
         # TODO high priority
         # if only y is given, we flip the plot
         # this really shouldnt happen, the previous behaviour was that both x and y have to be given
@@ -97,21 +98,7 @@ def get_scales(
 
     other_scales: List["GGScale"] = []
 
-    attrs_ = [
-        filled_scales.color,
-        filled_scales.fill,
-        filled_scales.size,
-        filled_scales.shape,
-        filled_scales.x_min,
-        filled_scales.x_max,
-        filled_scales.y_min,
-        filled_scales.y_max,
-        filled_scales.width,
-        filled_scales.height,
-        filled_scales.text,
-        filled_scales.y_ridges,
-        filled_scales.width,
-    ]
+    attrs_ = filled_scales.get_scales_excluding_xy()
 
     for attr_ in attrs_:
         new_scale = get_scale(geom, attr_)
@@ -325,7 +312,7 @@ def create_filled_geoms_for_filled_scales(
         y_continuous = y_continuous or filled_geom.gg_data.is_y_continuous()
 
         fg_x_scale = filled_geom.gg_data.x_scale
-        fg_y_scale = filled_geom.gg_data.x_scale
+        fg_y_scale = filled_geom.gg_data.y_scale
         if fg_x_scale or fg_y_scale:
             if (
                 x_scale is not None

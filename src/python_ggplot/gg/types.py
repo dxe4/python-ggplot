@@ -634,7 +634,7 @@ class gg_col_const:
     val: Any
 
     def evaluate(self, df: pd.DataFrame) -> "pd.Series[Any]":
-        return pd.Series(self.val)
+        return pd.Series(self.val)  # type: ignore
 
     def __str__(self):
         return self.val

@@ -39,6 +39,7 @@ from python_ggplot.core.objects import (
     Scale,
 )
 from python_ggplot.core.units.objects import RelativeUnit
+from python_ggplot.gg.constants import DEFAULT_TO_X
 from python_ggplot.gg.datamancer_pandas_compat import (
     VTODO,
     ColumnType,
@@ -390,6 +391,9 @@ class GGScale(ABC):
     """
 
     gg_data: GGScaleData
+
+    def evaluate(self, df: pd.DataFrame) -> "pd.Series[Any]":
+        return self.gg_data.col.evaluate(df)
 
     def merge(self, other: "GGScale") -> Optional["GGScale"]:
         # TODO add validations
@@ -792,6 +796,26 @@ class FilledScales:
     facets: List[GGScale] = field(default_factory=list)
     metadata: Dict[Any, Any] = field(default_factory=dict)
 
+    def get_scales_excluding_xy(self) -> List[Optional[MainAddScales]]:
+        scales = [
+            self.color,
+            self.fill,
+            self.size,
+            self.shape,
+            self.x_min,
+            self.x_max,
+            self.y_min,
+            self.y_max,
+            self.width,
+            self.height,
+            self.text,
+            self.y_ridges,
+            self.width,
+            self.xintercept,
+            self.yintercept,
+        ]
+        return scales
+
     def get_scale(
         self,
         attr: Optional[MainAddScales],
@@ -1010,15 +1034,79 @@ def scale_type_to_cls(scale_type: ScaleType) -> Type[GGScale]:
     return data[scale_type]
 
 
-class AbstractScalePair(ABC):
-    pass
+@dataclass
+class CompositeScale:
+    scale_min: GGScale
+    scale_max: GGScale
+
+    def get_bounds(self, df: pd.DataFrame) -> Scale:
+        min = self.scale_min.evaluate(df)
+        max = self.scale_min.evaluate(df)
+        combined = min + max
+        return Scale(low=float(combined.min()), high=float(combined.max()))
 
 
-class HybridScalePair(AbstractScalePair):
-    primary: List[GGScale]
-    seconday: List[GGScale]
+class AbstractXYScale(ABC):
+
+    @staticmethod
+    def from_geom(filled_cales: FilledScales, geom: Geom) -> "AbstractXYScale":
+        x = filled_cales.get_x_scale(geom, optional=True)
+        y = filled_cales.get_y_scale(geom, optional=True)
+
+        if x and y:
+            return XYScale(primary=x, seconday=y, primary_axis_kind=AxisKind.X)
+
+        x_min = filled_cales.get_x_min_scale(geom, optional=True)
+        x_max = filled_cales.get_x_max_scale(geom, optional=True)
+        y_min = filled_cales.get_y_min_scale(geom, optional=True)
+        y_max = filled_cales.get_y_max_scale(geom, optional=True)
+
+        has_x_minmax = len([i for i in [x_min, x_max] if i is None]) == 0
+        has_y_minmax = len([i for i in [y_min, y_max] if i is None]) == 0
+
+        if not DEFAULT_TO_X:
+            raise GGException(
+                "Default to X has to be True, until primary as y is implemented"
+            )
+
+        if x is not None and has_y_minmax:
+            return XYScalePrimaryComposite(
+                primary=x,
+                seconday=CompositeScale(scale_min=x_min, scale_max=x_max),
+                primary_axis_kind=AxisKind.X,
+            )
+        elif y is not None and has_x_minmax:
+            return XYScalePrimaryComposite(
+                primary=y,
+                seconday=CompositeScale(scale_min=y_min, scale_max=y_max),
+                primary_axis_kind=AxisKind.Y,
+            )
+        elif has_x_minmax and has_y_minmax:
+            return XYScaleComposite(
+                primary=CompositeScale(scale_min=x_min, scale_max=x_max),
+                seconday=CompositeScale(scale_min=y_min, scale_max=y_max),
+            )
+        else:
+            raise GGException(
+                "Expected x and y, or x and y_min y_max or y and x_min x_max"
+            )
 
 
-class ScalePair(AbstractScalePair):
-    primary: Optional[GGScale]
-    seconday: Optional[GGScale]
+@dataclass
+class XYScaleComposite(AbstractXYScale):
+    primary: CompositeScale
+    seconday: CompositeScale
+
+
+@dataclass
+class XYScalePrimaryComposite(AbstractXYScale):
+    primary: GGScale
+    seconday: CompositeScale
+    primary_axis_kind: AxisKind
+
+
+@dataclass
+class XYScale(AbstractXYScale):
+    primary: GGScale
+    seconday: GGScale
+    primary_axis_kind: AxisKind
