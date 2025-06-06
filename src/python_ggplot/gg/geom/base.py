@@ -1668,7 +1668,7 @@ class FilledStatGeom(ABC):
     map_discrete_columns: List["str"]
 
     @abstractmethod
-    def fill_crated_geom(
+    def fill_created_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
         pass
@@ -1714,7 +1714,7 @@ class FilledStatGeom(ABC):
         )
         self.geom.gg_data.data = df
         self.df = df
-        fg = self.fill_crated_geom(filled_scales, fg, style)
+        fg = self.fill_created_geom(filled_scales, fg, style)
         return fg, df, style
 
     @abstractmethod
@@ -1751,7 +1751,7 @@ class FilledStatGeom(ABC):
 
 
 class FilledNoneGeom(FilledStatGeom):
-    def fill_crated_geom(
+    def fill_created_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
         # TODO clean this up
@@ -1811,7 +1811,7 @@ class FilledNoneGeom(FilledStatGeom):
 
 
 class FilledSmoothGeom(FilledStatGeom):
-    def fill_crated_geom(
+    def fill_created_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_smooth_geom
@@ -1852,7 +1852,7 @@ class FilledSmoothGeom(FilledStatGeom):
 
 
 class FilledBinGeom(FilledStatGeom):
-    def fill_crated_geom(
+    def fill_created_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_bin_geom
@@ -1897,7 +1897,7 @@ class FilledBinGeom(FilledStatGeom):
 
 
 class FilledCountGeom(FilledStatGeom):
-    def fill_crated_geom(
+    def fill_created_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_count_geom
@@ -1939,7 +1939,7 @@ class FilledCountGeom(FilledStatGeom):
 
 
 class FilledIdentityGeom(FilledStatGeom):
-    def fill_crated_geom(
+    def fill_created_geom(
         self, filled_scales: "FilledScales", filled_geom: "FilledGeom", style: "GGStyle"
     ) -> "FilledGeom":
         from python_ggplot.gg.geom.utils import filled_identity_geom
