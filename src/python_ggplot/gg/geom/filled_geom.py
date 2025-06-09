@@ -17,7 +17,13 @@ from typing_extensions import Generator
 
 from python_ggplot.core.objects import AxisKind, GGException, Scale
 from python_ggplot.gg.datamancer_pandas_compat import GGValue, VectorCol
-from python_ggplot.gg.geom.base import Geom, GeomType, HistogramDrawingStyle
+from python_ggplot.gg.geom.base import (
+    Geom,
+    GeomErrorBar,
+    GeomType,
+    HistogramDrawingStyle,
+    XYMinMax,
+)
 from python_ggplot.gg.geom.tile_raster_data import TitleRasterData
 from python_ggplot.gg.types import (
     ColOperator,
@@ -28,7 +34,7 @@ from python_ggplot.gg.types import (
 )
 
 if TYPE_CHECKING:
-    from python_ggplot.gg.scales.base import ColorScale, FilledScales, GGScale
+    from python_ggplot.gg.scales.base import ColorScale, FilledScales, GGScale, XYScale
 
 
 def _optional_scale_col(scale: Optional["GGScale"]) -> Optional[str]:
@@ -279,41 +285,86 @@ class FilledGeomHistogram(FilledGeom):
 
 @dataclass
 class FilledGeomErrorBar(FilledGeom):
-    x_min: Optional[str] = None
-    y_min: Optional[str] = None
-    x_max: Optional[str] = None
-    y_max: Optional[str] = None
+    xy_scale: "XYScale[Any, Any]"
+    x_min: Optional[Union[float, int]] = None
+    y_min: Optional[Union[float, int]] = None
+    x_max: Optional[Union[float, int]] = None
+    y_max: Optional[Union[float, int]] = None
+
+    def get_xy_mixmax_values(self, df: pd.DataFrame, idx: int) -> XYMinMax:
+        """
+        There's 2 sets of those
+        aes(xmin="col") -> will be on the xy scale
+        geom_errorbar()
+        """
+        x_scale = self.xy_scale.x_scale()
+        y_scale = self.xy_scale.y_scale()
+        scales_xy_bounds = XYMinMax.from_scales(df, x_scale, y_scale, idx)
+        custom_xy_bounds = XYMinMax(
+            x_min=self.x_min,
+            x_max=self.x_max,
+            y_min=self.y_min,
+            y_max=self.y_max,
+        )
+        final_xy_values = custom_xy_bounds.merge(scales_xy_bounds)
+        return final_xy_values
 
     def maybe_filter_unique(self, df: pd.DataFrame) -> pd.DataFrame:
-        x_values = [i for i in [self.x_min, self.x_max] if i is not None]
-        y_values = [i for i in [self.y_min, self.y_max] if i is not None]
-        collect_cols = x_values + y_values
-
-        if len(x_values) > 0:
-            if self.gg_data.y_col is None:
-                raise GGException("expected y_col")
-            collect_cols.append(str(self.gg_data.y_col))
-
-        if len(y_values) > 0:
-            if self.gg_data.x_col is None:
-                raise GGException("expected x_col")
-            collect_cols.append(str(self.gg_data.x_col))
-
-        collect_cols = [str(i) for i in collect_cols]
-        return df.drop_duplicates(subset=collect_cols)
+        primary_col_name = self.xy_scale.primary_col_name()
+        return df.drop_duplicates(subset=[primary_col_name])
 
     @classmethod
     def from_geom(
-        cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+        cls,
+        geom: GeomErrorBar,
+        fg_data: FilledGeomData,
+        fs: "FilledScales",
+        df: pd.DataFrame,
     ) -> Tuple[FilledGeom, pd.DataFrame]:
+        from python_ggplot.gg.scales.base import XYScale
+
+        xy_scale = XYScale.from_geom(fs, geom)
+
         new_fg = FilledGeomErrorBar(
             gg_data=fg_data,
-            x_min=_optional_scale_col(fs.get_x_min_scale(geom, optional=True)),
-            x_max=_optional_scale_col(fs.get_x_max_scale(geom, optional=True)),
-            y_min=_optional_scale_col(fs.get_y_min_scale(geom, optional=True)),
-            y_max=_optional_scale_col(fs.get_y_max_scale(geom, optional=True)),
+            xy_scale=xy_scale,
+            x_min=geom.x_min,
+            y_min=geom.y_min,
+            x_max=geom.x_max,
+            y_max=geom.y_max,
         )
         return new_fg, df
+
+    # def maybe_filter_unique_old(self, df: pd.DataFrame) -> pd.DataFrame:
+    #     x_values = [i for i in [self.x_min, self.x_max] if i is not None]
+    #     y_values = [i for i in [self.y_min, self.y_max] if i is not None]
+    #     collect_cols = x_values + y_values
+
+    #     if len(x_values) > 0:
+    #         if self.gg_data.y_col is None:
+    #             raise GGException("expected y_col")
+    #         collect_cols.append(str(self.gg_data.y_col))
+
+    #     if len(y_values) > 0:
+    #         if self.gg_data.x_col is None:
+    #             raise GGException("expected x_col")
+    #         collect_cols.append(str(self.gg_data.x_col))
+
+    #     collect_cols = [str(i) for i in collect_cols]
+    #     return df.drop_duplicates(subset=collect_cols)
+
+    # @classmethod
+    # def from_geom(
+    #     cls, geom: Geom, fg_data: FilledGeomData, fs: "FilledScales", df: pd.DataFrame
+    # ) -> Tuple[FilledGeom, pd.DataFrame]:
+    #     new_fg = FilledGeomErrorBar(
+    #         gg_data=fg_data,
+    #         x_min=_optional_scale_col(fs.get_x_min_scale(geom, optional=True)),
+    #         x_max=_optional_scale_col(fs.get_x_max_scale(geom, optional=True)),
+    #         y_min=_optional_scale_col(fs.get_y_min_scale(geom, optional=True)),
+    #         y_max=_optional_scale_col(fs.get_y_max_scale(geom, optional=True)),
+    #     )
+    #     return new_fg, df
 
 
 def create_filled_geom(

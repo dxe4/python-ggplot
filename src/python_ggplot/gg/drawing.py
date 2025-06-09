@@ -188,22 +188,6 @@ def move_bin_position(x: float, bp_kind: BinPositionType, bin_width: float):
     return lookup[bp_kind]
 
 
-def read_error_data(
-    df: pd.DataFrame, idx: int, fg: FilledGeomErrorBar
-) -> Tuple[Optional[float], Optional[float], Optional[float], Optional[float]]:
-    result = {"x_min": None, "x_max": None, "y_min": None, "y_max": None}
-    if fg.x_min is not None:
-        result["x_min"] = float(df[fg.x_min].iloc[idx])  # type: ignore
-    if fg.x_max is not None:
-        result["x_max"] = float(df[fg.x_max].iloc[idx])  # type: ignore
-    if fg.y_min is not None:
-        result["y_min"] = float(df[fg.y_min].iloc[idx])  # type: ignore
-    if fg.y_max is not None:
-        result["y_max"] = float(df[fg.y_max].iloc[idx])  # type: ignore
-
-    return result["x_min"], result["x_max"], result["y_min"], result["y_max"]
-
-
 def read_width_height(
     df: pd.DataFrame,
     idx: int,
@@ -473,7 +457,13 @@ def draw_error_bar(
     idx: int,
     style: Style,
 ) -> GOComposite:
-    x_min, x_max, y_min, y_max = read_error_data(df, idx, fg)
+    xy_values = fg.get_xy_mixmax_values(df, idx)
+    x_min, x_max, y_min, y_max = (
+        xy_values.x_min,
+        xy_values.x_max,
+        xy_values.y_min,
+        xy_values.y_max,
+    )
 
     if x_min is not None or x_max is not None:
         if view.x_scale is None:
@@ -494,6 +484,7 @@ def draw_error_bar(
         )
         result = init_error_bar(data)
         return result
+
     if y_min is not None or y_max is not None:
         if view.y_scale is None:
             raise GGException("exected view.x_scale")

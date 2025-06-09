@@ -56,7 +56,7 @@ from tests.test_view import AxisKind, RelativeCoordType
 
 if TYPE_CHECKING:
     from python_ggplot.gg.geom.filled_geom import FilledGeom
-    from python_ggplot.gg.scales.base import GGScale
+    from python_ggplot.gg.scales.base import CompositeScale, GGScale
 
 
 class HistogramDrawingStyle(GGEnum):
@@ -340,7 +340,12 @@ class GeomErrorBarMixin:
         return GeomType.ERROR_BAR
 
 
+@dataclass
 class GeomErrorBar(GeomErrorBarMixin, Geom):
+    x_min: Optional[Union[float, int]] = None
+    y_min: Optional[Union[float, int]] = None
+    x_max: Optional[Union[float, int]] = None
+    y_max: Optional[Union[float, int]] = None
 
     def default_style(self):
         return default_line_style(self.stat_type)
@@ -858,3 +863,75 @@ class GeomLine(Geom):
         style: Style,
     ):
         raise GGException("Already handled in `draw_sub_df`!")
+
+
+@dataclass
+class XYMinMax:
+    x_min: Optional[Union[float, int]] = None
+    x_max: Optional[Union[float, int]] = None
+    y_min: Optional[Union[float, int]] = None
+    y_max: Optional[Union[float, int]] = None
+
+    @classmethod
+    def _evaluate_scale(
+        cls,
+        df: pd.DataFrame,
+        scale: Optional["GGScale"],
+        idx: int,
+    ) -> Optional[float]:
+        # move to scale
+        if scale is None:
+            return None
+        return float(scale.evaluate(df).iloc[idx])
+
+    @classmethod
+    def _min_max_for_scale(
+        cls, scale: Union["GGScale", "CompositeScale"]
+    ) -> Tuple[Optional["GGScale"], Optional["GGScale"]]:
+        # TODO move this on the scale class
+        from python_ggplot.gg.scales.base import GGScale
+
+        if isinstance(scale, GGScale):
+            return None, None
+        return scale.scale_min, scale.scale_max
+
+    @classmethod
+    def from_scales(
+        cls,
+        df: pd.DataFrame,
+        x_scale: Union["GGScale", "CompositeScale"],
+        y_scale: Union["GGScale", "CompositeScale"],
+        idx: int,
+    ):
+        xmin, xmax = cls._min_max_for_scale(x_scale)
+        ymin, ymax = cls._min_max_for_scale(y_scale)
+        xmin, xmax, ymin, ymax = (
+            cls._evaluate_scale(df, scale, idx) for scale in [xmin, xmax, ymin, ymax]
+        )
+        return XYMinMax(
+            x_min=xmin,
+            x_max=xmax,
+            y_min=ymin,
+            y_max=ymax,
+        )
+
+    def _merge_value(self, left: Any, right: Any):
+        if left is not None:
+            return left
+        return right
+
+    def merge(self, other: "XYMinMax") -> "XYMinMax":
+        """
+        This is intuidive that "left is preferred"
+        eg if 2 values exist left is chosen
+        this will need some extension for that
+        we can allow either dominant=left/right or raise exception on duplicates
+        i believe the correct way is as is, but the issue is left is ambiguous
+        in case of aes(xmin="col"), xmin=1 i think we are supposed to pick 1 as the value
+        """
+        return XYMinMax(
+            x_min=self._merge_value(self.x_min, other.x_min),
+            x_max=self._merge_value(self.x_max, other.x_max),
+            y_min=self._merge_value(self.y_min, other.y_min),
+            y_max=self._merge_value(self.y_max, other.y_max),
+        )

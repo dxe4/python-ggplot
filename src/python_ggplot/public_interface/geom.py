@@ -165,6 +165,10 @@ def geom_error_bar(
     bin_by: BIN_BY_VALUES = "full",
     density: bool = False,
     alpha: Optional[float] = None,
+    x_min: Optional[Union[float, int]] = None,
+    y_min: Optional[Union[float, int]] = None,
+    x_max: Optional[Union[float, int]] = None,
+    y_max: Optional[Union[float, int]] = None,
 ) -> "Geom":
     if aes is None:
         aes = Aesthetics()
@@ -199,7 +203,13 @@ def geom_error_bar(
         stat_kind=StatKind.create_from_enum(stat_),
         position=position_,
     )
-    result = GeomErrorBar(gg_data=gg_data)
+    result = GeomErrorBar(
+        gg_data=gg_data,
+        x_min=x_min,
+        y_min=y_min,
+        x_max=x_max,
+        y_max=y_max,
+    )
 
     Geom.assign_bin_fields(result, stat_, bins, bin_width, breaks, bin_by_, density)
     return result

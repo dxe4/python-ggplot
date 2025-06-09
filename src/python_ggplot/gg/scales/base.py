@@ -10,11 +10,13 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Generic,
     List,
     Optional,
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 
@@ -1043,18 +1045,46 @@ class CompositeScale:
         min = self.scale_min.evaluate(df)
         max = self.scale_min.evaluate(df)
         combined = min + max
-        return Scale(low=float(combined.min()), high=float(combined.max()))
+        try:
+            return Scale(low=float(combined.min()), high=float(combined.max()))
+        except ValueError:
+            return Scale(low=0.0, high=1.0)
 
 
-class AbstractXYScale(ABC):
+T = TypeVar("T", GGScale, CompositeScale)
+Y = TypeVar("Y", GGScale, CompositeScale)
+
+
+@dataclass
+class XYScale(ABC, Generic[T, Y]):
+    primary: T
+    secondary: Y
+    primary_axis_kind: AxisKind
+
+    def x_scale(self) -> GGScale | CompositeScale:
+        if self.primary_axis_kind == AxisKind.X:
+            return self.primary
+        elif self.primary_axis_kind == AxisKind.Y:
+            return self.secondary
+        else:
+            raise GGException("Unexpected axis kind")
+
+    def y_scale(self) -> GGScale | CompositeScale:
+        if self.primary_axis_kind == AxisKind.X:
+            return self.secondary
+        elif self.primary_axis_kind == AxisKind.Y:
+            return self.primary
+        else:
+            raise GGException("Unexpected axis kind")
+
+    @abstractmethod
+    def primary_col_name(self) -> str:
+        pass
 
     @staticmethod
-    def from_geom(filled_cales: FilledScales, geom: Geom) -> "AbstractXYScale":
+    def from_geom(filled_cales: FilledScales, geom: Geom) -> "XYScale[Any, Any]":
         x = filled_cales.get_x_scale(geom, optional=True)
         y = filled_cales.get_y_scale(geom, optional=True)
-
-        if x and y:
-            return XYScale(primary=x, seconday=y, primary_axis_kind=AxisKind.X)
 
         x_min = filled_cales.get_x_min_scale(geom, optional=True)
         x_max = filled_cales.get_x_max_scale(geom, optional=True)
@@ -1064,27 +1094,34 @@ class AbstractXYScale(ABC):
         has_x_minmax = len([i for i in [x_min, x_max] if i is None]) == 0
         has_y_minmax = len([i for i in [y_min, y_max] if i is None]) == 0
 
-        if not DEFAULT_TO_X:
-            raise GGException(
-                "Default to X has to be True, until primary as y is implemented"
+        if has_y_minmax:
+            y = None
+
+        if has_x_minmax:
+            x = None
+
+        if x and y:
+            return XYScaleTwoColumns(
+                primary=x, secondary=y, primary_axis_kind=AxisKind.X
             )
 
         if x is not None and has_y_minmax:
             return XYScalePrimaryComposite(
                 primary=x,
-                seconday=CompositeScale(scale_min=x_min, scale_max=x_max),
+                secondary=CompositeScale(scale_min=y_min, scale_max=y_max),
                 primary_axis_kind=AxisKind.X,
             )
         elif y is not None and has_x_minmax:
             return XYScalePrimaryComposite(
                 primary=y,
-                seconday=CompositeScale(scale_min=y_min, scale_max=y_max),
+                secondary=CompositeScale(scale_min=x_min, scale_max=x_max),
                 primary_axis_kind=AxisKind.Y,
             )
         elif has_x_minmax and has_y_minmax:
             return XYScaleComposite(
                 primary=CompositeScale(scale_min=x_min, scale_max=x_max),
-                seconday=CompositeScale(scale_min=y_min, scale_max=y_max),
+                secondary=CompositeScale(scale_min=y_min, scale_max=y_max),
+                primary_axis_kind=AxisKind.X,
             )
         else:
             raise GGException(
@@ -1093,20 +1130,21 @@ class AbstractXYScale(ABC):
 
 
 @dataclass
-class XYScaleComposite(AbstractXYScale):
-    primary: CompositeScale
-    seconday: CompositeScale
+class XYScaleComposite(XYScale[CompositeScale, CompositeScale]):
+
+    def primary_col_name(self) -> str:
+        raise GGException("Composite scale does not have a col name")
 
 
 @dataclass
-class XYScalePrimaryComposite(AbstractXYScale):
-    primary: GGScale
-    seconday: CompositeScale
-    primary_axis_kind: AxisKind
+class XYScalePrimaryComposite(XYScale[GGScale, CompositeScale]):
+
+    def primary_col_name(self) -> str:
+        return str(self.primary.gg_data.col)
 
 
 @dataclass
-class XYScale(AbstractXYScale):
-    primary: GGScale
-    seconday: GGScale
-    primary_axis_kind: AxisKind
+class XYScaleTwoColumns(XYScale[GGScale, GGScale]):
+
+    def primary_col_name(self) -> str:
+        return str(self.primary.gg_data.col)

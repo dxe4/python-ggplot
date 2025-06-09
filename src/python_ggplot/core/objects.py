@@ -257,6 +257,14 @@ class AxisKind(GGEnum):
     X = auto()
     Y = auto()
 
+    def opposite(self) -> "AxisKind":
+        if self == AxisKind.X:
+            return AxisKind.Y
+        elif self == AxisKind.Y:
+            return AxisKind.X
+        else:
+            raise GGException("Invalid axis")
+
 
 T = TypeVar("T", int, float)
 
