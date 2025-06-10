@@ -817,6 +817,24 @@ def _fill_area(
     return poly_line
 
 
+def _apply_transformations(
+    fg: FilledGeom, x_tensor: "pd.Series[Any]", y_tensor: "pd.Series[Any]"
+) -> Tuple["pd.Series[Any]", "pd.Series[Any]"]:
+    # TODO this needs to be cleaned up a bit
+    # it allows test_geom_point_and_text to do
+    # y=gg_col("displ") + 0.2 and y=gg_col("displ") - 0.2
+    # which is really convienient
+    if fg.gg_data.x_transformations:
+        for operator in fg.gg_data.x_transformations:
+            x_tensor = operator(x_tensor)  # type: ignore
+
+    if fg.gg_data.y_transformations:
+        for operator in fg.gg_data.y_transformations:
+            y_tensor = operator(y_tensor)  # type: ignore
+
+    return x_tensor, y_tensor
+
+
 def draw_sub_df(
     view: ViewPort,
     fg: FilledGeom,
@@ -853,21 +871,9 @@ def draw_sub_df(
         return
 
     if geom_type != GeomType.RASTER:
-
         x_tensor = fg.gg_data.x_col.evaluate(df)  # type: ignore
         y_tensor = fg.gg_data.y_col.evaluate(df)  # type: ignore
-
-        # TODO this needs to be cleaned up a bit
-        # it allows test_geom_point_and_text to do
-        # y=gg_col("displ") + 0.2 and y=gg_col("displ") - 0.2
-        # which is really convienient
-        if fg.gg_data.x_transformations:
-            for operator in fg.gg_data.x_transformations:
-                x_tensor = operator(x_tensor)  # type: ignore
-
-        if fg.gg_data.y_transformations:
-            for operator in fg.gg_data.y_transformations:
-                y_tensor = operator(y_tensor)  # type: ignore
+        x_tensor, y_tensor = _apply_transformations(fg, x_tensor, y_tensor)
 
         last_element: int = len(df) - 1
         if fg.gg_data.geom.gg_data.bin_position == BinPositionType.NONE:

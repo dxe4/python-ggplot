@@ -98,7 +98,7 @@ def is_discrete_data(
         else:
             indices = list(range(len(col)))
 
-        elements = {col[i] for i in indices}  # type: ignore
+        elements = {col.iloc[i] for i in indices}  # type: ignore
 
         if len(elements) > round(len(indices) * discrete_threshold):
             return False

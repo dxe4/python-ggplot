@@ -313,7 +313,7 @@ def test_geom_text():
     ggdraw_plot(res, plots_path / "geom_text.png")
 
 
-def test_geom_error_bar():
+def test_geom_error_bar_from_df():
     df = pd.DataFrame(
         {
             "trt": [1, 1, 2, 2],
@@ -328,6 +328,25 @@ def test_geom_error_bar():
     )
     res = ggcreate(plot)
     ggdraw_plot(res, plots_path / "geom_error_bar.png")
+
+
+def test_geom_error_bar_with_y_as_conts():
+    df = pd.DataFrame(
+        {
+            "trt": [1, 1, 2, 2, 3],
+            "resp": [1, 5, 3, 4, 3],
+            "group": pd.Categorical([1, 2, 1, 2, 1]),
+            "upper": [1.5, 5.0, 3.3, 4.2, 3],
+            "lower": [1, 4.0, 2.4, 3.6, 3],
+        }
+    )
+    plot = (
+        ggplot(df)
+        + geom_point(aes(x="trt", y="resp", color="group"))
+        + geom_error_bar(aes(x="trt", ymin=1, ymax=3), size=20)
+    )
+    res = ggcreate(plot)
+    ggdraw_plot(res, plots_path / "geom_error_bar_y_consts.png")
 
 
 def test_geom_linerange():

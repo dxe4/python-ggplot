@@ -20,7 +20,7 @@ import pandas as pd
 from python_ggplot.core.coord.objects import Coord
 from python_ggplot.core.objects import GGEnum, GGException, Scale, Style
 from python_ggplot.core.units.objects import DataUnit
-from python_ggplot.gg.datamancer_pandas_compat import VectorCol
+from python_ggplot.gg.datamancer_pandas_compat import VNull
 from python_ggplot.gg.styles.config import (
     AREA_DEFAULT_STYLE,
     BAR_DEFAULT_STYLE,
@@ -40,6 +40,7 @@ from python_ggplot.gg.types import (
     StatBin,
     StatKind,
     StatType,
+    gg_col_const,
 )
 from python_ggplot.graphics.initialize import (
     InitLineInput,
@@ -342,10 +343,7 @@ class GeomErrorBarMixin:
 
 @dataclass
 class GeomErrorBar(GeomErrorBarMixin, Geom):
-    x_min: Optional[Union[float, int]] = None
-    y_min: Optional[Union[float, int]] = None
-    x_max: Optional[Union[float, int]] = None
-    y_max: Optional[Union[float, int]] = None
+    xy_minmax: "XYMinMax"
 
     def default_style(self):
         return default_line_style(self.stat_type)
@@ -872,6 +870,28 @@ class XYMinMax:
     y_min: Optional[Union[float, int]] = None
     y_max: Optional[Union[float, int]] = None
 
+    def to_scales(
+        self,
+    ) -> Tuple[
+        Optional["GGScale"],
+        Optional["GGScale"],
+        Optional["GGScale"],
+        Optional["GGScale"],
+    ]:
+        from python_ggplot.gg.scales.base import LinearDataScale
+
+        result = {
+            "x_min": self.x_min,
+            "x_max": self.x_max,
+            "y_min": self.y_min,
+            "y_max": self.y_max,
+        }
+        for k, v in result.items():
+            if v is not None:
+                result[k] = LinearDataScale.from_const(v)
+        # todo change this later
+        return result["x_min"], result["x_max"], result["y_min"], result["y_max"]  # type: ignore
+
     @classmethod
     def _evaluate_scale(
         cls,
@@ -882,7 +902,7 @@ class XYMinMax:
         # move to scale
         if scale is None:
             return None
-        return float(scale.evaluate(df).iloc[idx])
+        return float(scale.evaluate(df.iloc[idx]))  # type ignore
 
     @classmethod
     def _min_max_for_scale(

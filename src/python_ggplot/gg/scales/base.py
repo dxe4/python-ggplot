@@ -47,9 +47,10 @@ from python_ggplot.gg.datamancer_pandas_compat import (
     ColumnType,
     GGValue,
     VectorCol,
+    VNull,
     pandas_series_to_column,
 )
-from python_ggplot.gg.geom.base import Geom, GeomType
+from python_ggplot.gg.geom.base import Geom, GeomType, XYMinMax
 from python_ggplot.gg.geom.filled_geom import (
     FilledGeom,
     FilledGeomContinuous,
@@ -498,6 +499,17 @@ class DateScale(GGScale):
 class LinearDataScale(GGScale):
     transform: Optional[VectorCol] = None  # for SecondaryAxis
     data: Optional[LinearAndTransformScaleData] = None
+
+    @staticmethod
+    def from_const(const_value: Any) -> "LinearDataScale":
+        return LinearDataScale(
+            gg_data=GGScaleData(
+                col=VectorCol(col_name=gg_col_const(const_value)),
+                value_kind=VNull(),
+                ids=set(),
+                discrete_kind=GGScaleDiscrete(label_seq=[]),
+            )
+        )
 
     @property
     def scale_type(self) -> ScaleType:
@@ -1082,7 +1094,9 @@ class XYScale(ABC, Generic[T, Y]):
         pass
 
     @staticmethod
-    def from_geom(filled_cales: FilledScales, geom: Geom) -> "XYScale[Any, Any]":
+    def from_geom(
+        filled_cales: FilledScales, geom: Geom, xy_minmax: XYMinMax
+    ) -> "XYScale[Any, Any]":
         x = filled_cales.get_x_scale(geom, optional=True)
         y = filled_cales.get_y_scale(geom, optional=True)
 
@@ -1090,6 +1104,19 @@ class XYScale(ABC, Generic[T, Y]):
         x_max = filled_cales.get_x_max_scale(geom, optional=True)
         y_min = filled_cales.get_y_min_scale(geom, optional=True)
         y_max = filled_cales.get_y_max_scale(geom, optional=True)
+
+        # todo refactor this
+        (
+            x_min_from_geom,
+            x_max_from_geom,
+            y_min_from_geom,
+            y_max_from_geom,
+        ) = xy_minmax.to_scales()
+
+        x_min = x_min_from_geom or x_min
+        x_max = x_max_from_geom or x_max
+        y_min = y_min_from_geom or y_min
+        y_max = y_max_from_geom or y_max
 
         has_x_minmax = len([i for i in [x_min, x_max] if i is None]) == 0
         has_y_minmax = len([i for i in [y_min, y_max] if i is None]) == 0

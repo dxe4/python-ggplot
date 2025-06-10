@@ -95,12 +95,22 @@ class FilledGeom:
     def _ensure_y_discrete_kind_exists(self):
         self._ensure_discrete_kind_exists(AxisKind.Y)
 
-    def is_discrete_y(self) -> bool:
-        self._ensure_y_discrete_kind_exists()
+    def is_discrete_y(self, raise_on_error: bool = False) -> bool:
+        try:
+            self._ensure_y_discrete_kind_exists()
+        except GGException as e:
+            if raise_on_error:
+                raise GGException from e
+            return False
         return self.gg_data.y_discrete_kind.discrete_type == DiscreteType.DISCRETE  # type: ignore
 
-    def is_discrete_x(self) -> bool:
-        self._ensure_x_discrete_kind_exists()
+    def is_discrete_x(self, raise_on_error: bool = False) -> bool:
+        try:
+            self._ensure_x_discrete_kind_exists()
+        except GGException as e:
+            if raise_on_error:
+                raise GGException from e
+            return False
         return self.gg_data.x_discrete_kind.discrete_type == DiscreteType.DISCRETE  # type: ignore
 
     @property
@@ -320,17 +330,12 @@ class FilledGeomErrorBar(FilledGeom):
     ) -> Tuple[FilledGeom, pd.DataFrame]:
         from python_ggplot.gg.scales.base import XYScale
 
-        xy_scale = XYScale.from_geom(fs, geom)
+        xy_scale = XYScale.from_geom(fs, geom, geom.xy_minmax)
 
         new_fg = FilledGeomErrorBar(
             gg_data=fg_data,
             xy_scale=xy_scale,
-            xy_minmax=XYMinMax(
-                x_min=geom.x_min,
-                y_min=geom.y_min,
-                x_max=geom.x_max,
-                y_max=geom.y_max,
-            ),
+            xy_minmax=geom.xy_minmax,
         )
         return new_fg, df
 

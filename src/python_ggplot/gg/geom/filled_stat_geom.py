@@ -99,7 +99,7 @@ def _get_filled_geom_from_scale(
 ) -> Optional[FilledGeomDiscreteKind]:
     # todo rename
     if scale is None:
-        return None
+        return FilledGeomContinuous()
     return scale.gg_data.discrete_kind.to_filled_geom_kind()
 
 
