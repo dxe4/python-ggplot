@@ -1127,6 +1127,11 @@ class XYScale(ABC, Generic[T, Y]):
         if has_x_minmax:
             x = None
 
+        if not DEFAULT_TO_X:
+            # if x and y but coord_flip=True
+            # then we need primary_axis = Y
+            raise GGException("support coord flip")
+
         if x and y:
             return XYScaleTwoColumns(
                 primary=x, secondary=y, primary_axis_kind=AxisKind.X
